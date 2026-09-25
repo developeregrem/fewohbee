@@ -112,6 +112,14 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
                 'content' => "<p data-if=\"check_in_times(reservation1.appartment.object)\">[[ check_in_times(reservation1.appartment.object) ]]</p>\n<p data-if=\"reservation1.appartment.object.checkInNote\">[[ reservation1.appartment.object.checkInNote ]]</p>",
             ],
             [
+                'id' => 'reservation.guest_checkin_link',
+                'label' => 'templates.editor.guest_checkin_link',
+                'description' => 'templates.editor.guest_checkin_link.desc',
+                'group' => 'Reservation',
+                'complexity' => 'easy',
+                'content' => "<p data-if=\"guest_checkin_url(reservation1)\"><a href=\"[[ guest_checkin_url(reservation1) ]]\">{{ 'guest_checkin.template.link_text'|trans }}</a></p>",
+            ],
+            [
                 'id' => 'reservation.opening_hours',
                 'label' => 'templates.editor.opening_hours',
                 'description' => 'templates.editor.opening_hours.desc',

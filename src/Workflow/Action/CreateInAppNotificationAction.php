@@ -8,6 +8,7 @@ use App\Entity\Enum\NotificationSeverity;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Service\NotificationCenterService;
+use App\Workflow\Trigger\GuestCheckInSubmittedTrigger;
 use App\Workflow\WorkflowSkippedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -162,6 +163,9 @@ class CreateInAppNotificationAction implements WorkflowActionInterface
         }
 
         $titleKey = match (true) {
+            GuestCheckInSubmittedTrigger::TYPE === $trigger => $hasName
+                ? 'notification.stored.guest_checkin_submitted'
+                : 'notification.stored.guest_checkin_submitted_anonymous',
             // One booking can cover several rooms; naming just the first would
             // be wrong, so the count takes over.
             !$isNewBooking => $hasName

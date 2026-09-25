@@ -19,6 +19,8 @@ reservation.days: Days
 reservation.departureTime: Departure
 reservation.delete.ask: Are you sure you want to delete this reservation?
 reservation.details: Reservation details
+reservation.tab.details: Details
+reservation.tab.guests: Guests
 reservation.edit.change.appartment: Assign new room
 reservation.enddate: To
 reservation.flash.create.success: Reservation has been successfully added.

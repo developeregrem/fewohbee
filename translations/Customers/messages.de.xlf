@@ -26,6 +26,14 @@
                 <source>customer.salutation</source>
                 <target>Anrede</target>
             </trans-unit>
+            <trans-unit id="customer.nationality">
+                <source>customer.nationality</source>
+                <target>Staatsangehörigkeit</target>
+            </trans-unit>
+            <trans-unit id="customer.nationality_unknown">
+                <source>customer.nationality_unknown</source>
+                <target>Keine Angabe</target>
+            </trans-unit>
             <trans-unit id="customer.birthday">
                 <source>customer.birthday</source>
                 <target>Geburtsdatum</target>

@@ -26,6 +26,15 @@ class ReservationPdfTemplatePreviewProvider extends AbstractReservationTemplateP
     public function getAvailableSnippets(): array
     {
         $snippets = parent::getAvailableSnippets();
+        // PDF only: mail clients drop data: images, mails get the link snippet instead.
+        $snippets[] = [
+            'id' => 'reservation.guest_checkin_qr',
+            'label' => 'templates.editor.guest_checkin_qr',
+            'description' => 'templates.editor.guest_checkin_qr.desc',
+            'group' => 'Reservation',
+            'complexity' => 'easy',
+            'content' => "<div data-if=\"guest_checkin_url(reservation1)\"><img src=\"[[ guest_checkin_qr(reservation1, 300) ]]\" alt=\"\" width=\"30mm\"></div>",
+        ];
         $snippets[] = [
             'id' => 'pdf.header',
             'label' => 'templates.preview.snippet.pdf_header',

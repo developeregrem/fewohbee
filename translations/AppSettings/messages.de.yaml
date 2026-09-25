@@ -7,6 +7,8 @@ app_settings:
   save: "Einstellungen speichern"
   save_hint: "Änderungen werden sofort wirksam."
   section:
+    public_address: "Öffentliche Adresse"
+    public_address_desc: "Unter dieser Adresse ist FewohBee aus dem Internet erreichbar. Daraus entstehen Links, die Gäste erhalten, z. B. zum Online-Check-in."
     currency: "Währung"
     currency_desc: "Währungscode und Symbol für Rechnungen und Preisanzeigen."
     invoices: "Rechnungen"
@@ -19,7 +21,15 @@ app_settings:
     mail_desc: "Absender und SMTP-Zugang für den Versand aus der Anwendung."
   notification_fallback_hint: "Kein Empfänger hinterlegt – Benachrichtigungen gehen an <strong>%email%</strong> (Absenderadresse)."
   mail_disabled_hint: "Der zentrale Schalter MAIL_ENABLED ist deaktiviert. Die SMTP-Verbindung kann geprüft werden, aber die Anwendung versendet keine E-Mails."
+  public_base_url:
+    preset_hint: "Vom Hosting vorgegeben und hier nicht änderbar."
+    fallback_hint: "Aktuell wird %url% aus der Serverkonfiguration verwendet."
+    missing_hint: "Solange keine Adresse hinterlegt ist, können keine Links für Gäste erzeugt werden."
+    warning_local: "Diese Adresse ist aus dem Internet vermutlich nicht erreichbar. Gäste können Links darauf nicht öffnen."
+    warning_insecure: "Die Adresse nutzt kein HTTPS. Gäste übermitteln darüber persönliche Daten, bitte stelle auf https:// um."
   form:
+    public_base_url: "Adresse (URL)"
+    public_base_url_help: "Vollständige Adresse inklusive https://, z. B. https://fewohbee.meine-pension.de"
     currency: "Währungscode"
     currency_symbol: "Währungssymbol"
     invoice_filename_pattern: "Dateiname Rechnungsexport"

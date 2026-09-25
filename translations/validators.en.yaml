@@ -22,6 +22,14 @@ invoice_number_pattern:
   month_without_year: Without a year the numbering restarts every month and repeats in later years.
   too_long: The generated invoice number must not exceed %max% characters.
   empty: Please enter a pattern.
+guest_checkin:
+  id_number_invalid: Please enter the ID number without special characters (4 to 30 characters).
+  zip_invalid: Please enter a valid zip code.
+  phone_invalid: Please enter a valid phone number.
+  companion_field_missing: Please fill in.
+  public_address_missing: Set the public address in the general settings first, links for guests are built from it.
+public_base_url:
+  invalid: Please enter a complete web address starting with https:// (without ? or #).
 accounting:
   bank_import:
     upload:

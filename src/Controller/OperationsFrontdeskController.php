@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
+use App\Repository\GuestCheckInRepository;
 use App\Service\FrontdeskViewService;
 use App\Service\HousekeepingViewService;
 use App\Service\OperationsFilterService;
@@ -36,7 +37,8 @@ class OperationsFrontdeskController extends AbstractController
         Request $request,
         HousekeepingViewService $viewService,
         OperationsFilterService $filterService,
-        FrontdeskViewService $frontdeskViewService
+        FrontdeskViewService $frontdeskViewService,
+        GuestCheckInRepository $guestCheckInRepository,
     ): Response {
         $session = $request->getSession();
         $em = $doctrine->getManager();
@@ -87,6 +89,10 @@ class OperationsFrontdeskController extends AbstractController
             'selectedCategories' => $selectedCategories,
             'selectedStatusIds' => $selectedStatusIds,
             'frontdeskItems' => $items,
+            // One query for the whole list, not one per row.
+            'checkInStatuses' => $guestCheckInRepository->findStatusesForReservations(
+                array_values(array_map(static fn (array $item): int => (int) $item['reservation']->getId(), $items))
+            ),
             'reservationStatuses' => $reservationStatuses,
         ];
 

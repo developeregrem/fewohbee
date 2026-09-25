@@ -57,6 +57,25 @@ framework:
             limit: 40
             interval: '5 minutes'
             cache_pool: cache.app
+        # Online check-in (GuestCheckInRateLimiter): only failures count, so guests sharing the
+        # house's WiFi never block each other. Links that do not work per visitor, wrong booking
+        # details per link (dates and last name are guessable in theory) and stored
+        # submissions per link.
+        guest_checkin_invalid_link:
+            policy: 'sliding_window'
+            limit: 20
+            interval: '15 minutes'
+            cache_pool: cache.app
+        guest_checkin_verify:
+            policy: 'sliding_window'
+            limit: 5
+            interval: '15 minutes'
+            cache_pool: cache.app
+        guest_checkin_submit:
+            policy: 'sliding_window'
+            limit: 10
+            interval: '1 hour'
+            cache_pool: cache.app
         api:
             policy: 'sliding_window'
             limit: 300
@@ -113,6 +132,21 @@ when@test:
                 enabled: false
         rate_limiter:
             # Generous limits so repeated test runs never trip the limiters.
+            guest_checkin_invalid_link:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '5 minutes'
+                cache_pool: cache.app
+            guest_checkin_verify:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '15 minutes'
+                cache_pool: cache.app
+            guest_checkin_submit:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '1 hour'
+                cache_pool: cache.app
             api:
                 policy: 'sliding_window'
                 limit: 10000

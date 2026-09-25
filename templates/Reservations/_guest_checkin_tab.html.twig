@@ -1,0 +1,179 @@
+{% use "common/delete_popover.html.twig" %}
+{% set checkIn = guestCheckIn.checkIn %}
+{% set canEdit = is_granted('ROLE_RESERVATIONS') %}
+<div data-controller="guest-checkin"
+     data-guest-checkin-link-url-value="{{ path('reservations.guest_checkin.link', {'id': reservation.id}) }}"
+     data-guest-checkin-regenerate-url-value="{{ path('reservations.guest_checkin.regenerate', {'id': reservation.id}) }}"
+     data-guest-checkin-token-value="{{ canEdit ? csrf_token('guest-checkin-' ~ reservation.id) : '' }}">
+
+    {# ── State, with what it means right below ── #}
+    {% set hasPayload = checkIn and checkIn.payload %}
+    {% set stateParts = [] %}
+    {% if checkIn and checkIn.lastSubmittedAt %}
+        {% set stateParts = stateParts|merge(['guest_checkin.tab.submitted_at'|trans({'%date%': checkIn.lastSubmittedAt|date('d.m.Y H:i')})]) %}
+    {% endif %}
+    {% if checkIn and checkIn.appliedAt %}
+        {% set stateParts = stateParts|merge(['guest_checkin.tab.applied_at'|trans({'%date%': checkIn.appliedAt|date('d.m.Y H:i')})]) %}
+    {% endif %}
+    <div class="mb-3">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            {% set badgeClass = {'open': 'text-bg-secondary', 'submitted': 'text-bg-primary', 'applied': 'text-bg-success'}[guestCheckIn.status.value] %}
+            <span class="badge {{ badgeClass }}">{{ guestCheckIn.status.labelKey|trans }}</span>
+            {% if stateParts is not empty %}
+                <small class="text-body-secondary">{{ stateParts|join(' · ') }}</small>
+            {% endif %}
+        </div>
+        {% if guestCheckIn.status.value == 'applied' %}
+            <p class="small text-body-secondary mb-0 mt-1">{{ 'guest_checkin.tab.applied_hint'|trans }}</p>
+        {% elseif guestCheckIn.status.value == 'submitted' and not hasPayload %}
+            <p class="small text-body-secondary mb-0 mt-1">{{ 'guest_checkin.tab.purged_hint'|trans }}</p>
+        {% elseif not hasPayload %}
+            <p class="small text-body-secondary mb-0 mt-1">{{ 'guest_checkin.tab.nothing_yet'|trans }}</p>
+        {% endif %}
+    </div>
+
+    {# ── Link for the guest ── #}
+    {% if guestCheckIn.unavailableReason %}
+        <div class="alert alert-secondary small">{{ guestCheckIn.unavailableReason|trans }}</div>
+    {% elseif canEdit %}
+        <div class="mb-4">
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-action="guest-checkin#showLink">
+                    <i class="fas fa-link me-1"></i>{{ 'guest_checkin.tab.show_link'|trans }}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-action="guest-checkin#showQr">
+                    <i class="fas fa-qrcode me-1"></i>{{ 'guest_checkin.tab.show_qr'|trans }}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#guest-checkin-regenerate-{{ reservation.id }}" aria-expanded="false">
+                    <i class="fas fa-rotate me-1"></i>{{ 'guest_checkin.tab.regenerate'|trans }}
+                </button>
+            </div>
+            <div class="collapse mt-2" id="guest-checkin-regenerate-{{ reservation.id }}" data-guest-checkin-target="regenerateBox">
+                <div class="alert alert-warning small mb-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <span>{{ 'guest_checkin.tab.regenerate_hint'|trans }}</span>
+                    <button type="button" class="btn btn-sm btn-warning" data-action="guest-checkin#regenerate">{{ 'guest_checkin.tab.regenerate_confirm'|trans }}</button>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-1 mt-2 d-none" data-guest-checkin-target="linkBox" data-controller="copy" data-copy-hint-value="{{ 'guest_checkin.tab.copied'|trans }}">
+                <input type="text" class="form-control form-control-sm" readonly data-guest-checkin-target="url" data-copy-target="input" aria-label="{{ 'guest_checkin.tab.show_link'|trans }}">
+                <button type="button" class="btn btn-sm border-0 shadow-none text-secondary" data-action="copy#copy"
+                        title="{{ 'guest_checkin.tab.copy'|trans }}" aria-label="{{ 'guest_checkin.tab.copy'|trans }}"><i class="fas fa-copy"></i></button>
+            </div>
+            <div class="mt-2 d-none" data-guest-checkin-target="qrBox">
+                <img data-guest-checkin-target="qr" alt="{{ 'guest_checkin.tab.show_qr'|trans }}" width="160" height="160" class="border rounded p-1 bg-white">
+                <a class="d-block small mt-1" data-guest-checkin-target="qrDownload" download="online-checkin-{{ reservation.id }}.png"><i class="fas fa-download me-1"></i>{{ 'guest_checkin.tab.download_qr'|trans }}</a>
+            </div>
+            <div class="small text-warning-emphasis mt-1" data-guest-checkin-target="error" role="alert"></div>
+            <p class="small text-body-secondary mt-2 mb-0">{{ 'guest_checkin.tab.link_hint'|trans }}</p>
+        </div>
+    {% endif %}
+
+    {# ── What the guest sent ── #}
+    {% if hasPayload %}
+        <h5 class="fs-6 fw-semibold">{{ 'guest_checkin.tab.submission'|trans }}</h5>
+        <dl class="row small mb-2">
+            <dt class="col-sm-4">{{ 'reservation.arrivalTime'|trans }}</dt>
+            <dd class="col-sm-8">{{ guestCheckIn.arrivalTime ?: '–' }}</dd>
+            {% if guestCheckIn.message %}
+                <dt class="col-sm-4">{{ 'guest_checkin.tab.message'|trans }}</dt>
+                <dd class="col-sm-8">{{ guestCheckIn.message|nl2br }}</dd>
+            {% endif %}
+        </dl>
+
+        <table class="table table-sm small align-middle">
+            <thead>
+            <tr>
+                <th scope="col">{{ 'guest_checkin.tab.main_guest'|trans }}</th>
+                <th scope="col">{{ 'guest_checkin.tab.col_submitted'|trans }}</th>
+                <th scope="col">{{ 'guest_checkin.tab.col_current'|trans }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in guestCheckIn.mainGuestRows %}
+                {# Salutation, ID type: stored values are translation keys or configured salutations. #}
+                {% set translatable = row.label in ['customer.salutation', 'customer.id.type.name'] %}
+                <tr{% if row.differs %} class="table-warning"{% endif %}>
+                    <th scope="row" class="fw-normal text-body-secondary">{{ row.label|trans }}</th>
+                    <td>{{ row.submitted is not null ? (translatable ? row.submitted|trans : row.submitted) : '–' }}</td>
+                    <td>{{ row.current is not null ? (translatable ? row.current|trans : row.current) : '–' }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        {% if guestCheckIn.companions is not empty %}
+            <table class="table table-sm small">
+                <thead>
+                <tr>
+                    <th scope="col">{{ 'guest_checkin.tab.companions'|trans }}</th>
+                    <th scope="col">{{ 'customer.birthday'|trans }}</th>
+                    <th scope="col">{{ 'customer.nationality'|trans }}</th>
+                    <th scope="col">{{ 'customer.address'|trans }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for companion in guestCheckIn.companions %}
+                    <tr>
+                        <td>{{ companion.name }}</td>
+                        <td>{{ companion.birthday ?: '–' }}</td>
+                        <td>{{ companion.nationality ?: '–' }}</td>
+                        <td>{{ companion.address ?: ('guest_checkin.tab.same_address'|trans) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        {# ── Take over ── #}
+        {% if canEdit and guestCheckIn.status.value == 'submitted' %}
+            <form action="{{ path('reservations.guest_checkin.apply', {'id': reservation.id}) }}" method="post" class="border rounded p-3 bg-body-tertiary" data-action="submit->guest-checkin#apply">
+                <input type="hidden" name="_token" value="{{ csrf_token('guest-checkin-' ~ reservation.id) }}">
+                <h5 class="fs-6 fw-semibold">{{ 'guest_checkin.apply.title'|trans }}</h5>
+
+                <div class="row g-2 align-items-center mb-2">
+                    <label class="col-sm-4 col-form-label col-form-label-sm" for="guest-checkin-main-{{ reservation.id }}">{{ 'guest_checkin.apply.main_target'|trans }}</label>
+                    <div class="col-sm-8">
+                        <select class="form-select form-select-sm" name="mainTarget" id="guest-checkin-main-{{ reservation.id }}">
+                            {% for target, name in guestCheckIn.mainTargets %}
+                                <option value="{{ target }}"{% if target == guestCheckIn.defaultMainTarget %} selected{% endif %}>
+                                    {{ (target == 'booker' ? 'guest_checkin.apply.target_booker' : 'guest_checkin.apply.target_guest')|trans({'%name%': name}) }}
+                                </option>
+                            {% endfor %}
+                            <option value="new"{% if guestCheckIn.defaultMainTarget == 'new' %} selected{% endif %}>{{ 'guest_checkin.apply.target_new'|trans }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="setAsBooker" value="1" id="guest-checkin-booker-{{ reservation.id }}"{% if reservation.booker is null %} checked disabled{% endif %}>
+                    <label class="form-check-label small" for="guest-checkin-booker-{{ reservation.id }}">{{ 'guest_checkin.apply.set_as_booker'|trans }}</label>
+                </div>
+
+                {% for companion in guestCheckIn.companions %}
+                    <div class="row g-2 align-items-center mb-2">
+                        <label class="col-sm-4 col-form-label col-form-label-sm" for="guest-checkin-companion-{{ reservation.id }}-{{ loop.index0 }}">{{ companion.name }}</label>
+                        <div class="col-sm-8">
+                            <select class="form-select form-select-sm" name="companionTargets[]" id="guest-checkin-companion-{{ reservation.id }}-{{ loop.index0 }}">
+                                <option value="new"{% if companion.defaultTarget == 'new' %} selected{% endif %}>{{ 'guest_checkin.apply.target_new'|trans }}</option>
+                                {% for target, name in guestCheckIn.companionTargets %}
+                                    <option value="{{ target }}"{% if target == companion.defaultTarget %} selected{% endif %}>{{ 'guest_checkin.apply.target_guest'|trans({'%name%': name}) }}</option>
+                                {% endfor %}
+                                <option value="skip">{{ 'guest_checkin.apply.target_skip'|trans }}</option>
+                            </select>
+                        </div>
+                    </div>
+                {% endfor %}
+                <p class="small text-body-secondary">{{ 'guest_checkin.apply.hint'|trans }}</p>
+                <div class="d-flex justify-content-between">
+                    {% set id = 'guest-checkin-' ~ reservation.id %}
+                    {% set targetUrl = path('reservations.guest_checkin.discard', {'id': reservation.id}) %}
+                    {% set deletePopoverHint = 'guest_checkin.discard.hint'|trans %}
+                    <button type="button" class="btn btn-sm btn-outline-danger" title="{{ 'guest_checkin.discard.title'|trans }}"
+                            data-popover="delete" data-delete-target="#modal-content-ajax" data-bs-content='{{ block('deletePopoverContent') }}'>
+                        <i class="fas fa-trash me-1"></i>{{ 'guest_checkin.discard.title'|trans }}
+                    </button>
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-check me-1"></i>{{ 'guest_checkin.apply.submit'|trans }}</button>
+                </div>
+            </form>
+        {% endif %}
+    {% endif %}
+</div>

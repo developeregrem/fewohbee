@@ -1,0 +1,6 @@
+{# Online check-in state of a reservation in the frontdesk list; nothing while the guest has not sent anything. #}
+{% if status and status.value == 'submitted' %}
+    <span class="badge text-bg-primary" title="{{ 'guest_checkin.frontdesk.submitted'|trans }}"><i class="fas fa-id-card me-1"></i>{{ 'guest_checkin.status.submitted'|trans }}</span>
+{% elseif status and status.value == 'applied' %}
+    <span class="badge text-bg-success" title="{{ 'guest_checkin.frontdesk.applied'|trans }}"><i class="fas fa-id-card me-1"></i>{{ 'guest_checkin.status.applied'|trans }}</span>
+{% endif %}

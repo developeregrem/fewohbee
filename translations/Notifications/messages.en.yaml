@@ -18,6 +18,8 @@ notification:
     reservation_anonymous: "New booking — room %room% starting %from%"
     reservation_multi_anonymous: "New booking — %count% rooms starting %from%"
     reservation_generic_anonymous: "Reservation — room %room% starting %from%"
+    guest_checkin_submitted: "Online check-in by %name% — room %room% starting %from%"
+    guest_checkin_submitted_anonymous: "Online check-in filled in — room %room% starting %from%"
     calendar_import: "Imported booking from %source% — room %room% starting %from%"
     invoice: "Invoice %number%"
   mark_all_read: "Mark all as read"

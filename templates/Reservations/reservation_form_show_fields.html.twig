@@ -1,10 +1,10 @@
 <!-- Nav tabs -->
 <ul class="nav nav-tabs">
     <li class="nav-item">
-        <a class="nav-link{% if tab is defined and tab == 'booker' %} active{% endif %}" href="#reservation" data-bs-toggle="tab">{{ 'reservation.details'|trans }}</a>
+        <a class="nav-link{% if tab is defined and tab == 'booker' %} active{% endif %}" href="#reservation" data-bs-toggle="tab">{{ 'reservation.tab.details'|trans }}</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link{% if tab is defined and tab == 'guest' %} active{% endif %}" href="#guests" data-bs-toggle="tab">{{ 'reservation.preview.customer.inroom'|trans }}</a>
+        <a class="nav-link{% if tab is defined and tab == 'guest' %} active{% endif %}" href="#guests" data-bs-toggle="tab" title="{{ 'reservation.preview.customer.inroom'|trans }}">{{ 'reservation.tab.guests'|trans }}</a>
     </li>
     <li class="nav-item">
         {% if booker is defined and booker is not null %}
@@ -16,6 +16,15 @@
     <li class="nav-item">
         <a class="nav-link{% if tab is defined and tab == 'prices' %} active{% endif %}" href="#prices" data-bs-toggle="tab">{{ 'reservation.prices.title'|trans }}</a>
     </li>
+    {% if guestCheckIn is defined and guestCheckIn %}
+    <li class="nav-item">
+        <a class="nav-link{% if tab is defined and tab == 'checkin' %} active{% endif %}" href="#guest-checkin" data-bs-toggle="tab">
+            {{ 'guest_checkin.tab.label'|trans }}
+            {# A submission waiting for review is easy to miss behind the tab. #}
+            {% if guestCheckIn.status.value == 'submitted' %}<span class="badge rounded-pill text-bg-primary ms-1" title="{{ 'guest_checkin.status.submitted'|trans }}">1</span>{% endif %}
+        </a>
+    </li>
+    {% endif %}
 </ul>
 
 <!-- Tab panes -->
@@ -151,6 +160,9 @@
                     <span>
                         {% if attribute(reservations, 0).arrivalTime %}
                             {{ attribute(reservations, 0).arrivalTime|date('H:i') }}
+                            {% if guestCheckIn is defined and guestCheckIn and guestCheckIn.checkIn and guestCheckIn.checkIn.lastSubmittedAt %}
+                                <small class="text-body-secondary ms-1">{{ 'guest_checkin.tab.arrival_time_source'|trans({'%date%': guestCheckIn.checkIn.lastSubmittedAt|date('d.m.Y')}) }}</small>
+                            {% endif %}
                         {% else %}
                             &ndash;
                         {% endif %}
@@ -466,4 +478,10 @@
             <small><span class="text-info me-auto"><i class="fas fa-info-circle"></i> {{ 'reservation.prices.preliminary'|trans }}</span></small>
         </div>
     </div>
+
+    {% if guestCheckIn is defined and guestCheckIn %}
+    <div class="tab-pane{% if tab is defined and tab == 'checkin' %} active{% endif %}" id="guest-checkin" role="tabpanel" aria-labelledby="guest-checkin-tab">
+        {% include 'Reservations/_guest_checkin_tab.html.twig' with {'reservation': attribute(reservations, 0)} %}
+    </div>
+    {% endif %}
 </div>

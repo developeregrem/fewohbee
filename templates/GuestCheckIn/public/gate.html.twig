@@ -1,0 +1,27 @@
+{% extends 'GuestCheckIn/public/base.html.twig' %}
+
+{# Nothing about the stay before the booking details are confirmed — only whose house this is. #}
+{% block house %}{{ reservation.appartment.object.name }}{% endblock %}
+
+{% block body %}
+    <h1 class="fhb-title">{{ 'guest_checkin.public.page_title'|trans }}</h1>
+    <p>{{ 'guest_checkin.public.verify.intro'|trans }}</p>
+
+    {% if failed %}
+        <div class="alert alert-warning" role="alert">{{ 'guest_checkin.public.verify.failed'|trans }}</div>
+    {% endif %}
+
+    {% form_theme form 'bootstrap_5_layout.html.twig' %}
+    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+        <div class="row">
+            <div class="col-sm-6">{{ form_row(form.arrival) }}</div>
+            <div class="col-sm-6">{{ form_row(form.departure) }}</div>
+        </div>
+        {% if form.lastname is defined %}
+            {{ form_row(form.lastname) }}
+        {% endif %}
+        <div class="fhb-actions">
+            <button type="submit" class="btn btn-primary">{{ 'guest_checkin.public.verify.submit'|trans }}</button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

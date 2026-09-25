@@ -676,6 +676,16 @@ class Reservation
         return (int) ($this->guestCounts[$guestCategoryId] ?? 0);
     }
 
+    /**
+     * Everyone staying, including guests not counted in the occupancy such as infants: the
+     * number of people that can be registered as guests of the room. Reservations without
+     * per-category counts fall back to the occupancy.
+     */
+    public function getTotalGuests(): int
+    {
+        return max(array_sum($this->guestCounts), $this->persons);
+    }
+
     public function isKurtaxeWaived(): bool
     {
         return $this->kurtaxeWaived;

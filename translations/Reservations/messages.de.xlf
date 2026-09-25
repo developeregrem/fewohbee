@@ -162,6 +162,14 @@
                 <source>reservation.preview.customer.inroom</source>
                 <target>Gäste in diesem Zimmer</target>
             </trans-unit>
+            <trans-unit id="reservation.tab.details">
+                <source>reservation.tab.details</source>
+                <target>Details</target>
+            </trans-unit>
+            <trans-unit id="reservation.tab.guests">
+                <source>reservation.tab.guests</source>
+                <target>Gäste</target>
+            </trans-unit>
             <trans-unit id="reservation.details">
                 <source>reservation.details</source>
                 <target>Reservierungsdetails</target>

@@ -118,6 +118,7 @@ workflow:
     online_booking_created: "New online booking received"
     calendar_import_created: "New booking via calendar import"
     assistant_booking_created: "New reservation by AI assistant"
+    guest_checkin_submitted: "Guest filled in the online check-in"
     reservation_created: "New reservation created (manually)"
     invoice_created: "New invoice created"
     invoice_status_changed: "Invoice status changed"
@@ -149,6 +150,10 @@ workflow:
     has_invoice.label: "Which invoice has to exist?"
     has_invoice.any: "Any invoice (excluding cancelled)"
     has_invoice.open: "At least one unpaid invoice"
+    reservation_guest_checkin: "Online check-in"
+    guest_checkin.label: "State of the online check-in"
+    guest_checkin.open: "Still open (guest can still check in)"
+    guest_checkin.completed: "Filled in by the guest"
 
   action:
     send_invoice_email: "Send invoice by email (with PDF/e-invoice attachment)"
@@ -215,6 +220,13 @@ workflow:
       name: "Show AI assistant reservations in the notification window"
       description: "Creates an entry in the notification window for every reservation an AI assistant created."
       note: "Created by an AI assistant."
+    notify_guest_checkin:
+      name: "Show online check-ins in the notification window"
+      description: "Creates an entry in the notification window as soon as a guest filled in the online check-in."
+      note: "Please review the details on the reservation's \"Online check-in\" tab."
+    example_guest_checkin_invitation:
+      name: "Example: Online check-in invitation (7 days before)"
+      description: "Sends the online check-in link to the guest 7 days before arrival, unless they already checked in (email template with the \"Online check-in link\" block required)."
     notify_calendar_import_inapp:
       name: "Show calendar imports in the notification window"
       description: "Creates an entry in the notification window for every imported booking."

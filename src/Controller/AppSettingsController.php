@@ -9,6 +9,7 @@ use App\Repository\WorkflowRepository;
 use App\Service\AppSettingsService;
 use App\Service\MailService;
 use App\Service\MailTransportFactory;
+use App\Service\PublicUrlService;
 use App\Service\SmtpPasswordCrypto;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -29,11 +30,14 @@ class AppSettingsController extends AbstractController
         WorkflowRepository $workflowRepository,
         SmtpPasswordCrypto $smtpPasswordCrypto,
         MailService $mailService,
+        PublicUrlService $publicUrlService,
     ): Response
     {
         $settings = $settingsService->getSettings();
 
-        $form = $this->createForm(AppSettingsType::class, $settings);
+        $form = $this->createForm(AppSettingsType::class, $settings, [
+            'public_base_url_locked' => $publicUrlService->isPresetByEnvironment(),
+        ]);
 
         // populate the unmapped salutations field
         $form->get('customerSalutations')->setData(implode(', ', $settings->getCustomerSalutations()));
@@ -63,6 +67,9 @@ class AppSettingsController extends AbstractController
             'form' => $form->createView(),
             'fallbackEmail' => $settingsService->getNotificationEmail($settings),
             'mailEnabled' => $mailService->isMailEnabled(),
+            'publicBaseUrl' => $publicBaseUrl = $publicUrlService->getBaseUrl(),
+            'publicBaseUrlWarning' => null !== $publicBaseUrl ? PublicUrlService::reachabilityWarning($publicBaseUrl) : null,
+            'publicBaseUrlLocked' => $publicUrlService->isPresetByEnvironment(),
             'notifyOnlineBookingWorkflow' => $workflowRepository->findBySystemCode('notify_online_booking'),
             'notifyCalendarImportWorkflow' => $workflowRepository->findBySystemCode('notify_calendar_import'),
         ]);

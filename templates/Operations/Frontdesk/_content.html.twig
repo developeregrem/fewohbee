@@ -48,6 +48,9 @@
                 <td class="text-center">
                     {% if 'arrival' in item.categories %}
                         <span class="badge text-bg-success">{{ 'operations.frontdesk.arrivals'|trans }}</span>
+                        {% if reservation.arrivalTime %}
+                            <small class="d-block text-body-secondary" title="{{ 'reservation.arrivalTime'|trans }}"><i class="fas fa-clock me-1"></i>{{ reservation.arrivalTime|date('H:i') }}</small>
+                        {% endif %}
                     {% endif %}
                     {% if 'departure' in item.categories %}
                         <span class="badge text-bg-danger">{{ 'operations.frontdesk.departures'|trans }}</span>
@@ -75,6 +78,7 @@
                         <i class="fas fa-print"></i>
                         <span class="visually-hidden">{{ 'operations.frontdesk.registration.print'|trans }}</span>
                     </a>
+                    {{ include('Operations/Frontdesk/_guest_checkin_badge.html.twig', {'status': checkInStatuses[reservation.id] ?? null}) }}
                 </td>
                 <td class="text-center">
                     {% if reservation.invoices|length > 0 %}
@@ -179,6 +183,9 @@
                     <div class="text-end">
                         {% if 'arrival' in item.categories %}
                             <span class="badge text-bg-success">{{ 'operations.frontdesk.arrivals'|trans }}</span>
+                            {% if reservation.arrivalTime %}
+                                <small class="d-block text-body-secondary" title="{{ 'reservation.arrivalTime'|trans }}"><i class="fas fa-clock me-1"></i>{{ reservation.arrivalTime|date('H:i') }}</small>
+                            {% endif %}
                         {% endif %}
                         {% if 'departure' in item.categories %}
                             <span class="badge text-bg-danger">{{ 'operations.frontdesk.departures'|trans }}</span>
@@ -214,6 +221,7 @@
                         <i class="fas fa-print"></i>
                         <span class="visually-hidden">{{ 'operations.frontdesk.registration.print'|trans }}</span>
                     </a>
+                    {{ include('Operations/Frontdesk/_guest_checkin_badge.html.twig', {'status': checkInStatuses[reservation.id] ?? null}) }}
                     {% if reservation.invoices|length > 0 %}
                         {% set invoice = reservation.invoices|first %}
                         {% set invoiceBadgeClass = 'text-bg-light' %}

@@ -6,7 +6,9 @@ namespace App\Tests\Functional;
 
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\GuestCheckIn;
 use App\Entity\Price;
+use App\Entity\Reservation;
 use App\Entity\User;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -235,6 +237,31 @@ final class EntityChangeLogListenerTest extends KernelTestCase
 
         self::assertCount(0, $this->fetchLog(),
             'An update whose only delta is a filtered field must not produce a log row at all.');
+    }
+
+    public function testGuestCheckInPayloadAndSelectorAreRedacted(): void
+    {
+        $reservation = $this->em->getRepository(Reservation::class)->findOneBy([]);
+        self::assertInstanceOf(Reservation::class, $reservation, 'The seeded test data contains reservations.');
+
+        $checkIn = new GuestCheckIn($reservation, 'SelectorValue123456789');
+        $checkIn->recordSubmission(['v' => 1, 'mainGuest' => ['idNumber' => 'L01X00T47']], new \DateTimeImmutable());
+        $this->em->persist($checkIn);
+        $this->em->flush();
+
+        try {
+            $rows = $this->fetchLog();
+            self::assertCount(1, $rows);
+            $changes = $this->decode($rows[0]['changes']);
+            self::assertSame(['***redacted***', '***redacted***'], $changes['payload']);
+            self::assertSame(['***redacted***', '***redacted***'], $changes['selector']);
+            self::assertArrayHasKey('status', $changes, 'The state change itself stays auditable.');
+            self::assertStringNotContainsString('L01X00T47', $rows[0]['changes']);
+            self::assertStringNotContainsString('SelectorValue123456789', $rows[0]['changes']);
+        } finally {
+            $this->em->remove($checkIn);
+            $this->em->flush();
+        }
     }
 
     private function newCustomer(string $first, string $last): Customer

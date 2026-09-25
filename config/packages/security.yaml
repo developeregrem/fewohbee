@@ -78,6 +78,8 @@ security:
         - { path: ^/register,  roles: PUBLIC_ACCESS}
         - { path: ^/book, roles: PUBLIC_ACCESS }
         - { path: ^/apartments/calendar, roles: PUBLIC_ACCESS }
+        # Online check-in for guests: the link token and the booking-details check guard it.
+        - { path: ^/checkin/, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/mcp, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/reservation/*, roles: [ROLE_RESERVATIONS_RO, ROLE_RESERVATIONS] }

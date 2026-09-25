@@ -1,0 +1,65 @@
+{# Standalone layout of the public check-in page: no JavaScript (the CSP forbids it), no
+   third-party resources, nothing that could carry the link token elsewhere. #}
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="no-referrer">
+    <title>{% block title %}{{ 'guest_checkin.public.page_title'|trans }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.8.css?v=2">
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/public-booking-modern.css?v=13">
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/fontawesome.min.css">
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/solid.min.css">
+    <style>
+        /* Mobile first */
+        .fhb-booking-root { --fhb-primary: {{ primaryColor }}; min-height: 100vh; padding: .75rem .5rem; }
+        .fhb-gci-top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+        .fhb-gci-house { color: var(--fhb-text-muted); font-size: .95rem; margin: 0; }
+        .fhb-gci-lang { display: flex; flex-shrink: 0; }
+        .fhb-gci-lang a { color: var(--fhb-text-muted); text-decoration: none; font-size: .9rem; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+        .fhb-gci-lang a[aria-current="true"] { color: var(--fhb-text); font-weight: 600; }
+        .fhb-gci-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: .75rem 1.25rem; margin: 0; }
+        .fhb-gci-facts dt { font-weight: 400; color: var(--fhb-text-muted); font-size: .8125rem; }
+        .fhb-gci-facts dd { margin: 0; font-weight: 500; }
+        .fhb-gci-person { border: 1px solid var(--fhb-border); border-radius: var(--fhb-radius-sm); margin-top: .75rem; }
+        .fhb-gci-person > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: .5rem; min-height: 48px; padding: .6rem 1rem; }
+        .fhb-gci-person > summary::-webkit-details-marker { display: none; }
+        .fhb-gci-person-title { flex-grow: 1; font-weight: 600; }
+        .fhb-gci-person-state { display: block; font-weight: 400; font-size: .875rem; color: var(--fhb-text-muted); }
+        .fhb-gci-chevron { color: var(--fhb-text-muted); transition: transform .15s ease; }
+        .fhb-gci-person[open] > summary .fhb-gci-chevron { transform: rotate(180deg); }
+        .fhb-gci-person-body { padding: .25rem 1rem 1rem; }
+        .fhb-gci-address > summary { cursor: pointer; color: var(--fhb-primary); font-size: .9rem; min-height: 44px; display: flex; align-items: center; }
+        .fhb-gci-time { max-width: 9rem; }
+        /* iOS Safari collapses empty date/time inputs and centres their text. */
+        .fhb-booking-root input[type="date"].form-control,
+        .fhb-booking-root input[type="time"].form-control { -webkit-appearance: none; appearance: none; min-height: calc(1.5em + 1.1rem + 2px); }
+        .fhb-booking-root input[type="date"]::-webkit-date-and-time-value,
+        .fhb-booking-root input[type="time"]::-webkit-date-and-time-value { text-align: left; }
+        @media (min-width: 576px) {
+            .fhb-booking-root { padding: 2rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="fhb-booking-root">
+    <div class="fhb-shell">
+        <div class="fhb-booking-card">
+            <div class="fhb-gci-top">
+                <p class="fhb-gci-house">{% block house %}{% endblock %}</p>
+                {% if token is defined %}
+                    <nav class="fhb-gci-lang" aria-label="{{ 'guest_checkin.public.language'|trans }}">
+                        {% for lang in ['de', 'en'] %}
+                            <a href="{{ path('public.guest_checkin', {'token': token, 'lang': lang}) }}" hreflang="{{ lang }}" lang="{{ lang }}"{% if app.request.locale == lang %} aria-current="true"{% endif %}>{{ lang|upper }}</a>
+                        {% endfor %}
+                    </nav>
+                {% endif %}
+            </div>
+            {% block body %}{% endblock %}
+        </div>
+    </div>
+</div>
+</body>
+</html>

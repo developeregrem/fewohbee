@@ -559,7 +559,7 @@ class ReservationService
             $this->em->persist($reservation);
             $this->em->flush();
             $this->requestStack->getSession()->getFlashBag()->add('success', 'reservation.flash.update.success');
-        } elseif ('guest' === $tab && count($reservation->getCustomers()) < $reservation->getPersons()) {
+        } elseif ('guest' === $tab && count($reservation->getCustomers()) < $reservation->getTotalGuests()) {
             // check if customer is already in list
             $isAlreadyInList = false;
             $customers = $reservation->getCustomers();

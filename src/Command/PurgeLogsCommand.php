@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Entity\GuestCheckIn;
+use App\Repository\GuestCheckInRepository;
 use App\Repository\LogRepository;
 use App\Repository\McpToolCallLogRepository;
 use App\Repository\NotificationRepository;
@@ -17,7 +19,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:purge-logs',
-    description: 'Delete audit log, workflow log and notification entries older than a given number of days (run via daily cron).',
+    description: 'Delete audit log, workflow log and notification entries older than a given number of days, and expired online check-in data (run via daily cron).',
     aliases: ['workflow:purge-logs'],
 )]
 class PurgeLogsCommand extends Command
@@ -27,6 +29,7 @@ class PurgeLogsCommand extends Command
         private readonly WorkflowLogRepository $workflowLogRepository,
         private readonly NotificationRepository $notificationRepository,
         private readonly McpToolCallLogRepository $mcpToolCallLogRepository,
+        private readonly GuestCheckInRepository $guestCheckInRepository,
     ) {
         parent::__construct();
     }
@@ -58,14 +61,20 @@ class PurgeLogsCommand extends Command
         // Read state is removed with the notification by the FK cascade.
         $notifications = $this->notificationRepository->purgeOlderThan($before);
         $mcpCalls = $this->mcpToolCallLogRepository->purgeOlderThan($before);
+        // Guest data has its own fixed retention, independent of --days: it is personal data
+        // including ID numbers, and this is the daily job every installation already runs.
+        $checkIns = $this->guestCheckInRepository->purgePayloadsDepartedBefore(
+            new \DateTimeImmutable('today -'.GuestCheckIn::RETENTION_DAYS_AFTER_DEPARTURE.' days')
+        );
 
         $io->success(sprintf(
-            'Deleted %d audit log, %d workflow log, %d notification and %d AI assistant call entries older than %d days.',
+            'Deleted %d audit log, %d workflow log, %d notification and %d AI assistant call entries older than %d days, and the guest data of %d online check-ins.',
             $audit,
             $workflow,
             $notifications,
             $mcpCalls,
             $days,
+            $checkIns,
         ));
 
         return Command::SUCCESS;

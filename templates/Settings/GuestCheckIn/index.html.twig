@@ -1,0 +1,118 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'guest_checkin.settings.page_title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} - {{ 'guest_checkin.settings.page_title'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+
+            {# ── Header ── #}
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h2 class="fs-4 mb-1">
+                        <i class="fas fa-id-card text-primary me-1"></i>
+                        {{ 'guest_checkin.settings.page_title'|trans }}
+                    </h2>
+                    <span class="badge {{ form.vars.value.enabled ? 'bg-success-subtle text-success-emphasis' : 'bg-warning-subtle text-warning-emphasis' }}">
+                        <i class="fas {{ form.vars.value.enabled ? 'fa-toggle-on' : 'fa-toggle-off' }} me-1"></i>
+                        {{ form.vars.value.enabled ? ('guest_checkin.settings.status_enabled'|trans) : ('guest_checkin.settings.status_disabled'|trans) }}
+                    </span>
+                </div>
+            </div>
+
+            {{ form_start(form) }}
+
+            {# ── General ── #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-sliders text-primary me-2"></i>{{ 'guest_checkin.settings.section_general'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'guest_checkin.settings.section_general_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {{ form_row(form.enabled) }}
+
+                    <ol class="small text-body-secondary ps-3 mb-3">
+                        <li>{{ 'guest_checkin.settings.how.link'|trans }}</li>
+                        <li>{{ 'guest_checkin.settings.how.verify'|trans }}</li>
+                        <li>{{ 'guest_checkin.settings.how.form'|trans }}</li>
+                        <li>{{ 'guest_checkin.settings.how.review'|trans }}</li>
+                    </ol>
+
+                    <div class="border rounded p-3">
+                        <p class="fw-semibold small mb-1">{{ 'guest_checkin.settings.public_address'|trans }}</p>
+                        {% if publicBaseUrl %}
+                            <p class="mb-1"><code>{{ publicBaseUrl }}</code></p>
+                            {% if publicBaseUrlWarning %}
+                                <div class="alert alert-warning small mb-1">{{ ('app_settings.public_base_url.warning_' ~ publicBaseUrlWarning)|trans }}</div>
+                            {% endif %}
+                        {% else %}
+                            <div class="alert alert-info small mb-1">{{ 'guest_checkin.settings.public_address_missing'|trans }}</div>
+                        {% endif %}
+                        <a class="small" href="{{ path('settings.general.index') }}">{{ 'guest_checkin.settings.public_address_change'|trans }}</a>
+                    </div>
+                </div>
+            </div>
+
+            {# ── Fields ── #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-list-check text-primary me-2"></i>{{ 'guest_checkin.settings.section_fields'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'guest_checkin.settings.section_fields_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for field in fieldGroups|filter(field => field != 'companionsMode') %}
+                            <div class="col-md-6">{{ form_row(attribute(form, field)) }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            {# ── Fellow travellers: who is asked, not which field — kept apart from the field groups ── #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-users text-primary me-2"></i>{{ 'guest_checkin.settings.section_companions'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'guest_checkin.settings.section_companions_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">{{ form_row(form.companionsMode) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            {# ── Texts ── #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-align-left text-primary me-2"></i>{{ 'guest_checkin.settings.section_texts'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'guest_checkin.settings.section_texts_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {{ form_row(form.introText) }}
+                    {{ form_row(form.privacyUrl) }}
+                    {{ form_row(form.privacyText) }}
+                </div>
+            </div>
+
+            {# ── Save bar ── #}
+            <div class="card sticky-bottom mb-3" style="z-index:10">
+                <div class="card-body py-2 d-flex align-items-center justify-content-between">
+                    <p class="text-body-secondary small mb-0 d-none d-md-block">{{ 'guest_checkin.settings.save_hint'|trans }}</p>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-save me-1"></i>{{ 'guest_checkin.settings.save'|trans }}
+                    </button>
+                </div>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

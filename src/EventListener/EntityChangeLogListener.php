@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\EventListener;
 
 use App\Entity\Enum\LogAction;
+use App\Entity\GuestCheckIn;
 use App\Entity\Log;
 use App\Entity\MonthlyStatsSnapshot;
 use App\Entity\User;
@@ -39,6 +40,15 @@ final class EntityChangeLogListener
         // a person. Redacting the value keeps the linking event itself in the
         // audit trail - the field name still shows that the binding changed.
         'oidcsubject',
+    ];
+
+    /**
+     * Fields redacted for one entity only, where the name gives no hint: the check-in payload
+     * holds a guest's personal data including ID numbers, the selector is half of a link token.
+     * The change itself (and who applied a check-in) stays in the audit trail.
+     */
+    private const SENSITIVE_FIELDS_BY_ENTITY = [
+        GuestCheckIn::class => ['payload', 'selector'],
     ];
 
     /** LastActionSubscriber writes this on every request; filter defensively. */
@@ -157,7 +167,7 @@ final class EntityChangeLogListener
                 $log->setEntityClass($item['class']);
                 $log->setEntityId($item['id'] ?? $this->getEntityId($item['entity'], $em));
                 $log->setAction($item['action']);
-                $log->setChanges($this->sanitize($item['changes']));
+                $log->setChanges($this->sanitize($item['changes'], $item['class']));
                 $log->setUser($userRef);
                 $log->setUsername($username);
                 $log->setIpAddress($ip);
@@ -274,11 +284,11 @@ final class EntityChangeLogListener
      *
      * @return array<string, array{0: mixed, 1: mixed}|array{0: string, 1: string}>
      */
-    private function sanitize(array $changes): array
+    private function sanitize(array $changes, string $class): array
     {
         $out = [];
         foreach ($changes as $field => $values) {
-            if ($this->isSensitive($field)) {
+            if ($this->isSensitive($field) || \in_array($field, self::SENSITIVE_FIELDS_BY_ENTITY[$class] ?? [], true)) {
                 $out[$field] = ['***redacted***', '***redacted***'];
                 continue;
             }

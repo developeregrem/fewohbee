@@ -7,7 +7,7 @@
     <meta name="keywords" content="{% block keywords %}{% endblock %}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     {% block stylesheets %}
-        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.8.css">
+        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.8.css?v=2">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/autocompletejs/autoComplete.custom.css">
     {% endblock %}
     {% block javascripts %}
@@ -108,6 +108,7 @@
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.calendars" %} active{% endif %}" href="{{ path('settings.calendars.index') }}"><i class="fas fa-calendar-alt text-secondary"></i> {{ 'nav.calendars'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.templates" %} active{% endif %}" href="{{ path('settings.templates.overview') }}"><i class="fas fa-file text-secondary"></i> {{ 'nav.templates'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.online_booking" %} active{% endif %}" href="{{ path('settings.online_booking.index') }}"><i class="fas fa-globe text-secondary"></i> {{ 'online_booking.nav.label'|trans }}</a>
+                                    <a class="dropdown-item{% if activeRouteName starts with "settings.guest_checkin" %} active{% endif %}" href="{{ path('settings.guest_checkin.index') }}"><i class="fas fa-id-card text-secondary"></i> {{ 'guest_checkin.nav.label'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.workflows" %} active{% endif %}" href="{{ path('settings.workflows.index') }}"><i class="fas fa-bolt text-secondary"></i> {{ 'workflow.nav.label'|trans }}</a>
                                     {% if mcp_available %}
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.mcp" %} active{% endif %}" href="{{ path('settings.mcp.index') }}"><i class="fas fa-robot text-secondary"></i> {{ 'mcp.nav.label'|trans }}</a>

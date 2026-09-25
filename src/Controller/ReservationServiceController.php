@@ -40,6 +40,7 @@ use App\Service\Calendar\PublicHolidayService;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
 use App\Service\EInvoice\EInvoiceReadinessService;
+use App\Service\GuestCheckIn\GuestCheckInReviewService;
 use App\Service\InvoiceService;
 use App\Service\PriceService;
 use App\Service\ReservationObject;
@@ -904,7 +905,7 @@ class ReservationServiceController extends AbstractController
      * Gets an already existing reservation and shows it.
      */
     #[Route('/get/{id}', name: 'reservations.get.reservation', methods: ['GET'])]
-    public function getReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, PriceService $ps, TouristTaxService $touristTaxService, Request $request, Reservation $reservation): Response
+    public function getReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, PriceService $ps, TouristTaxService $touristTaxService, GuestCheckInReviewService $guestCheckInReview, Request $request, Reservation $reservation): Response
     {
         $tab = $request->query->get('tab', 'booker');
         $em = $doctrine->getManager();
@@ -960,6 +961,7 @@ class ReservationServiceController extends AbstractController
             'miscTotal' => $miscTotal,
             'hasActiveTouristTax' => $touristTaxService->hasActiveTaxForSubsidiary($reservation->getAppartment()?->getObject()),
             'guestCategoriesById' => $guestCategoriesById,
+            'guestCheckIn' => $guestCheckInReview->buildTab($reservation),
         ]);
     }
 

@@ -57,6 +57,42 @@ final class PurgeLogsCommandTest extends KernelTestCase
             'The IP address from the purged row must no longer exist anywhere in the logging table.');
     }
 
+    public function testDropsOnlineCheckInDataLongAfterDeparture(): void
+    {
+        $rows = $this->conn->fetchAllAssociative('SELECT id, start_date, end_date FROM reservations WHERE id NOT IN (SELECT reservation_id FROM guest_check_in) ORDER BY id LIMIT 2');
+        self::assertCount(2, $rows, 'The sample data contains reservations.');
+        [$old, $recent] = [(int) $rows[0]['id'], (int) $rows[1]['id']];
+        $dates = ['old' => ['-45 days', '-40 days'], 'recent' => ['-15 days', '-10 days']];
+
+        foreach (['old' => $old, 'recent' => $recent] as $name => $reservationId) {
+            $this->conn->update('reservations', [
+                'start_date' => (new \DateTimeImmutable($dates[$name][0]))->format('Y-m-d'),
+                'end_date' => (new \DateTimeImmutable($dates[$name][1]))->format('Y-m-d'),
+            ], ['id' => $reservationId]);
+            $this->conn->insert('guest_check_in', [
+                'reservation_id' => $reservationId,
+                'selector' => str_pad($name, 22, 'x'),
+                'status' => 'submitted',
+                'payload' => '{"v":1,"mainGuest":{"idNumber":"P1"}}',
+                'created_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            ]);
+        }
+
+        try {
+            $this->tester->execute(['--days' => 90]);
+
+            self::assertNull($this->conn->fetchOne('SELECT payload FROM guest_check_in WHERE reservation_id = ?', [$old]));
+            self::assertSame('submitted', $this->conn->fetchOne('SELECT status FROM guest_check_in WHERE reservation_id = ?', [$old]));
+            self::assertNotNull($this->conn->fetchOne('SELECT payload FROM guest_check_in WHERE reservation_id = ?', [$recent]));
+            self::assertStringContainsString('guest data of 1 online check-ins', $this->tester->getDisplay());
+        } finally {
+            $this->conn->executeStatement('DELETE FROM guest_check_in WHERE reservation_id IN (?, ?)', [$old, $recent]);
+            foreach ($rows as $row) {
+                $this->conn->update('reservations', ['start_date' => $row['start_date'], 'end_date' => $row['end_date']], ['id' => $row['id']]);
+            }
+        }
+    }
+
     public function testLegacyAliasEmitsDeprecationWarning(): void
     {
         $exit = $this->tester->execute(['command' => 'workflow:purge-logs', '--days' => 90]);

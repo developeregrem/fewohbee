@@ -226,6 +226,19 @@
                     </div>
                 </div>
                 <div class="row mt-3">
+                    <label for="nationality-{{ customer.id }}"
+                           class="col-sm-4 col-form-label text-end">{{ 'customer.nationality'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <select class="form-select" id="nationality-{{ customer.id }}" name="nationality-{{ customer.id }}">
+                            <option value="">{{ 'customer.nationality_unknown'|trans }}</option>
+                            {% for key, country in countries %}
+                                <option value="{{ key }}"{% if key == customer.nationality %} selected{% endif %}>{{ country }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
                     <label for="id-type-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.id.type.name'|trans }}</label>
 

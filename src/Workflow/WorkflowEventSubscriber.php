@@ -7,12 +7,14 @@ namespace App\Workflow;
 use App\Entity\Reservation;
 use App\Event\AssistantReservationCreatedEvent;
 use App\Event\CalendarImportBookingCreatedEvent;
+use App\Event\GuestCheckInSubmittedEvent;
 use App\Event\InvoiceCreatedEvent;
 use App\Event\InvoiceStatusChangedEvent;
 use App\Event\OnlineBookingCreatedEvent;
 use App\Event\ReservationCreatedEvent;
 use App\Event\ReservationStatusChangedEvent;
 use App\Workflow\Trigger\AssistantReservationCreatedTrigger;
+use App\Workflow\Trigger\GuestCheckInSubmittedTrigger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -35,6 +37,7 @@ class WorkflowEventSubscriber implements EventSubscriberInterface
             ReservationStatusChangedEvent::class => 'onReservationStatusChanged',
             InvoiceCreatedEvent::class => 'onInvoiceCreated',
             InvoiceStatusChangedEvent::class => 'onInvoiceStatusChanged',
+            GuestCheckInSubmittedEvent::class => 'onGuestCheckInSubmitted',
         ];
     }
 
@@ -85,6 +88,11 @@ class WorkflowEventSubscriber implements EventSubscriberInterface
     public function onInvoiceCreated(InvoiceCreatedEvent $event): void
     {
         $this->engine->processEvent('invoice.created', $event->invoice);
+    }
+
+    public function onGuestCheckInSubmitted(GuestCheckInSubmittedEvent $event): void
+    {
+        $this->engine->processEvent(GuestCheckInSubmittedTrigger::TYPE, $event->reservation);
     }
 
     public function onInvoiceStatusChanged(InvoiceStatusChangedEvent $event): void

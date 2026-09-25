@@ -374,6 +374,14 @@
                 <source>templates.preview.snippet.gdpr.general_birthday</source>
                 <target>Geburtsdatum Kunde</target>
             </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.general_nationality">
+                <source>templates.preview.snippet.gdpr.general_nationality</source>
+                <target>Staatsangehörigkeit Kunde</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.general_id_document">
+                <source>templates.preview.snippet.gdpr.general_id_document</source>
+                <target>Ausweisdokument Kunde</target>
+            </trans-unit>
             <trans-unit id="templates.preview.snippet.gdpr.general_remark">
                 <source>templates.preview.snippet.gdpr.general_remark</source>
                 <target>Bemerkung Kunde</target>
@@ -998,6 +1006,10 @@
                 <source>templates.include.error.incompatible</source>
                 <target>Vorlage "%name%" (%type%) ist nicht kompatibel mit diesem Vorlagentyp</target>
             </trans-unit>
+            <trans-unit id="templates.guest_checkin_invitation.name">
+                <source>templates.guest_checkin_invitation.name</source>
+                <target>Einladung zum Online-Check-in</target>
+            </trans-unit>
             <trans-unit id="templates.journal.name">
                 <source>templates.journal.name</source>
                 <target>Buchungsjournal</target>
@@ -1037,6 +1049,22 @@
             <trans-unit id="templates.editor.opening_hours.desc">
                 <source>templates.editor.opening_hours.desc</source>
                 <target>Gibt die wöchentlichen Öffnungszeiten der Niederlassung als eine Zeile aus, z. B. „Mo.–Fr. 08:00–12:00, 16:00–19:00". Sind keine Zeiten hinterlegt, entfällt der Absatz.</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.guest_checkin_link">
+                <source>templates.editor.guest_checkin_link</source>
+                <target>Link zum Online-Check-in</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.guest_checkin_link.desc">
+                <source>templates.editor.guest_checkin_link.desc</source>
+                <target>Link, über den der Gast vor der Anreise Anreisezeit und Meldedaten angibt. Jede Reservierung bekommt ihren eigenen Link. Der Absatz entfällt, solange der Online-Check-in ausgeschaltet ist, bei stornierten Reservierungen und nach der Abreise.</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.guest_checkin_qr">
+                <source>templates.editor.guest_checkin_qr</source>
+                <target>QR-Code zum Online-Check-in</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.guest_checkin_qr.desc">
+                <source>templates.editor.guest_checkin_qr.desc</source>
+                <target>QR-Code des Online-Check-in-Links, z. B. für eine ausgedruckte Buchungsbestätigung. Die Zahl ist die Bildauflösung in Pixeln. Der Code entfällt immer dann, wenn auch der Link entfällt.</target>
             </trans-unit>
             <trans-unit id="templates.editor.check_in_times">
                 <source>templates.editor.check_in_times</source>

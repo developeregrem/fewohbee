@@ -23,6 +23,31 @@
 
             {{ form_start(form) }}
 
+            {# -- Public address -- #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-globe text-primary me-2"></i>{{ 'app_settings.section.public_address'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.public_address_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {% if publicBaseUrlLocked %}
+                        <label class="form-label" for="public-base-url-preset">{{ 'app_settings.form.public_base_url'|trans }}</label>
+                        <input type="text" class="form-control" id="public-base-url-preset" value="{{ publicBaseUrl }}" readonly>
+                        <div class="form-text">{{ 'app_settings.public_base_url.preset_hint'|trans }}</div>
+                    {% else %}
+                        {{ form_row(form.publicBaseUrl) }}
+                        {% if publicBaseUrl and not form.vars.value.publicBaseUrl %}
+                            <div class="form-text mt-n2 mb-2">{{ 'app_settings.public_base_url.fallback_hint'|trans({'%url%': publicBaseUrl}) }}</div>
+                        {% endif %}
+                    {% endif %}
+                    {% if not publicBaseUrl %}
+                        <div class="alert alert-info small mb-0 mt-2">{{ 'app_settings.public_base_url.missing_hint'|trans }}</div>
+                    {% elseif publicBaseUrlWarning %}
+                        <div class="alert alert-warning small mb-0 mt-2">{{ ('app_settings.public_base_url.warning_' ~ publicBaseUrlWarning)|trans }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
             {# -- Currency -- #}
             <div class="card mb-3">
                 <div class="card-header">

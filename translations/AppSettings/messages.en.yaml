@@ -7,6 +7,8 @@ app_settings:
   save: "Save settings"
   save_hint: "Changes take effect immediately."
   section:
+    public_address: "Public address"
+    public_address_desc: "The address under which FewohBee can be reached from the internet. Links sent to guests are built from it, e.g. for the online check-in."
     currency: "Currency"
     currency_desc: "Currency code and symbol used in invoices and price displays."
     invoices: "Invoices"
@@ -19,7 +21,15 @@ app_settings:
     mail_desc: "Sender and SMTP credentials used for outgoing application emails."
   notification_fallback_hint: "No recipient configured – notifications will be sent to <strong>%email%</strong> (sender address)."
   mail_disabled_hint: "The central MAIL_ENABLED switch is disabled. The SMTP connection can be tested, but the application will not send emails."
+  public_base_url:
+    preset_hint: "Set by your hosting provider and cannot be changed here."
+    fallback_hint: "Currently %url% from the server configuration is used."
+    missing_hint: "As long as no address is set, no links for guests can be created."
+    warning_local: "This address is probably not reachable from the internet. Guests will not be able to open links to it."
+    warning_insecure: "The address does not use HTTPS. Guests send personal data through it, please switch to https://."
   form:
+    public_base_url: "Address (URL)"
+    public_base_url_help: "Full address including https://, e.g. https://fewohbee.my-guesthouse.com"
     currency: "Currency code"
     currency_symbol: "Currency symbol"
     invoice_filename_pattern: "Invoice export filename"

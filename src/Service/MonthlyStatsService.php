@@ -129,7 +129,9 @@ class MonthlyStatsService
             $customers = $reservation->getCustomers();
             $customerCount = $customers->count();
             $persons = $reservation->getPersons();
-            $useBookerFallback = $persons !== $customerCount;
+            // The guest list is complete when it holds either the occupancy or everyone staying
+            // (infants not counted in the occupancy included); only then are its countries used.
+            $useBookerFallback = $persons !== $customerCount && $reservation->getTotalGuests() !== $customerCount;
             if ($useBookerFallback) {
                 $reservationId = (int) $reservation->getId();
                 if (!isset($warningsByReservation[$reservationId])) {

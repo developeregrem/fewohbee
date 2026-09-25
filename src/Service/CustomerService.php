@@ -16,18 +16,22 @@ namespace App\Service;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\Enum\IDCardType;
+use App\Entity\Reservation;
 use App\Entity\Template;
 use App\GeoEntity\PostalCodeData;
+use App\Repository\GuestCheckInRepository;
 use App\Repository\PostalCodeDataRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Intl\Countries;
 
 class CustomerService
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly PostalCodeDataRepository $postalCodeDataRepository,
+        private readonly GuestCheckInRepository $guestCheckInRepository,
     ) {
     }
 
@@ -83,7 +87,11 @@ class CustomerService
         }
         $customer->setIdType(IDCardType::tryFrom($request->request->get('id-type-'.$id)));
         $customer->setIDNumber($request->request->get('id-'.$id));
-        $customer->setIDNumber($request->request->get('id-'.$id));
+        // Only forms that render the field may change it, and only to a known country code.
+        if ($request->request->has('nationality-'.$id)) {
+            $nationality = strtoupper(trim((string) $request->request->get('nationality-'.$id)));
+            $customer->setNationality(Countries::exists($nationality) ? $nationality : null);
+        }
         $customer->setRemark($request->request->get('remark-'.$id));
 
         // first remove all old addresses
@@ -158,6 +166,12 @@ class CustomerService
                 $entry->setCustomer($deletedCustomer);
                 $this->em->persist($entry);
             }
+
+            // Online check-in data of these stays names the deleted guest as well.
+            $this->guestCheckInRepository->purgePayloadsForReservations(array_values(array_map(
+                static fn (Reservation $reservation): int => (int) $reservation->getId(),
+                $reservationsArray->toArray(),
+            )));
 
             $this->em->remove($customer);
             $this->em->flush();

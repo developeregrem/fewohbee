@@ -112,6 +112,15 @@ templates.editor.origin_payment_fee.desc: >-
 templates.editor.tourist_tax.positions: Tourist tax positions
 templates.editor.opening_hours: Opening hours of the branch
 templates.editor.check_in_times: Check-in times of the branch
+templates.editor.guest_checkin_link: Online check-in link
+templates.editor.guest_checkin_link.desc: >-
+  Link with which the guest fills in arrival time and registration data before arriving. Each
+  reservation gets its own link. The paragraph is omitted while the online check-in is switched
+  off, for cancelled reservations and after departure.
+templates.editor.guest_checkin_qr: Online check-in QR code
+templates.editor.guest_checkin_qr.desc: >-
+  QR code of the online check-in link, e.g. for a printed booking confirmation. The number is the
+  image resolution in pixels. The code is omitted whenever the link is.
 templates.editor.check_in_times.desc: >-
   Prints the branch's check-in window and check-out time as a single line, e.g.
   "Check-in 17:00-20:00 - Check-out by 10:00". These are house rules, not the arrival time
@@ -221,6 +230,8 @@ templates.preview.snippet.bookingjournal.entries_count: Number of journal entrie
 templates.preview.snippet.bookingjournal.positions: Journal entries table
 templates.preview.snippet.gdpr.general_name: Customer name
 templates.preview.snippet.gdpr.general_birthday: Customer birth date
+templates.preview.snippet.gdpr.general_nationality: Customer nationality
+templates.preview.snippet.gdpr.general_id_document: Customer ID document
 templates.preview.snippet.gdpr.general_remark: Customer remark
 templates.preview.snippet.gdpr.addresses: Address block (repeat)
 templates.preview.snippet.gdpr.reservations: Overnight stays block (repeat)
@@ -280,6 +291,7 @@ templates.include.error.circular: "Circular template include detected (ID: %id%)
 templates.include.error.notfound: "Included template not found (ID: %id%)"
 templates.include.error.incompatible: "Template \"%name%\" (%type%) is not compatible with this template type"
 templates.type: Template type
+templates.guest_checkin_invitation.name: Online check-in invitation
 templates.journal.name: Booking journal
 
 templates.preview.snippet.pdf_header.desc: Adds a header that appears at the top of every PDF page.

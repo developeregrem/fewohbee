@@ -7,6 +7,7 @@ namespace App\Workflow;
 use App\Entity\Workflow;
 use App\Repository\WorkflowRepository;
 use App\Workflow\Trigger\AssistantReservationCreatedTrigger;
+use App\Workflow\Trigger\GuestCheckInSubmittedTrigger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -89,6 +90,47 @@ class WorkflowSeeder
                 'note' => $this->translator->trans('workflow.system.notify_assistant_booking.note'),
             ],
             isSystem: true,
+        );
+
+        $this->em->flush();
+    }
+
+    /**
+     * Seeds the workflows of the online check-in. Called when an administrator switches the
+     * check-in on, so installations that never use it do not see them. Idempotent; switching it
+     * on again neither duplicates the workflows nor re-enables them.
+     */
+    public function seedGuestCheckInWorkflows(): void
+    {
+        $this->createOrUpdate(
+            systemCode: 'notify_guest_checkin',
+            name: 'workflow.system.notify_guest_checkin.name',
+            description: 'workflow.system.notify_guest_checkin.description',
+            triggerType: GuestCheckInSubmittedTrigger::TYPE,
+            actionType: 'create_in_app_notification',
+            defaultEnabled: true,
+            actionConfig: [
+                'severity' => 'info',
+                'requiredRole' => '',
+                'note' => $this->translator->trans('workflow.system.notify_guest_checkin.note'),
+            ],
+            isSystem: true,
+        );
+
+        $this->createOrUpdate(
+            systemCode: 'example_guest_checkin_invitation',
+            name: 'workflow.system.example_guest_checkin_invitation.name',
+            description: 'workflow.system.example_guest_checkin_invitation.description',
+            triggerType: 'reservation.days_before_start',
+            actionType: 'send_template_email',
+            defaultEnabled: false,
+            conditions: [
+                ['type' => 'reservation.has_booker_email', 'config' => []],
+                ['type' => 'reservation.guest_checkin', 'config' => ['state' => 'open']],
+            ],
+            triggerConfig: ['days' => 7, 'runOnDays' => 'daily', 'runAtHour' => 10],
+            actionConfig: ['recipientType' => 'booker_email', 'templateId' => 0, 'customRecipient' => ''],
+            isSystem: false,
         );
 
         $this->em->flush();

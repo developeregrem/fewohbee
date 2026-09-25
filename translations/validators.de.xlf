@@ -70,6 +70,30 @@
                 <source>accounting.bank_import.rules.validation.regex_invalid</source>
                 <target>Das ist kein gültiger regulärer Ausdruck.</target>
             </trans-unit>
+            <trans-unit id="guest_checkin.id_number_invalid">
+                <source>guest_checkin.id_number_invalid</source>
+                <target>Bitte geben Sie die Ausweisnummer ohne Sonderzeichen an (4 bis 30 Zeichen).</target>
+            </trans-unit>
+            <trans-unit id="guest_checkin.zip_invalid">
+                <source>guest_checkin.zip_invalid</source>
+                <target>Bitte geben Sie eine gültige Postleitzahl an.</target>
+            </trans-unit>
+            <trans-unit id="guest_checkin.phone_invalid">
+                <source>guest_checkin.phone_invalid</source>
+                <target>Bitte geben Sie eine gültige Telefonnummer an.</target>
+            </trans-unit>
+            <trans-unit id="guest_checkin.companion_field_missing">
+                <source>guest_checkin.companion_field_missing</source>
+                <target>Bitte ausfüllen.</target>
+            </trans-unit>
+            <trans-unit id="guest_checkin.public_address_missing">
+                <source>guest_checkin.public_address_missing</source>
+                <target>Bitte hinterlege zuerst die öffentliche Adresse in den allgemeinen Einstellungen, aus ihr entstehen die Links für Gäste.</target>
+            </trans-unit>
+            <trans-unit id="public_base_url.invalid">
+                <source>public_base_url.invalid</source>
+                <target>Bitte gib eine vollständige Webadresse mit https:// an (ohne ? oder #).</target>
+            </trans-unit>
             <trans-unit id="calendar.form.ics_file_invalid">
                 <source>calendar.form.ics_file_invalid</source>
                 <target>Bitte eine gültige ICS-Datei (.ics) hochladen.</target>

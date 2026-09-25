@@ -100,6 +100,15 @@ class AppSettings
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $mcpAllowedHosts = null;
 
+    /**
+     * Address under which this installation is reachable from the internet, e.g.
+     * "https://fewohbee.example.com", without trailing slash. Links handed to guests are built
+     * from it, also when rendered by a cron job without a request. PUBLIC_BASE_URI overrides
+     * it; PublicUrlService resolves the effective value.
+     */
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $publicBaseUrl = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
 
@@ -341,6 +350,19 @@ class AppSettings
     public function setSmtpPasswordEncrypted(?string $smtpPasswordEncrypted): self
     {
         $this->smtpPasswordEncrypted = $this->normalizeNullableString($smtpPasswordEncrypted);
+
+        return $this;
+    }
+
+    public function getPublicBaseUrl(): ?string
+    {
+        return $this->publicBaseUrl;
+    }
+
+    public function setPublicBaseUrl(?string $publicBaseUrl): self
+    {
+        $publicBaseUrl = $this->normalizeNullableString($publicBaseUrl);
+        $this->publicBaseUrl = null === $publicBaseUrl ? null : rtrim($publicBaseUrl, '/');
 
         return $this;
     }

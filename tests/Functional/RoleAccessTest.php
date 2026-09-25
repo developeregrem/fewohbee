@@ -158,5 +158,6 @@ final class RoleAccessTest extends WebTestCase
         // actions were missing the #[IsGranted('ROLE_RESERVATIONS')] check
         // that every other reservation-mutating action carries.
         yield 'reservations ro user on new calendar entry' => ['ROLE_RESERVATIONS_RO', '/reservation/calendar-entry/new'];
+        yield 'reservations user on online check-in settings' => ['ROLE_RESERVATIONS', '/settings/guest-checkin'];
     }
 }
