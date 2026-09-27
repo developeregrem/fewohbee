@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Entity\Enum\PaymentMeansCode;
+use App\Entity\Invoice;
 use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Repository\TemplateRepository;
@@ -477,6 +479,83 @@ final class TemplatesServiceTest extends TestCase
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    public function testInvoiceTemplateBoundToThePaymentMeansWins(): void
+    {
+        [$default, $cash] = $this->invoiceTemplates();
+        $service = $this->createServiceWithInvoiceTemplates([$cash, $default]);
+
+        $invoice = (new Invoice())->setPaymentMeans(PaymentMeansCode::CASH);
+
+        self::assertSame($cash, $service->resolveInvoiceTemplate($invoice, $default));
+        self::assertSame($cash, $service->resolveInvoiceTemplate($invoice));
+    }
+
+    public function testInvoiceWithoutBoundTemplateUsesThePreferredOne(): void
+    {
+        [$default, $cash, $other] = $this->invoiceTemplates();
+        $service = $this->createServiceWithInvoiceTemplates([$cash, $default, $other]);
+
+        $invoice = (new Invoice())->setPaymentMeans(PaymentMeansCode::SEPA_CREDIT_TRANSFER);
+
+        self::assertSame($other, $service->resolveInvoiceTemplate($invoice, $other));
+        self::assertSame($default, $service->resolveInvoiceTemplate($invoice));
+    }
+
+    public function testPreferredTemplateBoundToAnotherPaymentMeansIsNotUsed(): void
+    {
+        [$default, $cash] = $this->invoiceTemplates();
+        $service = $this->createServiceWithInvoiceTemplates([$cash, $default]);
+
+        $invoice = (new Invoice())->setPaymentMeans(PaymentMeansCode::SEPA_CREDIT_TRANSFER);
+
+        self::assertSame($default, $service->resolveInvoiceTemplate($invoice, $cash));
+    }
+
+    public function testHiddenTemplateIsNotPickedForItsPaymentMeans(): void
+    {
+        [$default, $cash] = $this->invoiceTemplates();
+        $cash->setHidden(true);
+        $service = $this->createServiceWithInvoiceTemplates([$cash, $default]);
+
+        $invoice = (new Invoice())->setPaymentMeans(PaymentMeansCode::CASH);
+
+        self::assertSame($default, $service->resolveInvoiceTemplate($invoice));
+    }
+
+    /**
+     * @return array{Template, Template, Template} default, bound to cash, plain
+     */
+    private function invoiceTemplates(): array
+    {
+        $default = (new Template())->setName('Rechnung')->setIsDefault(true);
+        $cash = (new Template())->setName('Rechnung A5 bar')->setPaymentMeans(PaymentMeansCode::CASH);
+        $other = (new Template())->setName('Rechnung Bemerkungen');
+
+        return [$default, $cash, $other];
+    }
+
+    /**
+     * @param Template[] $templates
+     */
+    private function createServiceWithInvoiceTemplates(array $templates): TemplatesService
+    {
+        $repo = $this->createStub(TemplateRepository::class);
+        $repo->method('loadByTypeName')->willReturn($templates);
+
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturn($repo);
+
+        return new TemplatesService(
+            new Environment(new ArrayLoader()),
+            $em,
+            new RequestStack(),
+            $this->createStub(MpdfService::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TemplateRenderParamsResolver::class),
+            $this->createStub(FilesystemOperator::class)
+        );
+    }
 
     private function createService(): TemplatesService
     {

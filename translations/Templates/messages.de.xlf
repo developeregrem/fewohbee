@@ -686,6 +686,18 @@
                 <source>templates.hidden.tooltip</source>
                 <target>Aktiv: Vorlage ist zum Einbetten in andere Vorlagen gedacht und erscheint deshalb nicht in der Vorlagenauswahl.</target>
             </trans-unit>
+            <trans-unit id="templates.payment_means">
+                <source>templates.payment_means</source>
+                <target>Standardvorlage für Zahlungsmethode</target>
+            </trans-unit>
+            <trans-unit id="templates.payment_means.all">
+                <source>templates.payment_means.all</source>
+                <target>Standardvorlage für Zahlungsmethode …</target>
+            </trans-unit>
+            <trans-unit id="templates.payment_means.tooltip">
+                <source>templates.payment_means.tooltip</source>
+                <target>Rechnungen mit dieser Zahlungsmethode werden automatisch mit dieser Vorlage gedruckt.</target>
+            </trans-unit>
             <trans-unit id="templates.recipient">
                 <source>templates.recipient</source>
                 <target>Empfänger</target>

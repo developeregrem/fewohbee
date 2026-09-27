@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Correspondence;
+use App\Entity\Enum\PaymentMeansCode;
 use App\Entity\FileCorrespondence;
 use App\Entity\Invoice;
 use App\Entity\MailAttachment;
@@ -116,6 +117,12 @@ class TemplatesService
             $template->setIsDefault(false);
         }
         $template->setHidden($request->request->has('hidden-'.$id));
+        $paymentMeans = (string) $request->request->get('paymentMeans-'.$id, '');
+        $template->setPaymentMeans(
+            'TEMPLATE_INVOICE_PDF' === $type?->getName() && '' !== $paymentMeans
+                ? PaymentMeansCode::tryFrom((int) $paymentMeans)
+                : null
+        );
 
         return $template;
     }
@@ -503,8 +510,7 @@ class TemplatesService
         if (!$invoice instanceof Invoice) {
             return null;
         }
-        $templates = $this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
-        $defaultTemlate = $this->getDefaultTemplate($templates);
+        $defaultTemlate = $this->resolveInvoiceTemplate($invoice);
         $templateOutput = '';
         if (null !== $defaultTemlate) {
             $templateOutput = $this->renderTemplate($defaultTemlate->getId(), $id);
@@ -694,6 +700,41 @@ class TemplatesService
         }
 
         return null;
+    }
+
+    /**
+     * The template to print an invoice with.
+     *
+     * A template bound to the invoice's payment means wins, so e.g. cash invoices get their own
+     * layout without switching the selection by hand. Otherwise $preferred is used (the selection
+     * made in the invoice settings), unless it is bound to another payment means itself - then
+     * the default among the unbound templates takes over.
+     */
+    public function resolveInvoiceTemplate(Invoice $invoice, ?Template $preferred = null): ?Template
+    {
+        $templates = $this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
+
+        $paymentMeans = $invoice->getPaymentMeans();
+        if (null !== $paymentMeans) {
+            $bound = array_values(array_filter(
+                $templates,
+                static fn (Template $t): bool => !$t->isHidden() && $t->getPaymentMeans() === $paymentMeans
+            ));
+            if ([] !== $bound) {
+                return $this->getDefaultTemplate($bound);
+            }
+        }
+
+        if ($preferred instanceof Template && null === $preferred->getPaymentMeans()) {
+            return $preferred;
+        }
+
+        $unbound = array_values(array_filter(
+            $templates,
+            static fn (Template $t): bool => null === $t->getPaymentMeans()
+        ));
+
+        return $this->getDefaultTemplate([] !== $unbound ? $unbound : $templates);
     }
 
     public function getTemplateId(ManagerRegistry $doctrine, RequestStack $requestStack, string $typeName, string $sessionName): int

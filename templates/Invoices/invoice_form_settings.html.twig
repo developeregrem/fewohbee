@@ -18,11 +18,15 @@
 					<label for="object" class="col-sm-4 col-form-label text-end">{{ 'invoice.template'|trans }}</label>
 					<div class="col-sm">
 						<select id="template" name="template" class="form-select" data-action="change->invoices#persistTemplateSelectionAction">
-							{% for template in templates %}
+							{# Templates bound to a payment means are picked automatically, not here. #}
+							{% for template in templates|filter(t => t.paymentMeans is null) %}
 								<option value="{{ template.id }}" {% if template.id==templateId %} selected {% endif %}>{{
                         template.name }}</option>
 							{% endfor %}
 						</select>
+						{% for template in templates|filter(t => t.paymentMeans is not null and not t.hidden) %}
+							<div class="form-text">{{ 'invoice.template.bound_hint'|trans({'%name%': template.name, '%means%': template.paymentMeans.name|trans}) }}</div>
+						{% endfor %}
 					</div>
 				</div>
 			</div>

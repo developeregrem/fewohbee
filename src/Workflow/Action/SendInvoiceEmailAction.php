@@ -143,7 +143,7 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_no_recipient', ['%type%' => $config['recipientType'] ?? 'invoice_email']));
         }
 
-        $pdfTemplate = $this->resolvePdfTemplate($config);
+        $pdfTemplate = $this->resolvePdfTemplate($config, $entity);
         $attachments = [];
         $asEInvoice = false;
         $fallbackUsed = false;
@@ -257,18 +257,17 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
 
     /**
      * The invoice layout to render. Picking one is optional — without an explicit
-     * choice the default invoice template is used, which is what every invoice
-     * printed by hand uses as well.
+     * choice the invoice gets the template bound to its payment means, or else the
+     * default invoice template, just like an invoice printed by hand.
      */
-    private function resolvePdfTemplate(array $config): Template
+    private function resolvePdfTemplate(array $config, Invoice $invoice): Template
     {
         $templateId = (int) ($config['invoicePdfTemplateId'] ?? 0);
         if ($templateId > 0) {
             return $this->loadTemplate($templateId, 'TEMPLATE_INVOICE_PDF');
         }
 
-        $templates = $this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
-        $default = $this->templatesService->getDefaultTemplate($templates);
+        $default = $this->templatesService->resolveInvoiceTemplate($invoice);
         if (!$default instanceof Template) {
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_no_pdf_template'));
         }

@@ -66,6 +66,9 @@ templates.correspondence.notfound: The entry could not be found.
 templates.default: Default template
 templates.hidden: Embedded template
 templates.hidden.tooltip: "Active: Template is meant to be embedded in other templates and therefore does not appear in the template selection."
+templates.payment_means: Default template for payment method
+templates.payment_means.all: "Default template for payment method …"
+templates.payment_means.tooltip: Invoices with this payment method are printed with this template automatically.
 templates.delete.ask: Are you sure you want to delete the template?
 templates.description: Templates for emails, invoices, etc.
 templates.edit: Edit template

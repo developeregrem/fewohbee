@@ -329,8 +329,7 @@ class CorrespondenceController extends AbstractController
                 $asEInvoice = false;
                 $readiness = $readinessService->check($invoice);
                 if ($readiness->ready) {
-                    $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
-                    $defaultTemplate = $ts->getDefaultTemplate($templates);
+                    $defaultTemplate = $ts->resolveInvoiceTemplate($invoice);
                     if (null !== $defaultTemplate) {
                         try {
                             $binaryPayload = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $defaultTemplate, $readinessService->resolveSettingsFor($invoice));
