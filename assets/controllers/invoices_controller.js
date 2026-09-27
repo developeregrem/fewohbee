@@ -79,8 +79,14 @@ export default class extends Controller {
                 const templateSelect = target?.querySelector('#template');
                 if (templateSelect) {
                     const storedTemplateId = getLocalStorageItem('invoice-template-id');
-                    if (storedTemplateId) {
+                    const isOffered = [...templateSelect.options].some((option) => option.value === storedTemplateId);
+                    if (isOffered) {
                         templateSelect.value = storedTemplateId;
+                    } else if (storedTemplateId) {
+                        // The stored template is gone or bound to a payment means, so it is no
+                        // longer offered here; drop it instead of leaving the select blank.
+                        localStorage.removeItem('invoice-template-id');
+                        updatePDFExportLinks(templateSelect.value);
                     }
                 }
             },

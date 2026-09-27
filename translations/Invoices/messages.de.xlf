@@ -208,7 +208,7 @@
             </trans-unit>
             <trans-unit id="invoice.template.bound_hint">
                 <source>invoice.template.bound_hint</source>
-                <target>Rechnungen mit Zahlungsart „%means%“ werden automatisch mit „%name%“ gedruckt.</target>
+                <target>Rechnungen mit Zahlungsmethode „%means%“ werden automatisch mit „%name%“ gedruckt.</target>
             </trans-unit>
             <trans-unit id="invoice.position.service">
                 <source>invoice.position.service</source>
