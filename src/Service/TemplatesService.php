@@ -737,6 +737,26 @@ class TemplatesService
         return $this->getDefaultTemplate([] !== $unbound ? $unbound : $templates);
     }
 
+    /**
+     * Another invoice template already bound to the same payment means, if any. Only one may
+     * be, or it would be left to chance which of them is printed.
+     */
+    public function findPaymentMeansConflict(Template $template): ?Template
+    {
+        $paymentMeans = $template->getPaymentMeans();
+        if (null === $paymentMeans || $template->isHidden()) {
+            return null;
+        }
+
+        foreach ($this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']) as $other) {
+            if ($other !== $template && !$other->isHidden() && $other->getPaymentMeans() === $paymentMeans) {
+                return $other;
+            }
+        }
+
+        return null;
+    }
+
     public function getTemplateId(ManagerRegistry $doctrine, RequestStack $requestStack, string $typeName, string $sessionName): int
     {
         $templates = $doctrine->getManager()->getRepository(Template::class)->loadByTypeName([$typeName]);

@@ -694,6 +694,10 @@
                 <source>templates.payment_means.all</source>
                 <target>Standardvorlage für Zahlungsmethode …</target>
             </trans-unit>
+            <trans-unit id="templates.flash.payment_means.conflict">
+                <source>templates.flash.payment_means.conflict</source>
+                <target>„%name%“ ist bereits die Standardvorlage für %means%. Entferne dort erst die Zuordnung.</target>
+            </trans-unit>
             <trans-unit id="templates.payment_means.tooltip">
                 <source>templates.payment_means.tooltip</source>
                 <target>Rechnungen mit dieser Zahlungsmethode werden automatisch mit dieser Vorlage gedruckt.</target>

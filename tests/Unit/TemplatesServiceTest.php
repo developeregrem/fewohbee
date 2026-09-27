@@ -523,6 +523,37 @@ final class TemplatesServiceTest extends TestCase
         self::assertSame($default, $service->resolveInvoiceTemplate($invoice));
     }
 
+    public function testSecondTemplateForTheSamePaymentMeansIsAConflict(): void
+    {
+        [$default, $cash] = $this->invoiceTemplates();
+        $service = $this->createServiceWithInvoiceTemplates([$cash, $default]);
+
+        $second = (new Template())->setName('Rechnung A4 bar')->setPaymentMeans(PaymentMeansCode::CASH);
+
+        self::assertSame($cash, $service->findPaymentMeansConflict($second));
+    }
+
+    public function testTemplateIsNoConflictWithItself(): void
+    {
+        [$default, $cash] = $this->invoiceTemplates();
+        $service = $this->createServiceWithInvoiceTemplates([$cash, $default]);
+
+        self::assertNull($service->findPaymentMeansConflict($cash));
+    }
+
+    public function testOtherPaymentMeansOrHiddenTemplatesAreNoConflict(): void
+    {
+        [$default, $cash] = $this->invoiceTemplates();
+        $service = $this->createServiceWithInvoiceTemplates([$cash, $default]);
+
+        $card = (new Template())->setName('Rechnung Karte')->setPaymentMeans(PaymentMeansCode::CARD_PAYMENT);
+        $hidden = (new Template())->setName('Baustein bar')->setPaymentMeans(PaymentMeansCode::CASH)->setHidden(true);
+
+        self::assertNull($service->findPaymentMeansConflict($card));
+        self::assertNull($service->findPaymentMeansConflict($hidden));
+        self::assertNull($service->findPaymentMeansConflict($default));
+    }
+
     /**
      * @return array{Template, Template, Template} default, bound to cash, plain
      */
