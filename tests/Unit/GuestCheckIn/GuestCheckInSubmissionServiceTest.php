@@ -7,6 +7,7 @@ namespace App\Tests\Unit\GuestCheckIn;
 use App\Dto\GuestCheckIn\GuestCheckInCompanion;
 use App\Dto\GuestCheckIn\GuestCheckInSubmission;
 use App\Entity\GuestCheckIn;
+use App\Entity\GuestCheckInConfig;
 use App\Entity\Reservation;
 use App\Event\GuestCheckInSubmittedEvent;
 use App\Service\GuestCheckIn\GuestCheckInSubmissionService;
@@ -31,6 +32,7 @@ final class GuestCheckInSubmissionServiceTest extends TestCase
         self::assertSame('en', $payload['locale']);
         self::assertCount(1, $payload['companions']);
         self::assertSame('Max', $payload['companions'][0]['firstname']);
+        self::assertSame('Mr', $payload['companions'][0]['salutation']);
         self::assertNull($payload['companions'][0]['address'], 'No own address: lives with the main guest.');
     }
 
@@ -47,6 +49,21 @@ final class GuestCheckInSubmissionServiceTest extends TestCase
         self::assertSame('P1234567', $checkIn->getPayload()['mainGuest']['idNumber'] ?? null);
     }
 
+    public function testChangingTheMainGuestDoesNotReuseTheirPredecessorsIdNumber(): void
+    {
+        $checkIn = new GuestCheckIn(new Reservation(), 'selector');
+        $first = $this->submission();
+        $first->mainGuest->idNumber = 'P1234567';
+        $service = $this->service();
+        $service->submit($checkIn, $first, 'de');
+
+        $other = $this->submission();
+        $other->mainGuest->firstname = 'Lea';
+        $service->submit($checkIn, $other, 'de');
+
+        self::assertNull($checkIn->getPayload()['mainGuest']['idNumber'] ?? null);
+    }
+
     public function testControlCharactersAreRemoved(): void
     {
         $checkIn = new GuestCheckIn(new Reservation(), 'selector');
@@ -58,6 +75,19 @@ final class GuestCheckInSubmissionServiceTest extends TestCase
 
         self::assertSame('Müller', $checkIn->getPayload()['mainGuest']['lastname'] ?? null);
         self::assertSame("Line one\nLine two", $checkIn->getPayload()['message'] ?? null);
+    }
+
+    public function testDisablingOffersKeepsAnExistingRequestWithoutAcceptingNewSelections(): void
+    {
+        $checkIn = new GuestCheckIn(new Reservation(), 'selector');
+        $existing = [['id' => 17, 'description' => 'Breakfast', 'total' => '30.00']];
+        $checkIn->recordSubmission(['extras' => $existing], new \DateTimeImmutable());
+        $submission = $this->submission();
+        $submission->extras = [99];
+
+        $this->service()->submit($checkIn, $submission, 'de', (new GuestCheckInConfig())->setExtrasEnabled(false));
+
+        self::assertSame($existing, $checkIn->getPayload()['extras'] ?? null);
     }
 
     public function testEventIsDispatchedAfterFlushInTheInstallationLanguage(): void
@@ -112,6 +142,7 @@ final class GuestCheckInSubmissionServiceTest extends TestCase
     private function companion(string $firstname): GuestCheckInCompanion
     {
         $companion = new GuestCheckInCompanion();
+        $companion->salutation = 'Mr';
         $companion->firstname = $firstname;
         $companion->lastname = 'Müller';
 

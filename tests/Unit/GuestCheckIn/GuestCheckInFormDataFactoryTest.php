@@ -6,8 +6,10 @@ namespace App\Tests\Unit\GuestCheckIn;
 
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\Enum\GuestCheckInFieldMode;
 use App\Entity\Enum\IDCardType;
 use App\Entity\GuestCheckIn;
+use App\Entity\GuestCheckInConfig;
 use App\Entity\Reservation;
 use App\Service\GuestCheckIn\GuestCheckInApplyService;
 use App\Service\GuestCheckIn\GuestCheckInFormDataFactory;
@@ -35,6 +37,7 @@ final class GuestCheckInFormDataFactoryTest extends TestCase
 
         self::assertCount(2, $data->companions);
         self::assertSame('Max', $data->companions[0]->firstname);
+        self::assertSame('Mr', $data->companions[0]->salutation);
         self::assertSame('Graz', $data->companions[0]->city, 'A different address on file is the companion\'s own.');
         self::assertTrue($data->companions[1]->isEmpty());
     }
@@ -50,6 +53,19 @@ final class GuestCheckInFormDataFactoryTest extends TestCase
         self::assertSame('20:00', $data->arrivalTime);
         self::assertNull($data->mainGuest->idNumber);
         self::assertSame('•••321', $this->factory()->storedIdNumberHint($checkIn));
+    }
+
+    public function testLinkedGuestIsPrefilledWhenTheBookerIsNotTravelling(): void
+    {
+        $reservation = $this->reservation();
+        $booker = $reservation->getBooker();
+        self::assertInstanceOf(Customer::class, $booker);
+        $reservation->removeCustomer($booker);
+
+        $data = $this->factory()->create(new GuestCheckIn($reservation, 'selector'), 0, ['Ms']);
+
+        self::assertSame('Max', $data->mainGuest->firstname);
+        self::assertNull($this->factory()->storedIdNumberHint(new GuestCheckIn($reservation, 'selector')));
     }
 
     public function testIdHintFallsBackToTheRecordsAndHidesShortNumbers(): void
@@ -70,6 +86,26 @@ final class GuestCheckInFormDataFactoryTest extends TestCase
         $reservation->setArrivalTime(new \DateTime('18:15'));
 
         self::assertSame('18:15', $this->factory()->create(new GuestCheckIn($reservation, 'selector'), 0, [])->arrivalTime);
+    }
+
+    public function testHiddenPrefilledFieldsAreClearedBeforeFormValidation(): void
+    {
+        $config = (new GuestCheckInConfig())
+            ->setAddressMode(GuestCheckInFieldMode::HIDDEN)
+            ->setBirthdayMode(GuestCheckInFieldMode::HIDDEN)
+            ->setNationalityMode(GuestCheckInFieldMode::HIDDEN)
+            ->setIdDocumentMode(GuestCheckInFieldMode::HIDDEN)
+            ->setContactMode(GuestCheckInFieldMode::HIDDEN)
+            ->setCompanionsMode(GuestCheckInFieldMode::HIDDEN);
+        $data = $this->factory()->create(new GuestCheckIn($this->reservation(), 'selector'), 1, ['Ms'], $config);
+
+        self::assertSame('Anna', $data->mainGuest->firstname);
+        self::assertNull($data->mainGuest->birthday);
+        self::assertNull($data->mainGuest->nationality);
+        self::assertNull($data->mainGuest->city);
+        self::assertNull($data->mainGuest->email);
+        self::assertNull($data->mainGuest->idType);
+        self::assertSame([], $data->companions);
     }
 
     private function factory(): GuestCheckInFormDataFactory
@@ -96,6 +132,7 @@ final class GuestCheckInFormDataFactoryTest extends TestCase
         $booker->addCustomerAddress($address);
 
         $companion = new Customer();
+        $companion->setSalutation('Herr');
         $companion->setFirstname('Max');
         $companion->setLastname('Müller');
         $companion->addCustomerAddress((new CustomerAddresses())->setType(GuestCheckInApplyService::ADDRESS_TYPE_PRIVATE)

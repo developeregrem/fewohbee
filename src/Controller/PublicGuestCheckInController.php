@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Dto\GuestCheckIn\GuestCheckInSubmission;
+use App\Dto\GuestCheckIn\GuestCheckInGuest;
 use App\Dto\GuestCheckIn\GuestCheckInVerification;
 use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\GuestCheckIn;
@@ -14,6 +15,7 @@ use App\Repository\OnlineBookingConfigRepository;
 use App\Service\AppSettingsService;
 use App\Service\GuestCheckIn\GuestCheckInConfigService;
 use App\Service\GuestCheckIn\GuestCheckInFormDataFactory;
+use App\Service\GuestCheckIn\GuestCheckInExtrasService;
 use App\Service\GuestCheckIn\GuestCheckInLinkService;
 use App\Service\GuestCheckIn\GuestCheckInLinkState;
 use App\Service\GuestCheckIn\GuestCheckInPolicy;
@@ -24,6 +26,7 @@ use App\Service\GuestCheckIn\GuestCheckInVerifier;
 use App\Service\GuestCheckIn\Section\GuestCheckInSections;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -55,6 +58,7 @@ final class PublicGuestCheckInController extends AbstractController
         private readonly GuestCheckInSections $sections,
         private readonly GuestCheckInSubmissionService $submissionService,
         private readonly GuestCheckInFormDataFactory $formDataFactory,
+        private readonly GuestCheckInExtrasService $extrasService,
         private readonly AppSettingsService $appSettingsService,
         private readonly OnlineBookingConfigRepository $onlineBookingConfigRepository,
         private readonly LocaleSwitcher $localeSwitcher,
@@ -97,18 +101,38 @@ final class PublicGuestCheckInController extends AbstractController
         }
 
         $reservation = $checkIn->getReservation();
+        $extras = $config->isExtrasEnabled() ? $this->extrasService->available($reservation) : [];
+        $bookedExtras = array_values(array_filter($extras, static fn (array $extra): bool => $extra['booked']));
+        $selectableExtras = array_values(array_filter($extras, static fn (array $extra): bool => !$extra['booked']));
+        $existingRequestedExtras = !$config->isExtrasEnabled() && \is_array($checkIn->getPayload()['extras'] ?? null)
+            ? $checkIn->getPayload()['extras']
+            : [];
         $showForm = GuestCheckInLinkState::EDITABLE === $state
             && (GuestCheckInStatus::OPEN === $checkIn->getStatus() || $request->query->getBoolean('edit') || $request->isMethod('POST'));
 
         $form = null;
+        $extrasChanged = false;
+        $canStartOtherGuest = false;
+        $otherGuestForm = false;
         if ($showForm) {
             $companionCount = $this->policy->companionCount($reservation);
             $salutations = array_values(array_filter($this->appSettingsService->getSettings()->getCustomerSalutations(), static fn (string $s): bool => '' !== trim($s)));
-            $form = $this->createForm(GuestCheckInType::class, $this->formDataFactory->create($checkIn, $companionCount, $salutations), [
+            $formData = $this->formDataFactory->create($checkIn, $companionCount, $salutations, $config);
+            $canStartOtherGuest = null !== $formData->mainGuest->firstname || null !== $formData->mainGuest->lastname;
+            $otherGuestForm = $canStartOtherGuest && 'other' === $request->query->getString('main');
+            if ($otherGuestForm) {
+                $formData->mainGuest = new GuestCheckInGuest();
+            }
+            $selectableIds = array_column($selectableExtras, 'id');
+            $bookedIds = array_column($bookedExtras, 'id');
+            $extrasChanged = $config->isExtrasEnabled() && [] !== array_diff($formData->extras, [...$selectableIds, ...$bookedIds]);
+            $formData->extras = array_values(array_intersect($formData->extras, $selectableIds));
+            $form = $this->createForm(GuestCheckInType::class, $formData, [
                 'config' => $config,
                 'salutations' => $salutations,
                 'companion_count' => $companionCount,
-                'stored_id_hint' => $this->formDataFactory->storedIdNumberHint($checkIn),
+                'stored_id_hint' => $otherGuestForm ? null : $this->formDataFactory->storedIdNumberHint($checkIn),
+                'extras' => $selectableExtras,
                 'action' => $this->pageUrl($request, $token, ['edit' => 1]),
             ]);
             $form->handleRequest($request);
@@ -121,10 +145,17 @@ final class PublicGuestCheckInController extends AbstractController
                 if ($form->isValid()) {
                     /** @var GuestCheckInSubmission $submission */
                     $submission = $form->getData();
-                    $this->submissionService->submit($checkIn, $submission, $locale);
-                    $this->rateLimiter->registerSubmission($checkIn->getSelector());
+                    try {
+                        $this->submissionService->submit($checkIn, $submission, $locale, $config);
+                        $this->rateLimiter->registerSubmission($checkIn->getSelector());
 
-                    return $this->secure(new RedirectResponse($this->pageUrl($request, $token), Response::HTTP_SEE_OTHER));
+                        return $this->secure(new RedirectResponse($this->pageUrl($request, $token), Response::HTTP_SEE_OTHER));
+                    } catch (\InvalidArgumentException $exception) {
+                        if ([] === $submission->extras) {
+                            throw $exception;
+                        }
+                        $form->addError(new FormError('guest_checkin.public.extras.changed'));
+                    }
                 }
             }
         }
@@ -135,6 +166,14 @@ final class PublicGuestCheckInController extends AbstractController
             'checkIn' => $checkIn,
             'config' => $config,
             'sections' => $this->sections->visibleFor($checkIn),
+            'extras' => $selectableExtras,
+            'bookedExtras' => $bookedExtras,
+            'existingRequestedExtras' => $existingRequestedExtras,
+            'extrasChanged' => $extrasChanged,
+            'canStartOtherGuest' => $canStartOtherGuest,
+            'otherGuestForm' => $otherGuestForm,
+            'otherGuestUrl' => $this->pageUrl($request, $token, ['edit' => 1, 'main' => 'other']),
+            'restoreGuestUrl' => $this->pageUrl($request, $token, ['edit' => 1]),
             'form' => $form?->createView(),
             'editable' => GuestCheckInLinkState::EDITABLE === $state,
             'submitted' => null !== $checkIn->getFirstSubmittedAt(),

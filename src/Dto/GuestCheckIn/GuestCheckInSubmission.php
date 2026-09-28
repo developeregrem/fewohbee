@@ -10,7 +10,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 final class GuestCheckInSubmission
 {
     /** Expected arrival as "HH:MM". */
-    #[Assert\NotBlank]
     #[Assert\Regex(pattern: '/^([01]\d|2[0-3]):[0-5]\d$/')]
     public ?string $arrivalTime = null;
 
@@ -23,6 +22,9 @@ final class GuestCheckInSubmission
 
     #[Assert\Length(max: 1000)]
     public ?string $message = null;
+
+    /** @var list<int> IDs of optional whole-stay prices requested by the guest. */
+    public array $extras = [];
 
     public function __construct()
     {

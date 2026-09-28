@@ -12,16 +12,21 @@ use App\Entity\Enum\GuestCheckInFieldMode;
 use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\GuestCheckIn;
 use App\Entity\GuestCheckInConfig;
+use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
+use App\Entity\User;
 use App\Service\GuestCheckIn\GuestCheckInLinkService;
+use App\Service\GuestCheckIn\GuestCheckInApplyService;
+use App\Dto\GuestCheckIn\GuestCheckInApplyRequest;
 use App\Service\GuestCheckIn\GuestCheckInRateLimiter;
 use App\Service\GuestCheckIn\GuestCheckInTokenSigner;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\BrowserKit\Cookie as BrowserKitCookie;
+use Symfony\Component\DomCrawler\Field\ChoiceFormField;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\Uid\Uuid;
 
@@ -34,6 +39,7 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
     private KernelBrowser $client;
     private ?int $reservationId = null;
     private ?int $bookerId = null;
+    private ?int $extraPriceId = null;
     /** @var list<int> further customers created by a test */
     private array $extraCustomerIds = [];
     private string $start;
@@ -49,6 +55,7 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         $config = $this->em()->getRepository(GuestCheckInConfig::class)->findOneBy([]) ?? throw new \RuntimeException('Config row missing.');
         // Independent of what other tests left behind: every group shown, ID and contact optional.
         $config->setEnabled(true)
+            ->setExtrasEnabled(true)
             ->setAddressMode(GuestCheckInFieldMode::REQUIRED)
             ->setBirthdayMode(GuestCheckInFieldMode::REQUIRED)
             ->setNationalityMode(GuestCheckInFieldMode::REQUIRED)
@@ -66,7 +73,12 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         if (null !== $this->reservationId) {
             $connection->executeStatement('DELETE FROM guest_check_in WHERE reservation_id = ?', [$this->reservationId]);
             $connection->executeStatement('DELETE FROM reservations_has_customers WHERE reservation_id = ?', [$this->reservationId]);
+            $connection->executeStatement('DELETE FROM reservation_price WHERE reservation_id = ?', [$this->reservationId]);
             $connection->executeStatement('DELETE FROM reservations WHERE id = ?', [$this->reservationId]);
+        }
+        if (null !== $this->extraPriceId) {
+            $connection->executeStatement('DELETE FROM prices_has_reservation_origins WHERE price_id = ?', [$this->extraPriceId]);
+            $connection->executeStatement('DELETE FROM prices WHERE id = ?', [$this->extraPriceId]);
         }
         foreach (array_filter([$this->bookerId, ...$this->extraCustomerIds]) as $customerId) {
             $addressIds = $connection->fetchFirstColumn('SELECT customer_addresses_id FROM customer_has_address WHERE customer_id = ?', [$customerId]);
@@ -76,7 +88,7 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
             }
             $connection->executeStatement('DELETE FROM customers WHERE id = ?', [$customerId]);
         }
-        $connection->executeStatement('UPDATE guest_check_in_config SET enabled = 0');
+        $connection->executeStatement('UPDATE guest_check_in_config SET enabled = 0, extras_enabled = 1');
         $connection->executeStatement('UPDATE app_settings SET public_base_url = NULL');
         parent::tearDown();
     }
@@ -167,6 +179,7 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         $form['guest_check_in[mainGuest][country]'] = 'AT';
         $form['guest_check_in[mainGuest][idType]'] = 'customer.id.type.passport';
         $form['guest_check_in[mainGuest][idNumber]'] = 'P1234567';
+        $form['guest_check_in[companions][0][salutation]'] = 'Mr';
         $form['guest_check_in[companions][0][firstname]'] = 'Max';
         $form['guest_check_in[companions][0][lastname]'] = 'Müller';
         $form['guest_check_in[companions][0][birthday]'] = '1982-02-02';
@@ -179,6 +192,7 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertSame(GuestCheckInStatus::SUBMITTED, $checkIn->getStatus());
         self::assertSame('P1234567', $checkIn->getPayload()['mainGuest']['idNumber'] ?? null);
         self::assertSame('Max', $checkIn->getPayload()['companions'][0]['firstname'] ?? null);
+        self::assertSame('Mr', $checkIn->getPayload()['companions'][0]['salutation'] ?? null);
 
         $stored = $this->em()->find(Reservation::class, $reservation->getId());
         self::assertSame('18:00', $stored?->getArrivalTime()?->format('H:i'));
@@ -205,7 +219,7 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         $this->em()->persist($address);
         $booker->addCustomerAddress($address);
         $companion = new Customer();
-        $companion->setSalutation('');
+        $companion->setSalutation('Herr');
         $companion->setFirstname('Lena');
         $companion->setLastname('Müller');
         $this->em()->persist($companion);
@@ -222,9 +236,189 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertSame('1980-05-01', $value('guest_check_in[mainGuest][birthday]'));
         self::assertSame('Graz', $value('guest_check_in[mainGuest][city]'));
         self::assertSame('Lena', $value('guest_check_in[companions][0][firstname]'));
+        self::assertSame('Mr', $crawler->filter('[name="guest_check_in[companions][0][salutation]"] option[selected]')->attr('value'));
         self::assertSame('', (string) $value('guest_check_in[mainGuest][idNumber]'));
         self::assertStringNotContainsString('P99887766', $crawler->html());
         self::assertStringContainsString('•••766', $crawler->html());
+
+        $crawler = $this->client->request('GET', $path.'?main=other');
+        self::assertSame('', (string) $crawler->filter('[name="guest_check_in[mainGuest][firstname]"]')->attr('value'));
+        self::assertSame('', (string) $crawler->filter('[name="guest_check_in[mainGuest][lastname]"]')->attr('value'));
+        self::assertStringNotContainsString('•••766', $crawler->html());
+        self::assertStringContainsString('You are entering the details of another arriving guest.', $crawler->html());
+
+        $checkIn = $this->checkIn();
+        $checkIn->recordSubmission([
+            'v' => 1,
+            'mainGuest' => ['firstname' => 'Anna', 'lastname' => 'Müller', 'idNumber' => 'P99887766'],
+            'companions' => [],
+        ], new \DateTimeImmutable());
+        $this->em()->flush();
+        $crawler = $this->client->request('GET', $path.'?edit=1&main=other');
+        self::assertSame('', (string) $crawler->filter('[name="guest_check_in[mainGuest][firstname]"]')->attr('value'));
+        self::assertStringNotContainsString('•••766', $crawler->html());
+    }
+
+    public function testOptionalServiceUsesTheExistingPriceAndWaitsForHotelierReview(): void
+    {
+        $reservation = $this->createReservation();
+        $price = (new Price())->setIsBookableOnline(true)->setIsFlatPrice(false)->setIsPerRoom(false);
+        $price->setDescription('Breakfast');
+        $price->setPrice('7.50');
+        $price->setVat(7.0);
+        $price->setActive(true);
+        $price->setType(1);
+        $price->setAllDays(true);
+        $price->addReservationOrigin($reservation->getReservationOrigin());
+        $this->em()->persist($price);
+        $this->em()->flush();
+        $this->extraPriceId = (int) $price->getId();
+
+        $this->em()->getRepository(GuestCheckInConfig::class)->findOneBy([])?->setExtrasEnabled(false);
+        $this->em()->flush();
+        $path = $this->linkPath($reservation);
+        $this->verify($path, 'Müller');
+        $crawler = $this->client->followRedirect();
+        self::assertSelectorNotExists('.fhb-gci-extra-choice');
+        self::assertStringNotContainsString('Breakfast', $crawler->html());
+
+        $this->em()->getRepository(GuestCheckInConfig::class)->findOneBy([])?->setExtrasEnabled(true);
+        $this->em()->flush();
+        $crawler = $this->client->request('GET', $path);
+        self::assertSelectorExists('.fhb-gci-extra-choice.form-switch input.form-check-input');
+        self::assertSelectorNotExists('.fhb-gci-extra-choice label');
+        self::assertSelectorTextContains('.fhb-gci-extra-name', 'Breakfast');
+        self::assertSelectorTextContains('.fhb-gci-extra-price', '30,00');
+        self::assertSelectorExists('.fhb-gci-extra-choice input[value="'.$this->extraPriceId.':30.00"]');
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $form['guest_check_in[arrivalTime]'] = '18:00';
+        $form['guest_check_in[mainGuest][salutation]'] = 'Ms';
+        $form['guest_check_in[mainGuest][firstname]'] = 'Anna';
+        $form['guest_check_in[mainGuest][lastname]'] = 'Müller';
+        $form['guest_check_in[mainGuest][birthday]'] = '1980-05-01';
+        $form['guest_check_in[mainGuest][nationality]'] = 'AT';
+        $form['guest_check_in[mainGuest][street]'] = 'Hauptstraße 1';
+        $form['guest_check_in[mainGuest][zip]'] = '1010';
+        $form['guest_check_in[mainGuest][city]'] = 'Wien';
+        $form['guest_check_in[mainGuest][country]'] = 'AT';
+        $extraFields = $form->get('guest_check_in[extras]');
+        self::assertIsArray($extraFields);
+        $extraField = reset($extraFields);
+        self::assertInstanceOf(ChoiceFormField::class, $extraField);
+        $extraField->tick();
+        $this->em()->find(Price::class, $this->extraPriceId)?->setPrice('8.50');
+        $this->em()->flush();
+        $this->client->submit($form);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('.alert-warning', 'Please check');
+        self::assertStringContainsString('A service or its price has changed', (string) $this->client->getResponse()->getContent());
+        self::assertNull($this->checkIn()->getPayload());
+
+        $this->em()->find(Price::class, $this->extraPriceId)?->setPrice('7.50');
+        $this->em()->flush();
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(303);
+        $this->em()->clear();
+        $checkIn = $this->checkIn();
+        self::assertSame([['id' => $this->extraPriceId, 'description' => 'Breakfast', 'total' => '30.00']], $checkIn->getPayload()['extras'] ?? null);
+        self::assertCount(0, $checkIn->getReservation()->getPrices());
+
+        $this->em()->getRepository(GuestCheckInConfig::class)->findOneBy([])?->setExtrasEnabled(false);
+        $this->em()->flush();
+        $crawler = $this->client->request('GET', $path.'?edit=1');
+        self::assertStringContainsString('already requested', $crawler->html());
+        self::assertSelectorNotExists('.fhb-gci-extra-choice');
+        $this->client->submit($crawler->filter('form[name="guest_check_in"]')->form());
+        self::assertResponseStatusCodeSame(303);
+        $this->em()->clear();
+        self::assertSame([['id' => $this->extraPriceId, 'description' => 'Breakfast', 'total' => '30.00']], $this->checkIn()->getPayload()['extras'] ?? null);
+
+        $this->em()->getRepository(GuestCheckInConfig::class)->findOneBy([])?->setExtrasEnabled(true);
+        $this->em()->flush();
+
+        $this->em()->find(Price::class, $this->extraPriceId)?->setIsBookableOnline(false);
+        $this->em()->flush();
+        $this->client->request('GET', $path.'?edit=1');
+        self::assertSelectorTextContains('.alert-warning', 'no longer available');
+        self::assertSelectorNotExists('.fhb-gci-extra-choice');
+
+        $this->em()->find(Price::class, $this->extraPriceId)?->setIsBookableOnline(true);
+        $this->em()->flush();
+        $this->client->request('GET', $path.'?edit=1');
+        self::assertSelectorExists('.fhb-gci-extra-choice input[checked]');
+
+        $this->em()->getRepository(GuestCheckInConfig::class)->findOneBy([])?->setExtrasEnabled(false);
+        $this->em()->flush();
+        $this->em()->clear();
+        $checkIn = $this->checkIn();
+        self::getContainer()->get(GuestCheckInApplyService::class)->apply($checkIn, new GuestCheckInApplyRequest('booker', false, []));
+        $this->em()->clear();
+        self::assertCount(1, $this->em()->find(Reservation::class, $reservation->getId())?->getPrices() ?? []);
+    }
+
+    public function testChangedServiceCanBeDeferredWhileGuestDetailsAreApplied(): void
+    {
+        $reservation = $this->createReservation();
+        $this->linkPath($reservation);
+        $price = (new Price())->setIsBookableOnline(true)->setIsFlatPrice(false)->setIsPerRoom(false);
+        $price->setDescription('Breakfast');
+        $price->setPrice('7.50');
+        $price->setVat(7.0);
+        $price->setActive(true);
+        $price->setType(1);
+        $price->setAllDays(true);
+        $price->addReservationOrigin($reservation->getReservationOrigin());
+        $this->em()->persist($price);
+        $this->em()->flush();
+        $this->extraPriceId = (int) $price->getId();
+
+        $checkIn = $this->checkIn();
+        $checkIn->recordSubmission([
+            'v' => 1,
+            'mainGuest' => ['firstname' => 'Anna', 'lastname' => 'Müller', 'nationality' => 'AT'],
+            'companions' => [],
+            'extras' => [['id' => $this->extraPriceId, 'description' => 'Breakfast', 'total' => '30.00']],
+        ], new \DateTimeImmutable());
+        $this->em()->flush();
+
+        $admin = $this->em()->getRepository(User::class)->findOneBy(['username' => 'test-admin']);
+        self::assertInstanceOf(User::class, $admin);
+        $this->client->loginUser($admin, 'main');
+        $url = '/reservation/get/'.$reservation->getId();
+        $this->client->request('GET', $url, ['tab' => 'checkin']);
+        self::assertSelectorExists('input[name="applyExtras"][checked]');
+
+        $price->setPrice('8.50');
+        $this->em()->flush();
+        $crawler = $this->client->request('GET', $url, ['tab' => 'checkin']);
+        self::assertStringContainsString('Preis hat sich geändert', (string) $this->client->getResponse()->getContent());
+        self::assertSelectorExists('input[name="applyExtras"][disabled]');
+        $token = (string) $crawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
+        $version = (string) $crawler->filter('input[name="submissionVersion"]')->attr('value');
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
+            '_token' => $token,
+            'submissionVersion' => $version,
+            'mainTarget' => 'booker',
+            'applyExtras' => '1',
+        ]);
+        self::assertSame(GuestCheckInStatus::SUBMITTED, $this->checkIn()->getStatus());
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
+            '_token' => $token,
+            'submissionVersion' => $version,
+            'mainTarget' => 'booker',
+        ]);
+        self::assertResponseIsSuccessful();
+        $this->em()->clear();
+        $stored = $this->em()->find(Reservation::class, $reservation->getId());
+        self::assertInstanceOf(Reservation::class, $stored);
+        self::assertSame('AT', $stored->getBooker()?->getNationality());
+        self::assertCount(0, $stored->getPrices());
+        self::assertStringContainsString('Breakfast · 30,00 €', (string) $stored->getRemark());
+        self::assertSame(GuestCheckInStatus::APPLIED, $this->checkIn()->getStatus());
     }
 
     public function testFormPostWithoutCheckStoresNothing(): void

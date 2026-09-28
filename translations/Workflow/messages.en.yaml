@@ -223,10 +223,10 @@ workflow:
     notify_guest_checkin:
       name: "Show online check-ins in the notification window"
       description: "Creates an entry in the notification window as soon as a guest filled in the online check-in."
-      note: "Please review the details on the reservation's \"Online check-in\" tab."
+      note: "Please review the details on the reservation's \"Check-in\" tab."
     example_guest_checkin_invitation:
       name: "Example: Online check-in invitation (7 days before)"
-      description: "Sends the online check-in link to the guest 7 days before arrival, unless they already checked in (email template with the \"Online check-in link\" block required)."
+      description: "Sends the online check-in link to the guest 7 days before arrival unless they have already completed the form (email template with the \"Online check-in link\" block required)."
     notify_calendar_import_inapp:
       name: "Show calendar imports in the notification window"
       description: "Creates an entry in the notification window for every imported booking."

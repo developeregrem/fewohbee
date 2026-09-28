@@ -11,7 +11,7 @@ import { enableDeletePopover } from '../js/utils.js';
  */
 /* stimulusFetch: 'lazy' */
 export default class extends Controller {
-    static targets = ['linkBox', 'url', 'qrBox', 'qr', 'qrDownload', 'error', 'regenerateBox'];
+    static targets = ['linkBox', 'url', 'qrBox', 'qr', 'qrDownload', 'error', 'regenerateBox', 'mainTarget', 'bookerConfirmation', 'removeBooker', 'setAsBooker', 'globalHint'];
     static values = {
         linkUrl: String,
         regenerateUrl: String,
@@ -20,6 +20,36 @@ export default class extends Controller {
 
     connect() {
         enableDeletePopover({ root: this.element });
+        this.syncMainTargetChoices();
+    }
+
+    syncMainTargetChoices() {
+        if (!this.hasMainTargetTarget) {
+            return;
+        }
+
+        const selected = this.mainTargetTarget.value;
+        if (this.hasBookerConfirmationTarget) {
+            this.showChoice(this.bookerConfirmationTarget, selected === 'booker');
+        }
+        if (this.hasRemoveBookerTarget) {
+            this.showChoice(this.removeBookerTarget, selected !== '' && selected !== 'booker');
+        }
+        if (this.hasSetAsBookerTarget) {
+            this.showChoice(this.setAsBookerTarget, selected !== '' && selected !== 'booker');
+        }
+        if (this.hasGlobalHintTarget) {
+            this.globalHintTarget.classList.toggle('d-none', !selected.startsWith('existing:'));
+        }
+    }
+
+    showChoice(element, visible) {
+        element.classList.toggle('d-none', !visible);
+        const input = element.querySelector('input');
+        input.disabled = !visible;
+        if (!visible) {
+            input.checked = false;
+        }
     }
 
     showLink(event) {

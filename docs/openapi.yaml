@@ -521,6 +521,7 @@ paths:
           schema: { type: string, enum: ['true', 'false', 'all'], default: 'true' }
         - name: bookableOnline
           in: query
+          description: Filter prices available to guests in online booking and self check-in.
           schema: { type: boolean }
       responses:
         '200':
@@ -1265,7 +1266,7 @@ components:
               endDate: { type: string, format: date }
         seasonStart: { type: [string, 'null'], format: date }
         seasonEnd: { type: [string, 'null'], format: date }
-        isBookableOnline: { type: boolean }
+        isBookableOnline: { type: boolean, description: 'Whether a miscellaneous price can be selected by guests in online booking and self check-in.' }
         isMandatoryOnline: { type: boolean }
         isDefaultActiveInReservationCreation: { type: boolean }
         isPackage: { type: boolean, description: 'Whether the row splits into components for revenue accounting.' }
@@ -1301,7 +1302,7 @@ components:
         minStay: { type: [integer, 'null'] }
         vat: { type: number }
         includesVat: { type: boolean }
-        isBookableOnline: { type: boolean }
+        isBookableOnline: { type: boolean, description: 'Whether a miscellaneous price can be selected by guests in online booking and self check-in.' }
 
     PriceQuote:
       type: object
@@ -1415,7 +1416,7 @@ components:
               total: { type: number }
               vat: { type: number }
               includesVat: { type: boolean }
-              isBookableOnline: { type: boolean }
+              isBookableOnline: { type: boolean, description: 'Whether a miscellaneous price can be selected by guests in online booking and self check-in.' }
               isMandatoryOnline: { type: boolean }
               isDefaultActiveInReservationCreation: { type: boolean }
               roomCategory:

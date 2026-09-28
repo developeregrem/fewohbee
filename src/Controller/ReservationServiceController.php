@@ -961,7 +961,7 @@ class ReservationServiceController extends AbstractController
             'miscTotal' => $miscTotal,
             'hasActiveTouristTax' => $touristTaxService->hasActiveTaxForSubsidiary($reservation->getAppartment()?->getObject()),
             'guestCategoriesById' => $guestCategoriesById,
-            'guestCheckIn' => $guestCheckInReview->buildTab($reservation),
+            'guestCheckIn' => $guestCheckInReview->buildTab($reservation, $this->isGranted('ROLE_CUSTOMERS')),
         ]);
     }
 

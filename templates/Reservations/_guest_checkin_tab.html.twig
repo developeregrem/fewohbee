@@ -80,12 +80,28 @@
             {% endif %}
         </dl>
 
+        {% if guestCheckIn.extras is not empty %}
+            <h5 class="fs-6 fw-semibold">{{ 'guest_checkin.tab.extras'|trans }}</h5>
+            <ul class="small">
+                {% for extra in guestCheckIn.extras %}
+                    <li>{{ extra.description }} · {{ extra.total|number_format(2, ',', '.') }} {{ currency_symbol }}</li>
+                {% endfor %}
+            </ul>
+            {% if guestCheckIn.extrasConflict %}
+                <div class="alert alert-warning small" role="alert">{{ 'guest_checkin.apply.extras_conflict_hint'|trans }}</div>
+            {% endif %}
+        {% endif %}
+
+        {% if guestCheckIn.bookerDiffers %}
+            <div class="alert alert-warning small" role="alert">{{ 'guest_checkin.apply.booker_differs'|trans }}</div>
+        {% endif %}
+
         <table class="table table-sm small align-middle">
             <thead>
             <tr>
                 <th scope="col">{{ 'guest_checkin.tab.main_guest'|trans }}</th>
                 <th scope="col">{{ 'guest_checkin.tab.col_submitted'|trans }}</th>
-                <th scope="col">{{ 'guest_checkin.tab.col_current'|trans }}</th>
+                <th scope="col">{{ guestCheckIn.comparisonGuestName ? 'guest_checkin.tab.col_current_person'|trans({'%name%': guestCheckIn.comparisonGuestName}) : 'guest_checkin.tab.col_new_person'|trans }}</th>
             </tr>
             </thead>
             <tbody>
@@ -114,7 +130,7 @@
                 <tbody>
                 {% for companion in guestCheckIn.companions %}
                     <tr>
-                        <td>{{ companion.name }}</td>
+                        <td>{{ companion.salutation ? companion.salutation ~ ' ' : '' }}{{ companion.name }}</td>
                         <td>{{ companion.birthday ?: '–' }}</td>
                         <td>{{ companion.nationality ?: '–' }}</td>
                         <td>{{ companion.address ?: ('guest_checkin.tab.same_address'|trans) }}</td>
@@ -128,40 +144,94 @@
         {% if canEdit and guestCheckIn.status.value == 'submitted' %}
             <form action="{{ path('reservations.guest_checkin.apply', {'id': reservation.id}) }}" method="post" class="border rounded p-3 bg-body-tertiary" data-action="submit->guest-checkin#apply">
                 <input type="hidden" name="_token" value="{{ csrf_token('guest-checkin-' ~ reservation.id) }}">
+                <input type="hidden" name="submissionVersion" value="{{ checkIn.submissionVersion }}">
                 <h5 class="fs-6 fw-semibold">{{ 'guest_checkin.apply.title'|trans }}</h5>
 
                 <div class="row g-2 align-items-center mb-2">
                     <label class="col-sm-4 col-form-label col-form-label-sm" for="guest-checkin-main-{{ reservation.id }}">{{ 'guest_checkin.apply.main_target'|trans }}</label>
                     <div class="col-sm-8">
-                        <select class="form-select form-select-sm" name="mainTarget" id="guest-checkin-main-{{ reservation.id }}">
+                        <select class="form-select form-select-sm" name="mainTarget" id="guest-checkin-main-{{ reservation.id }}" data-guest-checkin-target="mainTarget" data-action="change->guest-checkin#syncMainTargetChoices" required>
+                            {% if guestCheckIn.mainNeedsChoice %}
+                                <option value="" selected disabled>{{ 'guest_checkin.apply.target_choose'|trans }}</option>
+                            {% endif %}
                             {% for target, name in guestCheckIn.mainTargets %}
+                                {% set targetLabel = target == 'booker'
+                                    ? (guestCheckIn.bookerNeedsUpdate ? 'guest_checkin.apply.target_booker' : 'guest_checkin.apply.target_booker_unchanged')
+                                    : 'guest_checkin.apply.target_guest' %}
                                 <option value="{{ target }}"{% if target == guestCheckIn.defaultMainTarget %} selected{% endif %}>
-                                    {{ (target == 'booker' ? 'guest_checkin.apply.target_booker' : 'guest_checkin.apply.target_guest')|trans({'%name%': name}) }}
+                                    {{ targetLabel|trans({'%name%': name}) }}
                                 </option>
                             {% endfor %}
+                            {% if guestCheckIn.mainGlobalTargets is not empty %}
+                                <optgroup label="{{ 'guest_checkin.apply.existing_matches'|trans }}">
+                                    {% for target, match in guestCheckIn.mainGlobalTargets %}
+                                        <option value="{{ target }}"{% if target == guestCheckIn.defaultMainTarget %} selected{% endif %}>{{ 'guest_checkin.apply.target_existing'|trans({'%name%': match.name, '%id%': match.id}) }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endif %}
                             <option value="new"{% if guestCheckIn.defaultMainTarget == 'new' %} selected{% endif %}>{{ 'guest_checkin.apply.target_new'|trans }}</option>
                         </select>
                     </div>
                 </div>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" name="setAsBooker" value="1" id="guest-checkin-booker-{{ reservation.id }}"{% if reservation.booker is null %} checked disabled{% endif %}>
-                    <label class="form-check-label small" for="guest-checkin-booker-{{ reservation.id }}">{{ 'guest_checkin.apply.set_as_booker'|trans }}</label>
-                </div>
+                {% if guestCheckIn.mainGlobalTargets is not empty %}
+                    <p class="small text-body-secondary{% if not guestCheckIn.defaultMainTarget starts with 'existing:' %} d-none{% endif %}" data-guest-checkin-target="globalHint">{{ 'guest_checkin.apply.existing_match_hint'|trans }}</p>
+                {% endif %}
+                {% if guestCheckIn.mainNeedsChoice %}
+                    <div class="alert alert-warning small" role="alert">{{ (guestCheckIn.mainNameOnlyMatch ? 'guest_checkin.apply.name_only_match' : 'guest_checkin.apply.ambiguous_matches')|trans }}</div>
+                {% endif %}
+                {% if guestCheckIn.bookerDiffers %}
+                    <div class="form-check mb-2{% if guestCheckIn.defaultMainTarget != 'booker' %} d-none{% endif %}" data-guest-checkin-target="bookerConfirmation">
+                        <input class="form-check-input" type="checkbox" name="confirmBookerMismatch" value="1" id="guest-checkin-confirm-booker-{{ reservation.id }}"{% if guestCheckIn.defaultMainTarget != 'booker' %} disabled{% endif %}>
+                        <label class="form-check-label small" for="guest-checkin-confirm-booker-{{ reservation.id }}">{{ 'guest_checkin.apply.confirm_booker_mismatch'|trans }}</label>
+                    </div>
+                {% endif %}
+                {% if guestCheckIn.bookerDiffers and guestCheckIn.bookerIsGuest %}
+                    <div class="form-check mb-2{% if guestCheckIn.defaultMainTarget in ['', 'booker'] %} d-none{% endif %}" data-guest-checkin-target="removeBooker">
+                        <input class="form-check-input" type="checkbox" name="removeBookerFromGuests" value="1" id="guest-checkin-remove-booker-{{ reservation.id }}"{% if guestCheckIn.defaultMainTarget in ['', 'booker'] %} disabled{% endif %}>
+                        <label class="form-check-label small" for="guest-checkin-remove-booker-{{ reservation.id }}">{{ 'guest_checkin.apply.remove_booker_from_guests'|trans }}</label>
+                    </div>
+                {% endif %}
+                {% if reservation.booker is not null %}
+                    <div class="form-check mb-2{% if guestCheckIn.defaultMainTarget in ['', 'booker'] %} d-none{% endif %}" data-guest-checkin-target="setAsBooker">
+                        <input class="form-check-input" type="checkbox" name="setAsBooker" value="1" id="guest-checkin-booker-{{ reservation.id }}"{% if guestCheckIn.defaultMainTarget in ['', 'booker'] %} disabled{% endif %}>
+                        <label class="form-check-label small" for="guest-checkin-booker-{{ reservation.id }}">{{ 'guest_checkin.apply.set_as_booker'|trans }}</label>
+                    </div>
+                {% endif %}
 
                 {% for companion in guestCheckIn.companions %}
                     <div class="row g-2 align-items-center mb-2">
                         <label class="col-sm-4 col-form-label col-form-label-sm" for="guest-checkin-companion-{{ reservation.id }}-{{ loop.index0 }}">{{ companion.name }}</label>
                         <div class="col-sm-8">
-                            <select class="form-select form-select-sm" name="companionTargets[]" id="guest-checkin-companion-{{ reservation.id }}-{{ loop.index0 }}">
+                            <select class="form-select form-select-sm" name="companionTargets[]" id="guest-checkin-companion-{{ reservation.id }}-{{ loop.index0 }}" required>
+                                {% if companion.needsChoice %}
+                                    <option value="" selected disabled>{{ 'guest_checkin.apply.target_choose'|trans }}</option>
+                                {% endif %}
                                 <option value="new"{% if companion.defaultTarget == 'new' %} selected{% endif %}>{{ 'guest_checkin.apply.target_new'|trans }}</option>
                                 {% for target, name in guestCheckIn.companionTargets %}
                                     <option value="{{ target }}"{% if target == companion.defaultTarget %} selected{% endif %}>{{ 'guest_checkin.apply.target_guest'|trans({'%name%': name}) }}</option>
                                 {% endfor %}
+                                {% if companion.globalTargets is not empty %}
+                                    <optgroup label="{{ 'guest_checkin.apply.existing_matches'|trans }}">
+                                        {% for target, match in companion.globalTargets %}
+                                            <option value="{{ target }}"{% if target == companion.defaultTarget %} selected{% endif %}>{{ 'guest_checkin.apply.target_existing'|trans({'%name%': match.name, '%id%': match.id}) }}</option>
+                                        {% endfor %}
+                                    </optgroup>
+                                {% endif %}
                                 <option value="skip">{{ 'guest_checkin.apply.target_skip'|trans }}</option>
                             </select>
                         </div>
                     </div>
+                    {% if companion.needsChoice %}
+                        <div class="alert alert-warning small" role="alert">{{ (companion.nameOnlyMatch ? 'guest_checkin.apply.name_only_match' : 'guest_checkin.apply.ambiguous_matches')|trans }}</div>
+                    {% endif %}
                 {% endfor %}
+                {% if guestCheckIn.extras is not empty %}
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="applyExtras" value="1" id="guest-checkin-apply-extras-{{ reservation.id }}"{% if not guestCheckIn.extrasConflict %} checked{% else %} disabled{% endif %}>
+                        <label class="form-check-label small" for="guest-checkin-apply-extras-{{ reservation.id }}">{{ 'guest_checkin.apply.apply_extras'|trans }}</label>
+                    </div>
+                    <p class="small text-body-secondary">{{ 'guest_checkin.apply.extras_defer_hint'|trans }}</p>
+                {% endif %}
                 <p class="small text-body-secondary">{{ 'guest_checkin.apply.hint'|trans }}</p>
                 <div class="d-flex justify-content-between">
                     {% set id = 'guest-checkin-' ~ reservation.id %}

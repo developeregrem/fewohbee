@@ -127,6 +127,17 @@ class GuestCheckIn
         return $this->lastSubmittedAt;
     }
 
+    /** The review form uses this to reject a submission changed while the hotelier was reading it. */
+    public function getSubmissionVersion(): ?string
+    {
+        if (null === $this->payload) {
+            return null;
+        }
+
+        // DATETIME persistence drops microseconds, so the payload itself is part of the version.
+        return hash('sha256', $this->lastSubmittedAt?->format('U').'|'.json_encode($this->payload, \JSON_THROW_ON_ERROR));
+    }
+
     public function getAppliedAt(): ?\DateTimeImmutable
     {
         return $this->appliedAt;

@@ -228,10 +228,10 @@ workflow:
     notify_guest_checkin:
       name: "Online-Check-ins im Benachrichtigungsfenster anzeigen"
       description: "Legt einen Eintrag im Benachrichtigungsfenster an, sobald ein Gast den Online-Check-in ausgefüllt hat."
-      note: "Bitte prüfe die Angaben im Reiter „Online-Check-in“ der Reservierung."
+      note: "Bitte prüfe die Angaben im Reiter „Check-in“ der Reservierung."
     example_guest_checkin_invitation:
       name: "Beispiel: Einladung zum Online-Check-in (7 Tage vorher)"
-      description: "Sendet 7 Tage vor der Anreise den Link zum Online-Check-in an den Gast, sofern er noch nicht eingecheckt hat (E-Mail-Vorlage mit dem Baustein „Link zum Online-Check-in“ erforderlich)."
+      description: "Sendet 7 Tage vor der Anreise den Link zum Online-Check-in an den Gast, sofern er das Formular noch nicht ausgefüllt hat (E-Mail-Vorlage mit dem Baustein „Link zum Online-Check-in“ erforderlich)."
     notify_calendar_import_inapp:
       name: "Kalender-Import im Benachrichtigungsfenster anzeigen"
       description: "Legt für jede importierte Buchung einen Eintrag im Benachrichtigungsfenster an."

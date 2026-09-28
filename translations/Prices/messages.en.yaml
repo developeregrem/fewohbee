@@ -76,7 +76,7 @@ price.includesvat: incl. VAT
 price.isflatprice: flat rate
 price.perroom: per night (else per person)
 price.defaultactiveinreservationcreation: active by default in reservation creation
-price.bookableonline: Available for online booking
+price.bookableonline: Available for online booking and check-in
 price.brokered: Include in portal fees
 price.brokered.hint: Determines whether the portal charges commission or a payment fee for this service. Switch off for services added on site, such as a breakfast ordered at reception.
 price.mandatoryonline: Mandatory in online booking

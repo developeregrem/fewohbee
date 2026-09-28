@@ -11,6 +11,7 @@ use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\Enum\IDCardType;
 use App\Entity\GuestCheckIn;
 use App\Entity\Reservation;
+use App\Repository\AppSettingsRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -20,8 +21,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Takes a reviewed online check-in over into the guest records.
  *
  * - Only values the guest actually entered overwrite existing ones; nothing is cleared.
- * - Targets are restricted to the reservation's booker and linked guests, so the request can
- *   never reach another customer. Guests are never matched by email address.
+ * - Linked guests are always available; a customer outside the reservation can only be selected
+ *   with customer access and a fresh identity suggestion that the hotelier confirms.
  * - An address shared with other customers is left alone; the guest gets an own copy.
  * - Everyone taken over ends up among the reservation's guests, up to the number of guests booked.
  * - Afterwards the submission itself is dropped; the audit log records who took it over.
@@ -36,13 +37,16 @@ class GuestCheckInApplyService
         private readonly ClockInterface $clock,
         #[Autowire('%kernel.default_locale%')]
         private readonly string $installationLocale,
+        private readonly GuestCheckInExtrasService $extrasService,
+        private readonly AppSettingsRepository $settingsRepository,
+        private readonly GuestCheckInExistingGuestMatcher $existingGuestMatcher,
     ) {
     }
 
     /**
      * @return list<string> translation keys of warnings (e.g. guests beyond the occupancy)
      *
-     * @throws \InvalidArgumentException for targets outside this reservation or without data to apply
+     * @throws \InvalidArgumentException for invalid or unverified targets, or without data to apply
      */
     public function apply(GuestCheckIn $checkIn, GuestCheckInApplyRequest $request): array
     {
@@ -51,11 +55,78 @@ class GuestCheckInApplyService
             throw new \InvalidArgumentException('Nothing to take over.');
         }
 
+        if (null !== $request->expectedSubmissionVersion && !hash_equals($request->expectedSubmissionVersion, (string) $checkIn->getSubmissionVersion())) {
+            throw new \InvalidArgumentException('The guest changed the submission after it was opened for review.');
+        }
+
         $reservation = $checkIn->getReservation();
+        $main = \is_array($payload['mainGuest'] ?? null) ? $payload['mainGuest'] : [];
+        $booker = $reservation->getBooker();
+        if (null !== $booker
+            && \in_array($request->mainTarget, [GuestCheckInApplyRequest::TARGET_BOOKER, GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX.$booker->getId()], true)
+            && GuestCheckInPersonMatch::hasFullName($main)
+            && !GuestCheckInPersonMatch::likelySamePerson($main, $booker)
+            && !$request->confirmBookerMismatch) {
+            throw new \InvalidArgumentException('The submitted main guest differs from the booker and needs explicit confirmation.');
+        }
+        // "booker" and "customer:<booker id>" name the same person. Canonicalise them before
+        // changing any customer, or the second traveller can silently overwrite the first.
+        $usedTargets = [];
+        foreach ([$request->mainTarget, ...$request->companionTargets] as $target) {
+            if (\in_array($target, [GuestCheckInApplyRequest::TARGET_NEW, GuestCheckInApplyRequest::TARGET_SKIP], true)) {
+                continue;
+            }
+            if (GuestCheckInApplyRequest::TARGET_BOOKER === $target && null !== $reservation->getBooker()) {
+                $target = GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX.$reservation->getBooker()->getId();
+            } elseif (str_starts_with($target, GuestCheckInApplyRequest::TARGET_EXISTING_PREFIX)) {
+                $target = GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX.substr($target, \strlen(GuestCheckInApplyRequest::TARGET_EXISTING_PREFIX));
+            }
+            if (isset($usedTargets[$target])) {
+                throw new \InvalidArgumentException('One customer was selected for multiple guests.');
+            }
+            $usedTargets[$target] = true;
+        }
+
+        $removeBooker = $request->removeBookerFromGuests;
+        if ($removeBooker) {
+            if (null === $booker || !$reservation->getCustomers()->contains($booker)
+                || !GuestCheckInPersonMatch::hasFullName($main)
+                || GuestCheckInPersonMatch::likelySamePerson($main, $booker)
+                || isset($usedTargets[GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX.$booker->getId()])) {
+                throw new \InvalidArgumentException('The booker cannot be removed from the room in this review.');
+            }
+        }
+
+        $existingMainCustomer = GuestCheckInApplyRequest::TARGET_NEW === $request->mainTarget
+            ? null
+            : $this->resolveTarget($reservation, $request->mainTarget, false, $main, $request->allowGlobalMatch);
+        $companions = \is_array($payload['companions'] ?? null) ? array_values($payload['companions']) : [];
+        foreach ($companions as $index => $companion) {
+            $target = $request->companionTargets[$index] ?? GuestCheckInApplyRequest::TARGET_SKIP;
+            if (\is_array($companion) && GuestCheckInApplyRequest::TARGET_NEW !== $target) {
+                $this->resolveTarget($reservation, $target, true, $companion, $request->allowGlobalMatch);
+            }
+        }
+        $mainAlreadyInRoom = null !== $existingMainCustomer && $reservation->getCustomers()->contains($existingMainCustomer);
+        if (!$mainAlreadyInRoom && \count($reservation->getCustomers()) - (int) $removeBooker >= $reservation->getTotalGuests()) {
+            throw new GuestCheckInNoGuestSlotException('No room for the arriving main guest.');
+        }
+
+        $requestedExtras = \is_array($payload['extras'] ?? null) ? $payload['extras'] : [];
+        $extrasToApply = [];
+        if ([] !== $requestedExtras && $request->applyExtras) {
+            $extrasToApply = $this->extrasService->pricesToApply($reservation, $requestedExtras);
+        }
+        $deferredExtrasEntry = [] !== $requestedExtras && !$request->applyExtras
+            ? $this->deferredExtrasEntry($checkIn, $requestedExtras)
+            : null;
         $warnings = [];
 
-        $main = \is_array($payload['mainGuest'] ?? null) ? $payload['mainGuest'] : [];
-        $mainCustomer = $this->resolveTarget($reservation, $request->mainTarget, false)
+        if ($removeBooker) {
+            $reservation->removeCustomer($booker);
+        }
+
+        $mainCustomer = $existingMainCustomer ?? $this->resolveTarget($reservation, $request->mainTarget, false, $main, $request->allowGlobalMatch)
             ?? throw new \InvalidArgumentException('The main guest needs a target.');
         $this->fillPerson($mainCustomer, $main, true);
         $mainAddress = \is_array($main['address'] ?? null) ? $main['address'] : [];
@@ -65,10 +136,12 @@ class GuestCheckInApplyService
         }
         $warnings = [...$warnings, ...$this->addGuest($reservation, $mainCustomer)];
 
-        $companions = \is_array($payload['companions'] ?? null) ? array_values($payload['companions']) : [];
         foreach ($companions as $index => $companion) {
-            $customer = $this->resolveTarget($reservation, $request->companionTargets[$index] ?? GuestCheckInApplyRequest::TARGET_SKIP, true);
-            if (null === $customer || !\is_array($companion)) {
+            if (!\is_array($companion)) {
+                continue;
+            }
+            $customer = $this->resolveTarget($reservation, $request->companionTargets[$index] ?? GuestCheckInApplyRequest::TARGET_SKIP, true, $companion, $request->allowGlobalMatch);
+            if (null === $customer) {
                 continue;
             }
 
@@ -84,6 +157,24 @@ class GuestCheckInApplyService
             $warnings = [...$warnings, ...$this->addGuest($reservation, $customer)];
         }
 
+        $message = self::nullableString($payload['message'] ?? null);
+        if (null !== $message) {
+            $entry = $this->translator->trans('guest_checkin.remark.guest_comment', [
+                '%date%' => $checkIn->getLastSubmittedAt()?->format('d.m.Y H:i') ?? $this->clock->now()->format('d.m.Y H:i'),
+                '%message%' => $message,
+            ], null, $this->installationLocale);
+            $this->appendRemark($reservation, $entry);
+        }
+
+        if (null !== $deferredExtrasEntry) {
+            $this->appendRemark($reservation, $deferredExtrasEntry);
+            $warnings[] = 'guest_checkin.apply.warning_extras_deferred';
+        }
+
+        foreach ($extrasToApply as $price) {
+            $reservation->addPrice($price);
+        }
+
         $checkIn->markApplied($this->clock->now());
         $this->em->flush();
 
@@ -91,10 +182,12 @@ class GuestCheckInApplyService
     }
 
     /**
-     * Null for "skip". New customers are persisted here; existing ones must belong to the
-     * reservation (booker or linked guest).
+     * Null for "skip". New customers are persisted here. Global targets must still match the
+     * submitted person and require customer access, even if an ID was forged in the POST.
+     *
+     * @param array<string, mixed> $person
      */
-    private function resolveTarget(Reservation $reservation, string $target, bool $allowSkip): ?Customer
+    private function resolveTarget(Reservation $reservation, string $target, bool $allowSkip, array $person, bool $allowGlobalMatch): ?Customer
     {
         if ($allowSkip && GuestCheckInApplyRequest::TARGET_SKIP === $target) {
             return null;
@@ -112,6 +205,11 @@ class GuestCheckInApplyService
             return $reservation->getBooker() ?? throw new \InvalidArgumentException('The reservation has no booker.');
         }
 
+        if ($allowGlobalMatch && preg_match('/^existing:([1-9][0-9]*)$/D', $target, $matches)) {
+            return $this->existingGuestMatcher->matchingCandidateById($reservation, $person, (int) $matches[1])
+                ?? throw new \InvalidArgumentException('The existing guest no longer matches the submission.');
+        }
+
         if (str_starts_with($target, GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX)) {
             $id = (int) substr($target, \strlen(GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX));
             foreach ([$reservation->getBooker(), ...$reservation->getCustomers()] as $customer) {
@@ -127,7 +225,7 @@ class GuestCheckInApplyService
     /** @param array<string, mixed> $person */
     private function fillPerson(Customer $customer, array $person, bool $isMainGuest): void
     {
-        if ($isMainGuest && null !== ($salutation = self::nullableString($person['salutation'] ?? null))) {
+        if (null !== ($salutation = self::nullableString($person['salutation'] ?? null))) {
             // The form offers the configured salutations untranslated; the record keeps the
             // wording of the installation, whatever language the guest used.
             $customer->setSalutation(mb_substr($this->translator->trans($salutation, [], null, $this->installationLocale), 0, 20));
@@ -230,5 +328,33 @@ class GuestCheckInApplyService
     private static function nullableString(mixed $value): ?string
     {
         return \is_string($value) && '' !== trim($value) ? trim($value) : null;
+    }
+
+    private function appendRemark(Reservation $reservation, string $entry): void
+    {
+        $previous = trim((string) $reservation->getRemark());
+        $reservation->setRemark('' === $previous ? $entry : $previous."\n\n".$entry);
+    }
+
+    /** @param array<mixed> $requestedExtras */
+    private function deferredExtrasEntry(GuestCheckIn $checkIn, array $requestedExtras): string
+    {
+        $currency = $this->settingsRepository->findSingleton()?->getCurrencySymbol() ?? '';
+        $germanFormat = str_starts_with($this->installationLocale, 'de');
+        $services = [];
+        foreach ($requestedExtras as $extra) {
+            if (!\is_array($extra) || !\is_string($extra['description'] ?? null) || !\is_string($extra['total'] ?? null)) {
+                throw new \InvalidArgumentException('Invalid service request.');
+            }
+            $total = \is_numeric($extra['total'])
+                ? number_format((float) $extra['total'], 2, $germanFormat ? ',' : '.', $germanFormat ? '.' : ',')
+                : $extra['total'];
+            $services[] = trim($extra['description']).' · '.$total.' '.$currency;
+        }
+
+        return $this->translator->trans('guest_checkin.remark.deferred_extras', [
+            '%date%' => $checkIn->getLastSubmittedAt()?->format('d.m.Y H:i') ?? $this->clock->now()->format('d.m.Y H:i'),
+            '%services%' => implode("\n", $services),
+        ], null, $this->installationLocale);
     }
 }

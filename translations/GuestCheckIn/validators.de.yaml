@@ -1,0 +1,4 @@
+guest_checkin:
+  public:
+    extras:
+      changed: "Eine Leistung oder ihr Preis hat sich geändert. Bitte lade die Seite neu und prüfe deine Auswahl."
