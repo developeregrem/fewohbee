@@ -188,3 +188,13 @@ invoice.tourist_tax.position.persons: '{0} %count% people|{1} %count% person|]1,
 invoice.tourist_tax.no_positions: No tourist tax lines were calculated for this booking.
 invoice.payment_qr.remittance: Invoice %number%
 invoice.payment_due_date: Payable by
+invoice.payment_due.label: Payment due
+invoice.payment_due.mode.settings: '{0}As in the invoice settings (due immediately)|{1}As in the invoice settings (%count% day)|]1,Inf]As in the invoice settings (%count% days)'
+invoice.payment_due.mode.settings.none: As in the invoice settings (no period set there)
+invoice.payment_due.mode.days: Period in days from the invoice date
+invoice.payment_due.mode.last_departure: By the last departure day
+invoice.payment_due.mode.date: Fixed date
+invoice.payment_due.help: Days and the departure day are turned into a fixed date on saving, which does not change by itself afterwards. If the last departure day lies before the invoice date, the invoice date applies.
+invoice.payment_due.days: Days from the invoice date
+invoice.payment_due.date: Due on
+invoice.payment_due.own: Date set for this invoice

@@ -142,6 +142,8 @@ class InvoiceServiceController extends AbstractController
 
         $templateId = $requestStack->getSession()->get('invoice-template-id', $templateId); // get previously selected id
 
+        $settings = $readinessService->resolveSettingsFor($invoice);
+
         return $this->render(
             'Invoices/invoice_form_show.html.twig',
             [
@@ -156,6 +158,8 @@ class InvoiceServiceController extends AbstractController
                 'error' => true,
                 'readiness' => $readinessService->check($invoice),
                 'activeProfileKey' => $readinessService->getActiveProfileKey(),
+                'paymentDueDate' => $invoice->resolvePaymentDueDate($settings),
+                'settingsDueDays' => $settings?->getPaymentDueDays(),
             ]
         );
     }
@@ -684,13 +688,16 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/new/invoice/preview', name: 'invoices.show.new.invoice.preview', methods: ['GET'])]
-    public function showNewInvoicePreviewAction(ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, InvoiceRepository $invoiceRepository)
+    public function showNewInvoicePreviewAction(ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, InvoiceRepository $invoiceRepository, EInvoiceReadinessService $readinessService)
     {
         $em = $doctrine->getManager();
         $invoice = $is->getInvoiceInCreation($requestStack);
 
         $form = $this->createForm(InvoicePaymentRemarkType::class, $invoice, [
             'action' => $this->generateUrl('invoices.create.invoice'),
+            'settings_due_days' => $readinessService->resolveSettingsFor($invoice)?->getPaymentDueDays(),
+            // Positions of an invoice in creation live in the session until it is saved.
+            'last_departure' => Invoice::lastDepartureOf($requestStack->getSession()->get('invoicePositionsAppartments', [])),
         ]);
 
         $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get('invoicePositionsMiscellaneous');
@@ -740,7 +747,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/create/new/invoice', name: 'invoices.create.invoice', methods: ['POST'])]
-    public function createNewInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $reservationService, EventDispatcherInterface $eventDispatcher, InvoiceRepository $invoiceRepository, Request $request)
+    public function createNewInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $reservationService, EventDispatcherInterface $eventDispatcher, InvoiceRepository $invoiceRepository, EInvoiceReadinessService $readinessService, Request $request)
     {
         $em = $doctrine->getManager();
         $error = false;
@@ -748,6 +755,9 @@ class InvoiceServiceController extends AbstractController
 
         $form = $this->createForm(InvoicePaymentRemarkType::class, $invoice, [
             'action' => $this->generateUrl('invoices.create.invoice'),
+            'settings_due_days' => $readinessService->resolveSettingsFor($invoice)?->getPaymentDueDays(),
+            // Positions of an invoice in creation live in the session until it is saved.
+            'last_departure' => Invoice::lastDepartureOf($requestStack->getSession()->get('invoicePositionsAppartments', [])),
         ]);
         $form->handleRequest($request);
 
@@ -932,11 +942,13 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/{id}/edit/remark', name: 'invoices.edit.invoice.remark.show', methods: ['GET', 'POST'], defaults: ['id' => '0'])]
-    public function showChangeRemarkInvoiceEditAction(ManagerRegistry $doctrine, Request $request, Invoice $invoice)
+    public function showChangeRemarkInvoiceEditAction(ManagerRegistry $doctrine, EInvoiceReadinessService $readinessService, Request $request, Invoice $invoice)
     {
         $em = $doctrine->getManager();
         $form = $this->createForm(InvoicePaymentRemarkType::class, $invoice, [
             'action' => $this->generateUrl('invoices.edit.invoice.remark.show', ['id' => $invoice->getId()]),
+            'settings_due_days' => $readinessService->resolveSettingsFor($invoice)?->getPaymentDueDays(),
+            'last_departure' => Invoice::lastDepartureOf($invoice->getAppartments()),
         ]);
         $form->handleRequest($request);
 

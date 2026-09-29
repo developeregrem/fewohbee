@@ -750,6 +750,46 @@
                 <source>invoice.payment_due_date</source>
                 <target>Zahlbar bis</target>
             </trans-unit>
+            <trans-unit id="invoice.payment_due.label">
+                <source>invoice.payment_due.label</source>
+                <target>Fälligkeit</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.mode.settings">
+                <source>invoice.payment_due.mode.settings</source>
+                <target>{0}Wie in den Rechnungseinstellungen (sofort fällig)|{1}Wie in den Rechnungseinstellungen (%count% Tag)|]1,Inf]Wie in den Rechnungseinstellungen (%count% Tage)</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.mode.settings.none">
+                <source>invoice.payment_due.mode.settings.none</source>
+                <target>Wie in den Rechnungseinstellungen (dort ist keine Frist hinterlegt)</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.mode.days">
+                <source>invoice.payment_due.mode.days</source>
+                <target>Frist in Tagen ab Rechnungsdatum</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.mode.last_departure">
+                <source>invoice.payment_due.mode.last_departure</source>
+                <target>Bis zum letzten Abreisetag</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.mode.date">
+                <source>invoice.payment_due.mode.date</source>
+                <target>Festes Datum</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.help">
+                <source>invoice.payment_due.help</source>
+                <target>Tage und Abreisetag werden beim Speichern in ein festes Datum umgerechnet, das sich danach nicht mehr von selbst ändert. Liegt der letzte Abreisetag vor dem Rechnungsdatum, gilt das Rechnungsdatum.</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.days">
+                <source>invoice.payment_due.days</source>
+                <target>Tage ab Rechnungsdatum</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.date">
+                <source>invoice.payment_due.date</source>
+                <target>Fällig am</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.own">
+                <source>invoice.payment_due.own</source>
+                <target>Eigenes Datum für diese Rechnung</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

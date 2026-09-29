@@ -3,7 +3,7 @@
         <div class="ps-3 pe-3">    
             <div class="row">
                 <div class="col-md-7">
-                    {{ form_widget(form) }}
+                    {% include 'Invoices/_payment_remark_fields.html.twig' %}
                 </div>
                 <div class="col-md-5">
                     {% include 'Invoices/invoice_form_reservation_list_fields.html.twig' %}

@@ -1,0 +1,8 @@
+{# Fields of InvoicePaymentRemarkType, shared by the edit modal and the new-invoice preview. #}
+{% set dueMode = form.paymentDueMode.vars.value %}
+{{ form_row(form.paymentMeans) }}
+{{ form_row(form.paymentDueMode) }}
+{# Each input shows, and is required, only with its choice; see togglePaymentDueFieldsAction. #}
+{{ form_row(form.paymentDueDays, {'required': dueMode == 'days', 'row_attr': {'data-payment-due-field': 'days', 'class': dueMode == 'days' ? 'mb-3' : 'mb-3 d-none'}}) }}
+{{ form_row(form.paymentDueDate, {'required': dueMode == 'date', 'row_attr': {'data-payment-due-field': 'date', 'class': dueMode == 'date' ? 'mb-3' : 'mb-3 d-none'}}) }}
+{{ form_rest(form) }}

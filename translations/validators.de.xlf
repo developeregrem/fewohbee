@@ -98,6 +98,18 @@
                 <source>calendar.form.ics_file_invalid</source>
                 <target>Bitte eine gültige ICS-Datei (.ics) hochladen.</target>
             </trans-unit>
+            <trans-unit id="invoice.payment_due.days.required">
+                <source>invoice.payment_due.days.required</source>
+                <target>Bitte gib eine Anzahl von Tagen zwischen 0 und %max% an.</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.date.required">
+                <source>invoice.payment_due.date.required</source>
+                <target>Bitte wähle ein Datum.</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.no_departure">
+                <source>invoice.payment_due.no_departure</source>
+                <target>Die Rechnung hat keine Zimmerpositionen, aus denen sich ein Abreisetag ergibt.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

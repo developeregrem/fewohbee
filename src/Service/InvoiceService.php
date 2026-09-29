@@ -209,9 +209,10 @@ class InvoiceService
             'numbers' => $appartmentNumbers,
             'appartmentTotal' => number_format($appartmantTotal, 2, ',', '.'),
             'miscTotal' => number_format($miscTotal, 2, ',', '.'),
-            // Issuer data follows the invoice's branch, so a two-company setup prints
-            // each invoice's own payment period. Null when none is configured.
-            'paymentDueDate' => $this->readinessService?->resolveSettingsFor($invoice)?->dueDateFor($invoice->getDate()),
+            // The invoice may set its own due date; otherwise the issuer's period applies,
+            // following the invoice's branch so a two-company setup prints each one's own.
+            // Null when none applies.
+            'paymentDueDate' => $invoice->resolvePaymentDueDate($this->readinessService?->resolveSettingsFor($invoice)),
             // The portal's commission and payment fee for a booking through the
             // reservation's origin, worked out by OriginFeeCalculator - the same
             // one the deduction is booked from, so the guest is shown what the

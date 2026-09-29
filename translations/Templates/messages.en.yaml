@@ -136,8 +136,9 @@ templates.editor.payment_qr.desc: >-
 templates.editor.payment_due_date: Payment due date
 templates.editor.payment_due_date.desc: >-
   Inserts the day payment falls due, taken from the payment period in the
-  invoice settings so the printed date and the e-invoice always agree. The line
-  is left out when the settings state no period.
+  invoice settings or from the due date set on the invoice itself, so the
+  printed date and the e-invoice always agree. The line is left out when no
+  period applies.
 templates.editor.tourist_tax.positions.desc: >-
   Inserts a table with all tourist-tax / accommodation-tax positions. The
   table is only rendered when such positions exist on the invoice.

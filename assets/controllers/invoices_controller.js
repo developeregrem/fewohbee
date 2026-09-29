@@ -184,6 +184,9 @@ export default class extends Controller {
         const successUrl = event.currentTarget.dataset.successUrl;
         const form = event.target.closest('form');
         if (!url || !successUrl || !form) return;
+        // The request leaves for the overview whatever the server answers, so a field the
+        // server would reject has to be caught here, e.g. a payment period without days.
+        if (!form.reportValidity()) return;
         httpRequest({ 
             url, 
             method: 'POST', 
@@ -441,6 +444,17 @@ export default class extends Controller {
             url,
             method: 'GET',
             target: this.modalContent,
+        });
+    }
+
+    // Shows and requires the input belonging to the chosen way of entering the due date.
+    togglePaymentDueFieldsAction(event) {
+        const mode = event.currentTarget.value;
+        event.currentTarget.form?.querySelectorAll('[data-payment-due-field]').forEach((row) => {
+            const active = row.dataset.paymentDueField === mode;
+            row.classList.toggle('d-none', !active);
+            const input = row.querySelector('input');
+            if (input) input.required = active;
         });
     }
 

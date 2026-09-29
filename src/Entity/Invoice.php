@@ -78,6 +78,14 @@ class Invoice
     private ?string $buyerVatId = null;
 
     /**
+     * Due date set for this invoice alone. Null follows the payment period in the
+     * issuer's invoice settings, so changing those still reaches every invoice that
+     * was never given a date of its own.
+     */
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
+    private ?\DateTimeImmutable $paymentDueDate = null;
+
+    /**
      * Branch this invoice was issued for, derived from its reservations at creation time.
      * Drives the number range and the issuer (company) data.
      *
@@ -425,6 +433,60 @@ class Invoice
         $this->buyerVatId = $buyerVatId;
 
         return $this;
+    }
+
+    public function getPaymentDueDate(): ?\DateTimeImmutable
+    {
+        return $this->paymentDueDate;
+    }
+
+    public function setPaymentDueDate(?\DateTimeInterface $paymentDueDate): static
+    {
+        $this->paymentDueDate = null === $paymentDueDate ? null : \DateTimeImmutable::createFromInterface($paymentDueDate)->setTime(0, 0);
+
+        return $this;
+    }
+
+    /**
+     * The day payment falls due: this invoice's own date, else the invoice date plus
+     * the issuer's payment period. The template, the invoice view and the e-invoice
+     * all read it from here, so they never state different deadlines.
+     *
+     * Null when neither applies - the settings accept free-text terms instead. A
+     * caller that prints the date has to leave it out then rather than invent one.
+     */
+    public function resolvePaymentDueDate(?InvoiceSettingsData $settings): ?\DateTimeImmutable
+    {
+        if (null !== $this->paymentDueDate) {
+            return $this->paymentDueDate;
+        }
+        $days = $settings?->getPaymentDueDays();
+        if (null === $days || null === $this->date) {
+            return null;
+        }
+
+        return \DateTimeImmutable::createFromInterface($this->date)->modify('+'.$days.' days');
+    }
+
+    /**
+     * The latest end date among the given apartment positions, null without any.
+     *
+     * Static because an invoice in creation keeps its positions in the session, not
+     * in its own collection.
+     *
+     * @param iterable<InvoiceAppartment> $apartments
+     */
+    public static function lastDepartureOf(iterable $apartments): ?\DateTimeImmutable
+    {
+        $last = null;
+        foreach ($apartments as $apartment) {
+            $end = \DateTimeImmutable::createFromInterface($apartment->getEndDate())->setTime(0, 0);
+            if (null === $last || $end > $last) {
+                $last = $end;
+            }
+        }
+
+        return $last;
     }
 
     /**

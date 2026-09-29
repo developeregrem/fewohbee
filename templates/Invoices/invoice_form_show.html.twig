@@ -281,6 +281,26 @@
                 <div>{% if invoice.paymentMeans %}{{ invoice.paymentMeans.name|trans }}{% else %}-{% endif%}</div>
             </div>
             <div class="col">
+                <h5>{{ 'invoice.payment_due.label'|trans }}&nbsp;
+                    <small>
+                        <a href="#" data-action="click->invoices#changeInvoiceRemarkAction" data-url="{{ path('invoices.edit.invoice.remark.show', {'id': invoice.id}) }}"
+                           title="{{ 'button.edit'|trans }}" class="small invoice-edit-field d-none text-secondary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </small>
+                </h5>
+                <div>{% if paymentDueDate %}{{ 'invoice.payment_due_date'|trans }} {{ paymentDueDate|date('d.m.Y') }}{% else %}-{% endif %}</div>
+                <div class="text-muted small">
+                    {% if invoice.paymentDueDate %}
+                        {{ 'invoice.payment_due.own'|trans }}
+                    {% elseif settingsDueDays is null %}
+                        {{ 'invoice.payment_due.mode.settings.none'|trans }}
+                    {% else %}
+                        {{ 'invoice.payment_due.mode.settings'|trans({'%count%': settingsDueDays}) }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col">
                 <h5>{{ 'invoice.remark'|trans }}&nbsp;
                     <small>
                         <a href="#" data-action="click->invoices#changeInvoiceRemarkAction" data-url="{{ path('invoices.edit.invoice.remark.show', {'id': invoice.id}) }}"
