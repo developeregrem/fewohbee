@@ -19,7 +19,9 @@ enum ApiScope: string
     // are only evaluated by MCP tools for now.
     case MCP_ACCESS = 'mcp:access';
     case GUESTS_READ = 'guests:read';
+    case OPERATIONS_READ = 'operations:read';
     case RESERVATIONS_WRITE = 'reservations:write';
+    case PRICES_WRITE = 'prices:write';
 
     /** The role the token owner needs for the scope to take effect; null when any active user qualifies. */
     public function requiredRole(): ?string
@@ -34,7 +36,10 @@ enum ApiScope: string
             self::SUBSIDIARIES_READ => 'ROLE_RESERVATIONS_RO',
             self::MCP_ACCESS => null,
             self::GUESTS_READ => 'ROLE_CUSTOMERS',
+            self::OPERATIONS_READ => 'ROLE_OPERATIONS',
             self::RESERVATIONS_WRITE => 'ROLE_RESERVATIONS',
+            // Prices are configured in the settings, which only administrators reach.
+            self::PRICES_WRITE => 'ROLE_ADMIN',
         };
     }
 
@@ -42,7 +47,7 @@ enum ApiScope: string
     public function isMcpScope(): bool
     {
         return match ($this) {
-            self::MCP_ACCESS, self::GUESTS_READ, self::RESERVATIONS_WRITE => true,
+            self::MCP_ACCESS, self::GUESTS_READ, self::OPERATIONS_READ, self::RESERVATIONS_WRITE, self::PRICES_WRITE => true,
             default => false,
         };
     }
@@ -59,7 +64,9 @@ enum ApiScope: string
             self::SUBSIDIARIES_READ => 'profile.apitokens.scopes.subsidiaries_read',
             self::MCP_ACCESS => 'profile.apitokens.scopes.mcp_access',
             self::GUESTS_READ => 'profile.apitokens.scopes.guests_read',
+            self::OPERATIONS_READ => 'profile.apitokens.scopes.operations_read',
             self::RESERVATIONS_WRITE => 'profile.apitokens.scopes.reservations_write',
+            self::PRICES_WRITE => 'profile.apitokens.scopes.prices_write',
         };
     }
 }

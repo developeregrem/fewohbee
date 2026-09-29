@@ -19,19 +19,30 @@ class McpToolCallLogRepository extends ServiceEntityRepository
     }
 
     /**
+     * Newest first; $page starts at 1.
+     *
      * @return list<McpToolCallLog>
      */
-    public function findLatest(int $limit): array
+    public function findPage(int $page, int $perPage): array
     {
         /** @var list<McpToolCallLog> $result */
         $result = $this->createQueryBuilder('l')
             ->orderBy('l.createdAt', 'DESC')
             ->addOrderBy('l.id', 'DESC')
-            ->setMaxResults($limit)
+            ->setFirstResult(($page - 1) * $perPage)
+            ->setMaxResults($perPage)
             ->getQuery()
             ->getResult();
 
         return $result;
+    }
+
+    public function countAll(): int
+    {
+        return (int) $this->createQueryBuilder('l')
+            ->select('COUNT(l.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     public function purgeOlderThan(\DateTimeImmutable $before): int

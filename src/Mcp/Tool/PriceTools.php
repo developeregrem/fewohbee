@@ -4,11 +4,20 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tool;
 
+use App\Dto\Api\PriceDto;
+use App\Entity\Appartment;
 use App\Entity\Enum\ApiScope;
+use App\Entity\Price;
+use App\Entity\ReservationOrigin;
+use App\Entity\RoomCategory;
 use App\Mcp\Security\McpRequiresScope;
+use App\Mcp\Security\McpToolException;
+use App\Mcp\Support\McpInput;
 use App\Mcp\Support\StayInput;
+use App\Repository\PriceRepository;
 use App\Security\Voter\ApiScopeVoter;
 use App\Service\Api\PriceQuoteService;
+use App\Service\Api\RateCalendarService;
 use App\Service\Api\StayParameterResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Mcp\Capability\Attribute\McpTool;
@@ -17,13 +26,19 @@ use Mcp\Schema\ToolAnnotations;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
- * Price information calculated by the same pipeline as invoices.
+ * Price information: quotes calculated by the same pipeline as invoices, the rate calendar and
+ * the configured price rows.
  */
 final class PriceTools
 {
+    private const MAX_RATE_NIGHTS = 366;
+    private const MAX_PRICE_ROWS = 100;
+
     public function __construct(
         private readonly PriceQuoteService $priceQuoteService,
         private readonly StayParameterResolver $stayParameterResolver,
+        private readonly RateCalendarService $rateCalendarService,
+        private readonly PriceRepository $priceRepository,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly EntityManagerInterface $em,
     ) {
@@ -71,5 +86,177 @@ final class PriceTools
         $data = json_decode((string) json_encode($quote), true);
 
         return $data;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[McpTool(
+        name: 'get_rate_calendar',
+        title: 'Rate calendar',
+        description: 'Which room price applies per night and occupancy for a room category (at most 366 nights), from the configured price list. Consecutive nights with identical rates are merged into one period; a period without rates cannot be priced. The rate depends on the intended stay length because of minimum stay rules, so pass nights for longer stays. For the total of a concrete stay use get_price_quote.',
+        annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
+    )]
+    #[McpRequiresScope(ApiScope::PRICES_READ)]
+    public function rateCalendar(
+        #[Schema(description: 'First night, YYYY-MM-DD.')]
+        string $start,
+        #[Schema(type: 'string', description: 'Last night (inclusive), YYYY-MM-DD. Defaults to start.')]
+        ?string $end = null,
+        #[Schema(type: 'integer', description: 'Room category id. Required unless apartmentId is given.')]
+        ?int $roomCategoryId = null,
+        #[Schema(type: 'integer', description: 'Room (apartment) id; its room category is used.')]
+        ?int $apartmentId = null,
+        #[Schema(description: 'Intended stay length in nights; selects rates with a minimum stay.', minimum: 1, maximum: 366)]
+        int $nights = 1,
+        #[Schema(type: 'integer', description: 'Only this occupancy (number of persons). Defaults to every occupancy with a price.', minimum: 1)]
+        ?int $occupancy = null,
+        #[Schema(type: 'integer', description: 'Booking origin id; prices can differ per origin. Defaults to the online booking origin.')]
+        ?int $originId = null,
+    ): array {
+        $firstNight = McpInput::date($start, 'start');
+        $lastNight = null !== $end ? McpInput::date($end, 'end') : $firstNight;
+        if ($lastNight < $firstNight) {
+            throw McpToolException::invalid("'end' must not be before 'start'.");
+        }
+        if ((int) $firstNight->diff($lastNight)->days >= self::MAX_RATE_NIGHTS) {
+            throw McpToolException::invalid(\sprintf('The range must not exceed %d nights.', self::MAX_RATE_NIGHTS));
+        }
+        if ($nights < 1 || $nights > self::MAX_RATE_NIGHTS) {
+            throw McpToolException::invalid(\sprintf("'nights' must be between 1 and %d.", self::MAX_RATE_NIGHTS));
+        }
+        if (null !== $occupancy && $occupancy < 1) {
+            throw McpToolException::invalid("'occupancy' must be at least 1.");
+        }
+
+        [$roomCategory, $sampleRoom] = $this->resolveRoomCategory($roomCategoryId, $apartmentId);
+        $origin = McpInput::guard(fn (): ReservationOrigin => $this->stayParameterResolver->resolveOrigin($originId));
+        // numberOfPersons is matched exactly, so only occupancies with a price are worth asking for.
+        $occupancies = null !== $occupancy ? [$occupancy] : $this->priceRepository->findOccupanciesForRoomCategory($roomCategory);
+
+        $calendar = $this->rateCalendarService->build($sampleRoom, $firstNight, $lastNight, $nights, $occupancies, $origin);
+
+        return [
+            'roomCategory' => ['id' => $roomCategory->getId(), 'name' => $roomCategory->getName()],
+            'origin' => ['id' => $origin->getId(), 'name' => $origin->getName()],
+            'nights' => $nights,
+            'occupancies' => $occupancies,
+            'periods' => self::mergeNights($calendar),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[McpTool(
+        name: 'get_price_rules',
+        title: 'Price rules',
+        description: 'The configured price rows (the price list): room prices and extras with amount, occupancy, minimum stay, weekdays, season, special periods, booking origins and room categories. Use it to explain when which price applies; for the total of a concrete stay use get_price_quote. At most 100 rows per call.',
+        annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
+    )]
+    #[McpRequiresScope(ApiScope::PRICES_READ)]
+    public function priceRules(
+        #[Schema(type: 'string', description: 'Only room prices or only extras.', enum: ['apartment', 'misc'])]
+        ?string $type = null,
+        #[Schema(type: 'integer', description: 'Only rows for this room category.')]
+        ?int $roomCategoryId = null,
+        #[Schema(type: 'integer', description: 'Only rows for this booking origin.')]
+        ?int $originId = null,
+        #[Schema(description: 'Also return inactive rows.')]
+        bool $includeInactive = false,
+        #[Schema(description: 'Number of rows to skip (pagination).', minimum: 0)]
+        int $offset = 0,
+    ): array {
+        $typeId = match ($type) {
+            null => null,
+            'apartment' => 2,
+            'misc' => 1,
+            default => throw McpToolException::invalid("'type' must be 'apartment' or 'misc'."),
+        };
+        if (null !== $roomCategoryId && !$this->em->getRepository(RoomCategory::class)->find($roomCategoryId) instanceof RoomCategory) {
+            throw McpToolException::invalid('Unknown room category id.');
+        }
+        if (null !== $originId && !$this->em->getRepository(ReservationOrigin::class)->find($originId) instanceof ReservationOrigin) {
+            throw McpToolException::invalid('Unknown origin id.');
+        }
+
+        $prices = $this->priceRepository->findForCatalogue(
+            $typeId,
+            $roomCategoryId,
+            null !== $originId ? [$originId] : [],
+            $includeInactive ? null : true,
+        );
+        $offset = max(0, $offset);
+        // Sliced here: the catalogue query fetch-joins collections, which SQL limits would cut.
+        $page = \array_slice($prices, $offset, self::MAX_PRICE_ROWS);
+
+        /** @var list<array<string, mixed>> $rows */
+        $rows = json_decode((string) json_encode(array_map(static fn (Price $price): PriceDto => PriceDto::fromEntity($price), $page)), true);
+
+        return [
+            'prices' => $rows,
+            'total' => \count($prices),
+            'offset' => $offset,
+            'hasMore' => $offset + \count($page) < \count($prices),
+        ];
+    }
+
+    /**
+     * The room category to report and a room of it to price with (the rate calendar prices a
+     * sample reservation).
+     *
+     * @return array{0: RoomCategory, 1: Appartment}
+     */
+    private function resolveRoomCategory(?int $roomCategoryId, ?int $apartmentId): array
+    {
+        if (null !== $apartmentId) {
+            $apartment = $this->em->getRepository(Appartment::class)->find($apartmentId);
+            if (!$apartment instanceof Appartment) {
+                throw McpToolException::invalid('Unknown room (apartment) id.');
+            }
+            $category = $apartment->getRoomCategory();
+            if (!$category instanceof RoomCategory) {
+                throw McpToolException::invalid('This room has no room category and therefore no room prices.');
+            }
+
+            return [$category, $apartment];
+        }
+
+        if (null === $roomCategoryId) {
+            throw McpToolException::invalid("Pass 'roomCategoryId' or 'apartmentId'.");
+        }
+        $category = $this->em->getRepository(RoomCategory::class)->find($roomCategoryId);
+        if (!$category instanceof RoomCategory) {
+            throw McpToolException::invalid('Unknown room category id.');
+        }
+        $sampleRoom = $this->em->getRepository(Appartment::class)->findOneBy(['roomCategory' => $category]);
+        if (!$sampleRoom instanceof Appartment) {
+            throw McpToolException::invalid('No room is assigned to this room category.');
+        }
+
+        return [$category, $sampleRoom];
+    }
+
+    /**
+     * Merges consecutive nights with identical rates into periods, which keeps a year of rates
+     * small enough for the model.
+     *
+     * @param list<array{date: string, rates: list<array<string, mixed>>}> $calendar
+     *
+     * @return list<array{firstNight: string, lastNight: string, rates: list<array<string, mixed>>}>
+     */
+    public static function mergeNights(array $calendar): array
+    {
+        $periods = [];
+        foreach ($calendar as $night) {
+            $last = array_key_last($periods);
+            if (null !== $last && $periods[$last]['rates'] === $night['rates']) {
+                $periods[$last]['lastNight'] = $night['date'];
+                continue;
+            }
+            $periods[] = ['firstNight' => $night['date'], 'lastNight' => $night['date'], 'rates' => $night['rates']];
+        }
+
+        return $periods;
     }
 }

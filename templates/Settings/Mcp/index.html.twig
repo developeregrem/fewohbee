@@ -115,40 +115,11 @@
                         <h5 class="card-title fs-6 mb-0"><i class="fas fa-list text-primary me-2"></i>{{ 'mcp.settings.section.log'|trans }}</h5>
                         <p class="text-body-secondary small mb-0 mt-1">{{ 'mcp.settings.log.desc'|trans }}</p>
                     </div>
-                    <div class="card-body">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>{{ 'mcp.settings.log.date'|trans }}</th>
-                                    <th>{{ 'mcp.settings.tokens.user'|trans }}</th>
-                                    <th>{{ 'mcp.settings.log.tool'|trans }}</th>
-                                    <th>{{ 'mcp.settings.log.outcome'|trans }}</th>
-                                    <th>{{ 'mcp.settings.log.details'|trans }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for log in logs %}
-                                    <tr>
-                                        <td class="text-nowrap">{{ log.createdAt|date('Y-m-d H:i:s') }}</td>
-                                        <td>{{ log.username }} <span class="font-monospace text-body-secondary small">{{ log.tokenPrefix }}</span></td>
-                                        <td class="font-monospace small">{{ log.toolName }}</td>
-                                        <td>
-                                            <span class="badge {{ log.outcome.value == 'ok' ? 'text-bg-success' : (log.outcome.value == 'error' ? 'text-bg-danger' : 'text-bg-warning') }}">
-                                                {{ ('mcp.settings.log.outcomes.' ~ log.outcome.value)|trans }}
-                                            </span>
-                                        </td>
-                                        <td class="small">
-                                            {% if log.details.reservationId is defined %}
-                                                {{ 'mcp.settings.log.reservation'|trans({'%id%': log.details.reservationId}) }}
-                                                {% if log.details.arrival is defined %}{{ log.details.arrival }} – {{ log.details.departure }}{% endif %}
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% else %}
-                                    <tr><td colspan="5" class="text-center text-body-secondary">{{ 'mcp.settings.log.none'|trans }}</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="card-body"
+                         data-controller="log-pagination"
+                         data-log-pagination-url-value="{{ path('settings.mcp.logs') }}"
+                         data-action="click->log-pagination#paginate">
+                        {% include 'Settings/Mcp/_log_table.html.twig' with logPage %}
                     </div>
                 </div>
             {% endif %}

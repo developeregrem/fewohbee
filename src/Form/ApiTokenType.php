@@ -165,8 +165,9 @@ class ApiTokenType extends AbstractType
     }
 
     /**
-     * AI options the user may grant: only while MCP is on, only scopes their roles back, and
-     * "Create reservations" only while it is allowed for all users.
+     * AI options the user may grant: only while MCP is on, only scopes their roles back (so "Add
+     * special prices" only for administrators), and "Create reservations" only while it is allowed
+     * for all users.
      *
      * @return list<ApiScope>
      */
@@ -176,7 +177,7 @@ class ApiTokenType extends AbstractType
             return [];
         }
 
-        $candidates = [ApiScope::GUESTS_READ];
+        $candidates = [ApiScope::GUESTS_READ, ApiScope::OPERATIONS_READ, ApiScope::PRICES_WRITE];
         if ($this->mcpSettings->isWriteAllowed()) {
             $candidates[] = ApiScope::RESERVATIONS_WRITE;
         }

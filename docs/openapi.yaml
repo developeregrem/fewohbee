@@ -1264,6 +1264,7 @@ components:
             properties:
               startDate: { type: string, format: date }
               endDate: { type: string, format: date }
+              description: { type: [string, 'null'], description: 'Optional label, e.g. the event the period was added for.' }
         seasonStart: { type: [string, 'null'], format: date }
         seasonEnd: { type: [string, 'null'], format: date }
         isBookableOnline: { type: boolean, description: 'Whether a miscellaneous price can be selected by guests in online booking and self check-in.' }

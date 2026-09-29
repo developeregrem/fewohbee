@@ -209,9 +209,19 @@
                                data-action="click->prices#addPeriodAction"
                                data-start-selector="#periodstart-{{ price.id }}"
                                data-end-selector="#periodend-{{ price.id }}"
+                               data-description-selector="#perioddescription-{{ price.id }}"
                                data-target-selector="#periods-field-{{ price.id }}">
                                 <i class="fas fa-plus"></i>
                             </a>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="perioddescription-{{ price.id }}"
+                                   maxlength="100"
+                                   placeholder="{{ 'price.period.description'|trans }}"
+                                   {% if price.seasonStart is null %} disabled{% endif %}>
                         </div>
                     </div>
                     <div class="row">
@@ -219,11 +229,12 @@
                         <div class="col" id="periods-field-{{ price.id }}" data-action="click->prices#removePeriodAction">
                         {% for pricePeriod in price.pricePeriods %}
                             <div class="price-period float-start">
-                                <span class="badge rounded-pill bg-info fw-normal">{{ pricePeriod.start|date('d.m.Y') }} - {{ pricePeriod.end|date('d.m.Y') }}
+                                <span class="badge rounded-pill bg-info fw-normal">{{ pricePeriod.start|date('d.m.Y') }} - {{ pricePeriod.end|date('d.m.Y') }}{% if pricePeriod.description %} · {{ pricePeriod.description }}{% endif %}
                                     <button type="button" class="btn-close btn-close-white" aria-label="Close">&nbsp;</button>
                                 </span>                                 
                                 <input type="hidden" name="periodstart-{{ pricePeriod.id }}[]" value="{{ pricePeriod.start|date('Y-m-d') }}" />
                                 <input type="hidden" name="periodend-{{ pricePeriod.id }}[]" value="{{ pricePeriod.end|date('Y-m-d') }}" />
+                                <input type="hidden" name="perioddescription-{{ pricePeriod.id }}[]" value="{{ pricePeriod.description }}" />
                                 <input type="hidden" name="period-{{ price.id }}[]" value="{{ pricePeriod.id }}" />
                             </div>
                         {% endfor %}
@@ -494,6 +505,7 @@
         </span> 
         <input type="hidden" name="periodstart-new[]" value="" disabled />
         <input type="hidden" name="periodend-new[]" value="" disabled />        
+        <input type="hidden" name="perioddescription-new[]" value="" disabled />
         <input type="hidden" name="period-{{ price.id }}[]" value="new" disabled />
     </div>
 </div>

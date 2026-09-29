@@ -53,7 +53,9 @@ profile:
       subsidiaries_read: Niederlassungen lesen (Stammdaten und Öffnungszeiten)
       mcp_access: KI-Assistent (MCP)
       guests_read: Gästedaten weitergeben (Namen, Kontaktdaten, Bemerkungen)
+      operations_read: Betrieb lesen (Zimmerplan, Housekeeping, Zimmersperrungen)
       reservations_write: Reservierungen anlegen
+      prices_write: Sonderpreise anlegen (Sonderzeiträume an Preisen, nur nach Vorschau)
     kind:
       label: Verwendung
       api: REST-API und Kalender-Programme

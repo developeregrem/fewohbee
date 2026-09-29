@@ -59,12 +59,13 @@ mcp:
       revoke_ask: Zugang widerrufen?
       revoked: Der Zugang wurde widerrufen.
     log:
-      desc: Die letzten 50 Aufrufe von KI-Assistenten. Einträge werden nach 90 Tagen gelöscht.
+      desc: Alle Aufrufe von KI-Assistenten, die neuesten zuerst. Einträge werden nach 90 Tagen gelöscht.
       date: Zeitpunkt
       tool: Aktion
       outcome: Ergebnis
       details: Details
       reservation: 'Reservierung #%id%'
+      price: 'Preis #%id%'
       none: Noch keine Aufrufe.
       outcomes:
         ok: erfolgreich

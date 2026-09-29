@@ -6,6 +6,7 @@ namespace App\Mcp\Tool;
 
 use App\Entity\Enum\ApiScope;
 use App\Entity\Enum\InvoiceStatus;
+use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
 use App\Mcp\Security\McpRequiresScope;
 use App\Mcp\Security\McpToolException;
@@ -130,6 +131,44 @@ final class StatisticsTools
         $result = $this->monthlyStatsService->buildMetrics((int) $monthStart->format('n'), (int) $monthStart->format('Y'), $subsidiary);
 
         return $result['metrics'];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[McpTool(
+        name: 'get_booking_pace',
+        title: 'Booking pace',
+        description: 'Booked room nights for a stay period (at most 366 nights) as of a cut-off day, compared with the same period one year earlier as of the same cut-off day, plus what is booked for both periods now. Shows whether bookings run ahead of or behind last year and how much the previous year still gained after the cut-off. Canceled or deleted reservations are not counted, not even for the time before their cancellation.',
+        annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
+    )]
+    #[McpRequiresScope(ApiScope::STATISTICS_READ)]
+    public function bookingPace(
+        #[Schema(description: 'First night of the stay period, YYYY-MM-DD.')]
+        string $start,
+        #[Schema(description: 'Last night of the stay period (inclusive), YYYY-MM-DD.')]
+        string $end,
+        #[Schema(type: 'string', description: 'Last booking day that counts, YYYY-MM-DD. Defaults to today.')]
+        ?string $asOf = null,
+        #[Schema(type: 'integer', description: 'Property (object) id; all properties when omitted.')]
+        ?int $objectId = null,
+        #[Schema(type: 'integer', description: 'Only rooms of this room category.')]
+        ?int $roomCategoryId = null,
+    ): array {
+        $firstNight = McpInput::date($start, 'start');
+        $lastNight = McpInput::date($end, 'end');
+        $cutOff = null !== $asOf ? McpInput::date($asOf, 'asOf') : new \DateTimeImmutable('today');
+        if ($lastNight < $firstNight) {
+            throw McpToolException::invalid("'end' must not be before 'start'.");
+        }
+        if ((int) $firstNight->diff($lastNight)->days >= StatisticsQueryService::MAX_PACE_NIGHTS) {
+            throw McpToolException::invalid(\sprintf('The period must not exceed %d nights.', StatisticsQueryService::MAX_PACE_NIGHTS));
+        }
+        if (null !== $roomCategoryId && !$this->em->getRepository(RoomCategory::class)->find($roomCategoryId) instanceof RoomCategory) {
+            throw McpToolException::invalid('Unknown room category id.');
+        }
+
+        return $this->statisticsQueryService->bookingPace($firstNight, $lastNight, $cutOff, $this->resolveObjectId($objectId), $roomCategoryId);
     }
 
     private function resolveObjectId(?int $objectId): string

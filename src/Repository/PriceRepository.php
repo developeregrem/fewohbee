@@ -10,6 +10,7 @@ use App\Entity\PriceComponent;
 use App\Entity\Reservation;
 use App\Entity\RoomCategory;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Query\Expr;
 use Doctrine\Persistence\ManagerRegistry;
@@ -139,9 +140,50 @@ class PriceRepository extends ServiceEntityRepository
     }
 
     /**
+     * Ids of the active apartment rows with special periods that compete with the rules of $price
+     * (occupancy, minimum stay, room category, origin, weekday) on a night between $start and $end
+     * (both inclusive). Only ids are selected: the period filter would otherwise hydrate the
+     * period collections of the returned rows partially.
+     *
+     * @return list<int>
+     */
+    public function findConflictingPriceIdsForPeriod(Price $price, \DateTimeImmutable $start, \DateTimeImmutable $end): array
+    {
+        return $this->findSpecialPriceIdsForPeriod($this->conflictingBaseQuery($price), $start, $end);
+    }
+
+    /**
+     * Like findConflictingPriceIdsForPeriod(), but the rows with a different minimum stay. They do
+     * not conflict: for each night the row with the higher minimum stay wins once the stay is long
+     * enough, the other keeps the shorter stays.
+     *
+     * @return list<int>
+     */
+    public function findPriceIdsForOtherStayLengthsForPeriod(Price $price, \DateTimeImmutable $start, \DateTimeImmutable $end): array
+    {
+        return $this->findSpecialPriceIdsForPeriod($this->conflictingBaseQuery($price, sameMinStay: false), $start, $end);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function findSpecialPriceIdsForPeriod(\Doctrine\ORM\QueryBuilder $qb, \DateTimeImmutable $start, \DateTimeImmutable $end): array
+    {
+        $rows = $qb
+            ->select('DISTINCT p.id')
+            ->andWhere('pp.start <= :end AND pp.end >= :start')
+            ->setParameter('start', $start, Types::DATE_IMMUTABLE)
+            ->setParameter('end', $end, Types::DATE_IMMUTABLE)
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_values(array_map(static fn (array $row): int => (int) $row['id'], $rows));
+    }
+
+    /**
      * @return \Doctrine\ORM\QueryBuilder
      */
-    private function conflictingBaseQuery(Price $price)
+    private function conflictingBaseQuery(Price $price, bool $sameMinStay = true)
     {
         $q = $this
             ->createQueryBuilder('p')
@@ -151,7 +193,7 @@ class PriceRepository extends ServiceEntityRepository
                 /* select only room type and active prices */
             ->where('p.type = 2 AND p.active = true')
                 /* make sure that all room specific fields match */
-            ->andWhere('p.minStay = :ms and p.numberOfPersons = :nop')
+            ->andWhere($sameMinStay ? 'p.minStay = :ms and p.numberOfPersons = :nop' : 'p.minStay <> :ms and p.numberOfPersons = :nop')
                 /* the prices share at least one room category */
             ->andWhere(':rcs MEMBER OF p.roomCategories')
                 /* select only prices for the given reservation origin */

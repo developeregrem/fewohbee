@@ -58,12 +58,13 @@ mcp:
       revoke_ask: Revoke access?
       revoked: The access was revoked.
     log:
-      desc: The last 50 calls by AI assistants. Entries are deleted after 90 days.
+      desc: All calls by AI assistants, newest first. Entries are deleted after 90 days.
       date: Time
       tool: Action
       outcome: Result
       details: Details
       reservation: 'Reservation #%id%'
+      price: 'Price #%id%'
       none: No calls yet.
       outcomes:
         ok: successful

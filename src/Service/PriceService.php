@@ -965,6 +965,7 @@ class PriceService
         foreach ($periodIds as $id) {
             $starts = $request->request->all('periodstart-'.$id) ?? [];
             $ends = $request->request->all('periodend-'.$id) ?? [];
+            $descriptions = $request->request->all('perioddescription-'.$id) ?? [];
 
             foreach ($starts as $key => $start) {
                 if ('new' !== $id) {
@@ -979,6 +980,7 @@ class PriceService
                 }
                 $pricePeriod->setStart(new \DateTime($start));
                 $pricePeriod->setEnd(new \DateTime($ends[$key]));
+                $pricePeriod->setDescription(mb_substr((string) ($descriptions[$key] ?? ''), 0, 100));
 
                 $allAddedPeriods->add($pricePeriod);
                 $price->addPricePeriod($pricePeriod);

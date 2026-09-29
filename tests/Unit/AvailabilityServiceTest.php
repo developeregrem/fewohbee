@@ -181,6 +181,33 @@ final class AvailabilityServiceTest extends TestCase
         ], $result);
     }
 
+    public function testRoomNightsPerDayCountsABookedAndBlockedRoomAsBookedOnly(): void
+    {
+        $roomA = self::makeRoom(1);
+        $roomB = self::makeRoom(2);
+
+        $reservationRepo = $this->createStub(ReservationRepository::class);
+        $reservationRepo->method('loadBlockingSpansForPeriod')->willReturn([
+            ['appartmentId' => 1, 'startDate' => '2026-08-01', 'endDate' => '2026-08-03'],
+        ]);
+        $blockRepo = $this->createStub(RoomBlockRepository::class);
+        $blockRepo->method('findForPeriod')->willReturn([
+            self::makeBlock($roomA, '2026-08-02', '2026-08-04'),
+            self::makeBlock($roomB, '2026-08-01', '2026-08-02'),
+        ]);
+        $apartmentRepo = $this->createStub(AppartmentRepository::class);
+        $apartmentRepo->method('findAllByProperty')->willReturn([$roomA, $roomB]);
+
+        $service = new AvailabilityService($reservationRepo, $blockRepo, $apartmentRepo);
+        $result = $service->getRoomNightsPerDay('all', null, new \DateTimeImmutable('2026-08-01'), new \DateTimeImmutable('2026-08-04'));
+
+        self::assertSame([
+            '2026-08-01' => ['rooms' => 2, 'booked' => 1, 'blocked' => 1, 'available' => 0],
+            '2026-08-02' => ['rooms' => 2, 'booked' => 1, 'blocked' => 0, 'available' => 1],
+            '2026-08-03' => ['rooms' => 2, 'booked' => 0, 'blocked' => 1, 'available' => 1],
+        ], $result);
+    }
+
     public function testCountAvailablePerDayFiltersByCategory(): void
     {
         $category = new \App\Entity\RoomCategory();

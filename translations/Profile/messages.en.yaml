@@ -53,7 +53,9 @@ profile:
       subsidiaries_read: Read branches (master data and opening hours)
       mcp_access: AI assistant (MCP)
       guests_read: Share guest data (names, contact details, remarks)
+      operations_read: Read operations (room plan, housekeeping, room blocks)
       reservations_write: Create reservations
+      prices_write: Add special prices (special periods on prices, only after preview)
     kind:
       label: Use
       api: REST API and calendar clients

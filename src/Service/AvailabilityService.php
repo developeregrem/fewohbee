@@ -189,6 +189,22 @@ class AvailabilityService
      */
     public function countAvailablePerDay(string|int $objectId, ?int $roomCategoryId, \DateTimeImmutable $from, \DateTimeImmutable $toExclusive): array
     {
+        return array_map(
+            static fn (array $night): int => $night['available'],
+            $this->getRoomNightsPerDay($objectId, $roomCategoryId, $from, $toExclusive),
+        );
+    }
+
+    /**
+     * Room counts per night for a subsidiary/category scope: active rooms, rooms occupied by a
+     * blocking reservation, rooms blocked without such a reservation, and the free rest.
+     * A room that is booked and blocked on the same night counts as booked only.
+     *
+     * @return array<string, array{rooms: int, booked: int, blocked: int, available: int}> keyed by Y-m-d
+     *                                                                                      (nights from $from up to, excluding, $toExclusive)
+     */
+    public function getRoomNightsPerDay(string|int $objectId, ?int $roomCategoryId, \DateTimeImmutable $from, \DateTimeImmutable $toExclusive): array
+    {
         $rooms = $this->appartmentRepository->findAllByProperty($objectId);
         if (null !== $roomCategoryId) {
             $rooms = array_filter(
@@ -196,29 +212,37 @@ class AvailabilityService
                 static fn (Appartment $room): bool => $room->getRoomCategory()?->getId() === $roomCategoryId
             );
         }
-        $roomIds = array_map(static fn (Appartment $room) => $room->getId(), $rooms);
-        $roomIdSet = array_flip($roomIds);
-        $totalRooms = count($roomIds);
+        $roomIdSet = array_flip(array_map(static fn (Appartment $room) => $room->getId(), $rooms));
+        $totalRooms = count($roomIdSet);
 
-        $spans = $this->reservationRepository->loadBlockingSpansForPeriod($from, $toExclusive, $objectId, $roomCategoryId);
+        $booked = $this->expandSpansPerDay(
+            $this->reservationRepository->loadBlockingSpansForPeriod($from, $toExclusive, $objectId, $roomCategoryId),
+            $from,
+            $toExclusive,
+            $roomIdSet,
+        );
+
+        $blockSpans = [];
         foreach ($this->roomBlockRepository->findForPeriod($from, $toExclusive, $objectId) as $block) {
-            $room = $block->getAppartment();
-            if (null !== $roomCategoryId && $room->getRoomCategory()?->getId() !== $roomCategoryId) {
-                continue;
-            }
-            $spans[] = [
-                'appartmentId' => $room->getId(),
+            $blockSpans[] = [
+                'appartmentId' => $block->getAppartment()->getId(),
                 'startDate' => $block->getStartDate()->format('Y-m-d'),
                 'endDate' => $block->getEndDate()->format('Y-m-d'),
             ];
         }
-
-        $unavailable = $this->expandSpansPerDay($spans, $from, $toExclusive, $roomIdSet);
+        $blocked = $this->expandSpansPerDay($blockSpans, $from, $toExclusive, $roomIdSet);
 
         $result = [];
         for ($day = $from; $day < $toExclusive; $day = $day->modify('+1 day')) {
             $key = $day->format('Y-m-d');
-            $result[$key] = $totalRooms - count($unavailable[$key] ?? []);
+            $bookedRooms = count($booked[$key] ?? []);
+            $blockedRooms = count(array_diff_key($blocked[$key] ?? [], $booked[$key] ?? []));
+            $result[$key] = [
+                'rooms' => $totalRooms,
+                'booked' => $bookedRooms,
+                'blocked' => $blockedRooms,
+                'available' => $totalRooms - $bookedRooms - $blockedRooms,
+            ];
         }
 
         return $result;

@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\PricePeriod;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -21,32 +22,30 @@ class PricePeriodRepository extends ServiceEntityRepository
         parent::__construct($registry, PricePeriod::class);
     }
 
-    // /**
-    //  * @return PricePeriod[] Returns an array of PricePeriod objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    /**
+     * Periods of the given price rows that share at least one night with $start..$end (inclusive).
+     *
+     * @param list<int> $priceIds
+     *
+     * @return list<PricePeriod>
+     */
+    public function findOverlappingForPrices(array $priceIds, \DateTimeImmutable $start, \DateTimeImmutable $end): array
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('p.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        if ([] === $priceIds) {
+            return [];
+        }
 
-    /*
-    public function findOneBySomeField($value): ?PricePeriod
-    {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
+        /** @var list<PricePeriod> $periods */
+        $periods = $this->createQueryBuilder('pp')
+            ->andWhere('pp.price IN (:prices)')
+            ->andWhere('pp.start <= :end AND pp.end >= :start')
+            ->setParameter('prices', $priceIds)
+            ->setParameter('start', $start, Types::DATE_IMMUTABLE)
+            ->setParameter('end', $end, Types::DATE_IMMUTABLE)
+            ->orderBy('pp.start', 'ASC')
             ->getQuery()
-            ->getOneOrNullResult()
-        ;
+            ->getResult();
+
+        return $periods;
     }
-    */
 }

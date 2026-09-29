@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\ApiToken;
 use App\Entity\Enum\ApiScope;
+use App\Entity\McpToolCallLog;
 use App\Form\McpSettingsType;
 use App\Repository\ApiTokenRepository;
 use App\Repository\McpToolCallLogRepository;
@@ -27,7 +28,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_ADMIN')]
 final class McpSettingsController extends AbstractController
 {
-    private const LOG_LIMIT = 50;
+    private const LOG_PER_PAGE = 25;
 
     public function __construct(
         private readonly McpSettings $mcpSettings,
@@ -88,8 +89,37 @@ final class McpSettingsController extends AbstractController
             'secure' => $request->isSecure(),
             'insecureHttpAllowed' => $this->mcpSettings->isInsecureHttpAllowed(),
             'mcpTokens' => $mcpTokens,
-            'logs' => $settings->isMcpEnabled() ? $logRepository->findLatest(self::LOG_LIMIT) : [],
+            'logPage' => $settings->isMcpEnabled() ? $this->logPage($logRepository, 1) : null,
         ]);
+    }
+
+    /**
+     * One page of the audit log, reloaded into the settings page by the paginator.
+     */
+    #[Route('/logs', name: 'settings.mcp.logs', methods: ['GET'])]
+    public function logs(Request $request, McpToolCallLogRepository $logRepository): Response
+    {
+        if (!$this->mcpSettings->isAvailable()) {
+            throw $this->createNotFoundException();
+        }
+
+        return $this->render('Settings/Mcp/_log_table.html.twig', $this->logPage($logRepository, $request->query->getInt('page', 1)));
+    }
+
+    /**
+     * @return array{logs: list<McpToolCallLog>, page: int, pages: int}
+     */
+    private function logPage(McpToolCallLogRepository $logRepository, int $page): array
+    {
+        $total = $logRepository->countAll();
+        $pages = max(1, (int) ceil($total / self::LOG_PER_PAGE));
+        $page = min(max(1, $page), $pages);
+
+        return [
+            'logs' => $logRepository->findPage($page, self::LOG_PER_PAGE),
+            'page' => $page,
+            'pages' => $pages,
+        ];
     }
 
     /**
