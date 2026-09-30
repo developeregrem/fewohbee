@@ -22,6 +22,7 @@ enum ApiScope: string
     case OPERATIONS_READ = 'operations:read';
     case RESERVATIONS_WRITE = 'reservations:write';
     case PRICES_WRITE = 'prices:write';
+    case BANK_IMPORT_WRITE = 'bank-import:write';
 
     /** The role the token owner needs for the scope to take effect; null when any active user qualifies. */
     public function requiredRole(): ?string
@@ -40,6 +41,7 @@ enum ApiScope: string
             self::RESERVATIONS_WRITE => 'ROLE_RESERVATIONS',
             // Prices are configured in the settings, which only administrators reach.
             self::PRICES_WRITE => 'ROLE_ADMIN',
+            self::BANK_IMPORT_WRITE => 'ROLE_CASHJOURNAL',
         };
     }
 
@@ -47,7 +49,7 @@ enum ApiScope: string
     public function isMcpScope(): bool
     {
         return match ($this) {
-            self::MCP_ACCESS, self::GUESTS_READ, self::OPERATIONS_READ, self::RESERVATIONS_WRITE, self::PRICES_WRITE => true,
+            self::MCP_ACCESS, self::GUESTS_READ, self::OPERATIONS_READ, self::RESERVATIONS_WRITE, self::PRICES_WRITE, self::BANK_IMPORT_WRITE => true,
             default => false,
         };
     }
@@ -67,6 +69,7 @@ enum ApiScope: string
             self::OPERATIONS_READ => 'profile.apitokens.scopes.operations_read',
             self::RESERVATIONS_WRITE => 'profile.apitokens.scopes.reservations_write',
             self::PRICES_WRITE => 'profile.apitokens.scopes.prices_write',
+            self::BANK_IMPORT_WRITE => 'profile.apitokens.scopes.bank_import_write',
         };
     }
 }

@@ -177,7 +177,7 @@ class ApiTokenType extends AbstractType
             return [];
         }
 
-        $candidates = [ApiScope::GUESTS_READ, ApiScope::OPERATIONS_READ, ApiScope::PRICES_WRITE];
+        $candidates = [ApiScope::GUESTS_READ, ApiScope::OPERATIONS_READ, ApiScope::PRICES_WRITE, ApiScope::BANK_IMPORT_WRITE];
         if ($this->mcpSettings->isWriteAllowed()) {
             $candidates[] = ApiScope::RESERVATIONS_WRITE;
         }

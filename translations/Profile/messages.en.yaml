@@ -56,6 +56,7 @@ profile:
       operations_read: Read operations (room plan, housekeeping, room blocks)
       reservations_write: Create reservations
       prices_write: Add special prices (special periods on prices, only after preview)
+      bank_import_write: Prepare bank statements (names, purposes and shortened IBANs of the transactions go to the AI; you commit them yourself)
     kind:
       label: Use
       api: REST API and calendar clients
@@ -70,7 +71,9 @@ profile:
       privacy_hint: >-
         Everything the AI assistant retrieves is transferred to the AI provider (e.g. Anthropic or OpenAI,
         possibly outside the EU). Without "Share guest data" the AI receives no names, contact details or
-        remarks. Sharing guest data usually requires a data processing agreement with the provider.
+        remarks of your guests. With "Prepare bank statements", however, it sees names, purposes and shortened
+        IBANs of your bank transactions, often including payments by guests. Sharing such data usually
+        requires a data processing agreement with the provider.
       write_disabled: '"Create reservations" is switched off in the settings for all users.'
       write_disabled_link: Go to settings
       expiry_required: Access for AI assistants needs a limited validity.

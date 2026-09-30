@@ -7,14 +7,15 @@ namespace App\Tests\Functional;
 use App\Dto\BookingJournal\BankImport\ImportState;
 use App\Entity\AccountingAccount;
 use App\Entity\BankCsvProfile;
+use App\Entity\BankImportDraft;
 use App\Entity\BankImportRule;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
 use App\Entity\Role;
 use App\Entity\User;
+use App\Repository\BankImportDraftRepository;
 use App\Service\AppSettingsService;
-use App\Service\BookingJournal\BankImport\BankImportDraftSession;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -67,9 +68,7 @@ final class BankImportControllerTest extends WebTestCase
         preg_match('#/journal/bank-import/([0-9a-f-]{36})$#', $location, $matches);
         $sessionImportId = $matches[1];
 
-        $drafts = $client->getRequest()->getSession()->get(BankImportDraftSession::SESSION_KEY, []);
-        self::assertArrayHasKey($sessionImportId, $drafts);
-        $state = ImportState::fromArray($drafts[$sessionImportId]);
+        $state = $this->loadDraft($sessionImportId);
 
         self::assertSame((int) $bankAccount->getId(), $state->bankAccountId);
         self::assertSame((int) $profile->getId(), $state->bankCsvProfileId);
@@ -147,7 +146,7 @@ final class BankImportControllerTest extends WebTestCase
         $sessionImportId = $matches[1];
         $preview = $client->followRedirect();
         $token = (string) $preview->filter('[data-bank-import-preview-csrf-value]')->attr('data-bank-import-preview-csrf-value');
-        $state = $this->loadDraftFromSession($client->getRequest()->getSession(), $sessionImportId);
+        $state = $this->loadDraft($sessionImportId);
         $sourceIdx = $this->findLineIndexByPurpose($state, 'Zinsen fuer Kredit 12,30-');
         self::assertNotNull($sourceIdx);
 
@@ -180,7 +179,7 @@ final class BankImportControllerTest extends WebTestCase
         self::assertIsArray($ruleResponse);
         self::assertArrayHasKey('ruleId', $ruleResponse);
 
-        $state = $this->loadDraftFromSession($client->getRequest()->getSession(), $sessionImportId);
+        $state = $this->loadDraft($sessionImportId);
         $recurringLine = $state->lines[$this->findLineIndexByPurpose($state, 'Zinsen fuer Kredit 15,00-') ?? -1] ?? null;
         self::assertNotNull($recurringLine);
         self::assertSame(ImportState::LINE_STATUS_READY, $recurringLine['status']);
@@ -200,7 +199,7 @@ final class BankImportControllerTest extends WebTestCase
         ]);
         self::assertResponseRedirects(sprintf('/journal/bank-import/%s', $sessionImportId));
 
-        $state = $this->loadDraftFromSession($client->getRequest()->getSession(), $sessionImportId);
+        $state = $this->loadDraft($sessionImportId);
         $recurringLine = $state->lines[$this->findLineIndexByPurpose($state, 'Zinsen fuer Kredit 15,00-') ?? -1] ?? null;
         self::assertNotNull($recurringLine);
         self::assertNull($recurringLine['appliedRuleId']);
@@ -235,8 +234,42 @@ final class BankImportControllerTest extends WebTestCase
         ], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
         self::assertResponseIsSuccessful();
 
-        $state = $this->loadDraftFromSession($client->getRequest()->getSession(), $sessionImportId);
+        $state = $this->loadDraft($sessionImportId);
         self::assertSame('RE-2024-047', $state->lines[0]['userInvoiceNumber']);
+    }
+
+    public function testDraftIsPrivateToItsUserAndExpiresWithoutChanges(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+        $bankAccount = $this->createBankAccount('DE00DKBTESTKONTO0002');
+        $profile = $this->createCsvProfile('dkb');
+
+        $form = $client->request('GET', '/journal/bank-import')->filter('form')->form();
+        $this->uploadStatementFile($form, self::FIXTURE_DIR.'/dkb-girokonto-anonymized.csv');
+        $client->submit($form, [
+            'bank_statement_upload[bankAccount]' => (string) $bankAccount->getId(),
+            'bank_statement_upload[format]' => 'csv:'.$profile->getId(),
+        ]);
+        preg_match('#/journal/bank-import/([0-9a-f-]{36})$#', (string) $client->getResponse()->headers->get('Location'), $matches);
+        $draftId = $matches[1];
+
+        // A colleague neither sees nor opens the draft.
+        $client->loginUser($this->createCashJournalUser());
+        $client->request('GET', '/journal/bank-import');
+        self::assertStringNotContainsString($draftId, (string) $client->getResponse()->getContent());
+        $client->request('GET', '/journal/bank-import/'.$draftId);
+        self::assertResponseRedirects('/journal/bank-import');
+
+        // Two days without a change remove it.
+        $em = $this->getEntityManager();
+        $em->getConnection()->executeStatement('UPDATE bank_import_drafts SET updated_at = :old WHERE id = :id', [
+            'old' => (new \DateTimeImmutable('-'.BankImportDraft::RETENTION_DAYS.' days -1 hour'))->format('Y-m-d H:i:s'),
+            'id' => $draftId,
+        ]);
+        self::assertGreaterThanOrEqual(1, static::getContainer()->get(BankImportDraftRepository::class)->purgeNotUpdatedSince(new \DateTimeImmutable('-'.BankImportDraft::RETENTION_DAYS.' days')));
+        $em->clear();
+        self::assertNull($em->find(BankImportDraft::class, $draftId));
     }
 
     public function testDuplicateLineCanBeForcedInPreviewDraft(): void
@@ -257,7 +290,6 @@ final class BankImportControllerTest extends WebTestCase
         preg_match('#/journal/bank-import/([0-9a-f-]{36})$#', (string) $client->getResponse()->headers->get('Location'), $matches);
         $sessionImportId = $matches[1];
         $preview = $client->followRedirect();
-        $session = $client->getRequest()->getSession();
         $token = (string) $preview->filter('[data-bank-import-preview-csrf-value]')->attr('data-bank-import-preview-csrf-value');
         $expenseAccount = $this->createExpenseAccount('Force Duplicate Rule Aufwand');
         $em = $this->getEntityManager();
@@ -282,15 +314,12 @@ final class BankImportControllerTest extends WebTestCase
         $em->persist($rule);
         $em->flush();
 
-        $state = $this->loadDraftFromSession($session, $sessionImportId);
+        $state = $this->loadDraft($sessionImportId);
         $state->lines[0]['isDuplicate'] = true;
         $state->lines[0]['forceImportDuplicate'] = false;
         $state->lines[0]['status'] = ImportState::LINE_STATUS_DUPLICATE;
         $state->lines[0]['counterpartyName'] = 'FORCE-DUPLICATE-TEST';
-        $drafts = $session->get(BankImportDraftSession::SESSION_KEY, []);
-        $drafts[$sessionImportId] = $state->toArray();
-        $session->set(BankImportDraftSession::SESSION_KEY, $drafts);
-        $session->save();
+        $this->saveDraft($sessionImportId, $state);
 
         $client->request('POST', sprintf('/journal/bank-import/%s/line/0/force-duplicate', $sessionImportId), [
             '_token' => $token,
@@ -301,7 +330,7 @@ final class BankImportControllerTest extends WebTestCase
         self::assertIsArray($response);
         self::assertSame(ImportState::LINE_STATUS_READY, $response['status']);
 
-        $state = $this->loadDraftFromSession($session, $sessionImportId);
+        $state = $this->loadDraft($sessionImportId);
         self::assertTrue($state->lines[0]['forceImportDuplicate']);
         self::assertSame(ImportState::LINE_STATUS_READY, $state->lines[0]['status']);
         self::assertSame($rule->getId(), $state->lines[0]['appliedRuleId']);
@@ -337,7 +366,7 @@ final class BankImportControllerTest extends WebTestCase
         preg_match('#/journal/bank-import/([0-9a-f-]{36})$#', $location, $matches);
         $sessionImportId = $matches[1];
 
-        $state = $this->loadDraftFromSession($client->getRequest()->getSession(), $sessionImportId);
+        $state = $this->loadDraft($sessionImportId);
         self::assertSame((int) $bankAccount->getId(), $state->bankAccountId);
         self::assertSame('iso20022_camt', $state->fileFormat);
         self::assertNull($state->bankCsvProfileId);
@@ -612,12 +641,24 @@ final class BankImportControllerTest extends WebTestCase
         return null;
     }
 
-    private function loadDraftFromSession(\Symfony\Component\HttpFoundation\Session\SessionInterface $session, string $sessionImportId): ImportState
+    private function loadDraft(string $draftId): ImportState
     {
-        $drafts = $session->get(BankImportDraftSession::SESSION_KEY, []);
-        self::assertArrayHasKey($sessionImportId, $drafts);
+        $em = $this->getEntityManager();
+        // Requests run in their own kernel; drop stale copies before reading.
+        $em->clear();
+        $draft = $em->find(BankImportDraft::class, $draftId);
+        self::assertInstanceOf(BankImportDraft::class, $draft);
 
-        return ImportState::fromArray($drafts[$sessionImportId]);
+        return ImportState::fromArray($draft->getState());
+    }
+
+    private function saveDraft(string $draftId, ImportState $state): void
+    {
+        $em = $this->getEntityManager();
+        $draft = $em->find(BankImportDraft::class, $draftId);
+        self::assertInstanceOf(BankImportDraft::class, $draft);
+        $draft->setState($state->toArray());
+        $em->flush();
     }
 
     private function uploadStatementFile(Form $form, string $path): void

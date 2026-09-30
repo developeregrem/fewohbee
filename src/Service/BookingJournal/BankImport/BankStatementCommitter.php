@@ -31,8 +31,8 @@ use Symfony\Component\Uid\Uuid;
  * Every committed line — including ignored ones — is recorded as a
  * {@see BankImportFingerprint} so a re-import recognises it as a duplicate.
  *
- * The whole flow runs in a single DB transaction. On success the session
- * draft is discarded and a {@see BankStatementImport} audit row remains.
+ * The whole flow runs in a single DB transaction, which also deletes the
+ * draft; a {@see BankStatementImport} audit row remains.
  */
 final class BankStatementCommitter
 {
@@ -44,7 +44,7 @@ final class BankStatementCommitter
         private readonly BankImportFingerprintRepository $fingerprintRepo,
         private readonly InvoiceRepository $invoiceRepo,
         private readonly TaxRateRepository $taxRateRepo,
-        private readonly BankImportDraftSession $drafts,
+        private readonly BankImportDraftStore $drafts,
     ) {
     }
 
@@ -162,13 +162,12 @@ final class BankStatementCommitter
             if ([] !== $statementEntryYears) {
                 $this->journal->recalculateDocumentNumbersForYears(...array_values(array_unique($statementEntryYears)));
             }
+            $this->drafts->discard($state->sessionImportId);
             $this->em->commit();
         } catch (\Throwable $e) {
             $this->em->rollback();
             throw $e;
         }
-
-        $this->drafts->discard($state->sessionImportId);
 
         return [
             'importId' => (int) $audit->getId(),

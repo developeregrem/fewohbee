@@ -9,6 +9,8 @@ use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Security\Core\Exception\TooManyLoginAttemptsAuthenticationException;
+use Symfony\Component\Security\Http\SecurityRequestAttributes;
 
 /**
  * Covers the login page in all three single sign-on states (off, on, enforced)
@@ -339,5 +341,38 @@ final class OidcLoginTest extends WebTestCase
         // And the rejected attempt must not have produced a session either.
         $client->request('GET', '/profile/');
         self::assertResponseRedirects('http://localhost/login');
+    }
+
+    public function testFailedPasswordLoginsShareTheirLimitAcrossHosts(): void
+    {
+        $this->configureOidc(enabled: false);
+        $client = static::createClient();
+        $username = 'cross-host-login-limit-probe';
+        $ip = '203.0.113.99';
+
+        foreach (['app.example.test' => 5, 'custom.example.test' => 1] as $host => $attempts) {
+            $crawler = $client->request('GET', '/login', server: ['HTTP_HOST' => $host, 'REMOTE_ADDR' => $ip]);
+            self::assertResponseIsSuccessful();
+            $csrfToken = $crawler->filter('input[name="_csrf_token"]')->attr('value') ?? '';
+            self::assertNotSame('', $csrfToken);
+
+            for ($attempt = 0; $attempt < $attempts; ++$attempt) {
+                $client->request('POST', '/login', [
+                    '_username' => $username,
+                    '_password' => 'wrong-password',
+                    '_csrf_token' => $csrfToken,
+                ], server: [
+                    'HTTP_HOST' => $host,
+                    'HTTP_REFERER' => 'http://'.$host.'/login',
+                    'REMOTE_ADDR' => $ip,
+                ]);
+                self::assertResponseRedirects('http://'.$host.'/login');
+            }
+        }
+
+        self::assertInstanceOf(
+            TooManyLoginAttemptsAuthenticationException::class,
+            $client->getRequest()->getSession()->get(SecurityRequestAttributes::AUTHENTICATION_ERROR),
+        );
     }
 }

@@ -56,6 +56,7 @@ profile:
       operations_read: Betrieb lesen (Zimmerplan, Housekeeping, Zimmersperrungen)
       reservations_write: Reservierungen anlegen
       prices_write: Sonderpreise anlegen (Sonderzeiträume an Preisen, nur nach Vorschau)
+      bank_import_write: Kontoauszüge vorbereiten (Namen, Verwendungszwecke und gekürzte IBANs der Umsätze gehen an die KI; übernehmen musst du selbst)
     kind:
       label: Verwendung
       api: REST-API und Kalender-Programme
@@ -70,8 +71,9 @@ profile:
       privacy_hint: >-
         Alles, was der KI-Assistent abruft, wird an den Anbieter der KI übertragen (z. B. Anthropic oder
         OpenAI, ggf. außerhalb der EU). Ohne „Gästedaten weitergeben“ erhält die KI keine Namen, Kontaktdaten
-        oder Bemerkungen. Für die Weitergabe von Gästedaten brauchst du in der Regel einen
-        Auftragsverarbeitungsvertrag mit dem Anbieter.
+        oder Bemerkungen deiner Gäste. Mit „Kontoauszüge vorbereiten“ sieht sie aber Namen, Verwendungszwecke
+        und gekürzte IBANs deiner Kontoumsätze, darunter oft auch Zahlungen von Gästen. Für die Weitergabe
+        solcher Daten brauchst du in der Regel einen Auftragsverarbeitungsvertrag mit dem Anbieter.
       write_disabled: „Reservierungen anlegen“ ist in den Einstellungen für alle Benutzer abgeschaltet.
       write_disabled_link: Zu den Einstellungen
       expiry_required: Zugänge für KI-Assistenten brauchen eine begrenzte Gültigkeit.

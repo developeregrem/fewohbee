@@ -40,6 +40,7 @@
     <div class="card mb-4">
         <div class="card-header">
             <h6 class="mb-0">{{ 'accounting.bank_import.drafts.title'|trans }}</h6>
+            <p class="text-body-secondary small mb-0 mt-1">{{ 'accounting.bank_import.drafts.retention'|trans({'%days%': constant('App\\Entity\\BankImportDraft::RETENTION_DAYS')}) }}</p>
         </div>
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">
@@ -55,25 +56,26 @@
                 </thead>
                 <tbody>
                 {% for draft in drafts %}
-                    {% set id = draft.sessionImportId %}
-                    {% set targetUrl = path('bank_import.discard', {'sessionImportId': draft.sessionImportId}) %}
+                    {% set state = draft.state %}
+                    {% set id = draft.id %}
+                    {% set targetUrl = path('bank_import.discard', {'sessionImportId': draft.id}) %}
                     <tr>
-                        <td><i class="fas fa-file-csv me-1 text-muted"></i> {{ draft.originalFilename }}</td>
+                        <td><i class="fas fa-file-csv me-1 text-muted"></i> {{ state.originalFilename }}</td>
                         <td>
-                            {% set acc = accountsById[draft.bankAccountId] ?? null %}
+                            {% set acc = accountsById[state.bankAccountId] ?? null %}
                             {% if acc %}{{ acc.label }}{% else %}<span class="text-danger">{{ 'accounting.bank_import.drafts.account_missing'|trans }}</span>{% endif %}
                         </td>
                         <td class="small">
-                            {% if draft.periodFrom and draft.periodTo %}
-                                {{ draft.periodFrom|date('d.m.Y') }} – {{ draft.periodTo|date('d.m.Y') }}
+                            {% if state.periodFrom and state.periodTo %}
+                                {{ state.periodFrom|date('d.m.Y') }} – {{ state.periodTo|date('d.m.Y') }}
                             {% else %}
                                 <span class="text-muted">—</span>
                             {% endif %}
                         </td>
-                        <td>{{ draft.lines|length }}</td>
+                        <td>{{ state.lines|length }}</td>
                         <td class="small text-muted">{{ draft.createdAt|date('d.m.Y H:i') }}</td>
                         <td class="text-end">
-                            <a href="{{ path('bank_import.preview', {'sessionImportId': draft.sessionImportId}) }}"
+                            <a href="{{ path('bank_import.preview', {'sessionImportId': draft.id}) }}"
                                class="btn btn-sm btn-primary">
                                 <i class="fas fa-eye"></i> {{ 'accounting.bank_import.drafts.open'|trans }}
                             </a>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\EventListener;
 
+use App\Entity\BankImportDraft;
 use App\Entity\Enum\LogAction;
 use App\Entity\GuestCheckIn;
 use App\Entity\Log;
@@ -29,6 +30,8 @@ final class EntityChangeLogListener
     /** Recursion guard (Log itself), separate audit tables, and request-only caches. */
     private const IGNORED_ENTITIES = [
         Log::class,
+        // Serialized bank statement lines: personal data of third parties, rewritten on every edit.
+        BankImportDraft::class,
         WorkflowLog::class,
         MonthlyStatsSnapshot::class,
     ];

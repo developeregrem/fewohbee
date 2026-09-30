@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Dto\BookingJournal\BankImport\ImportState;
+use App\Entity\AccountingAccount;
 use App\Entity\Appartment;
+use App\Entity\BankImportDraft;
 use App\Entity\Enum\ApiScope;
 use App\Entity\Enum\HousekeepingStatus;
 use App\Entity\Enum\McpToolCallOutcome;
@@ -388,6 +391,59 @@ final class McpServerTest extends WebTestCase
         self::assertSame('add_period_to_row', $preview['action']);
         $yearRound = $this->callTool($token, 'preview_special_price', $again);
         self::assertStringContainsString('applies all year', $yearRound['content'][0]['text'] ?? '');
+    }
+
+    public function testAssistantPreparesABankImportDraftOfItsOwner(): void
+    {
+        $this->configureMcp(enabled: true);
+        [$owner, $token] = $this->createUserWithToken(['ROLE_CASHJOURNAL'], [ApiScope::MCP_ACCESS, ApiScope::BANK_IMPORT_WRITE]);
+        [$bankId, $expenseId] = $this->createBankAndExpenseAccount();
+        $draftId = $this->createBankImportDraft($owner, $bankId);
+
+        $drafts = $this->callTool($token, 'list_bank_import_drafts')['structuredContent']['drafts'];
+        self::assertSame([$draftId], array_column($drafts, 'draftId'));
+        self::assertSame('DE…0001', $drafts[0]['bankAccount']['iban']);
+
+        $result = $this->callTool($token, 'get_bank_import_lines', ['draftId' => $draftId]);
+        $lines = $result['structuredContent']['lines'];
+        self::assertCount(2, $lines);
+        self::assertSame('Rechnung Reinigung Mai', $lines[0]['purpose']['untrusted_text']);
+        self::assertSame('DE…3456', $lines[0]['counterpartyIban']);
+        self::assertStringNotContainsString('DE89370400440532013456', (string) json_encode($result));
+
+        $context = $this->callTool($token, 'get_bank_import_context', ['draftId' => $draftId])['structuredContent'];
+        self::assertContains($expenseId, array_column($context['accounts'], 'id'));
+
+        $invalid = $this->callTool($token, 'update_bank_import_lines', ['draftId' => $draftId, 'changes' => [['idx' => 0, 'debitAccountId' => 999999]]]);
+        self::assertTrue($invalid['isError'] ?? false);
+        self::assertStringContainsString('chart of accounts', $invalid['content'][0]['text'] ?? '');
+
+        $updated = $this->callTool($token, 'update_bank_import_lines', ['draftId' => $draftId, 'changes' => [
+            ['idx' => 0, 'debitAccountId' => $expenseId, 'creditAccountId' => $bankId, 'remark' => 'Reinigung Mai'],
+            ['idx' => 1, 'ignore' => true],
+        ]]);
+        self::assertFalse($updated['isError'] ?? false, (string) json_encode($updated));
+        self::assertSame(['ready', 'ignored'], array_column($updated['structuredContent']['updated'], 'status'));
+        $this->em()->clear();
+        $draft = $this->em()->find(BankImportDraft::class, $draftId);
+        self::assertInstanceOf(BankImportDraft::class, $draft);
+        self::assertSame('Reinigung Mai', $draft->getState()['lines'][0]['userRemark']);
+
+        // Drafts are private: another cash journal user's assistant neither lists nor reads them.
+        [, $colleagueToken] = $this->createUserWithToken(['ROLE_CASHJOURNAL'], [ApiScope::MCP_ACCESS, ApiScope::BANK_IMPORT_WRITE]);
+        self::assertSame([], $this->callTool($colleagueToken, 'list_bank_import_drafts')['structuredContent']['drafts']);
+        self::assertTrue($this->callTool($colleagueToken, 'get_bank_import_lines', ['draftId' => $draftId])['isError'] ?? false);
+    }
+
+    public function testBankImportToolsNeedTheCashJournalRole(): void
+    {
+        $this->configureMcp(enabled: true);
+        [, $token] = $this->createUserWithToken(['ROLE_RESERVATIONS'], [ApiScope::MCP_ACCESS, ApiScope::BANK_IMPORT_WRITE]);
+
+        $result = $this->callTool($token, 'list_bank_import_drafts');
+
+        self::assertTrue($result['isError'] ?? false);
+        self::assertStringContainsString('bank-import:write', $result['content'][0]['text'] ?? '');
     }
 
     public function testBookingFlowCreatesReservationNotifiesStaffAndIsIdempotent(): void
@@ -848,6 +904,63 @@ final class McpServerTest extends WebTestCase
             'bookerLastname' => $lastname,
             'bookerEmail' => strtolower($lastname).'-'.bin2hex(random_bytes(3)).'@example.com',
         ];
+    }
+
+    /**
+     * @return array{0: int, 1: int} ids of a new bank account and a new expense account
+     */
+    private function createBankAndExpenseAccount(): array
+    {
+        $em = $this->em();
+        $bank = new AccountingAccount();
+        $bank->setAccountNumber((string) random_int(900000, 999999));
+        $bank->setName('MCP Testbank');
+        $bank->setType(AccountingAccount::TYPE_ASSET);
+        $bank->setIsBankAccount(true);
+        $bank->setIban('DE00 1234 5678 0000 0000 01');
+        $expense = new AccountingAccount();
+        $expense->setAccountNumber((string) random_int(700000, 799999));
+        $expense->setName('MCP Reinigung');
+        $expense->setType(AccountingAccount::TYPE_EXPENSE);
+        $em->persist($bank);
+        $em->persist($expense);
+        $em->flush();
+
+        return [(int) $bank->getId(), (int) $expense->getId()];
+    }
+
+    private function createBankImportDraft(User $owner, int $bankAccountId): string
+    {
+        $line = static fn (int $idx, string $amount, string $name, ?string $iban, string $purpose): array => [
+            'idx' => $idx, 'bookDate' => '2026-05-03', 'valueDate' => '2026-05-03', 'amount' => $amount,
+            'counterpartyName' => $name, 'counterpartyIban' => $iban, 'purpose' => $purpose,
+            'fingerprint' => hash('sha256', $purpose), 'status' => ImportState::LINE_STATUS_PENDING,
+            'isIgnored' => false, 'isDuplicate' => false, 'forceImportDuplicate' => false,
+            'userDebitAccountId' => null, 'userCreditAccountId' => null, 'userTaxRateId' => null,
+            'userRemark' => null, 'userInvoiceNumber' => null, 'appliedRuleId' => null,
+            'matchedInvoiceId' => null, 'matchedInvoiceNumber' => null, 'matchedInvoiceAmountMatches' => false,
+            'splits' => [],
+        ];
+        $state = new ImportState(
+            sessionImportId: (string) \Symfony\Component\Uid\Uuid::v4(),
+            bankAccountId: $bankAccountId,
+            fileFormat: 'camt',
+            bankCsvProfileId: null,
+            originalFilename: 'statement.xml',
+            sourceIban: null,
+            periodFrom: '2026-05-01',
+            periodTo: '2026-05-31',
+            createdAt: new \DateTimeImmutable(),
+            lines: [
+                $line(0, '-119.00', 'Putzteufel GmbH', 'DE89370400440532013456', 'Rechnung Reinigung Mai'),
+                $line(1, '-4.90', 'Bank', null, 'Kontofuehrung'),
+            ],
+        );
+        $em = $this->em();
+        $em->persist(new BankImportDraft($state->sessionImportId, $owner, $state->toArray()));
+        $em->flush();
+
+        return $state->sessionImportId;
     }
 
     /**
