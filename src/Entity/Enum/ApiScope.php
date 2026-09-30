@@ -45,12 +45,50 @@ enum ApiScope: string
         };
     }
 
-    /** Whether the scope belongs to the AI assistant (MCP) section of the token form. */
-    public function isMcpScope(): bool
+    /**
+     * The question the scope answers in the token form; null for mcp:access, which marks a token
+     * as an AI token and is never chosen on its own.
+     */
+    public function group(): ?ApiScopeGroup
     {
         return match ($this) {
-            self::MCP_ACCESS, self::GUESTS_READ, self::OPERATIONS_READ, self::RESERVATIONS_WRITE, self::PRICES_WRITE, self::BANK_IMPORT_WRITE => true,
-            default => false,
+            self::MCP_ACCESS => null,
+            self::GUESTS_READ => ApiScopeGroup::PERSONAL_DATA,
+            self::RESERVATIONS_WRITE, self::PRICES_WRITE, self::BANK_IMPORT_WRITE => ApiScopeGroup::CHANGE,
+            default => ApiScopeGroup::SEE,
+        };
+    }
+
+    /** Whether a REST API endpoint evaluates the scope, so it can be chosen for a REST token. */
+    public function isForRest(): bool
+    {
+        return match ($this) {
+            self::MCP_ACCESS, self::GUESTS_READ, self::OPERATIONS_READ, self::RESERVATIONS_WRITE, self::PRICES_WRITE, self::BANK_IMPORT_WRITE => false,
+            default => true,
+        };
+    }
+
+    /** Whether an MCP tool evaluates the scope, so it can be chosen for an AI token. */
+    public function isForMcp(): bool
+    {
+        return match ($this) {
+            self::MCP_ACCESS, self::CALENDAR_READ, self::SUBSIDIARIES_READ => false,
+            default => true,
+        };
+    }
+
+    /** The scope as it appears in the summary sentence of a token ("may read reservations, prices ..."). */
+    public function summaryKey(): string
+    {
+        return 'profile.apitokens.summary.scope.'.strtolower($this->name);
+    }
+
+    /** A short note shown under the scope in the token form, or null. */
+    public function hintKey(): ?string
+    {
+        return match ($this) {
+            self::RESERVATIONS_WRITE, self::PRICES_WRITE, self::BANK_IMPORT_WRITE => 'profile.apitokens.hints.'.strtolower($this->name),
+            default => null,
         };
     }
 

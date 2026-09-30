@@ -132,7 +132,37 @@ final class McpServerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $names = array_column($this->decode()['result']['tools'] ?? [], 'name');
         self::assertContains('search_reservations', $names);
-        self::assertContains('create_reservation', $names);
+        // Only what the token may call is offered.
+        self::assertNotContains('create_reservation', $names);
+        self::assertNotContains('get_turnover', $names);
+    }
+
+    public function testToolListGrowsWithThePermissionsOfTheToken(): void
+    {
+        $this->configureMcp(enabled: true, write: true);
+        $list = function (array $scopes): array {
+            [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ...$scopes]);
+            $this->postJson($token, [
+                'jsonrpc' => '2.0',
+                'id' => 1,
+                'method' => 'tools/list',
+                'params' => ['_meta' => [
+                    'io.modelcontextprotocol/protocolVersion' => self::MODERN_VERSION,
+                    'io.modelcontextprotocol/clientCapabilities' => new \stdClass(),
+                    'io.modelcontextprotocol/clientInfo' => ['name' => 'functional-test', 'version' => '1.0'],
+                ]],
+            ], ['HTTP_MCP_PROTOCOL_VERSION' => self::MODERN_VERSION, 'HTTP_MCP_METHOD' => 'tools/list']);
+            self::assertResponseIsSuccessful();
+
+            return array_column($this->decode()['result']['tools'] ?? [], 'name');
+        };
+
+        self::assertSame([], $list([]));
+        $writer = $list([ApiScope::RESERVATIONS_WRITE, ApiScope::STATISTICS_READ]);
+        self::assertContains('create_reservation', $writer);
+        self::assertContains('get_revenue_forecast', $writer);
+        self::assertNotContains('search_reservations', $writer);
+        self::assertNotContains('update_bank_import_lines', $writer);
     }
 
     public function testNoNotificationStreamsAreOffered(): void
@@ -758,7 +788,7 @@ final class McpServerTest extends WebTestCase
     {
         $admin = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::RESERVATIONS_READ], null)[0];
         $this->client->loginUser($admin);
-        $writeOption = sprintf('input[name="api_token[mcpScopes][]"][value="%s"]', ApiScope::RESERVATIONS_WRITE->value);
+        $writeOption = sprintf('input[name="api_token[scopes][]"][value="%s"]', ApiScope::RESERVATIONS_WRITE->value);
 
         $this->configureMcp(enabled: true, write: false);
         $crawler = $this->client->request('GET', '/profile/');
@@ -775,15 +805,53 @@ final class McpServerTest extends WebTestCase
 
     public function testSpecialPriceOptionIsOfferedToAdministratorsOnly(): void
     {
-        $option = sprintf('input[name="api_token[mcpScopes][]"][value="%s"]', ApiScope::PRICES_WRITE->value);
+        $option = sprintf('input[name="api_token[scopes][]"][value="%s"]', ApiScope::PRICES_WRITE->value);
         $admin = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::RESERVATIONS_READ], null)[0];
         $staff = $this->createUserWithToken(['ROLE_RESERVATIONS'], [ApiScope::RESERVATIONS_READ], null)[0];
         $this->configureMcp(enabled: true);
 
         $this->client->loginUser($admin);
         self::assertCount(1, $this->client->request('GET', '/profile/')->filter($option));
+
+        // Without the role the permission is shown greyed out with its reason and cannot be submitted.
         $this->client->loginUser($staff);
-        self::assertCount(0, $this->client->request('GET', '/profile/')->filter($option));
+        $crawler = $this->client->request('GET', '/profile/');
+        self::assertCount(0, $crawler->filter($option));
+        $translator = static::getContainer()->get('translator');
+        self::assertStringContainsString(
+            (string) $translator->trans('profile.apitokens.unavailable.role', ['%role%' => $translator->trans('ROLE_ADMIN')]),
+            $crawler->filter('#apiTokenOffcanvas')->text()
+        );
+        $this->submitTokenForm([
+            'name' => 'Too much',
+            'kind' => 'mcp',
+            'expiresIn' => '+30 days',
+            'scopes' => [ApiScope::RESERVATIONS_READ->value, ApiScope::PRICES_WRITE->value],
+        ]);
+        self::assertNull($this->em()->getRepository(\App\Entity\ApiToken::class)->findOneBy(['user' => $staff, 'name' => 'Too much']));
+    }
+
+    public function testTokenListSumsUpPermissionsInPlainLanguage(): void
+    {
+        $this->configureMcp(enabled: true);
+        $admin = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::RESERVATIONS_READ, ApiScope::PRICES_READ, ApiScope::BANK_IMPORT_WRITE], '+30 days')[0];
+        $this->client->loginUser($admin);
+        $translator = static::getContainer()->get('translator');
+        $and = ' '.$translator->trans('profile.apitokens.summary.and').' ';
+        $expected = [
+            $translator->trans('profile.apitokens.summary.see.mcp', ['%list%' => $translator->trans('profile.apitokens.summary.scope.reservations_read').$and.$translator->trans('profile.apitokens.summary.scope.prices_read')]),
+            $translator->trans('profile.apitokens.summary.personal.bank'),
+            $translator->trans('profile.apitokens.summary.change.some', ['%list%' => $translator->trans('profile.apitokens.summary.scope.bank_import_write')]),
+        ];
+
+        $profile = $this->client->request('GET', '/profile/')->filter('#api-tokens table')->text();
+        $settings = $this->client->request('GET', '/settings/mcp')->text();
+
+        foreach ($expected as $sentence) {
+            self::assertStringContainsString($sentence, $profile);
+            self::assertStringContainsString($sentence, $settings);
+        }
+        self::assertStringNotContainsString('bank-import:write', $profile);
     }
 
     public function testAiTokenIsCreatedFromTheProfileDialog(): void
@@ -796,14 +864,13 @@ final class McpServerTest extends WebTestCase
             'name' => 'Claude',
             'kind' => 'mcp',
             'expiresIn' => '+30 days',
-            'scopes' => [ApiScope::RESERVATIONS_READ->value],
-            'mcpScopes' => [ApiScope::RESERVATIONS_WRITE->value],
+            'scopes' => [ApiScope::RESERVATIONS_READ->value, ApiScope::RESERVATIONS_WRITE->value],
         ]);
 
         $token = $this->em()->getRepository(\App\Entity\ApiToken::class)->findOneBy(['user' => $admin, 'name' => 'Claude']);
         self::assertNotNull($token);
         self::assertSame(
-            [ApiScope::RESERVATIONS_READ->value, ApiScope::MCP_ACCESS->value, ApiScope::RESERVATIONS_WRITE->value],
+            [ApiScope::RESERVATIONS_READ->value, ApiScope::RESERVATIONS_WRITE->value, ApiScope::MCP_ACCESS->value],
             $token->getScopes()
         );
 
@@ -825,8 +892,7 @@ final class McpServerTest extends WebTestCase
             'name' => 'Calendar',
             'kind' => 'api',
             'expiresIn' => '',
-            'scopes' => [ApiScope::CALENDAR_READ->value],
-            'mcpScopes' => [ApiScope::GUESTS_READ->value],
+            'scopes' => [ApiScope::CALENDAR_READ->value, ApiScope::GUESTS_READ->value],
         ]);
 
         $token = $this->em()->getRepository(\App\Entity\ApiToken::class)->findOneBy(['user' => $admin, 'name' => 'Calendar']);

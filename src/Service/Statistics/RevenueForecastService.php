@@ -21,9 +21,11 @@ use Doctrine\Common\Collections\ArrayCollection;
  * up with the invoice based turnover statistics.
  *
  * Every reservation counts except those with the status "canceled / no-show" and conflicts.
- * Reservations that already have an invoice (other than a canceled one) are reported separately:
- * their revenue normally shows up in the turnover already. They are valued the same way, not by
- * the amounts of their invoices.
+ * Reservations that already have an invoice are reported separately: their revenue normally shows
+ * up in the turnover already. They are valued the same way, not by the amounts of their invoices.
+ * Which invoices make a reservation "invoiced" is up to the caller: by default every invoice that
+ * is not canceled; the turnover statistics pass the invoice statuses their bars count, so a
+ * reservation whose invoice is left out there stays in the forecast and nothing falls between.
  */
 class RevenueForecastService
 {
@@ -37,18 +39,20 @@ class RevenueForecastService
     }
 
     /**
-     * @param \DateTimeImmutable $firstMonth first day of the first month
-     * @param \DateTimeImmutable $lastMonth  any day of the last month
+     * @param \DateTimeImmutable $firstMonth      first day of the first month
+     * @param \DateTimeImmutable $lastMonth       any day of the last month
+     * @param list<int>|null     $invoiceStatuses InvoiceStatus values that make a reservation count as
+     *                                            invoiced; null for every status except canceled
      *
      * @return array<string, array{open: array{total: float, room: float, extras: float, touristTax: float, reservations: int}, invoiced: array{total: float, room: float, extras: float, touristTax: float, reservations: int}}> keyed by Y-m, every month of the range
      */
-    public function byDepartureMonth(\DateTimeImmutable $firstMonth, \DateTimeImmutable $lastMonth, ?Subsidiary $subsidiary = null): array
+    public function byDepartureMonth(\DateTimeImmutable $firstMonth, \DateTimeImmutable $lastMonth, ?Subsidiary $subsidiary = null, ?array $invoiceStatuses = null): array
     {
         $from = $firstMonth->modify('first day of this month')->setTime(0, 0);
         $toExclusive = $lastMonth->modify('first day of next month')->setTime(0, 0);
 
         $reservations = $this->reservationRepository->findDepartingForRevenueForecast($from, $toExclusive, $subsidiary);
-        $invoiced = $this->invoicedReservationIds($reservations);
+        $invoiced = $this->invoicedReservationIds($reservations, $invoiceStatuses);
 
         /** @var array<string, array{open: list<Reservation>, invoiced: list<Reservation>}> $groups */
         $groups = [];
@@ -69,20 +73,23 @@ class RevenueForecastService
     }
 
     /**
-     * Ids of the reservations that have at least one invoice that is not canceled.
+     * Ids of the reservations that have at least one invoice in one of the given statuses, or one
+     * that is not canceled when no statuses are given.
      *
      * @param list<Reservation> $reservations
+     * @param list<int>|null    $invoiceStatuses
      *
      * @return array<int, true>
      */
-    private function invoicedReservationIds(array $reservations): array
+    private function invoicedReservationIds(array $reservations, ?array $invoiceStatuses): array
     {
         $ids = array_map(static fn (Reservation $reservation): int => (int) $reservation->getId(), $reservations);
 
         $invoiced = [];
         foreach ($this->invoiceRepository->findSummariesByReservationIds($ids) as $reservationId => $invoices) {
             foreach ($invoices as $invoice) {
-                if (InvoiceStatus::CANCELED->value !== (int) $invoice['status']) {
+                $status = (int) $invoice['status'];
+                if (null === $invoiceStatuses ? InvoiceStatus::CANCELED->value !== $status : \in_array($status, $invoiceStatuses, true)) {
                     $invoiced[$reservationId] = true;
                     break;
                 }

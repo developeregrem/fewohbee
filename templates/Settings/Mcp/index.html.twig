@@ -1,5 +1,6 @@
 {% extends 'base.html.twig' %}
 {% use "common/delete_popover.html.twig" %}
+{% import 'Profile/_api_token_summary.html.twig' as tokenSummary %}
 
 {% block title %}
     {{ parent() }} - {{ 'mcp.settings.page_title'|trans }}
@@ -84,11 +85,7 @@
                                     <tr>
                                         <td>{{ apiToken.user.userIdentifier }}</td>
                                         <td>{{ apiToken.name }} <span class="font-monospace text-body-secondary small">{{ apiToken.tokenPrefix }}&hellip;</span></td>
-                                        <td>
-                                            {% for scope in apiToken.scopes|filter(scope => scope != 'mcp:access') %}
-                                                <span class="badge text-bg-secondary">{{ scope }}</span>
-                                            {% endfor %}
-                                        </td>
+                                        <td class="small">{{ tokenSummary.summary(apiToken) }}</td>
                                         <td>{{ apiToken.lastUsedAt ? apiToken.lastUsedAt|date('Y-m-d H:i') : 'profile.apitokens.never'|trans }}</td>
                                         <td>{{ apiToken.expiresAt ? apiToken.expiresAt|date('Y-m-d') : 'profile.apitokens.expiry.never'|trans }}</td>
                                         <td class="text-end">

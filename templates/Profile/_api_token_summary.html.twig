@@ -1,0 +1,33 @@
+{#
+    Plain-language summary of what an API token may do, the same sentences the token form
+    composes live (api_token_form_controller.js).
+#}
+{% macro summary(token) %}
+    {%- set isMcp = 'mcp:access' in token.scopes -%}
+    {%- set see = [] -%}
+    {%- set change = [] -%}
+    {%- set guests = false -%}
+    {%- set bank = false -%}
+    {%- for scope in token.apiScopes -%}
+        {%- if scope.group is not null and (isMcp ? scope.forMcp : scope.forRest) -%}
+            {%- if scope.group.value == 'see' -%}
+                {%- set see = see|merge([scope.summaryKey|trans]) -%}
+            {%- elseif scope.group.value == 'change' -%}
+                {%- set change = change|merge([scope.summaryKey|trans]) -%}
+            {%- else -%}
+                {%- set guests = true -%}
+            {%- endif -%}
+            {%- if scope.value == 'bank-import:write' -%}
+                {%- set bank = true -%}
+            {%- endif -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {%- set and = ' ' ~ 'profile.apitokens.summary.and'|trans ~ ' ' -%}
+    {%- if isMcp -%}
+        {{ see is empty ? 'profile.apitokens.summary.see.mcp_none'|trans : 'profile.apitokens.summary.see.mcp'|trans({'%list%': see|join(', ', and)}) }}
+        {{ ('profile.apitokens.summary.personal.' ~ (guests and bank ? 'both' : (guests ? 'guests' : (bank ? 'bank' : 'none'))))|trans }}
+        {{ change is empty ? 'profile.apitokens.summary.change.none'|trans : 'profile.apitokens.summary.change.some'|trans({'%list%': change|join(', ', and)}) }}
+    {%- elseif see is not empty -%}
+        {{ 'profile.apitokens.summary.see.rest'|trans({'%list%': see|join(', ', and)}) }}
+    {%- endif -%}
+{% endmacro %}
