@@ -13,6 +13,7 @@ use App\Mcp\Security\McpToolException;
 use App\Mcp\Support\McpInput;
 use App\Service\Api\StatisticsQueryService;
 use App\Service\MonthlyStatsService;
+use App\Service\Statistics\RevenueForecastService;
 use Doctrine\ORM\EntityManagerInterface;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
@@ -26,6 +27,7 @@ final class StatisticsTools
     public function __construct(
         private readonly StatisticsQueryService $statisticsQueryService,
         private readonly MonthlyStatsService $monthlyStatsService,
+        private readonly RevenueForecastService $revenueForecastService,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -119,13 +121,7 @@ final class StatisticsTools
         ?int $objectId = null,
     ): array {
         $monthStart = McpInput::month($month, 'month');
-        $subsidiary = null;
-        if (null !== $objectId) {
-            $subsidiary = $this->em->getRepository(Subsidiary::class)->find($objectId);
-            if (!$subsidiary instanceof Subsidiary) {
-                throw McpToolException::invalid('Unknown property (object) id.');
-            }
-        }
+        $subsidiary = $this->resolveSubsidiary($objectId);
 
         // Computed live; unlike the statistics page this does not store a snapshot.
         $result = $this->monthlyStatsService->buildMetrics((int) $monthStart->format('n'), (int) $monthStart->format('Y'), $subsidiary);
@@ -171,15 +167,73 @@ final class StatisticsTools
         return $this->statisticsQueryService->bookingPace($firstNight, $lastNight, $cutOff, $this->resolveObjectId($objectId), $roomCategoryId);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    #[McpTool(
+        name: 'get_revenue_forecast',
+        title: 'Revenue forecast',
+        description: 'Expected gross revenue from the existing reservations per month of departure (at most 36 months), for all properties or one. Every reservation is valued like the invoice FewohBee would prefill for it: room price, guest category surcharges and discounts, booked extras and tourist tax. All reservations count except canceled / no-show and conflicts. "withoutInvoice" is revenue that is not invoiced yet; "withInvoice" are reservations that already have an invoice, valued the same way (their real invoices are in get_turnover, by invoice date). Use this instead of pricing reservations one by one.',
+        annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
+    )]
+    #[McpRequiresScope(ApiScope::STATISTICS_READ)]
+    public function revenueForecast(
+        #[Schema(description: 'First month of departure, YYYY-MM.')]
+        string $startMonth,
+        #[Schema(type: 'string', description: 'Last month (inclusive), YYYY-MM. Defaults to startMonth.')]
+        ?string $endMonth = null,
+        #[Schema(type: 'integer', description: 'Property (object) id; all properties when omitted.')]
+        ?int $objectId = null,
+    ): array {
+        $start = McpInput::month($startMonth, 'startMonth');
+        $end = null !== $endMonth ? McpInput::month($endMonth, 'endMonth') : $start;
+        if ($end < $start) {
+            throw McpToolException::invalid("'endMonth' must not be before 'startMonth'.");
+        }
+        $months = ((int) $end->format('Y') - (int) $start->format('Y')) * 12 + ((int) $end->format('n') - (int) $start->format('n')) + 1;
+        if ($months > RevenueForecastService::MAX_MONTHS) {
+            throw McpToolException::invalid(\sprintf('The range must not exceed %d months.', RevenueForecastService::MAX_MONTHS));
+        }
+
+        $rows = [];
+        $totals = ['withoutInvoice' => 0.0, 'withInvoice' => 0.0];
+        foreach ($this->revenueForecastService->byDepartureMonth($start, $end, $this->resolveSubsidiary($objectId)) as $month => $forecast) {
+            $rows[] = [
+                'month' => $month,
+                'withoutInvoice' => $forecast['open'],
+                'withInvoice' => $forecast['invoiced'],
+                'total' => round($forecast['open']['total'] + $forecast['invoiced']['total'], 2),
+            ];
+            $totals['withoutInvoice'] += $forecast['open']['total'];
+            $totals['withInvoice'] += $forecast['invoiced']['total'];
+        }
+
+        return [
+            'objectId' => $objectId,
+            'months' => $rows,
+            'totals' => [
+                'withoutInvoice' => round($totals['withoutInvoice'], 2),
+                'withInvoice' => round($totals['withInvoice'], 2),
+                'total' => round($totals['withoutInvoice'] + $totals['withInvoice'], 2),
+            ],
+        ];
+    }
+
     private function resolveObjectId(?int $objectId): string
     {
+        return null === $this->resolveSubsidiary($objectId) ? 'all' : (string) $objectId;
+    }
+
+    private function resolveSubsidiary(?int $objectId): ?Subsidiary
+    {
         if (null === $objectId) {
-            return 'all';
+            return null;
         }
-        if (!$this->em->getRepository(Subsidiary::class)->find($objectId) instanceof Subsidiary) {
+        $subsidiary = $this->em->getRepository(Subsidiary::class)->find($objectId);
+        if (!$subsidiary instanceof Subsidiary) {
             throw McpToolException::invalid('Unknown property (object) id.');
         }
 
-        return (string) $objectId;
+        return $subsidiary;
     }
 }

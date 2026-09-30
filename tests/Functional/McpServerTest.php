@@ -446,6 +446,51 @@ final class McpServerTest extends WebTestCase
         self::assertStringContainsString('bank-import:write', $result['content'][0]['text'] ?? '');
     }
 
+    public function testRevenueForecastValuesReservationsLikeTheirInvoiceInTheDepartureMonth(): void
+    {
+        $this->configureMcp(enabled: true, write: true);
+        [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::STATISTICS_READ, ApiScope::PRICES_READ]);
+        $month = (new \DateTimeImmutable('+642 days'))->format('Y-m');
+        $forecast = fn (): array => $this->callTool($token, 'get_revenue_forecast', ['startMonth' => $month])['structuredContent']['months'][0];
+
+        $before = $forecast();
+        $reservation = $this->bookReservation('Gast-Forecast', '+640 days');
+        $after = $forecast();
+
+        $quote = $this->callTool($token, 'get_price_quote', [
+            'apartmentId' => (int) $reservation->getAppartment()?->getId(),
+            'arrival' => $reservation->getStartDate()->format('Y-m-d'),
+            'departure' => $reservation->getEndDate()->format('Y-m-d'),
+            'persons' => $reservation->getPersons(),
+            'originId' => (int) $reservation->getReservationOrigin()?->getId(),
+        ])['structuredContent'];
+        $bookedExtraIds = array_map(static fn (Price $price): int => (int) $price->getId(), $reservation->getPrices()->toArray());
+        $bookedExtras = array_sum(array_map(
+            static fn (array $extra): float => \in_array((int) $extra['id'], $bookedExtraIds, true) ? (float) $extra['total'] : 0.0,
+            $quote['extras'],
+        ));
+
+        self::assertSame($month, $after['month']);
+        self::assertSame(1, $after['withoutInvoice']['reservations'] - $before['withoutInvoice']['reservations']);
+        self::assertEqualsWithDelta((float) $quote['room']['gross'], $after['withoutInvoice']['room'] - $before['withoutInvoice']['room'], 0.005);
+        self::assertGreaterThan(0.0, $bookedExtras);
+        self::assertEqualsWithDelta($bookedExtras, $after['withoutInvoice']['extras'] - $before['withoutInvoice']['extras'], 0.005);
+
+        // Once invoiced, the reservation is reported separately; a canceled invoice does not count.
+        $invoice = $this->createInvoiceFor($reservation);
+        $invoiced = $forecast();
+        self::assertSame($before['withoutInvoice']['reservations'], $invoiced['withoutInvoice']['reservations']);
+        self::assertSame($before['withInvoice']['reservations'] + 1, $invoiced['withInvoice']['reservations']);
+        self::assertEqualsWithDelta($after['total'], $invoiced['total'], 0.005);
+
+        // The request above ran in a new kernel: reload the invoice before changing it.
+        $invoice = $this->em()->find(\App\Entity\Invoice::class, $invoice->getId());
+        self::assertInstanceOf(\App\Entity\Invoice::class, $invoice);
+        $invoice->setStatus(\App\Entity\Enum\InvoiceStatus::CANCELED->value);
+        $this->em()->flush();
+        self::assertSame($after['withoutInvoice']['reservations'], $forecast()['withoutInvoice']['reservations']);
+    }
+
     public function testBookingFlowCreatesReservationNotifiesStaffAndIsIdempotent(): void
     {
         $this->configureMcp(enabled: true, write: true);
@@ -904,6 +949,24 @@ final class McpServerTest extends WebTestCase
             'bookerLastname' => $lastname,
             'bookerEmail' => strtolower($lastname).'-'.bin2hex(random_bytes(3)).'@example.com',
         ];
+    }
+
+    private function createInvoiceFor(Reservation $reservation): \App\Entity\Invoice
+    {
+        $em = $this->em();
+        $invoice = new \App\Entity\Invoice();
+        $invoice->setNumber('MCP-'.bin2hex(random_bytes(4)));
+        $invoice->setDate(new \DateTime());
+        $invoice->setStatus(\App\Entity\Enum\InvoiceStatus::OPEN->value);
+        $invoice->setFirstname('Max');
+        $invoice->setLastname('Mustermann');
+        $em->persist($invoice);
+        $managed = $em->find(Reservation::class, $reservation->getId());
+        self::assertInstanceOf(Reservation::class, $managed);
+        $managed->addInvoice($invoice);
+        $em->flush();
+
+        return $invoice;
     }
 
     /**

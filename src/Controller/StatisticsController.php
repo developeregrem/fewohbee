@@ -22,6 +22,7 @@ use App\Entity\Subsidiary;
 use App\Repository\GuestCategoryRepository;
 use App\Service\InvoiceService;
 use App\Service\MonthlyStatsService;
+use App\Service\Statistics\RevenueForecastService;
 use App\Service\StatisticsService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -34,6 +35,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[IsGranted('ROLE_STATISTICS')]
 #[Route('/statistics')]
@@ -345,19 +347,36 @@ class StatisticsController extends AbstractController
      * @return Response
      */
     #[Route('/turnover/yearly', name: 'statistics.turnover.yearly', methods: ['GET'])]
-    public function getTurnoverForYearAction(ManagerRegistry $doctrine, InvoiceService $is, StatisticsService $ss, Request $request): JsonResponse
+    public function getTurnoverForYearAction(ManagerRegistry $doctrine, InvoiceService $is, StatisticsService $ss, RevenueForecastService $forecastService, TranslatorInterface $translator, Request $request): JsonResponse
     {
         $yearStart = (int) $request->query->get('yearStart');
         $yearEnd = (int) $request->query->get('yearEnd');
         $invoiceStatus = $request->query->all('invoice-status');
+        $withForecast = $request->query->getBoolean('forecast');
+        $includeInvoiced = $request->query->getBoolean('forecast-invoiced');
 
         $result = [
             'labels' => [],
-            'datasets' => [],
+            'datasets' => [['label' => $translator->trans('statistics.turnover.series.invoiced'), 'data' => [], 'colorIndex' => 0]],
         ];
+        if ($withForecast) {
+            $result['datasets'][1] = ['label' => $translator->trans('statistics.turnover.series.forecast'), 'data' => [], 'details' => [], 'colorIndex' => 0, 'forecast' => true];
+        }
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
             $result['labels'][] = $y;
             $result['datasets'][0]['data'][] = $ss->loadTurnoverForYear($is, $y, $invoiceStatus);
+            if ($withForecast) {
+                $months = $this->forecastMonths($forecastService, $y, $invoiceStatus);
+                $year = ['open' => ['total' => 0.0, 'reservations' => 0], 'invoiced' => ['total' => 0.0, 'reservations' => 0]];
+                foreach ($months as $month) {
+                    foreach (['open', 'invoiced'] as $part) {
+                        $year[$part]['total'] += $month[$part]['total'];
+                        $year[$part]['reservations'] += $month[$part]['reservations'];
+                    }
+                }
+                $result['datasets'][1]['data'][] = $this->forecastAmount($year, $includeInvoiced);
+                $result['datasets'][1]['details'][] = $this->forecastDetails($year, $includeInvoiced, $translator, $request->getLocale());
+            }
         }
 
         return new JsonResponse(
@@ -366,11 +385,13 @@ class StatisticsController extends AbstractController
     }
 
     #[Route('/turnover/monthly', name: 'statistics.turnover.monthly', methods: ['GET'])]
-    public function getTurnoverForMonthAction(ManagerRegistry $doctrine, InvoiceService $is, StatisticsService $ss, Request $request): JsonResponse
+    public function getTurnoverForMonthAction(ManagerRegistry $doctrine, InvoiceService $is, StatisticsService $ss, RevenueForecastService $forecastService, TranslatorInterface $translator, Request $request): JsonResponse
     {
         $yearStart = (int) $request->query->get('yearStart');
         $yearEnd = (int) $request->query->get('yearEnd');
         $invoiceStatus = $request->query->all('invoice-status');
+        $withForecast = $request->query->getBoolean('forecast');
+        $includeInvoiced = $request->query->getBoolean('forecast-invoiced');
 
         $result = [
             'labels' => [],
@@ -382,16 +403,81 @@ class StatisticsController extends AbstractController
         }
 
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
-            $tmpResult = [
-                'label' => $y,
+            // The colour belongs to the year, whichever years are shown next to it.
+            $result['datasets'][] = [
+                // Next to a forecast the label says which date the invoices are counted by.
+                'label' => $withForecast ? $translator->trans('statistics.turnover.series.invoiced_year', ['%year%' => $y]) : $y,
                 'data' => $ss->loadTurnoverForMonth($is, $y, $invoiceStatus),
+                'colorIndex' => $y,
             ];
-            $result['datasets'][] = $tmpResult;
+            if ($withForecast) {
+                $months = array_values($this->forecastMonths($forecastService, $y, $invoiceStatus));
+                $result['datasets'][] = [
+                    'label' => $translator->trans('statistics.turnover.series.forecast_year', ['%year%' => $y]),
+                    'data' => array_map(fn (array $month): float => $this->forecastAmount($month, $includeInvoiced), $months),
+                    'details' => array_map(fn (array $month): array => $this->forecastDetails($month, $includeInvoiced, $translator, $request->getLocale()), $months),
+                    'colorIndex' => $y,
+                    'forecast' => true,
+                ];
+            }
         }
 
         return new JsonResponse(
             $result,
         );
+    }
+
+    /**
+     * Expected revenue of the reservations departing in each month of the year (see RevenueForecastService).
+     *
+     * A reservation only counts as invoiced when its invoice has one of the statuses the turnover
+     * bars show; otherwise it would appear neither there nor in the forecast.
+     *
+     * @param array<int|string, mixed> $invoiceStatus the invoice statuses selected for the turnover bars
+     *
+     * @return array<string, array{open: array{total: float, reservations: int}, invoiced: array{total: float, reservations: int}}> keyed by Y-m, January to December
+     */
+    private function forecastMonths(RevenueForecastService $forecastService, int $year, array $invoiceStatus): array
+    {
+        return $forecastService->byDepartureMonth(
+            new \DateTimeImmutable($year.'-01-01'),
+            new \DateTimeImmutable($year.'-12-01'),
+            null,
+            array_values(array_map(intval(...), array_filter($invoiceStatus, is_numeric(...)))),
+        );
+    }
+
+    /**
+     * @param array{open: array{total: float, reservations: int}, invoiced: array{total: float, reservations: int}} $forecast
+     */
+    private function forecastAmount(array $forecast, bool $includeInvoiced): float
+    {
+        return round($forecast['open']['total'] + ($includeInvoiced ? $forecast['invoiced']['total'] : 0.0), 2);
+    }
+
+    /**
+     * Tooltip lines for a forecast bar: how many reservations it stands for and, when invoiced
+     * reservations are included, how much of it they account for. The forecast counts by month of
+     * departure and the invoices by invoice date, so the two bars of a month need not add up.
+     *
+     * @param array{open: array{total: float, reservations: int}, invoiced: array{total: float, reservations: int}} $forecast
+     *
+     * @return list<string>
+     */
+    private function forecastDetails(array $forecast, bool $includeInvoiced, TranslatorInterface $translator, string $locale): array
+    {
+        $invoiced = $includeInvoiced ? $forecast['invoiced']['reservations'] : 0;
+        $lines = [$translator->trans('statistics.turnover.forecast.tooltip.reservations', ['%count%' => $forecast['open']['reservations'] + $invoiced])];
+        if ($invoiced > 0) {
+            $formatter = new \NumberFormatter($locale, \NumberFormatter::DECIMAL);
+            $formatter->setAttribute(\NumberFormatter::FRACTION_DIGITS, 2);
+            $lines[] = $translator->trans('statistics.turnover.forecast.tooltip.invoiced', [
+                '%count%' => $invoiced,
+                '%amount%' => $formatter->format($forecast['invoiced']['total']),
+            ]);
+        }
+
+        return $lines;
     }
 
     /**

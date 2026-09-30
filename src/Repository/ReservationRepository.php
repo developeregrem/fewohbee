@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Entity\Appartment;
 use App\Entity\CalendarSyncImport;
 use App\Entity\Reservation;
+use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\ArrayParameterType;
@@ -279,6 +280,35 @@ class ReservationRepository extends ServiceEntityRepository
         }
 
         return $occupancy;
+    }
+
+    /**
+     * Reservations departing in [$from, $toExclusive) that count for the revenue forecast: every
+     * status except "canceled / no-show" and no conflict, optionally for one subsidiary.
+     *
+     * @return list<Reservation>
+     */
+    public function findDepartingForRevenueForecast(\DateTimeImmutable $from, \DateTimeImmutable $toExclusive, ?Subsidiary $subsidiary = null): array
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->addSelect('a', 'rs')
+            ->join('u.appartment', 'a')
+            ->leftJoin('u.reservationStatus', 'rs')
+            ->andWhere('u.endDate >= :from AND u.endDate < :to')
+            ->andWhere('u.isConflict = 0')
+            ->andWhere('rs.id IS NULL OR rs.code IS NULL OR rs.code <> :canceled')
+            ->setParameter('from', $from)
+            ->setParameter('to', $toExclusive)
+            ->setParameter('canceled', ReservationStatus::CODE_CANCELED_NOSHOW)
+            ->orderBy('u.endDate', 'ASC');
+        if ($subsidiary instanceof Subsidiary) {
+            $qb->andWhere('a.object = :subsidiary')->setParameter('subsidiary', $subsidiary);
+        }
+
+        /** @var list<Reservation> $reservations */
+        $reservations = $qb->getQuery()->getResult();
+
+        return $reservations;
     }
 
     /**

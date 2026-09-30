@@ -104,6 +104,38 @@ final class StatisticsControllerTest extends WebTestCase
         self::assertSame(200.0, (float) $data[4]);
     }
 
+    public function testTurnoverOffersTheForecastAsItsOwnSeries(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createUserWithRoles(['ROLE_STATISTICS']));
+        $year = (int) date('Y') + 1;
+
+        $client->request('GET', '/statistics/turnover/monthly', ['yearStart' => $year, 'yearEnd' => $year, 'invoice-status' => [2]]);
+        $withoutForecast = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertCount(1, $withoutForecast['datasets']);
+
+        // Only open reservations: the forecast sits on top of the invoiced turnover of its year.
+        $client->request('GET', '/statistics/turnover/monthly', ['yearStart' => $year, 'yearEnd' => $year, 'invoice-status' => [2], 'forecast' => 1]);
+        self::assertResponseIsSuccessful();
+        $stacked = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertCount(2, $stacked['datasets']);
+        self::assertTrue($stacked['datasets'][1]['forecast']);
+        self::assertCount(12, $stacked['datasets'][1]['data']);
+        self::assertSame($stacked['datasets'][0]['stack'], $stacked['datasets'][1]['stack']);
+
+        // With invoiced reservations it is the total expected turnover, shown next to the invoices.
+        $client->request('GET', '/statistics/turnover/monthly', ['yearStart' => $year, 'yearEnd' => $year, 'invoice-status' => [2], 'forecast' => 1, 'forecast-invoiced' => 1]);
+        $sideBySide = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertNotSame($sideBySide['datasets'][0]['stack'], $sideBySide['datasets'][1]['stack']);
+        foreach ($sideBySide['datasets'][1]['data'] as $month => $amount) {
+            self::assertGreaterThanOrEqual($stacked['datasets'][1]['data'][$month], $amount);
+        }
+
+        $client->request('GET', '/statistics/turnover/yearly', ['yearStart' => $year, 'yearEnd' => $year, 'invoice-status' => [2], 'forecast' => 1]);
+        $yearly = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertEqualsWithDelta(array_sum($stacked['datasets'][1]['data']), $yearly['datasets'][1]['data'][0], 0.01);
+    }
+
     private function createStatisticsScenario(string $start, string $end): void
     {
         $container = static::getContainer();
