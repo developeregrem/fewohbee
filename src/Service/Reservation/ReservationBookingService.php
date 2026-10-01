@@ -196,11 +196,7 @@ class ReservationBookingService
         foreach (array_unique($request->extraPriceIds) as $id) {
             if (!isset($applicable[$id])) {
                 $offered = array_map(static fn (Price $price): string => sprintf('%d (%s)', $price->getId(), $price->getDescription()), $applicable);
-                throw new ReservationBookingException(sprintf(
-                    'Extra %d is not available for this stay. Available: %s.',
-                    $id,
-                    [] === $offered ? 'none' : implode(', ', $offered)
-                ));
+                throw new ReservationBookingException(sprintf('Extra %d is not available for this stay. Available: %s.', $id, [] === $offered ? 'none' : implode(', ', $offered)));
             }
             $extras[] = $applicable[$id];
         }
@@ -229,10 +225,7 @@ class ReservationBookingService
         if (null !== $booker->salutation && '' !== trim($booker->salutation)
             && !\in_array(trim($booker->salutation), $this->appSettingsService->getSettings()->getCustomerSalutations(), true)
         ) {
-            throw new ReservationBookingException(sprintf(
-                'Unknown salutation. Allowed: %s.',
-                implode(', ', $this->appSettingsService->getSettings()->getCustomerSalutations())
-            ));
+            throw new ReservationBookingException(sprintf('Unknown salutation. Allowed: %s.', implode(', ', $this->appSettingsService->getSettings()->getCustomerSalutations())));
         }
     }
 

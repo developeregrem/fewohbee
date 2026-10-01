@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Dto\TouristTaxBreakdown;
-use App\Entity\Enum\PercentageBase;
 use App\Entity\Enum\TaxCalculationMode;
 use App\Entity\Reservation;
 use App\Entity\Subsidiary;
@@ -188,7 +187,7 @@ class TouristTaxService
             ++$coveredNights;
         }
 
-        if ($coveredNights === 0 || $apartmentSum <= 0.0) {
+        if (0 === $coveredNights || $apartmentSum <= 0.0) {
             return [];
         }
 

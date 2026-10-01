@@ -201,8 +201,6 @@ class RegistrationBookEntry
 
     /**
      * Get birthday.
-     *
-     * @return \DateTime
      */
     public function getBirthday(): ?\DateTime
     {

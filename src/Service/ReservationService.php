@@ -396,9 +396,9 @@ class ReservationService
             $this->em->flush();
 
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -627,21 +627,22 @@ class ReservationService
             $is->prefillMiscPositionsWithReservations($reservations, $requestStack, true);
 
             return $requestStack->getSession()->get('invoicePositionsMiscellaneous');
-        } else { // initial load of preview new reservation, prices will be filled based on price categories
-            $prices = $ps->getUniquePricesForReservations($reservations, 1);
-            // prefill reservatioInCreationPrices session
-            foreach ($prices as $price) {
-                if ($price->getIsDefaultActiveInReservationCreation()) {
-                    $this->toggleInCreationPrice($price, $requestStack);
-                }
-            }
-            $selectedPrices = $requestStack->getSession()->get('reservatioInCreationPrices', new ArrayCollection());
-            $requestStack->getSession()->set('invoicePositionsMiscellaneous', []);
-            $reservations = $this->setPricesToReservations($selectedPrices, $reservations);
-            $is->prefillMiscPositionsWithReservations($reservations, $requestStack, true);
-
-            return $requestStack->getSession()->get('invoicePositionsMiscellaneous');
         }
+
+        // On the first preview, fill prices from the price categories.
+        $prices = $ps->getUniquePricesForReservations($reservations, 1);
+        // prefill reservatioInCreationPrices session
+        foreach ($prices as $price) {
+            if ($price->getIsDefaultActiveInReservationCreation()) {
+                $this->toggleInCreationPrice($price, $requestStack);
+            }
+        }
+        $selectedPrices = $requestStack->getSession()->get('reservatioInCreationPrices', new ArrayCollection());
+        $requestStack->getSession()->set('invoicePositionsMiscellaneous', []);
+        $reservations = $this->setPricesToReservations($selectedPrices, $reservations);
+        $is->prefillMiscPositionsWithReservations($reservations, $requestStack, true);
+
+        return $requestStack->getSession()->get('invoicePositionsMiscellaneous');
     }
 
     /**

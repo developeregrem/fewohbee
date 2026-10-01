@@ -40,7 +40,7 @@ final class McpToolCatalog
             if (!class_exists($class)) {
                 continue;
             }
-            foreach ((new \ReflectionClass($class))->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+            foreach (new \ReflectionClass($class)->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
                 $attribute = $method->getAttributes(McpTool::class)[0] ?? null;
                 if (null === $attribute) {
                     continue;

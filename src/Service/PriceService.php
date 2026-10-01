@@ -714,7 +714,7 @@ class PriceService
             return $stored;
         }
         $factor = 1.0 + $vatPercent / 100.0;
-        if ($target === PercentageBase::NET) {
+        if (PercentageBase::NET === $target) {
             return $storedIncludesVat ? $stored / $factor : $stored;
         }
 

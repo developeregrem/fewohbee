@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Dto\CalendarEntryViolation;
 use App\Entity\Appartment;
+use App\Entity\CalendarEntry;
 use App\Entity\Correspondence;
 use App\Entity\Customer;
 use App\Entity\Enum\IDCardType;
@@ -25,18 +27,16 @@ use App\Entity\ReservationStatus;
 use App\Entity\RoomBlock;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
-use App\Event\ReservationCreatedEvent;
-use App\Dto\CalendarEntryViolation;
-use App\Entity\CalendarEntry;
 use App\Entity\User;
-use App\Form\ReservationMetaType;
+use App\Event\ReservationCreatedEvent;
 use App\Form\CalendarEntryType;
+use App\Form\ReservationMetaType;
 use App\Repository\CalendarEntryRepository;
 use App\Repository\CalendarRepository;
 use App\Service\AvailabilityService;
 use App\Service\Calendar\Entry\CalendarEntryService;
-use App\Service\Calendar\Sync\ImportedReservationSynchronizer;
 use App\Service\Calendar\PublicHolidayService;
+use App\Service\Calendar\Sync\ImportedReservationSynchronizer;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
 use App\Service\EInvoice\EInvoiceReadinessService;
@@ -46,20 +46,20 @@ use App\Service\PriceService;
 use App\Service\ReservationObject;
 use App\Service\ReservationPeriodService;
 use App\Service\ReservationService;
+use App\Service\ReservationTableDecorationService;
 use App\Service\ReservationTableService;
 use App\Service\TemplatesService;
 use App\Service\TouristTaxService;
-use App\Service\ReservationTableDecorationService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Intl\Countries;
@@ -160,9 +160,9 @@ class ReservationServiceController extends AbstractController
         $year = $request->query->get('year', null);
         if (null === $year) {
             return $this->_handleTableRequest($doctrine, $requestStack, $request, $tableService, $decorationService);
-        } else {
-            return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request);
         }
+
+        return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request);
     }
 
     /**
@@ -1013,12 +1013,12 @@ class ReservationServiceController extends AbstractController
                 'id' => $reservation->getId(),
                 'error' => true,
             ]);
-        } else {
-            return $this->render('Reservations/reservation_form_edit_remark.html.twig', [
-                'reservation' => $reservation,
-                'form' => $form->createView(),
-            ]);
         }
+
+        return $this->render('Reservations/reservation_form_edit_remark.html.twig', [
+            'reservation' => $reservation,
+            'form' => $form->createView(),
+        ]);
     }
 
     /**
@@ -1224,34 +1224,33 @@ class ReservationServiceController extends AbstractController
             $query = ['tab' => $tab];
 
             return $this->forward($forwardController, $params, $query);
-        } else {
-            $customersInReservation = $requestStack->getSession()->get('customersInReservation');
-            $customerIsAlreadyInReservation = false;
+        }
+        $customersInReservation = $requestStack->getSession()->get('customersInReservation');
+        $customerIsAlreadyInReservation = false;
 
-            if (null == $customersInReservation) {
-                $customersInReservation = [];
-            } else {
-                foreach ($customersInReservation as $customer) {
-                    if ($customer['id'] == $customerId && $customer['appartmentId'] == $appartmentId) {
-                        $customerIsAlreadyInReservation = true;
-                        break;
-                    }
+        if (null == $customersInReservation) {
+            $customersInReservation = [];
+        } else {
+            foreach ($customersInReservation as $customer) {
+                if ($customer['id'] == $customerId && $customer['appartmentId'] == $appartmentId) {
+                    $customerIsAlreadyInReservation = true;
+                    break;
                 }
             }
-
-            if (!$customerIsAlreadyInReservation) {
-                $customersInReservation[] = ['id' => $customerId, 'appartmentId' => $appartmentId];
-                $requestStack->getSession()->set('customersInReservation', $customersInReservation);
-            }
-
-            $request2 = $request->duplicate([], []);
-            $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
-            $request2->request->add([
-                'tab' => $tab,
-            ]);
-
-            return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
         }
+
+        if (!$customerIsAlreadyInReservation) {
+            $customersInReservation[] = ['id' => $customerId, 'appartmentId' => $appartmentId];
+            $requestStack->getSession()->set('customersInReservation', $customersInReservation);
+        }
+
+        $request2 = $request->duplicate([], []);
+        $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
+        $request2->request->add([
+            'tab' => $tab,
+        ]);
+
+        return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
     }
 
     /**
@@ -1305,26 +1304,25 @@ class ReservationServiceController extends AbstractController
             $query = ['tab' => $tab];
 
             return $this->forward($forwardController, $params, $query);
-        } else {
-            $guestsInReservation = $requestStack->getSession()->get('customersInReservation');
-            $appartmentId = $request->request->get('appartmentId', 0);
-
-            foreach ($guestsInReservation as $key => $guest) {
-                if ($guest['id'] == $customerId && $guest['appartmentId'] == $appartmentId) {
-                    unset($guestsInReservation[$key]);
-                    $requestStack->getSession()->set('customersInReservation', $guestsInReservation);
-                    break;
-                }
-            }
-
-            $request2 = $request->duplicate([], []);
-            $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
-            $request2->request->add([
-                'tab' => $tab,
-            ]);
-
-            return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
         }
+        $guestsInReservation = $requestStack->getSession()->get('customersInReservation');
+        $appartmentId = $request->request->get('appartmentId', 0);
+
+        foreach ($guestsInReservation as $key => $guest) {
+            if ($guest['id'] == $customerId && $guest['appartmentId'] == $appartmentId) {
+                unset($guestsInReservation[$key]);
+                $requestStack->getSession()->set('customersInReservation', $guestsInReservation);
+                break;
+            }
+        }
+
+        $request2 = $request->duplicate([], []);
+        $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
+        $request2->request->add([
+            'tab' => $tab,
+        ]);
+
+        return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
     }
 
     #[Route('/edit/customer/edit', name: 'reservations.edit.customer.edit', methods: ['POST'])]

@@ -13,8 +13,8 @@ namespace App\Service\GuestCheckIn\Section;
 final readonly class GuestCheckInSection
 {
     /**
-     * @param string               $template Twig template rendering the block
-     * @param array<string, mixed> $vars     variables for that template
+     * @param string               $template           Twig template rendering the block
+     * @param array<string, mixed> $vars               variables for that template
      * @param bool                 $requiresSubmission shown only once the guest sent the form
      * @param bool                 $duringStayOnly     shown only from the arrival day to the departure day
      */

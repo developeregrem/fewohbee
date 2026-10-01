@@ -24,7 +24,7 @@ class InvoiceEmailTemplatePreviewProvider extends InvoiceTemplatePreviewProvider
 
     public function supportsPreview(Template $template): bool
     {
-        return $template->getTemplateType()?->getName() === 'TEMPLATE_INVOICE_EMAIL';
+        return 'TEMPLATE_INVOICE_EMAIL' === $template->getTemplateType()?->getName();
     }
 
     public function getAvailableSnippets(): array

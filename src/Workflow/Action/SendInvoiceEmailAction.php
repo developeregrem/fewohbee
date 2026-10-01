@@ -158,10 +158,7 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
             $missing = null !== $readiness->result
                 ? implode(', ', array_map(fn (string $key): string => $this->translator->trans($key), $readiness->result->getMessageKeys()))
                 : $this->translator->trans('invoice.settings.active.error');
-            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_einvoice_invalid', [
-                '%number%' => (string) $entity->getNumber(),
-                '%fields%' => $missing,
-            ]));
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_einvoice_invalid', ['%number%' => (string) $entity->getNumber(), '%fields%' => $missing]));
         }
 
         $pdfBytes = null;
@@ -171,10 +168,7 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
                 $asEInvoice = true;
             } catch (\Throwable $e) {
                 if ('einvoice_required' === $mode) {
-                    throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_einvoice_invalid', [
-                        '%number%' => (string) $entity->getNumber(),
-                        '%fields%' => $e->getMessage(),
-                    ]));
+                    throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_einvoice_invalid', ['%number%' => (string) $entity->getNumber(), '%fields%' => $e->getMessage()]));
                 }
                 $fallbackUsed = true;
             }
@@ -297,10 +291,7 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
 
         $typeName = $template->getTemplateType()?->getName();
         if ($expectedType !== $typeName) {
-            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_template_incompatible', [
-                '%type%' => $typeName ?? 'null',
-                '%expected%' => $expectedType,
-            ]));
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_template_incompatible', ['%type%' => $typeName ?? 'null', '%expected%' => $expectedType]));
         }
 
         return $template;

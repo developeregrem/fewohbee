@@ -8,7 +8,6 @@ use App\Dto\GuestCheckIn\GuestCheckInApplyRequest;
 use App\Entity\Customer;
 use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\Enum\IDCardType;
-use App\Entity\GuestCheckIn;
 use App\Entity\Reservation;
 use App\Repository\GuestCheckInRepository;
 use App\Service\PublicUrlService;
@@ -107,7 +106,8 @@ class GuestCheckInReviewService
      * without a match, suggest a new guest instead of overwriting another person.
      *
      * @param array<string, mixed> $submitted
-     * @param list<Customer> $globalCandidates
+     * @param list<Customer>       $globalCandidates
+     *
      * @return array{string, ?Customer}
      */
     private function suggestMainTarget(Reservation $reservation, array $submitted, array $globalCandidates): array
@@ -160,7 +160,7 @@ class GuestCheckInReviewService
     }
 
     /** @param array<string, Customer> $matches
-     *  @return array{string, ?Customer}
+     * @return array{string, ?Customer}
      */
     private static function uniqueTarget(array $matches): array
     {
@@ -269,7 +269,7 @@ class GuestCheckInReviewService
     }
 
     /** @param array<string, mixed> $submitted
-     *  @param list<Customer> $globalCandidates
+     * @param list<Customer> $globalCandidates
      */
     private function matchingGuest(Reservation $reservation, array $submitted, string $defaultMainTarget, array $globalCandidates): string
     {
@@ -314,7 +314,7 @@ class GuestCheckInReviewService
     }
 
     /** @param array<string, mixed> $submitted
-     *  @param list<Customer> $globalCandidates
+     * @param list<Customer> $globalCandidates
      */
     private function hasNameOnlyCandidate(array $submitted, array $globalCandidates): bool
     {
@@ -324,6 +324,7 @@ class GuestCheckInReviewService
 
     /**
      * @param list<Customer> $candidates
+     *
      * @return array<string, array{id: int, name: string}>
      */
     private function globalTargets(array $candidates): array

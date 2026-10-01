@@ -37,7 +37,7 @@ class WorkflowEngine
 
         foreach ($workflows as $workflow) {
             // Skip if this workflow already ran successfully for this entity (same dedup as scheduled workflows)
-            if ($workflow->getId() !== null && method_exists($entity, 'getId') && $entity->getId() !== null) {
+            if (null !== $workflow->getId() && method_exists($entity, 'getId') && null !== $entity->getId()) {
                 if ($this->logService->hasBeenProcessed($workflow->getId(), $entity::class, $entity->getId())) {
                     continue;
                 }
@@ -54,7 +54,7 @@ class WorkflowEngine
      */
     public function processScheduledWorkflow(Workflow $workflow, object $entity, array $context = []): bool
     {
-        if ($workflow->getId() !== null && method_exists($entity, 'getId') && $entity->getId() !== null) {
+        if (null !== $workflow->getId() && method_exists($entity, 'getId') && null !== $entity->getId()) {
             if ($this->logService->hasBeenProcessed($workflow->getId(), $entity::class, $entity->getId())) {
                 return false;
             }

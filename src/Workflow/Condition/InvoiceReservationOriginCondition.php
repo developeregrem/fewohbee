@@ -35,8 +35,8 @@ class InvoiceReservationOriginCondition implements WorkflowConditionInterface
     {
         return [
             [
-                'key'   => 'originId',
-                'type'  => 'reservation_origin_select',
+                'key' => 'originId',
+                'type' => 'reservation_origin_select',
                 'label' => 'workflow.condition.invoice_reservation_origin_is',
             ],
         ];

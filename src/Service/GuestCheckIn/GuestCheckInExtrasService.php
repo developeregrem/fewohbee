@@ -82,6 +82,7 @@ class GuestCheckInExtrasService
      * create a charge at a different amount when the hotelier takes the data over.
      *
      * @param list<int> $selectedIds
+     *
      * @return list<array{id: int, description: string, total: string}>
      */
     public function snapshot(Reservation $reservation, array $selectedIds): array
@@ -114,6 +115,7 @@ class GuestCheckInExtrasService
      * disappeared or changed requires the hotelier to resolve the request manually.
      *
      * @param array<mixed> $requested
+     *
      * @return list<Price>
      */
     public function pricesToApply(Reservation $reservation, array $requested): array

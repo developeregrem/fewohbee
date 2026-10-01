@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Calendar;
+use App\Exception\CalendarSyncException;
 use App\Form\CalendarType;
 use App\Repository\CalendarEntryRepository;
 use App\Repository\CalendarRepository;
 use App\Service\Calendar\Sync\CalendarEntrySyncService;
-use App\Exception\CalendarSyncException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;

@@ -37,7 +37,6 @@ class RoomCategoryController extends AbstractController
         $form = $this->createForm(RoomCategoryType::class, $roomCategory);
         $form->handleRequest($request);
 
-
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager = $doctrine->getManager();
             $entityManager->persist($roomCategory);

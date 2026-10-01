@@ -105,7 +105,6 @@ class MonthlyStatsSnapshot
         $this->isAll = $isAll;
     }
 
-
     /**
      * Get the subsidiary scope of this snapshot or null for "all".
      */

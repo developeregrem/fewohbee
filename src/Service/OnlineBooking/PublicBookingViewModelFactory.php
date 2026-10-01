@@ -58,7 +58,7 @@ class PublicBookingViewModelFactory
             'errorMessage' => $errorMessage,
             'successMessage' => $this->resolveSuccessMessage($request, $config),
             'submitFallbackNotice' => false,
-            'minArrivalDate' => (new \DateTimeImmutable('today'))->format('Y-m-d'),
+            'minArrivalDate' => new \DateTimeImmutable('today')->format('Y-m-d'),
             'maxDepartureDate' => $this->restrictionService->getMaxDepartureDate()?->format('Y-m-d'),
             'availabilityChecked' => false,
             'formState' => $this->abuseProtectionService->createFormState(false),
@@ -220,7 +220,7 @@ class PublicBookingViewModelFactory
     /** Whole months containing bookable nights, counted from the current month. */
     public function monthsUntil(\DateTimeImmutable $end): int
     {
-        $firstOfThisMonth = (new \DateTimeImmutable('today'))->modify('first day of this month');
+        $firstOfThisMonth = new \DateTimeImmutable('today')->modify('first day of this month');
         // The horizon is an exclusive departure boundary. If it falls on the first
         // day of a month, that month contains no bookable night and must not become
         // an otherwise empty calendar page.

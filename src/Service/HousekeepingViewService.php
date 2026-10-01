@@ -506,8 +506,6 @@ class HousekeepingViewService
      *
      * @param Reservation[] $arrivals
      * @param Reservation[] $departures
-     *
-     * @return string|null
      */
     private function buildReservationSummary(Reservation $primary, array $arrivals, array $departures): ?string
     {
@@ -536,7 +534,6 @@ class HousekeepingViewService
     {
         return $this->reservationNameResolver->resolve($reservation);
     }
-
 
     /**
      * Build an inclusive list of days between start and end.

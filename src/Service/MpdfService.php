@@ -41,27 +41,27 @@ class MpdfService
             : $this->tempDir.'/fonts-'.$this->customFonts->getCacheFingerprint();
 
         if (!is_dir($tempDir)) {
-            @mkdir($tempDir, 0775, true);
+            @mkdir($tempDir, 0o775, true);
         }
 
         $isA5 = 'A5' === strtoupper($format);
         $isA6 = 'A6' === strtoupper($format);
         $config = [
-            'mode'          => $locale,
-            'format'        => strtoupper($format),
-            'orientation'   => 'P',
-            'margin_left'   => $isA6 ? 10 : ($isA5 ? 15 : 25),
-            'margin_right'  => $isA6 ? 8  : ($isA5 ? 12 : 20),
-            'margin_top'    => $isA6 ? 8  : ($isA5 ? 12 : 20),
-            'margin_bottom' => $isA6 ? 8  : ($isA5 ? 12 : 20),
-            'margin_header' => $isA6 ? 4  : ($isA5 ? 6  : 9),
-            'margin_footer' => $isA6 ? 4  : ($isA5 ? 6  : 9),
-            'tempDir'       => $tempDir,
+            'mode' => $locale,
+            'format' => strtoupper($format),
+            'orientation' => 'P',
+            'margin_left' => $isA6 ? 10 : ($isA5 ? 15 : 25),
+            'margin_right' => $isA6 ? 8 : ($isA5 ? 12 : 20),
+            'margin_top' => $isA6 ? 8 : ($isA5 ? 12 : 20),
+            'margin_bottom' => $isA6 ? 8 : ($isA5 ? 12 : 20),
+            'margin_header' => $isA6 ? 4 : ($isA5 ? 6 : 9),
+            'margin_footer' => $isA6 ? 4 : ($isA5 ? 6 : 9),
+            'tempDir' => $tempDir,
         ];
 
         if ([] !== $customFontData) {
-            $defaultConfig = (new ConfigVariables())->getDefaults();
-            $defaultFontConfig = (new FontVariables())->getDefaults();
+            $defaultConfig = new ConfigVariables()->getDefaults();
+            $defaultFontConfig = new FontVariables()->getDefaults();
             $config['fontDir'] = array_merge($defaultConfig['fontDir'], [$this->customFonts->getFontDirectory()]);
             $config['fontdata'] = $defaultFontConfig['fontdata'] + $customFontData;
         }

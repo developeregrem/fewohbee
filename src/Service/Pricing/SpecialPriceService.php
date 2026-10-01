@@ -146,7 +146,7 @@ class SpecialPriceService
                 }
             }
 
-            $period = (new PricePeriod())
+            $period = new PricePeriod()
                 ->setStart(\DateTime::createFromImmutable($request->firstNight))
                 ->setEnd(\DateTime::createFromImmutable($request->lastNight))
                 ->setDescription($request->periodDescription);
@@ -237,7 +237,7 @@ class SpecialPriceService
         $period->setStart(\DateTime::createFromImmutable($remaining[0][0]));
         $period->setEnd(\DateTime::createFromImmutable($remaining[0][1]));
         if (isset($remaining[1])) {
-            $price->addPricePeriod((new PricePeriod())
+            $price->addPricePeriod(new PricePeriod()
                 ->setStart(\DateTime::createFromImmutable($remaining[1][0]))
                 ->setEnd(\DateTime::createFromImmutable($remaining[1][1]))
                 ->setDescription($period->getDescription()));
@@ -282,7 +282,7 @@ class SpecialPriceService
             $copy->addRoomCategory($category);
         }
         foreach ($source->getComponents() as $component) {
-            $copy->addComponent((new PriceComponent())
+            $copy->addComponent(new PriceComponent()
                 ->setDescription($component->getDescription())
                 ->setVat($component->getVat())
                 ->setAllocationType($component->getAllocationType())

@@ -75,7 +75,7 @@ class GuestCategoryController extends AbstractController
     {
         if ($this->isCsrfTokenValid('delete'.$category->getId(), $request->request->get('_token'))) {
             // prevent deletion of default adult category
-            if ($category->isSystem() && $category->getSystemCode() === 'default_adult') {
+            if ($category->isSystem() && 'default_adult' === $category->getSystemCode()) {
                 $this->addFlash('warning', 'status.flash.delete.error.system');
 
                 return new Response('', Response::HTTP_NO_CONTENT);

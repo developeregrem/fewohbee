@@ -84,7 +84,7 @@ final class PurgeLogsCommandTest extends KernelTestCase
             self::assertNull($this->conn->fetchOne('SELECT payload FROM guest_check_in WHERE reservation_id = ?', [$old]));
             self::assertSame('submitted', $this->conn->fetchOne('SELECT status FROM guest_check_in WHERE reservation_id = ?', [$old]));
             self::assertNotNull($this->conn->fetchOne('SELECT payload FROM guest_check_in WHERE reservation_id = ?', [$recent]));
-            self::assertStringContainsString('guest data of 1 online check-ins', $this->tester->getDisplay());
+            self::assertMatchesRegularExpression('/guest\s+data of 1 online check-ins/', $this->tester->getDisplay());
         } finally {
             $this->conn->executeStatement('DELETE FROM guest_check_in WHERE reservation_id IN (?, ?)', [$old, $recent]);
             foreach ($rows as $row) {

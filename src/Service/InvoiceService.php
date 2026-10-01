@@ -15,10 +15,11 @@ namespace App\Service;
 
 use App\Dto\OriginFee;
 use App\Dto\TouristTaxBreakdown;
-use App\Entity\Enum\ModifierType;
-use App\Entity\Enum\TaxCalculationMode;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\Enum\InvoiceStatus;
+use App\Entity\Enum\ModifierType;
+use App\Entity\Enum\TaxCalculationMode;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
@@ -27,7 +28,6 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
-use App\Entity\Enum\InvoiceStatus;
 use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\EInvoice\EInvoiceReadinessService;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -36,7 +36,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use App\Service\AppSettingsService;
 
 class InvoiceService
 {
@@ -167,9 +166,9 @@ class InvoiceService
             $this->em->flush();
 
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -245,7 +244,7 @@ class InvoiceService
         $pdfOutput = $ts->getPDFOutput($templateOutput, $this->buildInvoiceExportFilename($invoice, true), $template);
         $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
 
-        return (new ZugferdDocumentPdfMerger($xml, $pdfOutput))
+        return new ZugferdDocumentPdfMerger($xml, $pdfOutput)
             ->generateDocument()
             ->downloadString();
     }
@@ -379,7 +378,7 @@ class InvoiceService
         $fileNamePattern = $this->appSettingsService->getSettings()->getInvoiceFilenamePattern();
         $pattern = trim($fileNamePattern);
         if ('' === $pattern) {
-            $pattern = $this->translator->trans('invoice.number.short') . '-<number>';
+            $pattern = $this->translator->trans('invoice.number.short').'-<number>';
         }
 
         $statusLabel = '';
@@ -436,7 +435,7 @@ class InvoiceService
         $value = preg_replace('/[^A-Za-z0-9._-]/', '', $value);
         $value = preg_replace('/_+/', '_', $value);
         $value = preg_replace('/-+/', '-', $value);
-        $value = trim($value, "._-");
+        $value = trim($value, '._-');
 
         return '' !== $value ? $value : 'invoice';
     }

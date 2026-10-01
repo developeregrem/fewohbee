@@ -34,9 +34,9 @@ class RateCalendarService
     }
 
     /**
-     * @param \DateTimeImmutable $firstNight first night to report
-     * @param \DateTimeImmutable $lastNight  last night to report (inclusive)
-     * @param int                $nights     intended stay length, drives minStay selection
+     * @param \DateTimeImmutable $firstNight  first night to report
+     * @param \DateTimeImmutable $lastNight   last night to report (inclusive)
+     * @param int                $nights      intended stay length, drives minStay selection
      * @param int[]              $occupancies
      *
      * @return list<array{date: string, rates: list<array<string, mixed>>}>

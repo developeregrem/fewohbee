@@ -91,9 +91,7 @@ final class GenericCsvParser implements ParserInterface
         $path = $file->getPathname();
         $content = file_get_contents($path);
         if (false === $content) {
-            throw new \RuntimeException($this->trans('accounting.bank_import.parser.error.file_read_failed', [
-                '%path%' => $path,
-            ]));
+            throw new \RuntimeException($this->trans('accounting.bank_import.parser.error.file_read_failed', ['%path%' => $path]));
         }
 
         $encoding = $profile->getEncoding();
@@ -192,10 +190,7 @@ final class GenericCsvParser implements ParserInterface
         $raw = trim($raw);
         $date = \DateTimeImmutable::createFromFormat('!'.$format, $raw);
         if (false === $date) {
-            throw new \InvalidArgumentException($this->trans('accounting.bank_import.parser.error.invalid_date', [
-                '%value%' => $raw,
-                '%format%' => $format,
-            ]));
+            throw new \InvalidArgumentException($this->trans('accounting.bank_import.parser.error.invalid_date', ['%value%' => $raw, '%format%' => $format]));
         }
 
         if ((int) $date->format('Y') < 100 && 1 === preg_match('/(\d{2})\D*$/', $raw, $matches)) {
@@ -289,9 +284,7 @@ final class GenericCsvParser implements ParserInterface
     private function assertRequiredColumns(array $columnMap, string $directionMode): void
     {
         if (!isset($columnMap['bookDate'])) {
-            throw new \InvalidArgumentException($this->trans('accounting.bank_import.parser.error.required_column', [
-                '%field%' => 'bookDate',
-            ]));
+            throw new \InvalidArgumentException($this->trans('accounting.bank_import.parser.error.required_column', ['%field%' => 'bookDate']));
         }
 
         if (BankCsvProfile::DIRECTION_SEPARATE_COLUMNS === $directionMode) {
@@ -303,9 +296,7 @@ final class GenericCsvParser implements ParserInterface
         }
 
         if (!isset($columnMap['amount'])) {
-            throw new \InvalidArgumentException($this->trans('accounting.bank_import.parser.error.required_column', [
-                '%field%' => 'amount',
-            ]));
+            throw new \InvalidArgumentException($this->trans('accounting.bank_import.parser.error.required_column', ['%field%' => 'amount']));
         }
     }
 

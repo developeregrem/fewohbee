@@ -228,7 +228,7 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
                 'description' => 'templates.editor.reservation.misc_positions.desc',
                 'group' => 'Reservation',
                 'complexity' => 'easy',
-                'content' => "<span data-repeat=\"miscPositions\" data-repeat-as=\"position\">[[ position.description ]]: [[ position.totalPrice ]] €<br /></span>",
+                'content' => '<span data-repeat="miscPositions" data-repeat-as="position">[[ position.description ]]: [[ position.totalPrice ]] €<br /></span>',
             ],
         ];
     }

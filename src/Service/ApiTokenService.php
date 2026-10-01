@@ -46,7 +46,7 @@ class ApiTokenService
     public function createToken(User $user, string $name, array $scopes, ?\DateTimeImmutable $expiresAt): ApiTokenCreationResult
     {
         if (\in_array(ApiScope::MCP_ACCESS->value, $scopes, true)) {
-            $latestExpiry = (new \DateTimeImmutable())->modify(self::MCP_MAX_LIFETIME);
+            $latestExpiry = new \DateTimeImmutable()->modify(self::MCP_MAX_LIFETIME);
             if (null === $expiresAt || $expiresAt > $latestExpiry) {
                 throw new \InvalidArgumentException('Tokens for AI assistants must expire within one year.');
             }
