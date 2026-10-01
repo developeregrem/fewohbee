@@ -49,6 +49,7 @@ class TemplatesFixtures extends Fixture implements FixtureGroupInterface
             ],
             'TEMPLATE_RESERVATION_EMAIL' => [
                 ['file' => 'email-buchungsbestätigung.txt', 'isDefault' => true,],
+                ['file' => 'email-online-checkin.txt', 'name' => 'templates.guest_checkin_invitation.name'],
             ],
             'TEMPLATE_RESERVATION_PDF' => [
                 ['file' => 'pdf-reservierungsbestätigung.txt', 'isDefault' => true,],
