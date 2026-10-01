@@ -8,7 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\CashJournalRepository')]
-#[ORM\Table(name: 'cash_journal')]
+#[ORM\Table(name: '_legacy_cash_journal')]
 class CashJournal
 {
     #[ORM\Id]

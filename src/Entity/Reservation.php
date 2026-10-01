@@ -15,6 +15,9 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Table(name: 'reservations')]
 #[ORM\Index(name: 'idx_uuid', columns: ['uuid'])]
 #[ORM\Index(name: 'idx_booking_group_uuid', columns: ['booking_group_uuid'])]
+#[ORM\Index(name: 'idx_reservation_start_date', columns: ['start_date'])]
+#[ORM\Index(name: 'idx_reservation_end_date', columns: ['end_date'])]
+#[ORM\Index(name: 'idx_reservations_ref_uid', columns: ['ref_uid'])]
 class Reservation
 {
     #[ORM\Id]
@@ -106,10 +109,10 @@ class Reservation
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $refUid = null;
 
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isConflict = false;
 
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isConflictIgnored = false;
 
     #[ORM\ManyToOne(targetEntity: CalendarSyncImport::class)]
@@ -132,14 +135,14 @@ class Reservation
     #[ORM\Column(name: 'guest_counts', type: 'json')]
     private array $guestCounts = [];
 
-    #[ORM\Column(name: 'kurtaxe_waived', type: 'boolean')]
+    #[ORM\Column(name: 'kurtaxe_waived', type: 'boolean', options: ['default' => false])]
     private bool $kurtaxeWaived = false;
 
     /**
      * Explicit override that disables the "at least one adult" validation
      * for this booking (e.g. youth groups travelling without supervision).
      */
-    #[ORM\Column(name: 'adult_rule_override', type: 'boolean')]
+    #[ORM\Column(name: 'adult_rule_override', type: 'boolean', options: ['default' => false])]
     private bool $adultRuleOverride = false;
 
     public function __construct()

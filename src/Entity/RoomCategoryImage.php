@@ -32,11 +32,11 @@ class RoomCategoryImage
     private string $filename;
 
     /** Display order for gallery/carousel (lower = first) */
-    #[ORM\Column(type: 'smallint')]
+    #[ORM\Column(type: 'smallint', options: ['default' => 0])]
     private int $sortOrder = 0;
 
     /** Whether this is the hero image shown in booking overview cards */
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isPrimary = false;
 
     /** OTA image category tag (room, bathroom, view, etc.) — nullable, for future use */

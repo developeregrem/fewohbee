@@ -70,9 +70,9 @@ class Price
     private $includesVat;
     #[ORM\Column(type: 'boolean')]
     private $isFlatPrice;
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isPerRoom;
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $isDefaultActiveInReservationCreation;
 
     /**
@@ -88,9 +88,9 @@ class Price
      */
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $brokered = true;
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isBookableOnline;
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isMandatoryOnline;
     #[ORM\OneToMany(targetEntity: 'App\Entity\PriceComponent', mappedBy: 'price', orphanRemoval: true, cascade: ['persist'])]
     #[ORM\OrderBy(['sortOrder' => 'ASC', 'id' => 'ASC'])]
