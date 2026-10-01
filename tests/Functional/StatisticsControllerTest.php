@@ -81,6 +81,33 @@ final class StatisticsControllerTest extends WebTestCase
         self::assertSame([1], $payload['datasets'][0]['data']);
     }
 
+    public function testOriginChartsReturnConfiguredColorsAndLeaveOtherColorsOptional(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createUserWithRoles(['ROLE_STATISTICS']));
+
+        $year = $this->getScenarioYear(4);
+        $this->createStatisticsScenario(sprintf('%d-04-01', $year), sprintf('%d-04-03', $year), 'Web', '#123abc');
+        $this->createStatisticsScenario(sprintf('%d-05-01', $year), sprintf('%d-05-03', $year), 'Direct');
+
+        foreach (['/statistics/origin/monthtly' => ['monthStart' => 4, 'monthEnd' => 5], '/statistics/origin/yearly' => []] as $path => $period) {
+            $client->request('GET', $path, [
+                'objectId' => 'all',
+                'yearStart' => $year,
+                'yearEnd' => $year,
+                ...$period,
+            ]);
+
+            self::assertResponseIsSuccessful();
+            $payload = json_decode((string) $client->getResponse()->getContent(), true);
+            self::assertIsArray($payload);
+            $colorsByOrigin = array_combine($payload['labels'], $payload['colors']);
+            ksort($colorsByOrigin);
+            self::assertSame(['Direct' => null, 'Web' => '#123abc'], $colorsByOrigin);
+            self::assertSame([1, 1], $payload['datasets'][0]['data']);
+        }
+    }
+
     public function testTurnoverMonthlyUsesLiveData(): void
     {
         $client = static::createClient();
@@ -138,7 +165,7 @@ final class StatisticsControllerTest extends WebTestCase
         self::assertCount(1, $yearly['datasets'][1]['details']);
     }
 
-    private function createStatisticsScenario(string $start, string $end): void
+    private function createStatisticsScenario(string $start, string $end, string $originName = 'Web', ?string $originColor = null): void
     {
         $container = static::getContainer();
         $em = $container->get(ManagerRegistry::class)->getManager();
@@ -156,7 +183,8 @@ final class StatisticsControllerTest extends WebTestCase
         $em->persist($appartment);
 
         $origin = new ReservationOrigin();
-        $origin->setName('Web');
+        $origin->setName($originName);
+        $origin->setColor($originColor);
         $em->persist($origin);
 
         $status = new ReservationStatus();

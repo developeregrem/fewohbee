@@ -284,14 +284,17 @@ class StatisticsController extends AbstractController
 
         $labels = [];
         $data = [];
+        $colors = [];
         foreach ($resultArr as $single) {
             $origin = $em->getRepository(ReservationOrigin::class)->find($single['id']);
             $labels[] = $origin->getName();
             $data[] = $single['origins'];
+            $colors[] = $origin->getColor();
         }
 
         return new JsonResponse([
             'labels' => $labels,
+            'colors' => $colors,
             'datasets' => [
                 [
                     'label' => 'Origin',
@@ -320,14 +323,17 @@ class StatisticsController extends AbstractController
 
         $labels = [];
         $data = [];
+        $colors = [];
         foreach ($resultArr as $single) {
             $origin = $em->getRepository(ReservationOrigin::class)->find($single['id']);
             $labels[] = $origin->getName();
             $data[] = $single['origins'];
+            $colors[] = $origin->getColor();
         }
 
         return new JsonResponse([
             'labels' => $labels,
+            'colors' => $colors,
             'datasets' => [
                 [
                     'label' => 'Origin',
