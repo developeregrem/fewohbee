@@ -146,7 +146,11 @@ export default class extends Controller {
         try {
             const response = await fetch(`${url}?${params.toString()}`);
             const data = await response.json();
-            const datasets = this.styleTurnoverDatasets(data.datasets);
+            // Stack the forecast on the invoices only while the two are disjoint. With
+            // "include reservations with an invoice" the forecast repeats what the invoice bar
+            // already shows, so the bars go side by side and can be compared instead of summed.
+            const stacked = !(data.datasets || []).some((dataset) => dataset.forecast && dataset.includesInvoiced);
+            const datasets = this.styleTurnoverDatasets(data.datasets, stacked);
             const cfg = {
                 type: 'bar',
                 data: {
@@ -161,8 +165,7 @@ export default class extends Controller {
                         // A forecast bar explains itself: how many reservations, how much of it invoiced.
                         tooltip: { callbacks: { afterLabel: (item) => item.dataset.details?.[item.dataIndex] ?? [] } },
                     },
-                    // The forecast sits on top of the invoices it belongs to, one stack per year.
-                    scales: { x: { stacked: true }, y: { stacked: true } },
+                    scales: { x: { stacked }, y: { stacked } },
                 },
             };
 
@@ -179,31 +182,34 @@ export default class extends Controller {
     /**
      * Colours the turnover series: one hue per colorIndex (the year), solid for invoiced
      * turnover and hatched in the same hue for the forecast, so the two are not told apart
-     * by colour alone. The forecast is stacked on top of the invoices of its own year, so the
-     * bar shows the whole expected turnover; each year keeps its own stack and stands next to
-     * the others. Mind the x axis: invoices count by invoice date, the forecast by month of
-     * departure, so a stack is a total, not a month closed off to the day.
+     * by colour alone. While stacking, the forecast sits on top of the invoices of its own year,
+     * so the bar shows the whole expected turnover and each year keeps its own stack next to the
+     * others; otherwise every series gets its own bar. Mind the x axis: invoices count by invoice
+     * date, the forecast by month of departure, so a stack is a total, not a month closed off to
+     * the day.
      */
-    styleTurnoverDatasets(datasets) {
+    styleTurnoverDatasets(datasets, stacked = true) {
         const dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
         const palette = dark
             ? ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767']
             : ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'];
 
         // Invoices carrying a forecast are no longer the top of their stack, so they stay square.
-        const stacked = new Set((datasets || []).filter((dataset) => dataset.forecast).map((dataset) => dataset.colorIndex));
+        const carriesForecast = new Set((datasets || []).filter((dataset) => dataset.forecast).map((dataset) => dataset.colorIndex));
 
         return (datasets || []).map((dataset, index) => {
             const color = palette[(dataset.colorIndex ?? index) % palette.length];
+            const covered = stacked && !dataset.forecast && carriesForecast.has(dataset.colorIndex);
 
             return {
                 ...dataset,
                 backgroundColor: dataset.forecast ? this.hatchPattern(color) : color,
                 borderColor: color,
                 borderWidth: dataset.forecast ? 1 : 0,
-                borderRadius: !dataset.forecast && stacked.has(dataset.colorIndex) ? 0 : 3,
+                borderRadius: covered ? 0 : 3,
                 // Invoices and forecast of one year share a stack, different years do not.
-                stack: `year-${dataset.colorIndex ?? index}`,
+                // Without stacking no key is set, so every series keeps its own bar.
+                ...(stacked ? { stack: `year-${dataset.colorIndex ?? index}` } : {}),
             };
         });
     }

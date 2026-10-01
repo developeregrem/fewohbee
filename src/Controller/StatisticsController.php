@@ -366,7 +366,7 @@ class StatisticsController extends AbstractController
             'datasets' => [['label' => $translator->trans('statistics.turnover.series.invoiced'), 'data' => [], 'colorIndex' => 0]],
         ];
         if ($withForecast) {
-            $result['datasets'][1] = ['label' => $translator->trans('statistics.turnover.series.forecast'), 'data' => [], 'details' => [], 'colorIndex' => 0, 'forecast' => true];
+            $result['datasets'][1] = ['label' => $translator->trans('statistics.turnover.series.forecast'), 'data' => [], 'details' => [], 'colorIndex' => 0, 'forecast' => true, 'includesInvoiced' => $includeInvoiced];
         }
         $forecast = $withForecast ? $this->forecastRange($forecastService, $yearStart, $yearEnd, $invoiceStatus) : [];
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
@@ -426,6 +426,9 @@ class StatisticsController extends AbstractController
                     'details' => array_map(fn (array $month): array => $this->forecastDetails($month, $includeInvoiced, $translator, $request->getLocale()), $months),
                     'colorIndex' => $y,
                     'forecast' => true,
+                    // Whether the bar also carries the reservations that are already invoiced: it then
+                    // overlaps with the invoice bar and must not be stacked on it.
+                    'includesInvoiced' => $includeInvoiced,
                 ];
             }
         }
