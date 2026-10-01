@@ -368,11 +368,12 @@ class StatisticsController extends AbstractController
         if ($withForecast) {
             $result['datasets'][1] = ['label' => $translator->trans('statistics.turnover.series.forecast'), 'data' => [], 'details' => [], 'colorIndex' => 0, 'forecast' => true];
         }
+        $forecast = $withForecast ? $this->forecastRange($forecastService, $yearStart, $yearEnd, $invoiceStatus) : [];
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
             $result['labels'][] = $y;
             $result['datasets'][0]['data'][] = $ss->loadTurnoverForYear($is, $y, $invoiceStatus);
             if ($withForecast) {
-                $months = $this->forecastMonths($forecastService, $y, $invoiceStatus);
+                $months = $this->forecastYear($forecast, $y);
                 $year = ['open' => ['total' => 0.0, 'reservations' => 0], 'invoiced' => ['total' => 0.0, 'reservations' => 0]];
                 foreach ($months as $month) {
                     foreach (['open', 'invoiced'] as $part) {
@@ -408,6 +409,7 @@ class StatisticsController extends AbstractController
             $result['labels'][] = $this->getLocalizedDate($i, 'MMM', $request->getLocale());
         }
 
+        $forecast = $withForecast ? $this->forecastRange($forecastService, $yearStart, $yearEnd, $invoiceStatus) : [];
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
             // The colour belongs to the year, whichever years are shown next to it.
             $result['datasets'][] = [
@@ -417,7 +419,7 @@ class StatisticsController extends AbstractController
                 'colorIndex' => $y,
             ];
             if ($withForecast) {
-                $months = array_values($this->forecastMonths($forecastService, $y, $invoiceStatus));
+                $months = array_values($this->forecastYear($forecast, $y));
                 $result['datasets'][] = [
                     'label' => $translator->trans('statistics.turnover.series.forecast_year', ['%year%' => $y]),
                     'data' => array_map(fn (array $month): float => $this->forecastAmount($month, $includeInvoiced), $months),
@@ -434,23 +436,49 @@ class StatisticsController extends AbstractController
     }
 
     /**
-     * Expected revenue of the reservations departing in each month of the year (see RevenueForecastService).
+     * Expected revenue of the reservations departing in each month of the whole range
+     * (see RevenueForecastService). The range is fetched in one go, not year by year: every call
+     * costs its own reservation and invoice query, and a chart over five years paid them five times.
      *
      * A reservation only counts as invoiced when its invoice has one of the statuses the turnover
      * bars show; otherwise it would appear neither there nor in the forecast.
      *
      * @param array<int|string, mixed> $invoiceStatus the invoice statuses selected for the turnover bars
      *
-     * @return array<string, array{open: array{total: float, reservations: int}, invoiced: array{total: float, reservations: int}}> keyed by Y-m, January to December
+     * @return array<string, array{open: array{total: float, reservations: int}, invoiced: array{total: float, reservations: int}}> keyed by Y-m
      */
-    private function forecastMonths(RevenueForecastService $forecastService, int $year, array $invoiceStatus): array
+    private function forecastRange(RevenueForecastService $forecastService, int $yearStart, int $yearEnd, array $invoiceStatus): array
     {
+        if ($yearEnd < $yearStart) {
+            return [];
+        }
+
         return $forecastService->byDepartureMonth(
-            new \DateTimeImmutable($year.'-01-01'),
-            new \DateTimeImmutable($year.'-12-01'),
+            new \DateTimeImmutable($yearStart.'-01-01'),
+            new \DateTimeImmutable($yearEnd.'-12-01'),
             null,
             array_values(array_map(intval(...), array_filter($invoiceStatus, is_numeric(...)))),
         );
+    }
+
+    /**
+     * The twelve months of one year out of a forecast range, January to December.
+     *
+     * @param array<string, array{open: array{total: float, reservations: int}, invoiced: array{total: float, reservations: int}}> $range
+     *
+     * @return array<string, array{open: array{total: float, reservations: int}, invoiced: array{total: float, reservations: int}}>
+     */
+    private function forecastYear(array $range, int $year): array
+    {
+        $empty = ['total' => 0.0, 'room' => 0.0, 'extras' => 0.0, 'touristTax' => 0.0, 'reservations' => 0];
+
+        $months = [];
+        for ($m = 1; $m <= 12; ++$m) {
+            $key = \sprintf('%04d-%02d', $year, $m);
+            $months[$key] = $range[$key] ?? ['open' => $empty, 'invoiced' => $empty];
+        }
+
+        return $months;
     }
 
     /**

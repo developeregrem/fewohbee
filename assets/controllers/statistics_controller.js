@@ -161,6 +161,8 @@ export default class extends Controller {
                         // A forecast bar explains itself: how many reservations, how much of it invoiced.
                         tooltip: { callbacks: { afterLabel: (item) => item.dataset.details?.[item.dataIndex] ?? [] } },
                     },
+                    // The forecast sits on top of the invoices it belongs to, one stack per year.
+                    scales: { x: { stacked: true }, y: { stacked: true } },
                 },
             };
 
@@ -177,14 +179,19 @@ export default class extends Controller {
     /**
      * Colours the turnover series: one hue per colorIndex (the year), solid for invoiced
      * turnover and hatched in the same hue for the forecast, so the two are not told apart
-     * by colour alone. The forecast stands next to the invoices, never on top: it counts by
-     * month of departure, the invoices by invoice date, so the two do not add up per month.
+     * by colour alone. The forecast is stacked on top of the invoices of its own year, so the
+     * bar shows the whole expected turnover; each year keeps its own stack and stands next to
+     * the others. Mind the x axis: invoices count by invoice date, the forecast by month of
+     * departure, so a stack is a total, not a month closed off to the day.
      */
     styleTurnoverDatasets(datasets) {
         const dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
         const palette = dark
             ? ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767']
             : ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'];
+
+        // Invoices carrying a forecast are no longer the top of their stack, so they stay square.
+        const stacked = new Set((datasets || []).filter((dataset) => dataset.forecast).map((dataset) => dataset.colorIndex));
 
         return (datasets || []).map((dataset, index) => {
             const color = palette[(dataset.colorIndex ?? index) % palette.length];
@@ -194,7 +201,9 @@ export default class extends Controller {
                 backgroundColor: dataset.forecast ? this.hatchPattern(color) : color,
                 borderColor: color,
                 borderWidth: dataset.forecast ? 1 : 0,
-                borderRadius: 3,
+                borderRadius: !dataset.forecast && stacked.has(dataset.colorIndex) ? 0 : 3,
+                // Invoices and forecast of one year share a stack, different years do not.
+                stack: `year-${dataset.colorIndex ?? index}`,
             };
         });
     }
@@ -339,12 +348,22 @@ export default class extends Controller {
             const params = this.originParams(yearOnly);
             const response = await fetch(`${url}?${params.toString()}`);
             const data = await response.json();
+            // Chart.js uses these colors for pie slices when no colors are provided.
+            const palette = [
+                'rgb(54, 162, 235)', 'rgb(255, 99, 132)', 'rgb(255, 159, 64)',
+                'rgb(255, 205, 86)', 'rgb(75, 192, 192)', 'rgb(153, 102, 255)',
+                'rgb(201, 203, 207)',
+            ];
+            const datasets = data.datasets.map((dataset) => ({
+                ...dataset,
+                backgroundColor: data.colors.map((color, index) => color ?? palette[index % palette.length]),
+            }));
 
             const cfg = {
                 type: 'pie',
                 data: {
                     labels: data.labels,
-                    datasets: data.datasets,
+                    datasets,
                 },
                 options: {
                     responsive: true,

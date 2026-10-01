@@ -34,10 +34,24 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\Service\ResetInterface;
 
-class PriceService
+class PriceService implements ResetInterface
 {
     private $em;
+
+    /**
+     * Guest categories and the modifiers valid on a night are configuration: pricing asks for the
+     * same rows again for every reservation and every night of it. Remembering them for the request
+     * turns one query per night into one query. ResetInterface clears them between requests, so a
+     * worker process never prices with the configuration of the request before.
+     *
+     * @var array<int, GuestCategory>|null
+     */
+    private ?array $guestCategories = null;
+
+    /** @var array<string, list<GuestCategoryModifier>> keyed by night, Y-m-d */
+    private array $modifiersPerNight = [];
 
     public function __construct(
         EntityManagerInterface $em,
@@ -46,6 +60,47 @@ class PriceService
         private readonly ?GuestCategoryModifierRepository $modifierRepository = null,
     ) {
         $this->em = $em;
+    }
+
+    public function reset(): void
+    {
+        $this->guestCategories = null;
+        $this->modifiersPerNight = [];
+    }
+
+    /**
+     * All guest categories by id, loaded once per request.
+     *
+     * @return array<int, GuestCategory>
+     */
+    public function guestCategories(): array
+    {
+        if (null !== $this->guestCategories) {
+            return $this->guestCategories;
+        }
+
+        $categories = [];
+        if (null !== $this->guestCategoryRepository) {
+            foreach ($this->guestCategoryRepository->findAll() as $guestCategory) {
+                $categories[$guestCategory->getId()] = $guestCategory;
+            }
+        }
+
+        return $this->guestCategories = $categories;
+    }
+
+    /**
+     * The guest category modifiers valid on that night, loaded once per night and request.
+     *
+     * @return list<GuestCategoryModifier>
+     */
+    private function modifiersOn(\DateTimeInterface $night): array
+    {
+        if (null === $this->modifierRepository) {
+            return [];
+        }
+
+        return $this->modifiersPerNight[$night->format('Y-m-d')] ??= $this->modifierRepository->findActiveOn($night);
     }
 
     public function getPriceFromForm(Request $request, $id = 'new')
@@ -587,12 +642,7 @@ class PriceService
         )->nights;
         $guestCounts = $reservation->getGuestCounts();
 
-        $categories = [];
-        if (null !== $this->guestCategoryRepository) {
-            foreach ($this->guestCategoryRepository->findAll() as $gc) {
-                $categories[$gc->getId()] = $gc;
-            }
-        }
+        $categories = $this->guestCategories();
 
         $result = [];
         $curDate = clone $reservation->getStartDate();
@@ -607,9 +657,7 @@ class PriceService
             }
 
             $basePerHead = (float) $price->getPrice();
-            $modifiers = null !== $this->modifierRepository
-                ? $this->modifierRepository->findActiveOn($night)
-                : [];
+            $modifiers = $this->modifiersOn($night);
 
             // "Minimum full-fare guests" rule of the room type: the first N
             // occupants always pay the regular per-head rate; modifiers only

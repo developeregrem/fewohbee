@@ -6,20 +6,71 @@ namespace App\Service;
 
 use App\Dto\TouristTaxBreakdown;
 use App\Entity\Enum\TaxCalculationMode;
+use App\Entity\GuestCategory;
 use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use App\Entity\TouristTax;
 use App\Entity\TouristTaxRate;
 use App\Repository\GuestCategoryRepository;
 use App\Repository\TouristTaxRepository;
+use Symfony\Contracts\Service\ResetInterface;
 
-class TouristTaxService
+class TouristTaxService implements ResetInterface
 {
+    /**
+     * Guest categories and the active taxes of a stay are configuration, asked for again for every
+     * reservation and every tax of it. Remembering them for the request keeps a whole year of
+     * reservations at one query each. ResetInterface clears them between requests.
+     *
+     * @var array<int, GuestCategory>|null
+     */
+    private ?array $guestCategories = null;
+
+    /** @var array<string, list<TouristTax>> keyed by subsidiary and stay range */
+    private array $activeTaxes = [];
+
     public function __construct(
         private readonly TouristTaxRepository $touristTaxRepository,
         private readonly GuestCategoryRepository $guestCategoryRepository,
         private readonly ?PriceService $priceService = null,
     ) {
+    }
+
+    public function reset(): void
+    {
+        $this->guestCategories = null;
+        $this->activeTaxes = [];
+    }
+
+    /**
+     * All guest categories by id, loaded once per request.
+     *
+     * @return array<int, GuestCategory>
+     */
+    private function guestCategories(): array
+    {
+        if (null !== $this->guestCategories) {
+            return $this->guestCategories;
+        }
+
+        $categories = [];
+        foreach ($this->guestCategoryRepository->findAll() as $guestCategory) {
+            $categories[$guestCategory->getId()] = $guestCategory;
+        }
+
+        return $this->guestCategories = $categories;
+    }
+
+    /**
+     * The taxes active for that property and stay, loaded once per range and request.
+     *
+     * @return list<TouristTax>
+     */
+    private function activeTaxesInRange(?Subsidiary $subsidiary, \DateTimeInterface $start, \DateTimeInterface $lastNight): array
+    {
+        $key = ($subsidiary?->getId() ?? 0).'|'.$start->format('Y-m-d').'|'.$lastNight->format('Y-m-d');
+
+        return $this->activeTaxes[$key] ??= $this->touristTaxRepository->findActiveForSubsidiaryInRange($subsidiary, $start, $lastNight);
     }
 
     /**
@@ -43,7 +94,7 @@ class TouristTaxService
 
         $lastNightDate = (clone $start)->modify('+'.($totalNights - 1).' days');
         $subsidiary = $reservation->getAppartment()?->getObject();
-        $taxes = $this->touristTaxRepository->findActiveForSubsidiaryInRange($subsidiary, $start, $lastNightDate);
+        $taxes = $this->activeTaxesInRange($subsidiary, $start, $lastNightDate);
         if (empty($taxes)) {
             return [];
         }
@@ -106,10 +157,7 @@ class TouristTaxService
             return [];
         }
 
-        $categories = [];
-        foreach ($this->guestCategoryRepository->findAll() as $gc) {
-            $categories[$gc->getId()] = $gc;
-        }
+        $categories = $this->guestCategories();
 
         $aggregates = [];
         for ($i = 0; $i < $totalNights; ++$i) {
