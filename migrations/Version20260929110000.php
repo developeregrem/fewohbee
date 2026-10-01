@@ -12,7 +12,7 @@ use Doctrine\Migrations\AbstractMigration;
  * survive a logout and AI assistants can work on them. Drafts in running sessions are not carried
  * over; such an import has to be uploaded again after the update.
  */
-final class Version20260929120000 extends AbstractMigration
+final class Version20260929110000 extends AbstractMigration
 {
     public function getDescription(): string
     {
