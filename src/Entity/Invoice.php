@@ -78,9 +78,10 @@ class Invoice
     private ?string $buyerVatId = null;
 
     /**
-     * Due date set for this invoice alone. Null follows the payment period in the
-     * issuer's invoice settings, so changing those still reaches every invoice that
-     * was never given a date of its own.
+     * The day payment falls due. Set when the invoice is created - from the issuer's
+     * payment period unless entered otherwise - and kept from then on, so a later
+     * change of that period does not rewrite invoices already sent. Null only when
+     * the issuer states no period (free-text terms instead).
      */
     #[ORM\Column(type: 'date_immutable', nullable: true)]
     private ?\DateTimeImmutable $paymentDueDate = null;
@@ -448,24 +449,17 @@ class Invoice
     }
 
     /**
-     * The day payment falls due: this invoice's own date, else the invoice date plus
-     * the issuer's payment period. The template, the invoice view and the e-invoice
-     * all read it from here, so they never state different deadlines.
-     *
-     * Null when neither applies - the settings accept free-text terms instead. A
-     * caller that prints the date has to leave it out then rather than invent one.
+     * The due date the issuer's payment period gives: invoice date plus that period.
+     * What a new invoice starts with; null without a period or an invoice date.
      */
-    public function resolvePaymentDueDate(?InvoiceSettingsData $settings): ?\DateTimeImmutable
+    public function defaultPaymentDueDate(?InvoiceSettingsData $settings): ?\DateTimeImmutable
     {
-        if (null !== $this->paymentDueDate) {
-            return $this->paymentDueDate;
-        }
         $days = $settings?->getPaymentDueDays();
         if (null === $days || null === $this->date) {
             return null;
         }
 
-        return \DateTimeImmutable::createFromInterface($this->date)->modify('+'.$days.' days');
+        return \DateTimeImmutable::createFromInterface($this->date)->setTime(0, 0)->modify('+'.$days.' days');
     }
 
     /**

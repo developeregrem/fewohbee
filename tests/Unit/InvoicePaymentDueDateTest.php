@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 final class InvoicePaymentDueDateTest extends TestCase
 {
-    public function testByDefaultTheSettingsPeriodAppliesFromTheInvoiceDate(): void
+    public function testTheDefaultIsTheInvoiceDatePlusTheSettingsPeriod(): void
     {
         self::assertSame('2026-09-06', $this->due($this->invoice('2026-08-27'), 10));
     }
@@ -21,10 +21,10 @@ final class InvoicePaymentDueDateTest extends TestCase
      * insists that one of the two is filled. Callers print nothing rather than a
      * date they made up.
      */
-    public function testNoDueDateWithoutAPaymentPeriod(): void
+    public function testNoDefaultWithoutAPaymentPeriod(): void
     {
-        self::assertNull($this->invoice('2026-08-27')->resolvePaymentDueDate(new InvoiceSettingsData()));
-        self::assertNull($this->invoice('2026-08-27')->resolvePaymentDueDate(null));
+        self::assertNull($this->invoice('2026-08-27')->defaultPaymentDueDate(new InvoiceSettingsData()));
+        self::assertNull($this->invoice('2026-08-27')->defaultPaymentDueDate(null));
     }
 
     public function testAPeriodOfZeroDaysMeansTheInvoiceDateItself(): void
@@ -47,13 +47,12 @@ final class InvoicePaymentDueDateTest extends TestCase
         self::assertSame('2026-08-27', $invoice->getDate()->format('Y-m-d'));
     }
 
-    public function testTheInvoicesOwnDateOverridesTheSettings(): void
+    /** The stored date is a day, whatever time of day the input carried. */
+    public function testTheStoredDueDateHasNoTimeOfDay(): void
     {
         $invoice = $this->invoice('2026-08-27')->setPaymentDueDate(new \DateTime('2026-10-01 15:30'));
 
-        self::assertSame('2026-10-01', $this->due($invoice, 10));
-        // Also without settings at all, and stored without a time of day.
-        self::assertSame('2026-10-01 00:00', $invoice->resolvePaymentDueDate(null)?->format('Y-m-d H:i'));
+        self::assertSame('2026-10-01 00:00', $invoice->getPaymentDueDate()?->format('Y-m-d H:i'));
     }
 
     public function testTheLastDepartureIsTheLatestEndDate(): void
@@ -80,6 +79,6 @@ final class InvoicePaymentDueDateTest extends TestCase
 
     private function due(Invoice $invoice, int $settingsDays): ?string
     {
-        return $invoice->resolvePaymentDueDate((new InvoiceSettingsData())->setPaymentDueDays($settingsDays))?->format('Y-m-d');
+        return $invoice->defaultPaymentDueDate((new InvoiceSettingsData())->setPaymentDueDays($settingsDays))?->format('Y-m-d');
     }
 }

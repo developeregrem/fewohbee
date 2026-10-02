@@ -112,7 +112,7 @@ class ZugferdInvoiceGenerator
 
         // payment terms and due date - the same date the invoice template prints,
         // so the XML and the paper never state different deadlines
-        $documentBuilder->addDocumentPaymentTerm($settings->getPaymentTerms(), $invoice->resolvePaymentDueDate($settings), $mandateReference); // Payment term
+        $documentBuilder->addDocumentPaymentTerm($settings->getPaymentTerms(), $invoice->getPaymentDueDate(), $mandateReference); // Payment term
         // Buyer reference (BT-10, Leitweg-ID): mandatory for XRechnung via validator, omitted otherwise.
         $buyerReference = $invoice->getBuyerReference();
         if (null !== $buyerReference && '' !== trim($buyerReference)) {

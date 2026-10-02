@@ -447,15 +447,48 @@ export default class extends Controller {
         });
     }
 
-    // Shows and requires the input belonging to the chosen way of entering the due date.
-    togglePaymentDueFieldsAction(event) {
-        const mode = event.currentTarget.value;
-        event.currentTarget.form?.querySelectorAll('[data-payment-due-field]').forEach((row) => {
-            const active = row.dataset.paymentDueField === mode;
-            row.classList.toggle('d-none', !active);
-            const input = row.querySelector('input');
-            if (input) input.required = active;
-        });
+    // Payment due date helpers: days from the invoice date and the last departure both
+    // just fill in the date field, the only one that is submitted. Dates are handled as
+    // UTC days so a daylight saving change cannot shift them.
+    paymentDueDaysChangedAction(event) {
+        const daysInput = event.currentTarget;
+        const days = Number.parseInt(daysInput.value, 10);
+        if (Number.isNaN(days) || days < 0) return;
+        const dateInput = daysInput.closest('form')?.querySelector('[data-payment-due-date]');
+        if (!dateInput) return;
+        dateInput.value = this._shiftIsoDate(daysInput.dataset.invoiceDate, days);
+    }
+
+    paymentDueDateChangedAction(event) {
+        this._syncPaymentDueDays(event.currentTarget.closest('form'));
+    }
+
+    paymentDueToDepartureAction(event) {
+        event.preventDefault();
+        const form = event.currentTarget.closest('form');
+        const dateInput = form?.querySelector('[data-payment-due-date]');
+        if (!dateInput) return;
+        dateInput.value = event.currentTarget.dataset.departure;
+        this._syncPaymentDueDays(form);
+    }
+
+    _syncPaymentDueDays(form) {
+        const dateInput = form?.querySelector('[data-payment-due-date]');
+        const daysInput = form?.querySelector('[data-payment-due-days]');
+        if (!dateInput || !daysInput) return;
+        const days = this._isoDayDiff(daysInput.dataset.invoiceDate, dateInput.value);
+        daysInput.value = days === null || days < 0 ? '' : String(days);
+    }
+
+    _shiftIsoDate(isoDate, days) {
+        const [y, m, d] = isoDate.split('-').map(Number);
+        return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+    }
+
+    _isoDayDiff(fromIso, toIso) {
+        if (!fromIso || !toIso) return null;
+        const toUtc = (iso) => { const [y, m, d] = iso.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+        return Math.round((toUtc(toIso) - toUtc(fromIso)) / 86400000);
     }
 
     showCreateInvoicePositionsAction(event) {

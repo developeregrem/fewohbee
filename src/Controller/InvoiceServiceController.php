@@ -142,8 +142,6 @@ class InvoiceServiceController extends AbstractController
 
         $templateId = $requestStack->getSession()->get('invoice-template-id', $templateId); // get previously selected id
 
-        $settings = $readinessService->resolveSettingsFor($invoice);
-
         return $this->render(
             'Invoices/invoice_form_show.html.twig',
             [
@@ -158,8 +156,7 @@ class InvoiceServiceController extends AbstractController
                 'error' => true,
                 'readiness' => $readinessService->check($invoice),
                 'activeProfileKey' => $readinessService->getActiveProfileKey(),
-                'paymentDueDate' => $invoice->resolvePaymentDueDate($settings),
-                'settingsDueDays' => $settings?->getPaymentDueDays(),
+                'paymentDueDate' => $invoice->getPaymentDueDate(),
             ]
         );
     }
@@ -695,7 +692,7 @@ class InvoiceServiceController extends AbstractController
 
         $form = $this->createForm(InvoicePaymentRemarkType::class, $invoice, [
             'action' => $this->generateUrl('invoices.create.invoice'),
-            'settings_due_days' => $readinessService->resolveSettingsFor($invoice)?->getPaymentDueDays(),
+            'default_due_date' => $invoice->defaultPaymentDueDate($readinessService->resolveSettingsFor($invoice)),
             // Positions of an invoice in creation live in the session until it is saved.
             'last_departure' => Invoice::lastDepartureOf($requestStack->getSession()->get('invoicePositionsAppartments', [])),
         ]);
@@ -755,7 +752,7 @@ class InvoiceServiceController extends AbstractController
 
         $form = $this->createForm(InvoicePaymentRemarkType::class, $invoice, [
             'action' => $this->generateUrl('invoices.create.invoice'),
-            'settings_due_days' => $readinessService->resolveSettingsFor($invoice)?->getPaymentDueDays(),
+            'default_due_date' => $invoice->defaultPaymentDueDate($readinessService->resolveSettingsFor($invoice)),
             // Positions of an invoice in creation live in the session until it is saved.
             'last_departure' => Invoice::lastDepartureOf($requestStack->getSession()->get('invoicePositionsAppartments', [])),
         ]);
@@ -947,7 +944,7 @@ class InvoiceServiceController extends AbstractController
         $em = $doctrine->getManager();
         $form = $this->createForm(InvoicePaymentRemarkType::class, $invoice, [
             'action' => $this->generateUrl('invoices.edit.invoice.remark.show', ['id' => $invoice->getId()]),
-            'settings_due_days' => $readinessService->resolveSettingsFor($invoice)?->getPaymentDueDays(),
+            'default_due_date' => $invoice->defaultPaymentDueDate($readinessService->resolveSettingsFor($invoice)),
             'last_departure' => Invoice::lastDepartureOf($invoice->getAppartments()),
         ]);
         $form->handleRequest($request);

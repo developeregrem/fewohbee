@@ -131,7 +131,7 @@ workflow:
     days_before: "Days before"
     days_after: "Days after"
     days_after_due_date: "Days after the due date"
-    days_after_due_date_help: "0 = on the due date, 1 = the day after, -3 = three days before. The due date is the one printed on the invoice: its own, or the invoice date plus the period from the invoice settings."
+    days_after_due_date_help: "0 = on the due date, 1 = the day after, -3 = three days before. What counts is the due date stored on the invoice."
     day_of_month: "Day of month"
     run_on_days: "Run on which days?"
     run_on_days_help: "If the target date falls on an excluded day, the run is caught up on the next allowed day – nothing is lost."

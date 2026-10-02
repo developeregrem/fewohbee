@@ -40,8 +40,5 @@ accounting:
         regex_invalid: This is not a valid regular expression.
 invoice:
   payment_due:
-    days:
-      required: Please enter a number of days between 0 and %max%.
     date:
       required: Please choose a date.
-    no_departure: The invoice has no room positions to take a departure day from.

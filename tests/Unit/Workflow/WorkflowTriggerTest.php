@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Workflow;
 
-use App\Service\EInvoice\EInvoiceReadinessService;
 use App\Workflow\Trigger\InvoiceDaysAfterDateTrigger;
 use App\Workflow\Trigger\InvoiceDaysAfterDueDateTrigger;
 use App\Workflow\Trigger\MonthlyScheduleTrigger;
@@ -120,9 +119,7 @@ final class WorkflowTriggerTest extends TestCase
         yield 'days before start' => [new ReservationDaysBeforeStartTrigger()];
         yield 'days after end' => [new ReservationDaysAfterEndTrigger()];
         yield 'invoice days after date' => [new InvoiceDaysAfterDateTrigger()];
-        // The schema never touches the settings resolver, and a static provider cannot stub it.
-        $settingsResolver = (new \ReflectionClass(EInvoiceReadinessService::class))->newInstanceWithoutConstructor();
-        yield 'invoice days after due date' => [new InvoiceDaysAfterDueDateTrigger($settingsResolver)];
+        yield 'invoice days after due date' => [new InvoiceDaysAfterDueDateTrigger()];
         yield 'monthly' => [new MonthlyScheduleTrigger()];
     }
 

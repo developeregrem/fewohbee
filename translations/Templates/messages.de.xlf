@@ -984,7 +984,7 @@
             </trans-unit>
             <trans-unit id="templates.editor.payment_due_date.desc">
                 <source>templates.editor.payment_due_date.desc</source>
-                <target>Fügt den Tag ein, an dem die Zahlung fällig wird. Er stammt aus dem Zahlungsziel in den Rechnungseinstellungen oder aus der abweichenden Fälligkeit, die an der Rechnung selbst eingestellt ist, damit gedrucktes Datum und E-Rechnung nie auseinanderlaufen. Gibt es kein Zahlungsziel, entfällt die Zeile.</target>
+                <target>Fügt das Fälligkeitsdatum der Rechnung ein. Es wird beim Erstellen aus dem Zahlungsziel in den Rechnungseinstellungen vorbelegt und lässt sich pro Rechnung ändern; gedrucktes Datum und E-Rechnung stimmen immer überein. Hat die Rechnung kein Fälligkeitsdatum, entfällt die Zeile.</target>
             </trans-unit>
             <trans-unit id="templates.notfound">
                 <source>templates.notfound</source>
