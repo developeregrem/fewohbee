@@ -313,49 +313,6 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * Reservations a new special price would apply to if they were booked today: they block a room
-     * of one of the room categories, come from one of the origins, have the given occupancy, touch
-     * a night between $firstNight and $lastNight and have no invoice yet. They keep the price they
-     * were promised (see PricePromise); the list tells the user which bookings stay unchanged.
-     *
-     * @param list<int> $roomCategoryIds
-     * @param list<int> $originIds
-     *
-     * @return list<array{id: int, startDate: string, endDate: string, apartmentNumber: string|null}>
-     */
-    public function findUninvoicedForPriceChange(\DateTimeImmutable $firstNight, \DateTimeImmutable $lastNight, array $roomCategoryIds, array $originIds, ?int $persons): array
-    {
-        if ([] === $roomCategoryIds || [] === $originIds) {
-            return [];
-        }
-
-        $qb = $this->createQueryBuilder('u')
-            ->select('u.id', 'u.startDate', 'u.endDate', 'a.number AS apartmentNumber')
-            ->join('u.appartment', 'a')
-            ->andWhere('u.startDate <= :lastNight AND u.endDate > :firstNight')
-            ->andWhere('u.isConflict = 0')
-            ->andWhere('IDENTITY(a.roomCategory) IN (:categories)')
-            ->andWhere('IDENTITY(u.reservationOrigin) IN (:origins)')
-            ->andWhere('u.invoices IS EMPTY')
-            ->setParameter('firstNight', $firstNight)
-            ->setParameter('lastNight', $lastNight)
-            ->setParameter('categories', $roomCategoryIds)
-            ->setParameter('origins', $originIds)
-            ->orderBy('u.startDate', 'ASC');
-        if (null !== $persons) {
-            $qb->andWhere('u.persons = :persons')->setParameter('persons', $persons);
-        }
-        $this->applyBlockingStatusFilter($qb, 'u');
-
-        return array_map(static fn (array $row): array => [
-            'id' => (int) $row['id'],
-            'startDate' => $row['startDate'] instanceof \DateTimeInterface ? $row['startDate']->format('Y-m-d') : (string) $row['startDate'],
-            'endDate' => $row['endDate'] instanceof \DateTimeInterface ? $row['endDate']->format('Y-m-d') : (string) $row['endDate'],
-            'apartmentNumber' => null !== $row['apartmentNumber'] ? (string) $row['apartmentNumber'] : null,
-        ], $qb->getQuery()->getArrayResult());
-    }
-
-    /**
      * Lightweight (appartmentId, startDate, endDate) spans of blocking, non-conflict reservations
      * that truly overlap the period, optionally scoped by subsidiary and room category and limited
      * to reservations made before $bookedBefore (exclusive).

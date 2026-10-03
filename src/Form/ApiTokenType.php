@@ -45,6 +45,7 @@ class ApiTokenType extends AbstractType
     /** Order of the scopes within their group in the token form. */
     private const SCOPE_ORDER = [
         ApiScope::RESERVATIONS_READ,
+        ApiScope::AVAILABILITY_READ,
         ApiScope::PRICES_READ,
         ApiScope::STATISTICS_READ,
         ApiScope::INVOICES_READ,

@@ -46,6 +46,33 @@ class DayPriceRepository extends ServiceEntityRepository
         return $byNight;
     }
 
+    /**
+     * The day prices of the nights from $from up to, excluding, $toExclusive, optionally of one
+     * subsidiary or room category, in subsidiary, category and night order.
+     *
+     * @return list<DayPrice>
+     */
+    public function findForPeriod(?Subsidiary $subsidiary, ?RoomCategory $category, \DateTimeImmutable $from, \DateTimeImmutable $toExclusive): array
+    {
+        $qb = $this->createQueryBuilder('d')
+            ->andWhere('d.night >= :from AND d.night < :to')
+            ->setParameter('from', $from->format('Y-m-d'))
+            ->setParameter('to', $toExclusive->format('Y-m-d'))
+            ->join('d.subsidiary', 's')
+            ->join('d.roomCategory', 'c')
+            ->orderBy('s.id', 'ASC')
+            ->addOrderBy('c.id', 'ASC')
+            ->addOrderBy('d.night', 'ASC');
+        if (null !== $subsidiary) {
+            $qb->andWhere('d.subsidiary = :subsidiary')->setParameter('subsidiary', $subsidiary);
+        }
+        if (null !== $category) {
+            $qb->andWhere('d.roomCategory = :category')->setParameter('category', $category);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
     /** Nights already past need no day price: bookings keep the price they were promised. */
     public function deleteBefore(\DateTimeImmutable $day): void
     {

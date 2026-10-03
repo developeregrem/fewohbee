@@ -17,11 +17,13 @@ use App\Dto\Api\PriceDto;
 use App\Entity\Appartment;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
+use App\Entity\Subsidiary;
 use App\Repository\PriceRepository;
 use App\Security\Voter\ApiScopeVoter;
 use App\Service\Api\PriceQuoteService;
 use App\Service\Api\RateCalendarService;
 use App\Service\Api\StayParameterResolver;
+use App\Service\Pricing\PriceCalendarService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -55,6 +57,7 @@ class PriceApiController extends AbstractController
         private readonly StayParameterResolver $stayParameterResolver,
         private readonly PriceQuoteService $priceQuoteService,
         private readonly RateCalendarService $rateCalendarService,
+        private readonly PriceCalendarService $priceCalendarService,
     ) {
     }
 
@@ -120,7 +123,9 @@ class PriceApiController extends AbstractController
     }
 
     /**
-     * Per-night, per-occupancy rate calendar for one room category.
+     * Per-night, per-occupancy rate calendar for one room category. Price rules and day prices
+     * can differ per subsidiary, so the rates are those of a room in objectId, or in the
+     * subsidiary of apartmentId; without either, of any room of the category.
      */
     #[Route('/rates', name: 'api.prices.rates', methods: ['GET'])]
     public function rates(Request $request): JsonResponse
@@ -135,10 +140,15 @@ class PriceApiController extends AbstractController
             throw new BadRequestHttpException("Parameter 'roomCategoryId' or 'apartmentId' is required.");
         }
 
-        $sampleRoom = $apartment ?? $this->em->getRepository(Appartment::class)
-            ->findOneBy(['roomCategory' => $roomCategory]);
+        $subsidiary = $this->resolveSubsidiary($request);
+        if (null !== $apartment && null !== $subsidiary && $apartment->getObject()?->getId() !== $subsidiary->getId()) {
+            throw new BadRequestHttpException("The apartment does not belong to 'objectId'.");
+        }
+        $sampleRoom = $apartment ?? (null !== $subsidiary
+            ? $this->priceCalendarService->sampleRoom($subsidiary, $roomCategory)
+            : $this->em->getRepository(Appartment::class)->findOneBy(['roomCategory' => $roomCategory]));
         if (!$sampleRoom instanceof Appartment) {
-            throw new BadRequestHttpException('No apartment is assigned to this room category.');
+            throw new BadRequestHttpException(null !== $subsidiary ? 'This branch has no apartment of this room category.' : 'No apartment is assigned to this room category.');
         }
 
         $occupancies = $this->resolveOccupancies($request, $roomCategory);
@@ -157,6 +167,7 @@ class PriceApiController extends AbstractController
             'end' => $lastNight->format('Y-m-d'),
             'nights' => $nights,
             'roomCategoryId' => $roomCategory->getId(),
+            'objectId' => $sampleRoom->getObject()?->getId(),
             'occupancies' => $occupancies,
             'origin' => ['id' => (int) $origin->getId(), 'name' => $origin->getName()],
         ]);
@@ -203,6 +214,20 @@ class PriceApiController extends AbstractController
         }
 
         return $category;
+    }
+
+    private function resolveSubsidiary(Request $request): ?Subsidiary
+    {
+        $id = $request->query->get('objectId');
+        if (null === $id || '' === $id) {
+            return null;
+        }
+        $subsidiary = $this->em->getRepository(Subsidiary::class)->find((int) $id);
+        if (!$subsidiary instanceof Subsidiary) {
+            throw new BadRequestHttpException("Unknown 'objectId'.");
+        }
+
+        return $subsidiary;
     }
 
     private function resolveOrigin(Request $request): ReservationOrigin

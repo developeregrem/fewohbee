@@ -47,13 +47,15 @@ class PriceRulePreview
     }
 
     /**
-     * @param PriceRule|null $original the saved rule the draft replaces
+     * @param PriceRule|null          $original the saved rule the draft replaces
+     * @param \DateTimeImmutable|null $from     first night to look at; today by default
+     * @param int                     $nights   number of nights to look at
      *
      * @return array{nights: int, matches: int, example: array{room: Appartment, persons: int, night: \DateTimeImmutable, before: float, after: float, percent: float, limited: bool}|null}
      */
-    public function preview(PriceRule $draft, ?PriceRule $original): array
+    public function preview(PriceRule $draft, ?PriceRule $original, ?\DateTimeImmutable $from = null, int $nights = self::NIGHTS): array
     {
-        $result = ['nights' => self::NIGHTS, 'matches' => 0, 'example' => null];
+        $result = ['nights' => $nights, 'matches' => 0, 'example' => null];
         $room = $this->sampleRoom($draft);
         $category = $room?->getRoomCategory();
         if (null === $room || null === $category) {
@@ -65,8 +67,8 @@ class PriceRulePreview
             static fn (PriceRule $rule): bool => null === $original || $rule->getId() !== $original->getId(),
         ));
         $rules[] = $draft;
-        $from = $this->clock->now()->setTime(0, 0);
-        $adjustments = $this->dynamicRates->adjustments($room, $from, $from->modify('+'.self::NIGHTS.' days'), $rules);
+        $from = ($from ?? $this->clock->now())->setTime(0, 0);
+        $adjustments = $this->dynamicRates->adjustments($room, $from, $from->modify('+'.$nights.' days'), $rules);
 
         $matching = array_filter($adjustments, static fn (NightAdjustment $adjustment): bool => in_array($draft, $adjustment->rules, true));
         $result['matches'] = count($matching);

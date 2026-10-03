@@ -51,11 +51,12 @@ profile:
       prices_read: Preise
       tourist_tax_read: Kurtaxe
       subsidiaries_read: Niederlassungen (Stammdaten und Öffnungszeiten)
+      availability_read: Verfügbarkeit (freie und belegte Zimmer, ohne Reservierungsdaten)
       mcp_access: KI-Assistent (MCP)
       guests_read: Gästedaten (Namen, Kontaktdaten, Bemerkungen)
       operations_read: Betrieb (Zimmerplan, Housekeeping)
       reservations_write: Reservierungen anlegen
-      prices_write: Sonderpreise anlegen
+      prices_write: Preise anpassen
       bank_import_write: Kontoauszüge vorbereiten
     groups:
       see:
@@ -69,7 +70,7 @@ profile:
         mcp: Was darf die KI ändern?
     hints:
       reservations_write: Nur nach Vorschau und deiner Zustimmung.
-      prices_write: Nur nach Vorschau und deiner Zustimmung.
+      prices_write: Bestehende Buchungen behalten ihren Preis. Eine KI ändert Preise nur nach Vorschau und deiner Zustimmung.
       bank_import_write: Gibt Namen, Verwendungszwecke und gekürzte IBANs der Umsätze an die KI weiter. Übernehmen musst du selbst.
     unavailable:
       role: Braucht die Rolle „%role%“.
@@ -84,10 +85,11 @@ profile:
         prices_read: Preise
         tourist_tax_read: Kurtaxe
         subsidiaries_read: Niederlassungen
+        availability_read: Verfügbarkeit
         operations_read: Betrieb
         guests_read: Gästedaten
         reservations_write: Reservierungen anlegen
-        prices_write: Sonderpreise anlegen
+        prices_write: Preise anpassen
         bank_import_write: Kontoauszüge vorbereiten
       see:
         rest: Dieser Zugang darf %list% lesen.
@@ -101,6 +103,7 @@ profile:
       change:
         some: Sie darf %list%.
         none: Sie kann nichts ändern.
+        rest: Dieser Zugang darf %list%.
     kind:
       label: Verwendung
       api: REST-API und Kalender-Programme

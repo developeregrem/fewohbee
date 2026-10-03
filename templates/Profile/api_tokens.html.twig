@@ -134,6 +134,7 @@
             personalBoth: 'profile.apitokens.summary.personal.both'|trans,
             changeSome: 'profile.apitokens.summary.change.some'|trans,
             changeNone: 'profile.apitokens.summary.change.none'|trans,
+            changeRest: 'profile.apitokens.summary.change.rest'|trans,
         } %}
         {{ form_start(apiTokenForm, {attr: {'data-turbo': 'false', 'data-controller': 'api-token-form', 'data-api-token-form-texts-value': summaryTexts|json_encode}}) }}
         {{ form_errors(apiTokenForm) }}
@@ -151,7 +152,8 @@
         {% do apiTokenForm.scopes.setRendered %}
         {% for group, entries in apiTokenForm.vars.scope_groups %}
             <fieldset class="mb-3" data-api-token-form-target="group">
-                <legend class="fs-6 fw-semibold mb-1">
+                {# No float: Bootstrap only clears the element right after a legend, and that one may be hidden. #}
+                <legend class="fs-6 fw-semibold mb-1 float-none">
                     <span data-api-token-form-target="restOnly">{{ ('profile.apitokens.groups.' ~ group ~ '.rest')|trans }}</span>
                     {% if apiTokenForm.kind is defined %}
                         <span data-api-token-form-target="mcpOnly">{{ ('profile.apitokens.groups.' ~ group ~ '.mcp')|trans }}</span>

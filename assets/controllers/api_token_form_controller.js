@@ -61,24 +61,28 @@ export default class extends Controller {
         if (!this.hasSummaryTarget) return;
 
         const texts = this.textsValue;
-        const chosen = this.scopeItemTargets.filter((item) => item.querySelector('input:checked:not(:disabled)'));
+        // Scopes the chosen kind does not evaluate are not stored, even when still ticked.
+        const kind = isMcp ? 'mcp' : 'api';
+        const chosen = this.scopeItemTargets.filter((item) => item.querySelector('input:checked:not(:disabled)')
+            && item.dataset.kinds.split(' ').includes(kind));
         const labels = (group) => chosen.filter((item) => item.dataset.group === group).map((item) => item.dataset.summary);
         const list = (items) => (items.length > 1
             ? `${items.slice(0, -1).join(', ')} ${texts.and} ${items[items.length - 1]}`
             : items.join(''));
 
         const see = labels('see');
+        const change = labels('change');
         const sentences = [];
         if (isMcp) {
-            const change = labels('change');
             const guests = labels('personal_data').length > 0;
             const bank = chosen.some((item) => item.dataset.sharesBankData === '1');
 
             sentences.push(see.length > 0 ? texts.seeMcp.replace('%list%', list(see)) : texts.seeMcpNone);
             sentences.push(guests && bank ? texts.personalBoth : guests ? texts.personalGuests : bank ? texts.personalBank : texts.personalNone);
             sentences.push(change.length > 0 ? texts.changeSome.replace('%list%', list(change)) : texts.changeNone);
-        } else if (see.length > 0) {
-            sentences.push(texts.seeRest.replace('%list%', list(see)));
+        } else {
+            if (see.length > 0) sentences.push(texts.seeRest.replace('%list%', list(see)));
+            if (change.length > 0) sentences.push(texts.changeRest.replace('%list%', list(change)));
         }
 
         this.summaryTarget.textContent = sentences.join(' ');

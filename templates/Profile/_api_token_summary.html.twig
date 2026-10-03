@@ -27,7 +27,8 @@
         {{ see is empty ? 'profile.apitokens.summary.see.mcp_none'|trans : 'profile.apitokens.summary.see.mcp'|trans({'%list%': see|join(', ', and)}) }}
         {{ ('profile.apitokens.summary.personal.' ~ (guests and bank ? 'both' : (guests ? 'guests' : (bank ? 'bank' : 'none'))))|trans }}
         {{ change is empty ? 'profile.apitokens.summary.change.none'|trans : 'profile.apitokens.summary.change.some'|trans({'%list%': change|join(', ', and)}) }}
-    {%- elseif see is not empty -%}
-        {{ 'profile.apitokens.summary.see.rest'|trans({'%list%': see|join(', ', and)}) }}
+    {%- else -%}
+        {%- if see is not empty %}{{ 'profile.apitokens.summary.see.rest'|trans({'%list%': see|join(', ', and)}) }}{% endif -%}
+        {%- if change is not empty %} {{ 'profile.apitokens.summary.change.rest'|trans({'%list%': change|join(', ', and)}) }}{% endif -%}
     {%- endif -%}
 {% endmacro %}
