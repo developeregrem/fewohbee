@@ -59,9 +59,8 @@ class RateCalendarService
         // to run one day past the last night for that night to be evaluated at all.
         $windowEnd = $lastNight->modify('+1 day');
 
-        // Price rules depend on the night and the room's subsidiary, not on the occupancy.
-        $category = $sampleRoom->getRoomCategory();
-        $adjustments = null === $category ? [] : $this->dynamicRates->adjustments($sampleRoom->getObject(), $category, $firstNight, $windowEnd);
+        // Price rules and day prices depend on the night and the room's subsidiary, not on the occupancy.
+        $adjustments = $this->dynamicRates->adjustments($sampleRoom, $firstNight, $windowEnd);
 
         $ratesByDate = [];
         foreach ($occupancies as $occupancy) {
@@ -147,6 +146,13 @@ class RateCalendarService
                 static fn (PriceRule $rule): array => ['name' => $rule->getName(), 'percent' => $rule->getPercent()],
                 $adjustment->rules,
             ),
+            'dayPrice' => null === $adjustment?->dayPrice ? null : [
+                'amount' => $adjustment->dayPrice->getAmount(),
+                'persons' => $adjustment->dayPrice->getPersons(),
+                'source' => $adjustment->dayPrice->getSource()->value,
+                'sourceLabel' => $adjustment->dayPrice->getSourceLabel(),
+            ],
+            'limited' => $adjustment->limited ?? false,
             'perNight' => $perNight,
             'stayPrice' => 'flat' === $pricingModel ? $unitPrice : null,
             'minStay' => null !== $price->getMinStay() ? (int) $price->getMinStay() : null,

@@ -15,6 +15,8 @@ namespace App\Service\Pricing;
 
 use App\Dto\Pricing\NightAdjustment;
 use App\Dto\Pricing\PricePromise;
+use App\Entity\Appartment;
+use App\Entity\Enum\PriceRounding;
 use App\Entity\Enum\PriceRuleCondition;
 use App\Entity\PriceRule;
 use App\Entity\RoomCategory;
@@ -52,6 +54,7 @@ class DynamicRateResolver implements ResetInterface
         private readonly AppSettingsService $settings,
         private readonly ClockInterface $clock,
         private readonly SubsidiaryRepository $subsidiaries,
+        private readonly DayPriceResolver $dayPrices,
     ) {
     }
 
@@ -63,8 +66,9 @@ class DynamicRateResolver implements ResetInterface
     }
 
     /**
-     * The adjustment of each night from $from up to, excluding, $toExclusive for a room of
-     * $category in $subsidiary. Nights no rule applies to are missing from the result.
+     * The adjustment of each night from $from up to, excluding, $toExclusive for the room: its
+     * day price where there is one, otherwise the price rules of its category and subsidiary.
+     * Nights neither changes are missing from the result.
      *
      * @param list<PriceRule>|null $rules                  rules to evaluate instead of the saved enabled ones (preview)
      * @param int|null             $excludingReservationId a booking that must not count towards occupancy, e.g. the one being priced
@@ -72,28 +76,38 @@ class DynamicRateResolver implements ResetInterface
      * @return array<string, NightAdjustment> keyed by Y-m-d
      */
     public function adjustments(
-        ?Subsidiary $subsidiary,
-        RoomCategory $category,
+        Appartment $room,
         \DateTimeImmutable $from,
         \DateTimeImmutable $toExclusive,
         ?array $rules = null,
         ?int $excludingReservationId = null,
     ): array {
+        $subsidiary = $room->getObject();
+        $category = $room->getRoomCategory();
+        if (null === $category) {
+            return [];
+        }
         $rules = array_values(array_filter(
             $rules ?? $this->enabledRules(),
             static fn (PriceRule $rule): bool => $rule->appliesTo($subsidiary, $category),
         ));
-        if ([] === $rules) {
+        $first = $from->setTime(0, 0);
+        $dayPrices = $this->dayPrices->adjustments($room, $first, $toExclusive);
+        if ([] === $rules && [] === $dayPrices) {
             return [];
         }
 
         $settings = $this->settings->getSettings();
         $today = $this->clock->now()->setTime(0, 0);
-        $first = $from->setTime(0, 0);
         $window = [$first, $toExclusive, $excludingReservationId];
 
         $result = [];
         for ($night = max($first, $today); $night < $toExclusive; $night = $night->modify('+1 day')) {
+            // A day price takes the place of the rules on its night.
+            if (isset($dayPrices[$night->format('Y-m-d')])) {
+                $result[$night->format('Y-m-d')] = $dayPrices[$night->format('Y-m-d')];
+                continue;
+            }
             $daysAhead = (int) $today->diff($night)->days;
             $matching = array_values(array_filter(
                 $rules,
@@ -110,12 +124,16 @@ class DynamicRateResolver implements ResetInterface
         return $result;
     }
 
-    /** The unit price after the adjustment, rounded as configured. */
+    /**
+     * The unit price after the adjustment, rounded as configured. Day prices are not rounded, so
+     * the occupancy they were stated for gets exactly the amount named.
+     */
     public function apply(string $unit, NightAdjustment $adjustment): string
     {
         $changed = (float) $unit * (1 + $adjustment->percent / 100);
+        $rounding = null !== $adjustment->dayPrice ? PriceRounding::CENT : $this->settings->getSettings()->getPriceChangeRounding();
 
-        return PricePromise::money(max(0.0, $this->settings->getSettings()->getPriceChangeRounding()->round($changed)));
+        return PricePromise::money(max(0.0, $rounding->round($changed)));
     }
 
     /**

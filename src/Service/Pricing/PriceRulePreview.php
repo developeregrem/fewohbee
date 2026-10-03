@@ -20,10 +20,8 @@ use App\Entity\PriceRule;
 use App\Repository\AppartmentRepository;
 use App\Repository\PriceRepository;
 use App\Repository\PriceRuleRepository;
-use App\Repository\ReservationOriginRepository;
 use App\Repository\SubsidiaryRepository;
 use App\Service\Api\RateCalendarService;
-use App\Service\OnlineBooking\OnlineBookingConfigService;
 use Symfony\Component\Clock\ClockInterface;
 
 /**
@@ -43,8 +41,7 @@ class PriceRulePreview
         private readonly AppartmentRepository $apartments,
         private readonly PriceRepository $prices,
         private readonly RateCalendarService $rateCalendar,
-        private readonly OnlineBookingConfigService $onlineBooking,
-        private readonly ReservationOriginRepository $origins,
+        private readonly DayPriceResolver $dayPrices,
         private readonly ClockInterface $clock,
     ) {
     }
@@ -69,7 +66,7 @@ class PriceRulePreview
         ));
         $rules[] = $draft;
         $from = $this->clock->now()->setTime(0, 0);
-        $adjustments = $this->dynamicRates->adjustments($room->getObject(), $category, $from, $from->modify('+'.self::NIGHTS.' days'), $rules);
+        $adjustments = $this->dynamicRates->adjustments($room, $from, $from->modify('+'.self::NIGHTS.' days'), $rules);
 
         $matching = array_filter($adjustments, static fn (NightAdjustment $adjustment): bool => in_array($draft, $adjustment->rules, true));
         $result['matches'] = count($matching);
@@ -106,7 +103,7 @@ class PriceRulePreview
     private function example(Appartment $room, \DateTimeImmutable $night, NightAdjustment $adjustment): ?array
     {
         $occupancies = $this->prices->findOccupanciesForRoomCategory($room->getRoomCategory());
-        $origin = $this->onlineBooking->getReservationOrigin() ?? $this->origins->findOneBy([], ['id' => 'ASC']);
+        $origin = $this->dayPrices->referenceOrigin();
         if ([] === $occupancies || null === $origin) {
             return null;
         }

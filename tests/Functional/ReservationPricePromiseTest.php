@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\Entity\Appartment;
+use App\Entity\DayPrice;
+use App\Entity\Enum\DayPriceSource;
 use App\Entity\Enum\PercentageBase;
 use App\Entity\Enum\TaxCalculationMode;
 use App\Entity\Price;
@@ -126,6 +128,30 @@ final class ReservationPricePromiseTest extends WebTestCase
             self::assertSame([['Messe', '10.00']], $night['d']['r'] ?? null);
         } finally {
             $this->em()->remove($this->em()->find(PriceRule::class, $rule->getId()));
+            $this->em()->flush();
+        }
+    }
+
+    public function testANewBookingIsPromisedTheDayPriceOfItsNight(): void
+    {
+        $this->createRoomPrice('80.00');
+        $arrival = (new \DateTimeImmutable('+870 days'))->setTime(0, 0);
+        $room = $this->apartment();
+        $dayPrice = new DayPrice($room->getObject(), $room->getRoomCategory(), $arrival);
+        $dayPrice->set(120.0, self::PERSONS, DayPriceSource::MANUAL, null, new \DateTimeImmutable());
+        $this->em()->persist($dayPrice);
+        $this->em()->flush();
+
+        try {
+            $reservation = $this->createReservation('+870 days', withPromise: true);
+
+            $nights = $reservation->getPricePromise()['n'] ?? [];
+            self::assertSame('120.00', $nights[0]['u'] ?? null);
+            self::assertSame('manual', $nights[0]['d']['s'] ?? null);
+            // The second night has no day price and keeps the price list.
+            self::assertSame('80.00', $nights[1]['u'] ?? null);
+        } finally {
+            $this->em()->remove($this->em()->find(DayPrice::class, $dayPrice->getId()));
             $this->em()->flush();
         }
     }

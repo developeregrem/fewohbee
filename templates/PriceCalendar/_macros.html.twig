@@ -1,0 +1,36 @@
+{# Building blocks shared by the day list (phones) and the month grid. #}
+
+{% macro change(day) -%}
+    {% if day.dayPrice %}
+        {% set source = day.dayPrice.source %}
+        <i class="fas {{ source == 'assistant' ? 'fa-robot' : (source == 'api' ? 'fa-cloud-arrow-down' : 'fa-pen') }} text-primary"
+           title="{{ ('price_calendar.source.' ~ source)|trans({'%label%': day.dayPrice.sourceLabel ?? ''}) }}"></i>
+    {% elseif day.rules is not empty %}
+        <i class="fas fa-wand-magic-sparkles text-primary" title="{{ day.rules|map(rule => rule.name)|join(', ') }}"></i>
+    {% endif %}
+    {% if day.percent|round(2) != 0 %}
+        <span class="badge text-bg-light border">{{ day.percent > 0 ? '+' : '−' }}{{ day.percent|abs|number_format(0, ',', '.') }} %</span>
+    {% endif %}
+{%- endmacro %}
+
+{% macro price(day) -%}
+    {% if day.price is null %}—{% else %}{{ day.price|number_format(day.price == day.price|round ? 0 : 2, ',', '.') }}&nbsp;{{ currency_symbol }}{% endif %}
+{%- endmacro %}
+
+{% macro occupancy(day) -%}
+    {% set share = day.sellable > 0 ? (day.booked * 100 / day.sellable)|round : 0 %}
+    <div class="progress" style="height:.3rem" role="progressbar" aria-label="{{ 'price_calendar.occupancy'|trans }}"
+         aria-valuenow="{{ share }}" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar" style="width: {{ share }}%"></div>
+    </div>
+    <span class="small text-body-secondary">{{ 'price_calendar.booked'|trans({'%booked%': day.booked, '%rooms%': day.sellable}) }}</span>
+{%- endmacro %}
+
+{# "Night from Fri 15.10. to Sat 16.10.2026": a day stands for the night that starts on it. #}
+{% macro nightTitle(night) -%}
+    {% set next = night|date_modify('+1 day') %}
+    {{ 'price_calendar.night_title'|trans({
+        '%from%': ('booking_rules.day_' ~ night|date('N'))|trans ~ ' ' ~ night|date('d.m.'),
+        '%to%': ('booking_rules.day_' ~ next|date('N'))|trans ~ ' ' ~ next|date('d.m.Y'),
+    }) }}
+{%- endmacro %}

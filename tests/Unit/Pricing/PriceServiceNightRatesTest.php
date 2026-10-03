@@ -29,6 +29,7 @@ use App\Repository\SubsidiaryRepository;
 use App\Service\AppSettingsService;
 use App\Service\AvailabilityService;
 use App\Service\PriceService;
+use App\Service\Pricing\DayPriceResolver;
 use App\Service\Pricing\DynamicRateResolver;
 use App\Service\ReservationPeriodService;
 use Doctrine\Common\Collections\Collection;
@@ -161,7 +162,7 @@ final class PriceServiceNightRatesTest extends TestCase
         $settings = $this->createStub(AppSettingsService::class);
         $settings->method('getSettings')->willReturn(new AppSettings());
 
-        return new DynamicRateResolver($rules, $this->createStub(AvailabilityService::class), $settings, new MockClock('2026-10-02 10:00:00'), $this->createStub(SubsidiaryRepository::class));
+        return new DynamicRateResolver($rules, $this->createStub(AvailabilityService::class), $settings, new MockClock('2026-10-02 10:00:00'), $this->createStub(SubsidiaryRepository::class), $this->createStub(DayPriceResolver::class));
     }
 
     /** @param list<GuestCategoryModifier> $modifiers */

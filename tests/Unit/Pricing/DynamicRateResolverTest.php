@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Pricing;
 
 use App\Dto\Pricing\NightAdjustment;
+use App\Entity\Appartment;
 use App\Entity\AppSettings;
+use App\Entity\DayPrice;
 use App\Entity\Enum\PriceRounding;
 use App\Entity\Enum\PriceRuleCondition;
 use App\Entity\PriceRule;
@@ -15,6 +17,7 @@ use App\Repository\PriceRuleRepository;
 use App\Repository\SubsidiaryRepository;
 use App\Service\AppSettingsService;
 use App\Service\AvailabilityService;
+use App\Service\Pricing\DayPriceResolver;
 use App\Service\Pricing\DynamicRateResolver;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Clock\MockClock;
@@ -28,7 +31,7 @@ final class DynamicRateResolverTest extends TestCase
     {
         $weekend = $this->rule(10.0, weekdays: [5, 6]);
 
-        $adjustments = $this->resolver([$weekend])->adjustments($this->subsidiary(1), $this->category(3), $this->day('2026-10-02'), $this->day('2026-10-06'));
+        $adjustments = $this->resolver([$weekend])->adjustments($this->room(1, 3), $this->day('2026-10-02'), $this->day('2026-10-06'));
 
         self::assertSame(['2026-10-02', '2026-10-03'], array_keys($adjustments));
         self::assertSame(10.0, $adjustments['2026-10-02']->percent);
@@ -39,7 +42,7 @@ final class DynamicRateResolverTest extends TestCase
         $fair = $this->rule(30.0);
         $fair->setPeriod($this->day('2026-10-10'), $this->day('2026-10-13'));
 
-        $adjustments = $this->resolver([$fair])->adjustments($this->subsidiary(1), $this->category(3), $this->day('2026-10-09'), $this->day('2026-10-15'));
+        $adjustments = $this->resolver([$fair])->adjustments($this->room(1, 3), $this->day('2026-10-09'), $this->day('2026-10-15'));
 
         self::assertSame(['2026-10-10', '2026-10-11', '2026-10-12'], array_keys($adjustments));
     }
@@ -49,7 +52,7 @@ final class DynamicRateResolverTest extends TestCase
         $lastMinute = $this->rule(-10.0, PriceRuleCondition::LAST_MINUTE, days: 2);
         $earlyBird = $this->rule(-5.0, PriceRuleCondition::EARLY_BIRD, days: 4);
 
-        $adjustments = $this->resolver([$lastMinute, $earlyBird])->adjustments($this->subsidiary(1), $this->category(3), $this->day('2026-10-02'), $this->day('2026-10-08'));
+        $adjustments = $this->resolver([$lastMinute, $earlyBird])->adjustments($this->room(1, 3), $this->day('2026-10-02'), $this->day('2026-10-08'));
 
         self::assertSame(-10.0, $adjustments['2026-10-02']->percent);
         self::assertSame(-10.0, $adjustments['2026-10-04']->percent);
@@ -57,9 +60,31 @@ final class DynamicRateResolverTest extends TestCase
         self::assertSame(-5.0, $adjustments['2026-10-06']->percent);
     }
 
+    public function testADayPriceTakesThePlaceOfTheRulesOnItsNight(): void
+    {
+        $dayPrice = new NightAdjustment(25.0, [], false, $this->createStub(DayPrice::class));
+        $dayPrices = $this->createStub(DayPriceResolver::class);
+        $dayPrices->method('adjustments')->willReturn(['2026-10-03' => $dayPrice]);
+
+        $adjustments = $this->resolver([$this->rule(10.0)], dayPrices: $dayPrices)->adjustments($this->room(1, 3), $this->day('2026-10-02'), $this->day('2026-10-05'));
+
+        self::assertSame(10.0, $adjustments['2026-10-02']->percent);
+        self::assertSame($dayPrice, $adjustments['2026-10-03']);
+        self::assertSame(10.0, $adjustments['2026-10-04']->percent);
+    }
+
+    public function testADayPriceIsNotRounded(): void
+    {
+        $settings = new AppSettings();
+        $dayPrice = new NightAdjustment(0.6666666, [], false, $this->createStub(DayPrice::class));
+
+        // 151 € for two guests against a list price of 75 € per head: exactly 75.50 € per head.
+        self::assertSame('75.50', $this->resolver([], settings: $settings)->apply('75.00', $dayPrice));
+    }
+
     public function testNightsBeforeTodayAreNeverChanged(): void
     {
-        $adjustments = $this->resolver([$this->rule(10.0)])->adjustments($this->subsidiary(1), $this->category(3), $this->day('2026-09-28'), $this->day('2026-10-04'));
+        $adjustments = $this->resolver([$this->rule(10.0)])->adjustments($this->room(1, 3), $this->day('2026-09-28'), $this->day('2026-10-04'));
 
         self::assertSame(['2026-10-02', '2026-10-03'], array_keys($adjustments));
     }
@@ -70,7 +95,7 @@ final class DynamicRateResolverTest extends TestCase
         $settings->setPriceChangeLimits(-30, 25);
         $rules = [$this->rule(10.0), $this->rule(20.0)];
 
-        $night = $this->resolver($rules, settings: $settings)->adjustments($this->subsidiary(1), $this->category(3), $this->day('2026-10-02'), $this->day('2026-10-03'))['2026-10-02'];
+        $night = $this->resolver($rules, settings: $settings)->adjustments($this->room(1, 3), $this->day('2026-10-02'), $this->day('2026-10-03'))['2026-10-02'];
 
         self::assertSame(25.0, $night->percent);
         self::assertTrue($night->limited);
@@ -92,9 +117,9 @@ final class DynamicRateResolverTest extends TestCase
         $resolver = $this->resolver([$selected, $emptied]);
         $window = [$this->day('2026-10-02'), $this->day('2026-10-03')];
 
-        self::assertSame(10.0, $resolver->adjustments($here, $double, ...$window)['2026-10-02']->percent);
-        self::assertSame([], $resolver->adjustments($elsewhere, $double, ...$window));
-        self::assertSame([], $resolver->adjustments($here, $this->category(4), ...$window));
+        self::assertSame(10.0, $resolver->adjustments($this->roomIn($here, $double), ...$window)['2026-10-02']->percent);
+        self::assertSame([], $resolver->adjustments($this->roomIn($elsewhere, $double), ...$window));
+        self::assertSame([], $resolver->adjustments($this->roomIn($here, $this->category(4)), ...$window));
     }
 
     public function testOccupancyCountsBookedAgainstSellableRoomsWithoutTheBookingItself(): void
@@ -111,7 +136,7 @@ final class DynamicRateResolverTest extends TestCase
             ]);
 
         $adjustments = $this->resolver([$high], $availability)
-            ->adjustments($this->subsidiary(1), $this->category(3), $this->day('2026-10-02'), $this->day('2026-10-05'), excludingReservationId: 42);
+            ->adjustments($this->room(1, 3), $this->day('2026-10-02'), $this->day('2026-10-05'), excludingReservationId: 42);
 
         // 3 of 4 sellable rooms = 75 %; 2 of 4 = 50 %; nothing sellable = no occupancy at all.
         self::assertSame(['2026-10-02'], array_keys($adjustments));
@@ -131,10 +156,10 @@ final class DynamicRateResolverTest extends TestCase
         $window = [$this->day('2026-10-02'), $this->day('2026-10-03')];
 
         // The first floor is full, but the house as a whole is only half booked.
-        self::assertSame([], $this->resolver([$high], $availability)->adjustments($this->subsidiary(1), $this->category(3), ...$window));
+        self::assertSame([], $this->resolver([$high], $availability)->adjustments($this->room(1, 3), ...$window));
 
         $high->setOccupancyAcrossSubsidiaries(false);
-        self::assertArrayHasKey('2026-10-02', $this->resolver([$high], $availability)->adjustments($this->subsidiary(1), $this->category(3), ...$window));
+        self::assertArrayHasKey('2026-10-02', $this->resolver([$high], $availability)->adjustments($this->room(1, 3), ...$window));
     }
 
     public function testLowOccupancyAlsoNeedsTheNightToBeNear(): void
@@ -147,7 +172,7 @@ final class DynamicRateResolverTest extends TestCase
             '2026-10-04' => ['rooms' => 4, 'booked' => 0, 'blocked' => 0, 'available' => 4],
         ]);
 
-        $adjustments = $this->resolver([$low], $availability)->adjustments($this->subsidiary(1), $this->category(3), $this->day('2026-10-02'), $this->day('2026-10-05'));
+        $adjustments = $this->resolver([$low], $availability)->adjustments($this->room(1, 3), $this->day('2026-10-02'), $this->day('2026-10-05'));
 
         self::assertSame(['2026-10-02'], array_keys($adjustments));
     }
@@ -163,7 +188,7 @@ final class DynamicRateResolverTest extends TestCase
     }
 
     /** @param list<PriceRule> $rules */
-    private function resolver(array $rules, ?AvailabilityService $availability = null, ?AppSettings $settings = null): DynamicRateResolver
+    private function resolver(array $rules, ?AvailabilityService $availability = null, ?AppSettings $settings = null, ?DayPriceResolver $dayPrices = null): DynamicRateResolver
     {
         $repository = $this->createStub(PriceRuleRepository::class);
         $repository->method('findEnabled')->willReturn($rules);
@@ -178,7 +203,22 @@ final class DynamicRateResolverTest extends TestCase
             $settingsService,
             new MockClock(self::TODAY.' 15:00:00'),
             $subsidiaries,
+            $dayPrices ?? $this->createStub(DayPriceResolver::class),
         );
+    }
+
+    private function room(int $subsidiaryId, int $categoryId): Appartment
+    {
+        return $this->roomIn($this->subsidiary($subsidiaryId), $this->category($categoryId));
+    }
+
+    private function roomIn(Subsidiary $subsidiary, RoomCategory $category): Appartment
+    {
+        $room = new Appartment();
+        $room->setObject($subsidiary);
+        $room->setRoomCategory($category);
+
+        return $room;
     }
 
     /** @param list<int> $weekdays */

@@ -10,12 +10,13 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Price rules: percentage changes of the room price by weekday, date range, lead time or
  * occupancy, for one, several or all subsidiaries and room categories, within global limits.
+ * Day prices: a fixed room price for single nights, per subsidiary and room category.
  */
 final class Version20261003120000 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Add price rules and the limits for price changes';
+        return 'Add price rules, day prices and the limits for price changes';
     }
 
     public function up(Schema $schema): void
@@ -28,13 +29,21 @@ final class Version20261003120000 extends AbstractMigration
         $this->addSql('ALTER TABLE price_rule_category ADD CONSTRAINT FK_A94245D8744E0351 FOREIGN KEY (rule_id) REFERENCES price_rules (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE price_rule_category ADD CONSTRAINT FK_A94245D812469DE2 FOREIGN KEY (category_id) REFERENCES room_category (id) ON DELETE CASCADE');
         $this->addSql("ALTER TABLE app_settings ADD price_change_min_percent SMALLINT DEFAULT -30 NOT NULL, ADD price_change_max_percent SMALLINT DEFAULT 50 NOT NULL, ADD price_change_rounding VARCHAR(10) DEFAULT 'euro' NOT NULL");
+        $this->addSql('CREATE TABLE day_prices (id INT AUTO_INCREMENT NOT NULL, night DATE NOT NULL, amount NUMERIC(10, 2) NOT NULL, persons SMALLINT NOT NULL, source VARCHAR(10) NOT NULL, source_label VARCHAR(60) DEFAULT NULL, updated_at DATETIME NOT NULL, subsidiary_id INT NOT NULL, room_category_id INT NOT NULL, UNIQUE INDEX uniq_day_price_night (subsidiary_id, room_category_id, night), INDEX IDX_43158684D4A7BDA2 (subsidiary_id), INDEX IDX_4315868467333DD (room_category_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
+        $this->addSql('ALTER TABLE day_prices ADD CONSTRAINT FK_43158684D4A7BDA2 FOREIGN KEY (subsidiary_id) REFERENCES objects (id) ON DELETE CASCADE');
+        $this->addSql('ALTER TABLE day_prices ADD CONSTRAINT FK_4315868467333DD FOREIGN KEY (room_category_id) REFERENCES room_category (id) ON DELETE CASCADE');
     }
 
-    /** Refuses to run while price rules exist, because the old schema cannot keep them. */
+    /** Refuses to run while price rules or upcoming day prices exist, because the old schema cannot keep them. */
     public function down(Schema $schema): void
     {
         $rules = (int) $this->connection->fetchOne('SELECT COUNT(*) FROM price_rules');
-        $this->abortIf($rules > 0, 'Price rules exist and would be lost. Delete them in the price settings, or restore the pre-upgrade backup, before downgrading.');
+        $dayPrices = (int) $this->connection->fetchOne('SELECT COUNT(*) FROM day_prices WHERE night >= CURRENT_DATE');
+        $this->abortIf($rules + $dayPrices > 0, 'Price rules or day prices exist and would be lost. Delete them in the price settings, or restore the pre-upgrade backup, before downgrading.');
+
+        $this->addSql('ALTER TABLE day_prices DROP FOREIGN KEY FK_43158684D4A7BDA2');
+        $this->addSql('ALTER TABLE day_prices DROP FOREIGN KEY FK_4315868467333DD');
+        $this->addSql('DROP TABLE day_prices');
 
         $this->addSql('ALTER TABLE price_rule_subsidiary DROP FOREIGN KEY FK_8AF1E2A3744E0351');
         $this->addSql('ALTER TABLE price_rule_subsidiary DROP FOREIGN KEY FK_8AF1E2A3D4A7BDA2');

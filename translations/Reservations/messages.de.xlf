@@ -784,11 +784,15 @@
             </trans-unit>
             <trans-unit id="reservation.price.rules_applied">
                 <source>reservation.price.rules_applied</source>
-                <target>Enthält Preisregeln</target>
+                <target>Angepasst durch</target>
             </trans-unit>
             <trans-unit id="reservation.price.rules_nights">
                 <source>reservation.price.rules_nights</source>
                 <target>{1}1 Nacht|]1,Inf[%count% Nächte</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.day_price">
+                <source>reservation.price.day_price</source>
+                <target>Tagespreis</target>
             </trans-unit>
         </body>
     </file>

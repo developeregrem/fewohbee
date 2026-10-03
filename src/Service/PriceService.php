@@ -700,12 +700,11 @@ class PriceService implements ResetInterface
     private function ruleAdjustments(Reservation $reservation, \DateTimeImmutable $from, \DateTimeImmutable $toExclusive): array
     {
         $apartment = $reservation->getAppartment();
-        $category = $apartment?->getRoomCategory();
-        if (null === $this->dynamicRates || null === $category) {
+        if (null === $this->dynamicRates || null === $apartment) {
             return [];
         }
 
-        return $this->dynamicRates->adjustments($apartment->getObject(), $category, $from, $toExclusive, excludingReservationId: $reservation->getId());
+        return $this->dynamicRates->adjustments($apartment, $from, $toExclusive, excludingReservationId: $reservation->getId());
     }
 
     /** The stored price promise of the reservation, null when it has none or it is unreadable. */
@@ -1034,50 +1033,7 @@ class PriceService implements ResetInterface
 
     private function isWeekDayMatch(Price $price, \DateTime $curr)
     {
-        if ($price->getAllDays()) {
-            return true;
-        }
-
-        $dayOfWeek = $curr->format('N'); // 1 = Mon, 7 = Sun
-        switch ($dayOfWeek) {
-            case 1:
-                if ($price->getMonday()) {
-                    return true;
-                }
-                break;
-            case 2:
-                if ($price->getTuesday()) {
-                    return true;
-                }
-                break;
-            case 3:
-                if ($price->getWednesday()) {
-                    return true;
-                }
-                break;
-            case 4:
-                if ($price->getThursday()) {
-                    return true;
-                }
-                break;
-            case 5:
-                if ($price->getFriday()) {
-                    return true;
-                }
-                break;
-            case 6:
-                if ($price->getSaturday()) {
-                    return true;
-                }
-                break;
-            case 7:
-                if ($price->getSunday()) {
-                    return true;
-                }
-                break;
-        }
-
-        return false;
+        return $price->coversWeekday($curr);
     }
 
     /**

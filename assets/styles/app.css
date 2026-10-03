@@ -1308,3 +1308,13 @@ details.einvoice-readiness > summary::-webkit-details-marker {
 .price-rules-offcanvas.offcanvas-bottom {
     height: 85vh;
 }
+
+/* Price calendar: the month as a seven-column grid on wider screens. */
+.price-calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: .5rem;
+}
+
+.price-calendar-cell {
+    min-height: 6.5rem;
+}
