@@ -8,6 +8,7 @@ use App\Entity\Appartment;
 use App\Entity\Enum\PercentageBase;
 use App\Entity\Enum\TaxCalculationMode;
 use App\Entity\Price;
+use App\Entity\PriceRule;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
@@ -101,6 +102,30 @@ final class ReservationPricePromiseTest extends WebTestCase
             self::assertSame('99.00', $this->promisedUnit($reservation));
         } finally {
             $this->em()->remove($this->em()->find(TouristTax::class, $tax->getId()));
+            $this->em()->flush();
+        }
+    }
+
+    public function testANewBookingIsPromisedThePriceAfterPriceRules(): void
+    {
+        $this->createRoomPrice('80.00');
+        $arrival = new \DateTimeImmutable('+860 days');
+        $rule = new PriceRule();
+        $rule->setName('Messe');
+        $rule->setPercent(10.0);
+        $rule->setPeriod($arrival->setTime(0, 0), $arrival->setTime(0, 0)->modify('+2 days'));
+        $this->em()->persist($rule);
+        $this->em()->flush();
+
+        try {
+            $reservation = $this->createReservation('+860 days', withPromise: true);
+
+            $night = $reservation->getPricePromise()['n'][0] ?? [];
+            self::assertSame('88.00', $night['u'] ?? null);
+            self::assertSame('80.00', $night['d']['b'] ?? null);
+            self::assertSame([['Messe', '10.00']], $night['d']['r'] ?? null);
+        } finally {
+            $this->em()->remove($this->em()->find(PriceRule::class, $rule->getId()));
             $this->em()->flush();
         }
     }

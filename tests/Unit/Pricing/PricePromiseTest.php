@@ -9,6 +9,7 @@ use App\Dto\Pricing\PricePromise;
 use App\Dto\Pricing\PromisedExtra;
 use App\Dto\Pricing\PromisedLine;
 use App\Dto\Pricing\PromisedNight;
+use App\Dto\Pricing\RateAdjustment;
 use App\Entity\Appartment;
 use App\Entity\Enum\ModifierType;
 use App\Entity\Reservation;
@@ -79,6 +80,19 @@ final class PricePromiseTest extends TestCase
         self::assertSame('12.50', $read->extra(5)?->unit);
         self::assertFalse($read->extra(5)->includesVat);
         self::assertSame([5, 17], $read->priceIds());
+    }
+
+    public function testANightChangedByPriceRulesKeepsWhatTheRulesDid(): void
+    {
+        $adjustment = new RateAdjustment('80.00', 12.5, [['Weekend', 10.0], ['Fair', 2.5]]);
+        $promise = new PricePromise('2026-10-02', 'ctx', ['2026-12-20' => new PromisedNight(17, '90.00', false, false, true, [], $adjustment)], []);
+
+        $night = PricePromise::fromArray($promise->toArray())?->night(new \DateTimeImmutable('2026-12-20'));
+
+        self::assertSame('90.00', $night?->unit);
+        self::assertSame('80.00', $night->adjustment?->baseUnit);
+        self::assertSame(12.5, $night->adjustment->percent);
+        self::assertSame([['Weekend', 10.0], ['Fair', 2.5]], $night->adjustment->rules);
     }
 
     /** @return iterable<string, array{0: array<string, mixed>|null}> */

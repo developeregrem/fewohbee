@@ -86,6 +86,7 @@ class PublicBookingViewModelFactory
             'selectedExtras' => [],
             'extrasTotalFormatted' => null,
             'grandTotalFormatted' => null,
+            'grandTotal' => null,
             'extrasBreakdown' => [],
             'touristTaxLines' => [],
             'touristTaxTotalFormatted' => null,
@@ -164,6 +165,7 @@ class PublicBookingViewModelFactory
         $view['extrasTotalFormatted'] = $preview['extrasTotalFormatted'];
         $view['extrasBreakdown'] = $preview['extrasBreakdown'];
         $view['grandTotalFormatted'] = $preview['grandTotalFormatted'];
+        $view['grandTotal'] = $preview['grandTotal'];
         $view['touristTaxLines'] = $preview['touristTaxLines'];
         $view['touristTaxTotalFormatted'] = $preview['touristTaxTotalFormatted'];
         $view['touristTaxTotal'] = $preview['touristTaxTotal'];
@@ -276,6 +278,7 @@ class PublicBookingViewModelFactory
             $recovered['extrasTotalFormatted'] = $preview['extrasTotalFormatted'];
             $recovered['extrasBreakdown'] = $preview['extrasBreakdown'];
             $recovered['grandTotalFormatted'] = $preview['grandTotalFormatted'];
+            $recovered['grandTotal'] = $preview['grandTotal'];
         }
 
         return $recovered;

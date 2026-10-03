@@ -27,6 +27,7 @@ final readonly class NightRate
 {
     /**
      * @param list<PromisedLine>|null $promisedLines the promised guest lines, null when priced live
+     * @param RateAdjustment|null     $adjustment    how price rules changed the row's unit price
      */
     public function __construct(
         public \DateTimeImmutable $night,
@@ -36,6 +37,7 @@ final readonly class NightRate
         public bool $isFlatPrice,
         public bool $isPerRoom,
         public ?array $promisedLines = null,
+        public ?RateAdjustment $adjustment = null,
     ) {
     }
 
@@ -61,7 +63,14 @@ final readonly class NightRate
             $promised->isFlatPrice,
             $promised->isPerRoom,
             $promised->lines,
+            $promised->adjustment,
         );
+    }
+
+    /** The same night at the unit price the price rules lead to. */
+    public function adjusted(string $unit, RateAdjustment $adjustment): self
+    {
+        return new self($this->night, $this->price, $unit, $this->includesVat, $this->isFlatPrice, $this->isPerRoom, $this->promisedLines, $adjustment);
     }
 
     public function isPromised(): bool

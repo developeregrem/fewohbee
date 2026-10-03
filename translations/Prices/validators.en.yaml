@@ -1,0 +1,8 @@
+price_rules.validation.name: 'Enter a name.'
+price_rules.validation.amount: 'Enter a change above 0 %, at most 99 % when lowering and 500 % when raising.'
+price_rules.validation.days: 'Enter a number of days between 0 and 730.'
+price_rules.validation.occupancy: 'Enter an occupancy between 0 and 100 %.'
+price_rules.validation.weekdays: 'Select at least one night.'
+price_rules.validation.period: 'Enter both nights. The last one must not be before the first.'
+price_rules.validation.subsidiaries: 'Select at least one branch or all branches.'
+price_rules.validation.categories: 'Select at least one room category or all of them.'

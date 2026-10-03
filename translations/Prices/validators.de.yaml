@@ -1,0 +1,8 @@
+price_rules.validation.name: 'Gib eine Bezeichnung an.'
+price_rules.validation.amount: 'Gib eine Änderung über 0 % an, beim Senken höchstens 99 %, beim Erhöhen höchstens 500 %.'
+price_rules.validation.days: 'Gib eine Anzahl Tage zwischen 0 und 730 an.'
+price_rules.validation.occupancy: 'Gib eine Auslastung zwischen 0 und 100 % an.'
+price_rules.validation.weekdays: 'Wähle mindestens eine Nacht aus.'
+price_rules.validation.period: 'Gib beide Nächte an. Die letzte darf nicht vor der ersten liegen.'
+price_rules.validation.subsidiaries: 'Wähle mindestens eine Niederlassung oder alle Niederlassungen aus.'
+price_rules.validation.categories: 'Wähle mindestens eine Zimmerkategorie oder alle aus.'

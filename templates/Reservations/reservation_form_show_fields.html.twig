@@ -471,6 +471,21 @@
             <div class="col">
                 <h5>{{ 'invoice.appartment'|trans }}</h5>
                 {% include 'Invoices/invoice_table_apartment_preview_positions.html.twig' with {'mode': 'read'} %}
+                {# Which price rules are part of the room price, and on how many nights. #}
+                {% import 'PriceRules/_macros.html.twig' as ruleText %}
+                {% set ruleNights = {} %}
+                {% for rate in nightRates|default([])|filter(rate => rate and rate.adjustment) %}
+                    {% for applied in rate.adjustment.rules %}
+                        {% set ruleLabel = applied[0] ~ ' ' ~ ruleText.percent(applied[1]) %}
+                        {% set ruleNights = ruleNights|merge({(ruleLabel): (ruleNights[ruleLabel] ?? 0) + 1}) %}
+                    {% endfor %}
+                {% endfor %}
+                {% if ruleNights is not empty %}
+                    <p class="small text-body-secondary mb-0">
+                        {{ 'reservation.price.rules_applied'|trans }}:
+                        {% for ruleLabel, nights in ruleNights %}{{ ruleLabel }} ({{ 'reservation.price.rules_nights'|trans({'%count%': nights}) }}){{ loop.last ? '' : ', ' }}{% endfor %}
+                    </p>
+                {% endif %}
             </div>
         </div>
             

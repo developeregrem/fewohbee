@@ -20,6 +20,7 @@ online_booking:
     disabled: "Online booking is disabled."
     invalid_status_config: "Online booking status configuration is invalid."
     reservation_origin_missing: "Configured reservation origin is missing or invalid."
+    price_changed: "The price has changed in the meantime. Please check the new total and submit your booking again."
     dates_required: "Please provide a valid arrival and departure date."
     invalid_dates: "Please provide valid dates."
     departure_after_arrival: "Departure date must be after arrival date."

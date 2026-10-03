@@ -132,6 +132,7 @@ class PublicBookingService
         array $selectedExtras = [],
         array $guestCounts = [],
         ?Appartment $calendarRoom = null,
+        ?int $quotedTotal = null,
     ): array {
         $config = $this->configService->getConfig();
         $this->assertConfigReady($config);
@@ -191,17 +192,25 @@ class PublicBookingService
         foreach ($reservations as $reservation) {
             // The guest is promised the price shown, whatever happens to the price list later.
             $this->pricePromises?->reconcile($reservation);
+        }
+
+        $pricing = $this->calculateRoomTotal($reservations);
+        $extrasResult = $this->summarizeExtras($resolvedExtras);
+        // Grand total must match the preview: room rates + guest adjustments + extras + tourist tax.
+        $grandTotal = $pricing['roomTotal'] + $pricing['modifierTotal'] + $extrasResult['extrasTotal'] + $pricing['touristTaxTotal'];
+        // Price rules follow occupancy and lead time, so the price can move between the summary
+        // and the click on "book". The guest books nothing they have not seen: the summary is
+        // shown again with the current price instead.
+        if (null !== $quotedTotal && (int) round($grandTotal * 100) !== $quotedTotal) {
+            throw new PublicBookingException('online_booking.error.price_changed');
+        }
+
+        foreach ($reservations as $reservation) {
             $this->em->persist($reservation);
         }
         $this->em->flush();
 
-        $pricing = $this->calculateRoomTotal($reservations);
-        $extrasResult = $this->summarizeExtras($resolvedExtras);
-
         $this->eventDispatcher->dispatch(new OnlineBookingCreatedEvent($reservations, $customer));
-
-        // Grand total must match the preview: room rates + guest adjustments + extras + tourist tax.
-        $grandTotal = $pricing['roomTotal'] + $pricing['modifierTotal'] + $extrasResult['extrasTotal'] + $pricing['touristTaxTotal'];
 
         return [
             'reservations' => $reservations,

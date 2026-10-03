@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Tool;
 
 use App\Dto\Reservation\BookerData;
+use App\Dto\Reservation\ReservationBookingPreview;
 use App\Dto\Reservation\ReservationBookingRequest;
 use App\Entity\ApiToken;
 use App\Entity\Enum\ApiScope;
@@ -121,23 +122,9 @@ final class BookingTools
             throw McpToolException::invalid($e->getMessage());
         }
 
-        $quote = $this->priceQuoteService->quote(
-            $preview->apartment,
-            $stay->arrival,
-            $stay->departure,
-            $preview->persons,
-            $preview->guestCounts,
-            $preview->origin,
-            $this->authorizationChecker->isGranted(ApiScopeVoter::TOURIST_TAX_READ),
-        );
-        $previewToken = $this->previewTokenSigner->sign($this->currentApiToken()->getId() ?? 0, $request->fingerprint());
-
-        /** @var array<string, mixed> $price */
-        $price = json_decode((string) json_encode($quote), true);
-        $extras = $this->splitExtras($price, $preview->extras);
-        // The quote's own extras total only covers online-mandatory extras; the preview states the booked ones instead.
-        unset($price['extras'], $price['extrasTotal'], $price['grandTotal']);
-        $touristTax = \is_array($price['touristTax'] ?? null) ? (float) ($price['touristTax']['total'] ?? 0) : 0.0;
+        ['price' => $price, 'extras' => $extras, 'estimatedTotal' => $estimatedTotal] = $this->estimate($preview, $stay);
+        // The total is signed along with the arguments: create_reservation books nothing the user has not seen.
+        $previewToken = $this->previewTokenSigner->sign($this->currentApiToken()->getId() ?? 0, self::pricedFingerprint($request, $estimatedTotal));
 
         return [
             'available' => true,
@@ -154,11 +141,11 @@ final class BookingTools
             'availableExtras' => $extras['available'],
             'extrasTotal' => $extras['total'],
             // Room + booked extras (+ tourist tax when the token may read it). The invoice stays authoritative.
-            'estimatedTotal' => round((float) ($price['room']['gross'] ?? 0) + $extras['total'] + $touristTax, 2),
+            'estimatedTotal' => $estimatedTotal,
             'warnings' => $preview->warnings,
             'previewToken' => $previewToken,
             'previewTokenExpiresAt' => PreviewTokenSigner::expiresAt($previewToken)?->format(\DateTimeInterface::ATOM),
-            'nextStep' => 'Show these details, the extras and the price to the user. Only after the user agreed, call create_reservation with exactly the same arguments plus previewToken.',
+            'nextStep' => 'Show these details, the extras and the price to the user. Only after the user agreed, call create_reservation with exactly the same arguments plus previewToken and estimatedTotal as expectedTotal.',
         ];
     }
 
@@ -171,13 +158,15 @@ final class BookingTools
     #[McpTool(
         name: 'create_reservation',
         title: 'Create reservation',
-        description: 'Books the room exactly as previewed. Requires the previewToken from preview_reservation and the same arguments. Staff are notified in FewohBee. Calling it again with the same previewToken returns the already created reservation.',
+        description: 'Books the room exactly as previewed. Requires the previewToken and estimatedTotal (as expectedTotal) from preview_reservation and the same arguments. Fails when the price has changed since the preview; then preview again and show the new price. Staff are notified in FewohBee. Calling it again with the same previewToken returns the already created reservation.',
         annotations: new ToolAnnotations(readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false),
     )]
     #[McpRequiresScope(ApiScope::RESERVATIONS_WRITE)]
     public function create(
         #[Schema(description: 'The previewToken returned by preview_reservation.', minLength: 10, maxLength: 200)]
         string $previewToken,
+        #[Schema(description: 'The estimatedTotal returned by preview_reservation, i.e. the price the user agreed to.', minimum: 0)]
+        float $expectedTotal,
         #[Schema(description: 'Room (apartment) id.', minimum: 1)]
         int $apartmentId,
         #[Schema(description: 'Arrival date, YYYY-MM-DD.')]
@@ -210,11 +199,11 @@ final class BookingTools
         ?array $extras = null,
     ): array {
         $this->assertWriteAllowed();
-        [$request] = $this->buildRequest($apartmentId, $arrival, $departure, $statusId, $persons, $guestCounts, $originId, $customerId, $bookerLastname, $bookerFirstname, $bookerSalutation, $bookerEmail, $bookerPhone, $remark, $extras);
+        [$request, $stay] = $this->buildRequest($apartmentId, $arrival, $departure, $statusId, $persons, $guestCounts, $originId, $customerId, $bookerLastname, $bookerFirstname, $bookerSalutation, $bookerEmail, $bookerPhone, $remark, $extras);
 
         $apiToken = $this->currentApiToken();
-        if (!$this->previewTokenSigner->verify($previewToken, $apiToken->getId() ?? 0, $request->fingerprint())) {
-            throw McpToolException::invalid('The previewToken is missing, expired or does not match these arguments. Call preview_reservation again and confirm the result with the user.');
+        if (!$this->previewTokenSigner->verify($previewToken, $apiToken->getId() ?? 0, self::pricedFingerprint($request, $expectedTotal))) {
+            throw McpToolException::invalid('The previewToken is missing, expired or does not match these arguments and expectedTotal. Call preview_reservation again and confirm the result with the user.');
         }
 
         // A retried call (e.g. after a dropped connection) returns the reservation it already created.
@@ -234,6 +223,11 @@ final class BookingTools
         }
 
         try {
+            // Price rules follow occupancy and lead time, so the price may have moved since the preview.
+            $current = $this->estimate($this->bookingService->preview($request), $stay)['estimatedTotal'];
+            if (self::cents($current) !== self::cents($expectedTotal)) {
+                throw McpToolException::invalid(sprintf('The price has changed since the preview (now %.2f instead of %.2f). Call preview_reservation again and show the new price to the user.', $current, $expectedTotal));
+            }
             $reservation = $this->bookingService->create($request);
         } catch (ReservationBookingException $e) {
             throw McpToolException::invalid($e->getMessage());
@@ -252,6 +246,48 @@ final class BookingTools
         $this->eventDispatcher->dispatch(new AssistantReservationCreatedEvent($reservation, $reservation->getBooker(), $apiToken->getTokenPrefix()));
 
         return ['created' => true, 'alreadyCreated' => false, 'reservation' => $this->reservationView->render($reservation, withExtras: true)];
+    }
+
+    /**
+     * The quote of a previewed booking: room price, booked extras and the estimated total the user
+     * is shown (room + booked extras, plus the tourist tax when the token may read it).
+     *
+     * @return array{price: array<string, mixed>, extras: array{booked: list<array<string, mixed>>, available: list<array<string, mixed>>, total: float}, estimatedTotal: float}
+     */
+    private function estimate(ReservationBookingPreview $preview, StayInput $stay): array
+    {
+        $quote = $this->priceQuoteService->quote(
+            $preview->apartment,
+            $stay->arrival,
+            $stay->departure,
+            $preview->persons,
+            $preview->guestCounts,
+            $preview->origin,
+            $this->authorizationChecker->isGranted(ApiScopeVoter::TOURIST_TAX_READ),
+        );
+
+        /** @var array<string, mixed> $price */
+        $price = json_decode((string) json_encode($quote), true);
+        $extras = $this->splitExtras($price, $preview->extras);
+        // The quote's own extras total only covers online-mandatory extras; the preview states the booked ones instead.
+        unset($price['extras'], $price['extrasTotal'], $price['grandTotal']);
+        $touristTax = \is_array($price['touristTax'] ?? null) ? (float) ($price['touristTax']['total'] ?? 0) : 0.0;
+
+        return [
+            'price' => $price,
+            'extras' => $extras,
+            'estimatedTotal' => round((float) ($price['room']['gross'] ?? 0) + $extras['total'] + $touristTax, 2),
+        ];
+    }
+
+    private static function pricedFingerprint(ReservationBookingRequest $request, float $total): string
+    {
+        return $request->fingerprint().'|'.self::cents($total);
+    }
+
+    private static function cents(float $amount): int
+    {
+        return (int) round($amount * 100);
     }
 
     /**

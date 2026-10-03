@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Service\Api;
 
+use App\Dto\Pricing\NightAdjustment;
+use App\Dto\Pricing\PricePromise;
 use App\Entity\Appartment;
 use App\Entity\Price;
+use App\Entity\PriceRule;
 use App\Entity\ReservationOrigin;
 use App\Repository\PriceRepository;
 use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\PriceService;
+use App\Service\Pricing\DynamicRateResolver;
 use Doctrine\Common\Collections\ArrayCollection;
 
 /**
@@ -30,6 +34,7 @@ class RateCalendarService
         private readonly PriceService $priceService,
         private readonly PublicPricingService $pricingService,
         private readonly PriceRepository $priceRepository,
+        private readonly DynamicRateResolver $dynamicRates,
     ) {
     }
 
@@ -53,6 +58,10 @@ class RateCalendarService
         // The resolver treats the reservation end as a departure date, so the window has
         // to run one day past the last night for that night to be evaluated at all.
         $windowEnd = $lastNight->modify('+1 day');
+
+        // Price rules depend on the night and the room's subsidiary, not on the occupancy.
+        $category = $sampleRoom->getRoomCategory();
+        $adjustments = null === $category ? [] : $this->dynamicRates->adjustments($sampleRoom->getObject(), $category, $firstNight, $windowEnd);
 
         $ratesByDate = [];
         foreach ($occupancies as $occupancy) {
@@ -84,7 +93,7 @@ class RateCalendarService
                     continue;
                 }
                 $date = $firstNight->modify('+'.$i.' days')->format('Y-m-d');
-                $ratesByDate[$date][] = $this->describeRate($price, $occupancy);
+                $ratesByDate[$date][] = $this->describeRate($price, $occupancy, $adjustments[$date] ?? null);
             }
         }
 
@@ -102,9 +111,16 @@ class RateCalendarService
     /**
      * @return array<string, mixed>
      */
-    private function describeRate(Price $price, int $occupancy): array
+    private function describeRate(Price $price, int $occupancy, ?NightAdjustment $adjustment): array
     {
-        $unitPrice = round((float) $price->getPrice(), 2);
+        $baseUnitPrice = round((float) $price->getPrice(), 2);
+        // Flat prices are never changed by price rules, nor is anything by a zero sum.
+        if ($price->getIsFlatPrice() || 0.0 === round($adjustment->percent ?? 0.0, 2)) {
+            $adjustment = null;
+        }
+        $unitPrice = null === $adjustment
+            ? $baseUnitPrice
+            : (float) $this->dynamicRates->apply(PricePromise::money($price->getPrice()), $adjustment);
 
         if ($price->getIsFlatPrice()) {
             // A flat price covers the whole stay, so there is no meaningful per-night
@@ -125,6 +141,12 @@ class RateCalendarService
             'description' => $price->getDescription(),
             'pricingModel' => $pricingModel,
             'unitPrice' => $unitPrice,
+            'baseUnitPrice' => $baseUnitPrice,
+            'adjustmentPercent' => null === $adjustment ? 0.0 : round($adjustment->percent, 2),
+            'priceRules' => null === $adjustment ? [] : array_map(
+                static fn (PriceRule $rule): array => ['name' => $rule->getName(), 'percent' => $rule->getPercent()],
+                $adjustment->rules,
+            ),
             'perNight' => $perNight,
             'stayPrice' => 'flat' === $pricingModel ? $unitPrice : null,
             'minStay' => null !== $price->getMinStay() ? (int) $price->getMinStay() : null,

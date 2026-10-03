@@ -1291,7 +1291,17 @@ components:
         priceId: { type: integer }
         description: { type: [string, 'null'] }
         pricingModel: { type: string, enum: [per_person_night, per_room_night, flat] }
-        unitPrice: { type: number, description: 'The stored amount of the price row.' }
+        unitPrice: { type: number, description: 'The amount of the price row after price rules; equals baseUnitPrice when no rule applies.' }
+        baseUnitPrice: { type: number, description: 'The stored amount of the price row.' }
+        adjustmentPercent: { type: number, description: 'Total change by price rules in percent, within the configured limits; 0 when no rule applies.' }
+        priceRules:
+          type: array
+          description: The price rules that changed this night.
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              percent: { type: number }
         perNight:
           type: [number, 'null']
           description: >-

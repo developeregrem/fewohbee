@@ -408,16 +408,16 @@ class PublicPricingService
         $origin = $this->configService->getReservationOrigin();
         $reservation = $this->buildSampleReservation($room, 1, $dateFrom, $dateTo, $origin);
 
-        foreach ($this->priceService->getPricesForReservationDays($reservation, 2) as $pricesOfDay) {
-            $price = is_array($pricesOfDay) ? ($pricesOfDay[0] ?? null) : null;
-            if (!$price instanceof Price) {
+        // Night rates, so the comparison uses the price after price rules.
+        foreach ($this->priceService->getNightRates($reservation) as $rate) {
+            if (null === $rate) {
                 continue;
             }
-            if ($price->getIsFlatPrice() || $price->getIsPerRoom()) {
+            if ($rate->isFlatPrice || $rate->isPerRoom) {
                 return null;
             }
 
-            return (float) $price->getPrice();
+            return (float) $rate->unit;
         }
 
         return null;

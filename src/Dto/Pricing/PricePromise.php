@@ -27,8 +27,12 @@ use App\Entity\Reservation;
  *
  *     {"v":1,"at":"2026-10-02","ctx":"c3|s1|o2|p3|g1:2,4:1",
  *      "n":[{"f":"2026-12-20","c":3,"p":17,"u":"89.00","t":"p","g":true,
- *            "l":[[1,2,"44.50"],[4,1,"22.25","discount_percent","50.00"]]}],
+ *            "l":[[1,2,"44.50"],[4,1,"22.25","discount_percent","50.00"]],
+ *            "d":{"b":"80.00","pct":"11.25","r":[["Wochenende","10.00"],["Messe","1.25"]]}}],
  *      "x":[{"p":5,"u":"12.50","g":true}]}
+ *
+ * `d` is only present when price rules changed the night: the row's unit price before, the
+ * total percentage and the rules by name, so the booking can explain its price later.
  *
  * `ctx` identifies what the nights were priced for (room category, subsidiary, origin, persons,
  * guest counts). Promised nights only apply while it still matches the reservation; a booking

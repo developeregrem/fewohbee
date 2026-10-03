@@ -95,6 +95,7 @@ class PublicBookingController extends AbstractController
                     $booking->extrasSelection,
                     $booking->guestCounts,
                     $calendarRoom,
+                    $booking->quotedTotal,
                 );
 
                 $view['step'] = 4;

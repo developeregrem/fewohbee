@@ -1,0 +1,30 @@
+{# Body of the limits offcanvas: how far price rules may move a price in total, and how changed prices are rounded. #}
+{{ form_start(form, {attr: {'data-action': 'submit->price-rules#submitForm', 'novalidate': 'novalidate'}}) }}
+    {{ form_errors(form) }}
+    <p class="text-body-secondary small">{{ 'price_rules.limits.help'|trans }}</p>
+    <div class="row g-2 mb-3">
+        <div class="col-6">
+            {{ form_label(form.maxDecrease, null, {label_attr: {class: 'form-label small fw-semibold'}}) }}
+            <div class="input-group">
+                {{ form_widget(form.maxDecrease, {attr: {class: 'form-control'}}) }}
+                <span class="input-group-text">%</span>
+            </div>
+            {{ form_errors(form.maxDecrease) }}
+        </div>
+        <div class="col-6">
+            {{ form_label(form.maxIncrease, null, {label_attr: {class: 'form-label small fw-semibold'}}) }}
+            <div class="input-group">
+                {{ form_widget(form.maxIncrease, {attr: {class: 'form-control'}}) }}
+                <span class="input-group-text">%</span>
+            </div>
+            {{ form_errors(form.maxIncrease) }}
+        </div>
+    </div>
+    <div class="mb-3">
+        {{ form_label(form.rounding, null, {label_attr: {class: 'form-label small fw-semibold'}}) }}
+        {{ form_widget(form.rounding) }}
+    </div>
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>{{ 'price_rules.save'|trans }}</button>
+    </div>
+{{ form_end(form) }}

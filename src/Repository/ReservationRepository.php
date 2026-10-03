@@ -362,7 +362,7 @@ class ReservationRepository extends ServiceEntityRepository
      *
      * @return array<array{appartmentId: int, startDate: string, endDate: string}>
      */
-    public function loadBlockingSpansForPeriod(\DateTimeInterface $start, \DateTimeInterface $end, string|int $objectId = 'all', ?int $roomCategoryId = null, ?\DateTimeInterface $bookedBefore = null): array
+    public function loadBlockingSpansForPeriod(\DateTimeInterface $start, \DateTimeInterface $end, string|int $objectId = 'all', ?int $roomCategoryId = null, ?\DateTimeInterface $bookedBefore = null, ?int $excludingReservationId = null): array
     {
         $qb = $this
             ->createQueryBuilder('u')
@@ -386,6 +386,10 @@ class ReservationRepository extends ServiceEntityRepository
         if (null !== $bookedBefore) {
             $qb->andWhere('u.reservationDate < :bookedBefore')
                 ->setParameter('bookedBefore', $bookedBefore);
+        }
+        if (null !== $excludingReservationId) {
+            $qb->andWhere('u.id <> :excludingId')
+                ->setParameter('excludingId', $excludingReservationId);
         }
 
         $this->applyBlockingStatusFilter($qb, 'u');

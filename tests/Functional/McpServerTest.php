@@ -16,6 +16,7 @@ use App\Entity\McpToolCallLog;
 use App\Entity\Notification;
 use App\Entity\Price;
 use App\Entity\PricePeriod;
+use App\Entity\PriceRule;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Role;
@@ -539,18 +540,21 @@ final class McpServerTest extends WebTestCase
         $args = $this->bookingArguments('Gast-Idempotenz', '+500 days');
 
         // Without preview there is no booking.
-        $withoutPreview = $this->callTool($token, 'create_reservation', $args + ['previewToken' => 'pv1.1.invalid']);
+        $withoutPreview = $this->callTool($token, 'create_reservation', $args + ['previewToken' => 'pv1.1.invalid', 'expectedTotal' => 100.0]);
         self::assertTrue($withoutPreview['isError'] ?? false);
 
         $preview = $this->callTool($token, 'preview_reservation', $args);
         self::assertFalse($preview['isError'] ?? false, (string) json_encode($preview));
         $previewToken = $preview['structuredContent']['previewToken'];
+        $confirmation = ['previewToken' => $previewToken, 'expectedTotal' => $preview['structuredContent']['estimatedTotal']];
 
-        // The confirmation only covers exactly the previewed request.
-        $changed = $this->callTool($token, 'create_reservation', ['bookerLastname' => 'Someone Else'] + $args + ['previewToken' => $previewToken]);
+        // The confirmation only covers exactly the previewed request and price.
+        $changed = $this->callTool($token, 'create_reservation', ['bookerLastname' => 'Someone Else'] + $args + $confirmation);
         self::assertTrue($changed['isError'] ?? false);
+        $cheaper = $this->callTool($token, 'create_reservation', $args + ['expectedTotal' => $confirmation['expectedTotal'] - 1] + $confirmation);
+        self::assertTrue($cheaper['isError'] ?? false);
 
-        $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $previewToken]);
+        $created = $this->callTool($token, 'create_reservation', $args + $confirmation);
         self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
         self::assertTrue($created['structuredContent']['created']);
         $reservationId = (int) $created['structuredContent']['reservation']['id'];
@@ -572,7 +576,7 @@ final class McpServerTest extends WebTestCase
         self::assertSame('mcp', $changeLog?->getChannel());
 
         // A retry with the same confirmation returns the same reservation instead of a duplicate.
-        $retry = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $previewToken]);
+        $retry = $this->callTool($token, 'create_reservation', $args + $confirmation);
         self::assertTrue($retry['structuredContent']['alreadyCreated']);
         self::assertSame($reservationId, $retry['structuredContent']['reservation']['id']);
 
@@ -605,10 +609,11 @@ final class McpServerTest extends WebTestCase
         self::assertEqualsWithDelta(30.0, $preview['structuredContent']['extrasTotal'], 0.001);
 
         // The confirmation covers the extras as well.
-        $changed = $this->callTool($token, 'create_reservation', ['extras' => [$dog, $breakfast]] + $args + ['previewToken' => $preview['structuredContent']['previewToken']]);
+        $confirmation = ['previewToken' => $preview['structuredContent']['previewToken'], 'expectedTotal' => $preview['structuredContent']['estimatedTotal']];
+        $changed = $this->callTool($token, 'create_reservation', ['extras' => [$dog, $breakfast]] + $args + $confirmation);
         self::assertTrue($changed['isError'] ?? false);
 
-        $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $preview['structuredContent']['previewToken']]);
+        $created = $this->callTool($token, 'create_reservation', $args + $confirmation);
         self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
         self::assertSame([$dog], array_column($created['structuredContent']['reservation']['extras'], 'id'));
 
@@ -795,6 +800,34 @@ final class McpServerTest extends WebTestCase
         self::assertCount(2, $crawler->filter('input[name="api_token[kind]"]'));
     }
 
+    public function testABookingIsRefusedWhenThePriceChangedAfterThePreview(): void
+    {
+        $this->configureMcp(enabled: true, write: true);
+        [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::RESERVATIONS_WRITE]);
+        $args = $this->bookingArguments('Gast-Preisregel', '+760 days');
+        $preview = $this->callTool($token, 'preview_reservation', $args)['structuredContent'];
+
+        // A price rule for exactly these nights appears between preview and confirmation.
+        $rule = new PriceRule();
+        $rule->setName('mcp-test');
+        $rule->setPercent(20.0);
+        $rule->setPeriod(new \DateTimeImmutable($args['arrival']), new \DateTimeImmutable($args['departure']));
+        $this->em()->persist($rule);
+        $this->em()->flush();
+
+        try {
+            $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $preview['previewToken'], 'expectedTotal' => $preview['estimatedTotal']]);
+            self::assertTrue($created['isError'] ?? false);
+            self::assertStringContainsString('price has changed', (string) json_encode($created));
+
+            $again = $this->callTool($token, 'preview_reservation', $args)['structuredContent'];
+            self::assertGreaterThan($preview['estimatedTotal'], $again['estimatedTotal']);
+        } finally {
+            $this->em()->remove($this->em()->find(PriceRule::class, $rule->getId()));
+            $this->em()->flush();
+        }
+    }
+
     public function testCreateReservationOptionFollowsTheGlobalSwitch(): void
     {
         $admin = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::RESERVATIONS_READ], null)[0];
@@ -970,7 +1003,7 @@ final class McpServerTest extends WebTestCase
         $args = $this->bookingArguments($lastname, $arrivalOffset) + ['remark' => 'Arrives late'];
         $preview = $this->callTool($token, 'preview_reservation', $args);
         self::assertFalse($preview['isError'] ?? false, (string) json_encode($preview));
-        $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $preview['structuredContent']['previewToken']]);
+        $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $preview['structuredContent']['previewToken'], 'expectedTotal' => $preview['structuredContent']['estimatedTotal']]);
         self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
 
         $reservation = $this->em()->find(Reservation::class, (int) $created['structuredContent']['reservation']['id']);

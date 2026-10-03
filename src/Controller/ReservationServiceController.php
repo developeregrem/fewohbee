@@ -839,6 +839,7 @@ class ReservationServiceController extends AbstractController
                 ? $touristTaxService->hasActiveTaxForSubsidiary($reservations[0]->getAppartment()?->getObject())
                 : false,
             'guestCategoriesById' => $guestCategoriesById ?? [],
+            'nightRates' => array_merge(...array_map(static fn (Reservation $reservation): array => $ps->getNightRates($reservation), $reservations)),
         ]);
     }
 
@@ -972,6 +973,7 @@ class ReservationServiceController extends AbstractController
             'guestCategoriesById' => $guestCategoriesById,
             'guestCheckIn' => $guestCheckInReview->buildTab($reservation, $this->isGranted('ROLE_CUSTOMERS')),
             'priceListChange' => $this->priceListChange($pricePromises, $reservation),
+            'nightRates' => $ps->getNightRates($reservation),
         ]);
     }
 

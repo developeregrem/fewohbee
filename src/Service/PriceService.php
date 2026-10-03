@@ -16,8 +16,10 @@ namespace App\Service;
 use App\Dto\PriceBreakdown;
 use App\Dto\PriceBreakdownLine;
 use App\Dto\PriceCategoryGroup;
+use App\Dto\Pricing\NightAdjustment;
 use App\Dto\Pricing\NightRate;
 use App\Dto\Pricing\PricePromise;
+use App\Dto\Pricing\RateAdjustment;
 use App\Entity\AccountingAccount;
 use App\Entity\Enum\ModifierType;
 use App\Entity\Enum\PercentageBase;
@@ -32,6 +34,7 @@ use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
 use App\Repository\GuestCategoryModifierRepository;
 use App\Repository\GuestCategoryRepository;
+use App\Service\Pricing\DynamicRateResolver;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -60,6 +63,7 @@ class PriceService implements ResetInterface
         private readonly ReservationPeriodService $reservationPeriodService,
         private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
         private readonly ?GuestCategoryModifierRepository $modifierRepository = null,
+        private readonly ?DynamicRateResolver $dynamicRates = null,
     ) {
         $this->em = $em;
     }
@@ -637,6 +641,10 @@ class PriceService implements ResetInterface
      * it was made for what the reservation is now (see PricePromise::contextKey()), and a promised
      * night whose price row no longer exists is priced from the current rows as well.
      *
+     * Price rules change the current rows for what is priced now: a stay not saved yet (quote,
+     * new booking) and, with $ignorePromise, the promise being built for a booking. A saved
+     * booking without a promise keeps the plain price list. Flat prices are never changed.
+     *
      * @return array<int, NightRate|null> null for a night without any applicable price
      *
      * @throws \App\Exception\InvalidReservationPeriodException when the reservation period is unsafe to process
@@ -652,6 +660,7 @@ class PriceService implements ResetInterface
         $start = \DateTimeImmutable::createFromInterface($reservation->getStartDate())->setTime(0, 0);
 
         $live = null;
+        $adjustments = null;
         $rates = [];
         for ($i = 0, $count = max(1, $nights); $i < $count; ++$i) {
             $night = $start->modify('+'.$i.' day');
@@ -664,10 +673,39 @@ class PriceService implements ResetInterface
 
             $live ??= $this->getPricesForReservationDays($reservation, 2);
             $price = $live[$i][0] ?? null;
-            $rates[$i] = $price instanceof Price ? NightRate::live($night, $price) : null;
+            if (!$price instanceof Price) {
+                $rates[$i] = null;
+                continue;
+            }
+            $rate = NightRate::live($night, $price);
+            $adjustments ??= null === $reservation->getId() || $ignorePromise
+                ? $this->ruleAdjustments($reservation, $start, $start->modify('+'.$count.' day'))
+                : [];
+            $adjustment = $adjustments[$night->format('Y-m-d')] ?? null;
+            if (null !== $adjustment && null !== $this->dynamicRates && !$rate->isFlatPrice && 0.0 !== round($adjustment->percent, 2)) {
+                $rate = $rate->adjusted($this->dynamicRates->apply($rate->unit, $adjustment), RateAdjustment::from($rate->unit, $adjustment));
+            }
+            $rates[$i] = $rate;
         }
 
         return $rates;
+    }
+
+    /**
+     * Price rule adjustments for the room of the reservation; the reservation itself does not
+     * count towards the occupancy it is priced by.
+     *
+     * @return array<string, NightAdjustment>
+     */
+    private function ruleAdjustments(Reservation $reservation, \DateTimeImmutable $from, \DateTimeImmutable $toExclusive): array
+    {
+        $apartment = $reservation->getAppartment();
+        $category = $apartment?->getRoomCategory();
+        if (null === $this->dynamicRates || null === $category) {
+            return [];
+        }
+
+        return $this->dynamicRates->adjustments($apartment->getObject(), $category, $from, $toExclusive, excludingReservationId: $reservation->getId());
     }
 
     /** The stored price promise of the reservation, null when it has none or it is unreadable. */

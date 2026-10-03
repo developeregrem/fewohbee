@@ -9,12 +9,14 @@ use App\Dto\Pricing\PricePromise;
 use App\Dto\Pricing\PromisedLine;
 use App\Dto\Pricing\PromisedNight;
 use App\Entity\Appartment;
+use App\Entity\AppSettings;
 use App\Entity\Enum\GuestStatisticalGroup;
 use App\Entity\Enum\ModifierType;
 use App\Entity\Enum\PercentageBase;
 use App\Entity\GuestCategory;
 use App\Entity\GuestCategoryModifier;
 use App\Entity\Price;
+use App\Entity\PriceRule;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
@@ -22,11 +24,17 @@ use App\Entity\Subsidiary;
 use App\Repository\GuestCategoryModifierRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Repository\PriceRepository;
+use App\Repository\PriceRuleRepository;
+use App\Repository\SubsidiaryRepository;
+use App\Service\AppSettingsService;
+use App\Service\AvailabilityService;
 use App\Service\PriceService;
+use App\Service\Pricing\DynamicRateResolver;
 use App\Service\ReservationPeriodService;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Clock\MockClock;
 
 final class PriceServiceNightRatesTest extends TestCase
 {
@@ -109,8 +117,55 @@ final class PriceServiceNightRatesTest extends TestCase
         $reservation->setPricePromise($promise->toArray());
     }
 
+    public function testPriceRulesChangeAStayThatIsNotSavedYet(): void
+    {
+        $rates = $this->service($this->price(17, '95.00'), dynamicRates: $this->resolver(10.0))->getNightRates($this->reservation());
+
+        // 95 € + 10 % = 104.50 €, rounded to whole euros.
+        self::assertSame('105.00', $rates[0]?->unit);
+        self::assertSame('95.00', $rates[0]->adjustment?->baseUnit);
+        self::assertSame(10.0, $rates[0]->adjustment->percent);
+        self::assertSame([['Weekend', 10.0]], $rates[0]->adjustment->rules);
+    }
+
+    public function testASavedBookingWithoutPromiseKeepsThePriceList(): void
+    {
+        $reservation = $this->reservation();
+        $reservation->setId(7);
+
+        $service = $this->service($this->price(17, '95.00'), dynamicRates: $this->resolver(10.0));
+
+        self::assertSame('95.00', $service->getNightRates($reservation)[0]?->unit);
+        // ...but a promise built for it takes today's rules into account.
+        self::assertSame('105.00', $service->getNightRates($reservation, ignorePromise: true)[0]?->unit);
+    }
+
+    public function testFlatPricesAreNeverChangedByRules(): void
+    {
+        $flat = $this->price(17, '300.00');
+        $flat->setIsFlatPrice(true);
+
+        $rates = $this->service($flat, dynamicRates: $this->resolver(10.0))->getNightRates($this->reservation());
+
+        self::assertSame('300.00', $rates[0]?->unit);
+        self::assertNull($rates[0]->adjustment);
+    }
+
+    private function resolver(float $percent): DynamicRateResolver
+    {
+        $rule = new PriceRule();
+        $rule->setName('Weekend');
+        $rule->setPercent($percent);
+        $rules = $this->createStub(PriceRuleRepository::class);
+        $rules->method('findEnabled')->willReturn([$rule]);
+        $settings = $this->createStub(AppSettingsService::class);
+        $settings->method('getSettings')->willReturn(new AppSettings());
+
+        return new DynamicRateResolver($rules, $this->createStub(AvailabilityService::class), $settings, new MockClock('2026-10-02 10:00:00'), $this->createStub(SubsidiaryRepository::class));
+    }
+
     /** @param list<GuestCategoryModifier> $modifiers */
-    private function service(Price $row, array $modifiers = []): PriceService
+    private function service(Price $row, array $modifiers = [], ?DynamicRateResolver $dynamicRates = null): PriceService
     {
         $prices = $this->createStub(PriceRepository::class);
         $prices->method('findBy')->willReturn([$row]);
@@ -125,14 +180,15 @@ final class PriceServiceNightRatesTest extends TestCase
         $modifierRepository = $this->createStub(GuestCategoryModifierRepository::class);
         $modifierRepository->method('findActiveOn')->willReturn($modifiers);
 
-        return new class($em, $categories, $modifierRepository, $row) extends PriceService {
+        return new class($em, $categories, $modifierRepository, $row, $dynamicRates) extends PriceService {
             public function __construct(
                 EntityManagerInterface $em,
                 GuestCategoryRepository $categories,
                 GuestCategoryModifierRepository $modifiers,
                 private readonly Price $row,
+                ?DynamicRateResolver $dynamicRates,
             ) {
-                parent::__construct($em, new ReservationPeriodService(), $categories, $modifiers);
+                parent::__construct($em, new ReservationPeriodService(), $categories, $modifiers, $dynamicRates);
             }
 
             public function getPricesForReservationDays(Reservation $reservation, int $type, ?Collection $prices = null): array

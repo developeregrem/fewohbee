@@ -23,7 +23,8 @@ namespace App\Dto\Pricing;
 final readonly class PromisedNight
 {
     /**
-     * @param list<PromisedLine> $lines empty when the reservation has no guest counts
+     * @param list<PromisedLine> $lines      empty when the reservation has no guest counts
+     * @param RateAdjustment|null $adjustment how price rules changed the unit price, for display
      */
     public function __construct(
         public int $priceId,
@@ -32,6 +33,7 @@ final readonly class PromisedNight
         public bool $isPerRoom,
         public bool $includesVat,
         public array $lines = [],
+        public ?RateAdjustment $adjustment = null,
     ) {
     }
 
@@ -45,6 +47,7 @@ final readonly class PromisedNight
             $rate->isPerRoom,
             $rate->includesVat,
             $lines,
+            $rate->adjustment,
         );
     }
 
@@ -52,7 +55,7 @@ final readonly class PromisedNight
      * The night without its date, as stored in a segment. Consecutive nights with equal
      * payloads are merged into one segment.
      *
-     * @return array{p: int, u: string, t: string, g: bool, l?: list<array<int, int|string>>}
+     * @return array{p: int, u: string, t: string, g: bool, l?: list<array<int, int|string>>, d?: array<string, mixed>}
      */
     public function payload(): array
     {
@@ -64,6 +67,9 @@ final readonly class PromisedNight
         ];
         if ([] !== $this->lines) {
             $payload['l'] = array_map(static fn (PromisedLine $line): array => $line->toArray(), $this->lines);
+        }
+        if (null !== $this->adjustment) {
+            $payload['d'] = $this->adjustment->toArray();
         }
 
         return $payload;
@@ -85,6 +91,14 @@ final readonly class PromisedNight
             $lines[] = $line;
         }
 
-        return new self($segment['p'], $segment['u'], 'f' === $type, 'r' === $type, $segment['g'], $lines);
+        $adjustment = null;
+        if (isset($segment['d'])) {
+            $adjustment = RateAdjustment::fromArray($segment['d']);
+            if (null === $adjustment) {
+                return null;
+            }
+        }
+
+        return new self($segment['p'], $segment['u'], 'f' === $type, 'r' === $type, $segment['g'], $lines, $adjustment);
     }
 }

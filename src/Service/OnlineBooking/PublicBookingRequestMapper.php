@@ -63,6 +63,7 @@ class PublicBookingRequestMapper
             $occupancySelection,
             $this->extractExtrasSelection($request),
             $this->mapBooker($request, $defaultCountry),
+            ctype_digit((string) $request->request->get('quotedTotal', '')) ? $request->request->getInt('quotedTotal') : null,
         );
     }
 

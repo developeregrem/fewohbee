@@ -171,6 +171,11 @@
             </h2>
             <div id="collapseTwo-{{ price.id }}" class="accordion-collapse collapse" aria-labelledby="headingTwo-{{ price.id }}" data-bs-parent="#accordion">
                 <div class="accordion-body">
+                    {# Percentage changes are price rules; a period here sets a fixed price for its dates. #}
+                    <p class="small text-body-secondary mb-3">
+                        <i class="fas fa-info-circle"></i> {{ 'price.period.rules_hint'|trans }}
+                        <a href="{{ path('prices.rules') }}">{{ 'price.period.rules_link'|trans }}</a>
+                    </p>
                     <div class="row">
                         <label for="inputDescription" class="col-sm-3 col-form-label text-end">{{ 'price.season'|trans }}:</label>
                         <div class="checkbox col-sm-2 align-self-center">
