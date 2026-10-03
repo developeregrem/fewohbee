@@ -279,6 +279,12 @@ class InvoiceServiceController extends AbstractController
             }
         }
 
+        // The due date is chosen here, next to number and date, and starts with the settings' one.
+        $settings = $readinessService->resolveSettingsFor($invoice);
+        if (null === $invoice->getPaymentDueDate()) {
+            $invoice->setPaymentDueDate($invoice->defaultPaymentDueDate($settings));
+        }
+
         // The invoice needs at least one position (apartment or miscellaneous) to be billable;
         // number/date are auto-filled, so they no longer gate the continue button.
         $canContinue = count($newInvoicePositionsAppartmentsArray) > 0 || count($newInvoicePositionsMiscellaneousArray) > 0;
@@ -296,11 +302,14 @@ class InvoiceServiceController extends AbstractController
                 'invoice' => $invoice,
                 'invoiceDate' => $invoice->getDate(),
                 'readiness' => $readinessService->check($invoice),
+                'dueDateRequired' => null !== $settings?->getPaymentDueDays(),
+                'settingsDueDays' => $settings?->getPaymentDueDays(),
+                'lastDeparture' => Invoice::lastDepartureOf($newInvoicePositionsAppartmentsArray),
             ]
         );
     }
 
-    // Auto-save endpoint for invoice number and date while creating an invoice (no page submit needed).
+    // Auto-save endpoint for invoice number, date and due date while creating an invoice (no page submit needed).
     #[Route('/create/positions/meta', name: 'invoices.create.invoice.meta', methods: ['POST'])]
     public function saveInvoiceMetaAction(RequestStack $requestStack, InvoiceService $is, Request $request): Response
     {
@@ -314,6 +323,14 @@ class InvoiceServiceController extends AbstractController
                 $invoice->setDate(new \DateTime($dateRaw));
             } catch (\Exception) {
                 // unparsable input: keep the current date
+            }
+        }
+        // Left empty, the invoice gets the settings' date when it is saved (InvoicePaymentDueDateListener).
+        if ($request->request->has('paymentDueDate')) {
+            $dueRaw = trim((string) $request->request->get('paymentDueDate'));
+            $dueDate = '' === $dueRaw ? null : \DateTimeImmutable::createFromFormat('!Y-m-d', $dueRaw);
+            if (false !== $dueDate) {
+                $invoice->setPaymentDueDate($dueDate);
             }
         }
 
@@ -876,11 +893,12 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/{id}/edit/number/show', name: 'invoices.edit.invoice.number.show', methods: ['GET'], defaults: ['id' => '0'])]
-    public function showChangeNumberInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
+    public function showChangeNumberInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, EInvoiceReadinessService $readinessService, $id)
     {
         $em = $doctrine->getManager();
         $invoice = $em->getRepository(Invoice::class)->find($id);
         $reservations = $invoice->getReservations();
+        $settingsDueDays = $readinessService->resolveSettingsFor($invoice)?->getPaymentDueDays();
 
         return $this->render(
             'Invoices/invoice_form_show_change_number.html.twig',
@@ -889,12 +907,16 @@ class InvoiceServiceController extends AbstractController
                 'invoice' => $invoice,
                 'invoiceId' => $invoice->getId(),
                 'token' => $csrf->getCSRFTokenForForm(),
+                // An issuer with a payment period always gives a due date; one without may not.
+                'dueDateRequired' => null !== $settingsDueDays,
+                'settingsDueDays' => $settingsDueDays,
+                'lastDeparture' => Invoice::lastDepartureOf($invoice->getAppartments()),
             ]
         );
     }
 
     #[Route('/edit/number/save', name: 'invoices.edit.invoice.number.save', methods: ['POST'])]
-    public function saveChangeNumberInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, InvoiceRepository $invoiceRepository, Request $request)
+    public function saveChangeNumberInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, InvoiceRepository $invoiceRepository, EInvoiceReadinessService $readinessService, Request $request)
     {
         $em = $doctrine->getManager();
         $id = $request->request->get('invoice-id');
@@ -905,7 +927,7 @@ class InvoiceServiceController extends AbstractController
             if ('' === $date || '' === $number) {
                 $this->addFlash('warning', 'invoice.number.missing.error');
 
-                return $this->showChangeNumberInvoiceEditAction($doctrine, $csrf, $id);
+                return $this->showChangeNumberInvoiceEditAction($doctrine, $csrf, $readinessService, $id);
             }
 
             // Re-numbering must not collide with an existing invoice; the invoice being
@@ -913,12 +935,23 @@ class InvoiceServiceController extends AbstractController
             if ($invoiceRepository->countByNumber($number, (int) $id) > 0) {
                 $this->addFlash('warning', 'invoice.number.duplicate.error');
 
-                return $this->showChangeNumberInvoiceEditAction($doctrine, $csrf, $id);
+                return $this->showChangeNumberInvoiceEditAction($doctrine, $csrf, $readinessService, $id);
             }
 
             $invoice = $em->getRepository(Invoice::class)->find($id);
+
+            $dueDateRaw = trim((string) $request->request->get('payment_due_date', ''));
+            $dueDate = '' === $dueDateRaw ? null : \DateTimeImmutable::createFromFormat('!Y-m-d', $dueDateRaw);
+            $dueDateRequired = null !== $readinessService->resolveSettingsFor($invoice)?->getPaymentDueDays();
+            if (false === $dueDate || (null === $dueDate && $dueDateRequired)) {
+                $this->addFlash('warning', 'invoice.payment_due.date.missing');
+
+                return $this->showChangeNumberInvoiceEditAction($doctrine, $csrf, $readinessService, $id);
+            }
+
             $invoice->setDate(new \DateTime($date));
             $invoice->setNumber($number);
+            $invoice->setPaymentDueDate($dueDate);
             $em->persist($invoice);
             $em->flush();
 

@@ -29,7 +29,6 @@ use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Service\EInvoice\EInvoiceExportService;
-use App\Service\EInvoice\EInvoiceReadinessService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -55,9 +54,6 @@ class InvoiceService
         private readonly OriginFeeCalculator $originFees,
         private readonly ?TouristTaxService $touristTaxService = null,
         private readonly ?InvoiceNumberGenerator $numberGenerator = null,
-        // Optional like the two above, so the unit tests that build this service by
-        // hand keep working; templates then see a null due date.
-        private readonly ?EInvoiceReadinessService $readinessService = null,
     ) {
     }
 
@@ -208,9 +204,8 @@ class InvoiceService
             'numbers' => $appartmentNumbers,
             'appartmentTotal' => number_format($appartmantTotal, 2, ',', '.'),
             'miscTotal' => number_format($miscTotal, 2, ',', '.'),
-            // Issuer data follows the invoice's branch, so a two-company setup prints
-            // each invoice's own payment period. Null when none is configured.
-            'paymentDueDate' => $this->readinessService?->resolveSettingsFor($invoice)?->dueDateFor($invoice->getDate()),
+            // Stored on the invoice when it is created; null when the issuer states no period.
+            'paymentDueDate' => $invoice->getPaymentDueDate(),
             // The portal's commission and payment fee for a booking through the
             // reservation's origin, worked out by OriginFeeCalculator - the same
             // one the deduction is booked from, so the guest is shown what the
