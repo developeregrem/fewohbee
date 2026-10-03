@@ -23,6 +23,7 @@ use App\Service\AppSettingsService;
 use App\Service\AvailabilityService;
 use App\Service\OnlineBooking\BookingRestrictionService;
 use App\Service\OnlineBooking\PublicPricingService;
+use App\Service\Pricing\PricePromiseService;
 use App\Service\ReservationPeriodService;
 use App\Service\ReservationService;
 use Doctrine\DBAL\LockMode;
@@ -56,6 +57,7 @@ class ReservationBookingService
         private readonly AppSettingsService $appSettingsService,
         private readonly PriceRepository $priceRepository,
         private readonly PublicPricingService $pricingService,
+        private readonly PricePromiseService $pricePromises,
     ) {
     }
 
@@ -151,6 +153,7 @@ class ReservationBookingService
             if ('' !== $remark) {
                 $reservation->setRemark($remark);
             }
+            $this->pricePromises->reconcile($reservation);
 
             $this->em->persist($reservation);
             $this->em->flush();

@@ -12,6 +12,7 @@ use App\Entity\Enum\IDCardType;
 use App\Entity\GuestCheckIn;
 use App\Entity\Reservation;
 use App\Repository\AppSettingsRepository;
+use App\Service\Pricing\PricePromiseService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -40,6 +41,7 @@ class GuestCheckInApplyService
         private readonly GuestCheckInExtrasService $extrasService,
         private readonly AppSettingsRepository $settingsRepository,
         private readonly GuestCheckInExistingGuestMatcher $existingGuestMatcher,
+        private readonly PricePromiseService $pricePromises,
     ) {
     }
 
@@ -174,6 +176,8 @@ class GuestCheckInApplyService
         foreach ($extrasToApply as $price) {
             $reservation->addPrice($price);
         }
+        // Extras chosen by the guest are promised at today's price, the room keeps its own.
+        $this->pricePromises->reconcile($reservation);
 
         $checkIn->markApplied($this->clock->now());
         $this->em->flush();

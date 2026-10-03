@@ -379,6 +379,17 @@ final class McpServerTest extends WebTestCase
         self::assertSame(99.0, (float) $created['structuredContent']['rates'][0]['rates'][0]['perNight']);
         self::assertTrue($this->callTool($token, 'create_special_price', $fair + ['previewToken' => $preview['previewToken']])['structuredContent']['alreadyCreated']);
 
+        // The booking keeps the price it was promised; the special price is for new bookings.
+        $this->em()->clear();
+        $booked = $this->em()->find(Reservation::class, $reservation->getId());
+        self::assertInstanceOf(Reservation::class, $booked);
+        self::assertNotNull($booked->getPricePromise());
+        $positions = static::getContainer()->get(\App\Service\InvoiceService::class)->buildAppartmentPositions($booked);
+        self::assertNotEmpty($positions);
+        foreach ($positions as $position) {
+            self::assertNotSame(99.0, (float) $position->getPrice());
+        }
+
         // A second special price inside the first one conflicts and is refused without consent.
         $festival = $this->specialPriceArguments('+721 days', '+721 days', 'Stadtfest') + ['amount' => 120.0];
         $preview = $this->callTool($token, 'preview_special_price', $festival)['structuredContent'];

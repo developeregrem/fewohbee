@@ -11,6 +11,7 @@ use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\NoResultException;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Uuid;
@@ -312,10 +313,10 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * Reservations whose room price a new special price could change: they block a room of one of
-     * the room categories, come from one of the origins, have the given occupancy, touch a night
-     * between $firstNight and $lastNight and have no invoice yet. Reservations do not store their
-     * price, so the invoice created later uses the price rows valid then.
+     * Reservations a new special price would apply to if they were booked today: they block a room
+     * of one of the room categories, come from one of the origins, have the given occupancy, touch
+     * a night between $firstNight and $lastNight and have no invoice yet. They keep the price they
+     * were promised (see PricePromise); the list tells the user which bookings stay unchanged.
      *
      * @param list<int> $roomCategoryIds
      * @param list<int> $originIds
@@ -687,5 +688,66 @@ class ReservationRepository extends ServiceEntityRepository
             ->distinct()
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Ids of reservations without a price promise and without an invoice whose stay ended on or
+     * after $endFrom: the bookings from before price promises that still need one.
+     *
+     * @return list<int>
+     */
+    public function findIdsWithoutPricePromise(\DateTimeImmutable $endFrom): array
+    {
+        $rows = $this->createQueryBuilder('r')
+            ->select('r.id')
+            ->andWhere('r.pricePromise IS NULL')
+            ->andWhere('r.invoices IS EMPTY')
+            ->andWhere('r.endDate >= :endFrom')
+            ->setParameter('endFrom', $endFrom->format('Y-m-d'))
+            ->orderBy('r.id', 'ASC')
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        return array_map('intval', $rows);
+    }
+
+    /**
+     * Stores a price promise for a reservation that has none yet. As a DQL update it bypasses the
+     * unit of work, so it is neither written again by a later flush nor recorded in the change log.
+     *
+     * @param array<string, mixed> $promise
+     */
+    public function storePricePromise(int $reservationId, array $promise): void
+    {
+        $this->createQueryBuilder('r')
+            ->update()
+            ->set('r.pricePromise', ':promise')
+            ->andWhere('r.id = :id')
+            ->andWhere('r.pricePromise IS NULL')
+            ->setParameter('promise', $promise, Types::JSON)
+            ->setParameter('id', $reservationId)
+            ->getQuery()
+            ->execute();
+    }
+
+    /**
+     * The stored price promises of all reservations without an invoice.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function findOpenPricePromises(): array
+    {
+        $rows = $this->createQueryBuilder('r')
+            ->select('r.pricePromise')
+            ->andWhere('r.pricePromise IS NOT NULL')
+            ->andWhere('r.invoices IS EMPTY')
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        // A single selected column is not converted by its mapping type; it arrives as JSON text.
+        return array_values(array_filter(
+            array_map(static fn (mixed $json): mixed => is_string($json) ? json_decode($json, true) : $json, $rows),
+            'is_array',
+        ));
     }
 }

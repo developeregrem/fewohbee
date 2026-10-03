@@ -108,3 +108,4 @@ price.wednesday: Wednesday
 price.weekdays: Weekdays
 price.period.description: 'Label of the period (optional), e.g. trade fair or town festival'
 price.persons: Pers.
+price.flash.delete.deactivated_in_use: '{1}This price is still part of the promised price of an open booking, so it was deactivated instead of deleted.|]1,Inf[This price is still part of the promised price of %count% open bookings, so it was deactivated instead of deleted.'

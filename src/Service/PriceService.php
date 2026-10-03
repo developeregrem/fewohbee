@@ -16,6 +16,8 @@ namespace App\Service;
 use App\Dto\PriceBreakdown;
 use App\Dto\PriceBreakdownLine;
 use App\Dto\PriceCategoryGroup;
+use App\Dto\Pricing\NightRate;
+use App\Dto\Pricing\PricePromise;
 use App\Entity\AccountingAccount;
 use App\Entity\Enum\ModifierType;
 use App\Entity\Enum\PercentageBase;
@@ -627,15 +629,92 @@ class PriceService implements ResetInterface
     }
 
     /**
+     * The room price of every night of the stay, index 0 being the arrival night. A day-use stay
+     * (arrival = departure) has one entry for its day, as it is billed like one night.
+     *
+     * Nights covered by the reservation's price promise come from the promise; all others, and
+     * every night with $ignorePromise, from the current price rows. A promise only counts while
+     * it was made for what the reservation is now (see PricePromise::contextKey()), and a promised
+     * night whose price row no longer exists is priced from the current rows as well.
+     *
+     * @return array<int, NightRate|null> null for a night without any applicable price
+     *
+     * @throws \App\Exception\InvalidReservationPeriodException when the reservation period is unsafe to process
+     */
+    public function getNightRates(Reservation $reservation, bool $ignorePromise = false): array
+    {
+        $nights = $this->reservationPeriodService->validate(
+            $reservation->getStartDate(),
+            $reservation->getEndDate(),
+        )->nights;
+        $promise = $ignorePromise ? null : $this->applicablePromise($reservation);
+        $promisedPrices = null !== $promise ? $this->findPricesById($promise->priceIds()) : [];
+        $start = \DateTimeImmutable::createFromInterface($reservation->getStartDate())->setTime(0, 0);
+
+        $live = null;
+        $rates = [];
+        for ($i = 0, $count = max(1, $nights); $i < $count; ++$i) {
+            $night = $start->modify('+'.$i.' day');
+            $promised = $promise?->night($night);
+            $promisedPrice = null !== $promised ? ($promisedPrices[$promised->priceId] ?? null) : null;
+            if (null !== $promised && null !== $promisedPrice) {
+                $rates[$i] = NightRate::promised($night, $promisedPrice, $promised);
+                continue;
+            }
+
+            $live ??= $this->getPricesForReservationDays($reservation, 2);
+            $price = $live[$i][0] ?? null;
+            $rates[$i] = $price instanceof Price ? NightRate::live($night, $price) : null;
+        }
+
+        return $rates;
+    }
+
+    /** The stored price promise of the reservation, null when it has none or it is unreadable. */
+    public function promiseOf(Reservation $reservation): ?PricePromise
+    {
+        return PricePromise::fromArray($reservation->getPricePromise());
+    }
+
+    /** The price promise, as long as it was made for what the reservation is now. */
+    private function applicablePromise(Reservation $reservation): ?PricePromise
+    {
+        $promise = $this->promiseOf($reservation);
+
+        return null !== $promise && $promise->context === PricePromise::contextKey($reservation) ? $promise : null;
+    }
+
+    /**
+     * @param list<int> $ids
+     *
+     * @return array<int, Price> keyed by id
+     */
+    public function findPricesById(array $ids): array
+    {
+        if ([] === $ids) {
+            return [];
+        }
+        $prices = [];
+        foreach ($this->em->getRepository(Price::class)->findBy(['id' => $ids]) as $price) {
+            $prices[(int) $price->getId()] = $price;
+        }
+
+        return $prices;
+    }
+
+    /**
      * Builds a per-night PriceBreakdown for the apartment price (type=2),
      * applying GuestCategoryModifiers per non-ADULT category from
      * Reservation.guestCounts. ADULT counts use the unmodified base price.
      *
+     * Promised nights carry the guest lines of the promise instead, so a
+     * modifier changed after booking does not reach the booking.
+     *
      * @return PriceBreakdown[] keyed by day index (0..nights-1)
      */
-    public function getPriceBreakdownForReservation(Reservation $reservation): array
+    public function getPriceBreakdownForReservation(Reservation $reservation, bool $ignorePromise = false): array
     {
-        $pricesPerDay = $this->getPricesForReservationDays($reservation, 2);
+        $rates = $this->getNightRates($reservation, $ignorePromise);
         $days = $this->reservationPeriodService->validate(
             $reservation->getStartDate(),
             $reservation->getEndDate(),
@@ -648,15 +727,28 @@ class PriceService implements ResetInterface
         $curDate = clone $reservation->getStartDate();
         for ($i = 0; $i < $days; ++$i) {
             $night = (clone $curDate)->add(new \DateInterval('P'.$i.'D'));
-            $price = $pricesPerDay[$i][0] ?? null;
-            $breakdown = new PriceBreakdown($night, $price);
+            $rate = $rates[$i] ?? null;
+            $price = $rate?->price;
+            $breakdown = new PriceBreakdown($night, $price, $rate);
 
-            if (null === $price || empty($guestCounts)) {
+            if (null === $rate || empty($guestCounts)) {
                 $result[$i] = $breakdown;
                 continue;
             }
 
-            $basePerHead = (float) $price->getPrice();
+            if (null !== $rate->promisedLines) {
+                foreach ($rate->promisedLines as $line) {
+                    // A deleted guest category is no longer part of the reservation's counts either.
+                    $category = $categories[$line->categoryId] ?? null;
+                    if (null !== $category) {
+                        $breakdown->addLine(new PriceBreakdownLine($category, $line->count, (float) $line->unit, null, $line->adjustment));
+                    }
+                }
+                $result[$i] = $breakdown;
+                continue;
+            }
+
+            $basePerHead = (float) $rate->unit;
             $modifiers = $this->modifiersOn($night);
 
             // "Minimum full-fare guests" rule of the room type: the first N
@@ -718,22 +810,23 @@ class PriceService implements ResetInterface
         $result = [];
         foreach ($breakdowns as $breakdown) {
             $price = $breakdown->basePrice;
-            if (null === $price) {
+            $rate = $breakdown->rate;
+            if (null === $price || null === $rate) {
                 continue;
             }
-            if ($price->getIsFlatPrice() || $price->getIsPerRoom()) {
-                $stored = (float) $price->getPrice();
+            if ($rate->isFlatPrice || $rate->isPerRoom) {
+                $stored = (float) $rate->unit;
             } else {
                 // Mirror the apartment invoice row: numberOfPersons × per-head,
                 // then apply modifier deltas (only for occupancy-counted, non-adult
                 // categories — same rule as buildApartmentModifierPositions). This
                 // makes the city-tax base match the effective apartment total
                 // visible on the invoice (room row + modifier row).
-                $perHead = (float) $price->getPrice();
+                $perHead = (float) $rate->unit;
                 $numPersons = (int) $price->getNumberOfPersons();
                 $stored = $perHead * $numPersons;
                 foreach ($breakdown->lines as $line) {
-                    if (null === $line->modifier) {
+                    if (null === $line->adjustment) {
                         continue;
                     }
                     if (!$line->category->isCountedInOccupancy()) {
@@ -747,7 +840,7 @@ class PriceService implements ResetInterface
                 }
             }
             $vat = null !== $price->getVat() ? (float) $price->getVat() : 0.0;
-            $storedIncludesVat = (bool) $price->getIncludesVat();
+            $storedIncludesVat = $rate->includesVat;
 
             $value = $this->convertNetGross($stored, $vat, $storedIncludesVat, $target);
             $result[$breakdown->night->format('Y-m-d')] = $value;

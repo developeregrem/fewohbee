@@ -96,6 +96,7 @@ final class ReservationGuestCountsTest extends TestCase
             $repo,
             $this->createStub(\App\Service\AvailabilityService::class),
             new \App\Service\ReservationPeriodService(),
+            $this->createStub(\App\Service\Pricing\PricePromiseService::class),
         );
     }
 

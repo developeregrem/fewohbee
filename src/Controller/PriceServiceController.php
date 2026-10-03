@@ -22,11 +22,13 @@ use App\Repository\ReservationOriginRepository;
 use App\Service\BookingJournal\AccountingSettingsService;
 use App\Service\CSRFProtectionService;
 use App\Service\PriceService;
+use App\Service\Pricing\PricePromiseService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Route('/settings/prices')]
 class PriceServiceController extends AbstractController
@@ -105,11 +107,13 @@ class PriceServiceController extends AbstractController
     }
 
     #[Route('/create', name: 'prices.create.price', methods: ['POST'])]
-    public function createPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, PriceService $ps, Request $request)
+    public function createPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, PriceService $ps, PricePromiseService $pricePromises, Request $request)
     {
         $error = false;
         $conflicts = [];
         if ($csrf->validateCSRFToken($request)) {
+            // Open bookings without a promise are promised today's price before the list changes.
+            $pricePromises->promiseOpenReservations();
             $price = $ps->getPriceFromForm($request, 'new');
 
             // check for mandatory fields
@@ -151,11 +155,13 @@ class PriceServiceController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'prices.edit.price', methods: ['POST'], defaults: ['id' => '0'])]
-    public function editPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, PriceService $ps, Request $request, $id)
+    public function editPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, PriceService $ps, PricePromiseService $pricePromises, Request $request, $id)
     {
         $error = false;
         $conflicts = [];
         if ($csrf->validateCSRFToken($request)) {
+            // Must run before the form is applied: the price row is changed in memory right away.
+            $pricePromises->promiseOpenReservations();
             $price = $ps->getPriceFromForm($request, $id);
             $em = $doctrine->getManager();
 
@@ -208,11 +214,21 @@ class PriceServiceController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'prices.delete.price', methods: ['DELETE'])]
-    public function deletePriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request, Price $entry)
+    public function deletePriceAction(CSRFProtectionService $csrf, PriceService $ps, PricePromiseService $pricePromises, ManagerRegistry $doctrine, TranslatorInterface $translator, Request $request, Price $entry)
     {
         if ($this->isCsrfTokenValid('delete'.$entry->getId(), $request->request->get('_token'))) {
-            $price = $ps->deletePrice($entry);
-            $this->addFlash('success', 'price.flash.delete.success');
+            $pricePromises->promiseOpenReservations();
+            // Deleting would also drop it from bookings that were promised this price (booked
+            // extras cascade away), so a price still in use is only switched off.
+            $inUse = $pricePromises->countOpenPromisesUsing((int) $entry->getId());
+            if ($inUse > 0) {
+                $entry->setActive(false);
+                $doctrine->getManager()->flush();
+                $this->addFlash('warning', $translator->trans('price.flash.delete.deactivated_in_use', ['%count%' => $inUse]));
+            } else {
+                $ps->deletePrice($entry);
+                $this->addFlash('success', 'price.flash.delete.success');
+            }
         } else {
             $this->addFlash('warning', 'flash.invalidtoken');
         }

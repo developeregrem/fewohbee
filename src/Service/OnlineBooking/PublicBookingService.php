@@ -16,6 +16,7 @@ use App\Exception\PublicBookingException;
 use App\Repository\AppartmentRepository;
 use App\Repository\CustomerRepository;
 use App\Repository\GuestCategoryRepository;
+use App\Service\Pricing\PricePromiseService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
@@ -32,6 +33,7 @@ class PublicBookingService
         private readonly PublicPricingService $pricingService,
         private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
         private readonly ?TouristTaxService $touristTaxService = null,
+        private readonly ?PricePromiseService $pricePromises = null,
     ) {
     }
 
@@ -187,6 +189,8 @@ class PublicBookingService
         $this->attachExtrasToReservations($reservations, $resolvedExtras);
 
         foreach ($reservations as $reservation) {
+            // The guest is promised the price shown, whatever happens to the price list later.
+            $this->pricePromises?->reconcile($reservation);
             $this->em->persist($reservation);
         }
         $this->em->flush();

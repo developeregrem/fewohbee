@@ -94,7 +94,7 @@ final class PriceWriteTools
         return $result + [
             'previewToken' => $previewToken,
             'previewTokenExpiresAt' => PreviewTokenSigner::expiresAt($previewToken)?->format(\DateTimeInterface::ATOM),
-            'nextStep' => 'Show the new price, the current rates, the conflicts that will be overwritten and the affected reservations to the user. Only after the user agreed, call create_special_price with exactly the same arguments plus previewToken.',
+            'nextStep' => 'Show the new price, the current rates, the conflicts that will be overwritten and the bookings that keep their booked price to the user. Only after the user agreed, call create_special_price with exactly the same arguments plus previewToken.',
         ];
     }
 
@@ -245,7 +245,7 @@ final class PriceWriteTools
                     'departure' => $row['endDate'],
                     'apartment' => $row['apartmentNumber'],
                 ], \array_slice($plan->affectedReservations, 0, self::MAX_LISTED_RESERVATIONS)),
-                'note' => 'Reservations do not store their price: these have no invoice yet, so their invoice will use the new price. Tell the user.',
+                'note' => 'These bookings have no invoice yet and keep the price they were booked at; the special price applies to new bookings only. Tell the user; a booking can be repriced in its reservation view.',
             ],
             'canApply' => $plan->canApply(),
         ];

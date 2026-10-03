@@ -11,6 +11,7 @@ use App\Exception\SpecialPriceException;
 use App\Repository\PricePeriodRepository;
 use App\Repository\PriceRepository;
 use App\Repository\ReservationRepository;
+use App\Service\Pricing\PricePromiseService;
 use App\Service\Pricing\SpecialPriceService;
 use App\Service\PriceService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -96,6 +97,7 @@ final class SpecialPriceServiceTest extends TestCase
             $this->createStub(PricePeriodRepository::class),
             $this->createStub(ReservationRepository::class),
             $this->createStub(PriceService::class),
+            $this->createStub(PricePromiseService::class),
         ))->rowDescription($plan));
     }
 
@@ -134,6 +136,7 @@ final class SpecialPriceServiceTest extends TestCase
             $periods,
             $reservations,
             $this->createStub(PriceService::class),
+            $this->createStub(PricePromiseService::class),
         );
     }
 

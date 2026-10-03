@@ -23,6 +23,7 @@ use App\Entity\Template;
 use App\Event\ReservationStatusChangedEvent;
 use App\Exception\InvalidReservationPeriodException;
 use App\Repository\GuestCategoryRepository;
+use App\Service\Pricing\PricePromiseService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -42,6 +43,7 @@ class ReservationService
         private readonly GuestCategoryRepository $guestCategoryRepository,
         private readonly AvailabilityService $availabilityService,
         private readonly ReservationPeriodService $reservationPeriodService,
+        private readonly PricePromiseService $pricePromises,
     ) {
     }
 
@@ -525,6 +527,9 @@ class ReservationService
         $reservation->setStartDate($startDate);
         $reservation->setEndDate($endDate);
         $reservation->setAppartment($apartment);
+        // Remaining nights keep their promised price, new ones are priced today. Guest counts
+        // changed by updateReservation() are already applied at this point.
+        $this->pricePromises->reconcile($reservation);
 
         if ($flush) {
             $this->em->persist($reservation);

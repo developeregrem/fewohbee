@@ -1,2 +1,3 @@
 price.period.description: 'Bezeichnung des Zeitraums (optional), z. B. Messe oder Stadtfest'
 price.persons: Pers.
+price.flash.delete.deactivated_in_use: '{1}Dieser Preis gehört noch zum zugesagten Preis einer offenen Buchung. Er wurde deshalb deaktiviert statt gelöscht.|]1,Inf[Dieser Preis gehört noch zum zugesagten Preis von %count% offenen Buchungen. Er wurde deshalb deaktiviert statt gelöscht.'

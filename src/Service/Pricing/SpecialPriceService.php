@@ -44,6 +44,7 @@ class SpecialPriceService
         private readonly PricePeriodRepository $pricePeriodRepository,
         private readonly ReservationRepository $reservationRepository,
         private readonly PriceService $priceService,
+        private readonly PricePromiseService $pricePromises,
     ) {
     }
 
@@ -136,6 +137,8 @@ class SpecialPriceService
         if (!$plan->canApply()) {
             throw new SpecialPriceException('Other special price rows apply on these nights. Show the conflicts to the user and, if they agree, preview again with overwriteConflicts.');
         }
+        // Open bookings without a promise keep the price they were booked at.
+        $this->pricePromises->promiseOpenReservations();
         $request = $plan->request;
         $target = $request->createsRow() ? $this->copyRow($plan->source, (float) $request->amount, $this->rowDescription($plan)) : $plan->source;
 

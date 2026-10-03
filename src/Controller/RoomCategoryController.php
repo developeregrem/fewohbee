@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\RoomCategory;
 use App\Form\RoomCategoryType;
 use App\Repository\RoomCategoryRepository;
+use App\Service\Pricing\PricePromiseService;
 use App\Service\RoomCategoryImageService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -55,8 +56,13 @@ class RoomCategoryController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'room_category_edit', methods: ['GET', 'POST'])]
-    public function edit(ManagerRegistry $doctrine, Request $request, RoomCategory $roomCategory): Response
+    public function edit(ManagerRegistry $doctrine, PricePromiseService $pricePromises, Request $request, RoomCategory $roomCategory): Response
     {
+        // The minimum of full-fare guests shapes room prices: open bookings without a promise are
+        // promised today's price first, before the form changes the category in memory.
+        if ($request->isMethod('POST')) {
+            $pricePromises->promiseOpenReservations();
+        }
         $form = $this->createForm(RoomCategoryType::class, $roomCategory);
         $form->handleRequest($request);
 

@@ -2804,6 +2804,18 @@ export default class extends Controller {
         return false;
     }
 
+    /** "Apply today's prices" in the price tab: the response is the refreshed reservation view. */
+    repriceReservation(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        httpRequest({
+            url: form.action,
+            method: 'POST',
+            data: httpSerializeForm(form),
+            target: this.modalContent,
+        });
+    }
+
     initHtmlEditor() {
         const textarea = document.getElementById('editor1');
         if (!textarea || textarea.dataset.editorInitialized === 'true') {

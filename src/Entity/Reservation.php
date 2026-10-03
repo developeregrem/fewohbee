@@ -145,6 +145,16 @@ class Reservation
     #[ORM\Column(name: 'adult_rule_override', type: 'boolean', options: ['default' => false])]
     private bool $adultRuleOverride = false;
 
+    /**
+     * The price promised to the guest, so later changes to the price list do not reach this
+     * booking. Format and meaning: {@see \App\Dto\Pricing\PricePromise}. Null for bookings that
+     * predate promises and have not been backfilled yet; they are priced from the current rows.
+     *
+     * @var array<string, mixed>|null
+     */
+    #[ORM\Column(name: 'price_promise', type: Types::JSON, nullable: true)]
+    private ?array $pricePromise = null;
+
     public function __construct()
     {
         $this->reservationDate = new \DateTime('now');
@@ -709,6 +719,20 @@ class Reservation
     public function setAdultRuleOverride(bool $adultRuleOverride): self
     {
         $this->adultRuleOverride = $adultRuleOverride;
+
+        return $this;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function getPricePromise(): ?array
+    {
+        return $this->pricePromise;
+    }
+
+    /** @param array<string, mixed>|null $pricePromise */
+    public function setPricePromise(?array $pricePromise): self
+    {
+        $this->pricePromise = $pricePromise;
 
         return $this;
     }
