@@ -18,7 +18,8 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
  * The payment due date of an invoice: prefilled from the settings when the invoice is
- * created, stored from then on, and changeable in the payment method and remark dialog.
+ * created, stored from then on, and chosen - at creation and later - next to the invoice
+ * number and date.
  */
 final class InvoicePaymentDueFormTest extends WebTestCase
 {
@@ -28,21 +29,29 @@ final class InvoicePaymentDueFormTest extends WebTestCase
         self::ensureKernelShutdown();
     }
 
-    public function testEditDialogShowsTheStoredDateAndItsHelpers(): void
+    public function testNumberDialogShowsTheStoredDateAndItsMenu(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createInvoiceUser());
+        $this->givenSettingsPeriod(10);
         $invoice = $this->createInvoice(ownDueDate: '2026-09-11');
 
         $crawler = $client->request('GET', $this->editUrl($invoice));
 
         self::assertResponseIsSuccessful();
-        self::assertSame('2026-09-11', $crawler->filter('#invoice_payment_remark_paymentDueDate')->attr('value'));
-        self::assertSame('10', $crawler->filter('[data-payment-due-days]')->attr('value'));
-        self::assertSame('2026-09-05', $crawler->filter('[data-departure]')->attr('data-departure'));
+        self::assertSame('2026-09-11', $crawler->filter('#payment_due_date')->attr('value'));
+        // Only the settings' period as a fixed choice, plus an own period typed in.
+        self::assertSame(['10'], $crawler->filter('[data-days]')->each(static fn (Crawler $item): string => (string) $item->attr('data-days')));
+        self::assertStringContainsString('Standard', $crawler->filter('[data-days="10"]')->text());
+        $ownPeriod = $crawler->filter('.dropdown-menu input[type="number"]');
+        self::assertCount(1, $ownPeriod);
+        self::assertNull($ownPeriod->attr('name'), 'The own period only fills in the date.');
+        $departure = $crawler->filter('[data-payment-due-departure]');
+        self::assertSame('2026-09-05', $departure->attr('data-payment-due-departure'));
+        self::assertStringNotContainsString('d-none', (string) $departure->attr('class'));
     }
 
-    /** The helpers only fill in the date in the browser; nothing of them reaches the server. */
+    /** The menu only fills in the date in the browser; nothing of it reaches the server. */
     public function testOnlyTheDateIsSubmitted(): void
     {
         $client = static::createClient();
@@ -50,10 +59,10 @@ final class InvoicePaymentDueFormTest extends WebTestCase
         $invoice = $this->createInvoice(ownDueDate: '2026-09-11');
 
         $crawler = $client->request('GET', $this->editUrl($invoice));
-        $fields = array_keys($crawler->filter('form[name="invoice_payment_remark"]')->form()->getValues());
+        $fields = array_keys($crawler->filter('#invoice-number-form')->form()->getValues());
 
         sort($fields);
-        self::assertSame(['invoice_payment_remark[_token]', 'invoice_payment_remark[paymentDueDate]', 'invoice_payment_remark[paymentMeans]', 'invoice_payment_remark[remark]'], $fields);
+        self::assertSame(['_csrf_token', 'date', 'invoice-id', 'number', 'payment_due_date'], $fields);
     }
 
     public function testAChangedDateIsStoredAndShown(): void
@@ -62,11 +71,12 @@ final class InvoicePaymentDueFormTest extends WebTestCase
         $client->loginUser($this->createInvoiceUser());
         $invoice = $this->createInvoice(ownDueDate: '2026-09-11');
 
-        $this->submit($client, $invoice, '2026-09-22');
+        $crawler = $this->submit($client, $invoice, '2026-09-22');
 
         self::assertResponseIsSuccessful();
-        // The saved form forwards to the invoice view, which states the date.
-        self::assertStringContainsString('22.09.2026', (string) $client->getResponse()->getContent());
+        // The saved dialog forwards to the invoice view, which states the date by the invoice date.
+        $header = implode(' ', $crawler->filter('.col.text-end')->each(static fn (Crawler $cell): string => $cell->text()));
+        self::assertStringContainsString('22.09.2026', $header);
         self::assertSame('2026-09-22', $this->reload($invoice)->getPaymentDueDate()?->format('Y-m-d'));
     }
 
@@ -80,12 +90,12 @@ final class InvoicePaymentDueFormTest extends WebTestCase
         $crawler = $this->submit($client, $invoice, '');
 
         self::assertResponseIsSuccessful();
-        self::assertGreaterThan(0, $crawler->filter('#invoice_payment_remark_paymentDueDate.is-invalid')->count());
+        self::assertCount(1, $crawler->filter('#invoice-number-form'), 'The dialog is shown again.');
         self::assertSame('2026-09-11', $this->reload($invoice)->getPaymentDueDate()?->format('Y-m-d'));
     }
 
-    /** An invoice written after the stay is due at once, not on a day already past. */
-    public function testADepartureBeforeTheInvoiceDateOffersTheInvoiceDate(): void
+    /** A due date before the invoice date makes no sense, so that departure is not offered. */
+    public function testADepartureBeforeTheInvoiceDateIsNotOffered(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createInvoiceUser());
@@ -93,7 +103,7 @@ final class InvoicePaymentDueFormTest extends WebTestCase
 
         $crawler = $client->request('GET', $this->editUrl($invoice));
 
-        self::assertSame('2026-09-10', $crawler->filter('[data-departure]')->attr('data-departure'));
+        self::assertStringContainsString('d-none', (string) $crawler->filter('[data-payment-due-departure]')->attr('class'));
     }
 
     public function testNoDepartureHelperWithoutRoomPositions(): void
@@ -104,7 +114,20 @@ final class InvoicePaymentDueFormTest extends WebTestCase
 
         $crawler = $client->request('GET', $this->editUrl($invoice));
 
-        self::assertCount(0, $crawler->filter('[data-departure]'));
+        self::assertCount(0, $crawler->filter('[data-payment-due-departure]'));
+    }
+
+    /** Once the invoice exists, payment method and remark are edited without the due date. */
+    public function testTheRemarkDialogNoLongerCarriesTheDueDate(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createInvoiceUser());
+        $invoice = $this->createInvoice(ownDueDate: '2026-09-11');
+
+        $crawler = $client->request('GET', sprintf('/invoices/%d/edit/remark', $invoice->getId()));
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('#invoice_payment_remark_paymentDueDate'));
     }
 
     /** Every new invoice is given the settings' date, whichever way it is created. */
@@ -118,30 +141,40 @@ final class InvoicePaymentDueFormTest extends WebTestCase
         self::assertSame('2026-09-11', $this->reload($invoice)->getPaymentDueDate()?->format('Y-m-d'));
     }
 
-    public function testNewInvoicePreviewIsPrefilledWithTheSettingsDate(): void
+    /** The due date is chosen in the step with number and date, starting with the settings' one. */
+    public function testCreationStepIsPrefilledWithTheSettingsDate(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createInvoiceUser());
         $this->givenSettingsPeriod(10);
 
-        $crawler = $this->openNewInvoicePreview($client);
+        $crawler = $this->openCreationStep($client);
 
-        $invoiceDate = (string) $crawler->filter('[data-payment-due-days]')->attr('data-invoice-date');
+        $invoiceDate = (string) $crawler->filter('#invoiceDate')->attr('value');
         $expected = (new \DateTimeImmutable($invoiceDate))->modify('+10 days')->format('Y-m-d');
-        self::assertSame($expected, $crawler->filter('#invoice_payment_remark_paymentDueDate')->attr('value'));
-        self::assertSame('10', $crawler->filter('[data-payment-due-days]')->attr('value'));
+        self::assertSame($expected, $crawler->filter('#paymentDueDate')->attr('value'));
+        self::assertCount(1, $crawler->filter('#invoice-meta [data-days]'));
     }
 
+    /** Saved on the fly like number and date, shown in the preview and kept on the invoice. */
     public function testNewInvoiceIsCreatedWithTheChosenDate(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createInvoiceUser());
         $this->givenSettingsPeriod(10);
-        $crawler = $this->openNewInvoicePreview($client);
+        $crawler = $this->openCreationStep($client);
 
-        $form = $crawler->filter('form#create-new-invoice')->form();
-        $form['invoice_payment_remark[paymentDueDate]'] = '2027-01-15';
-        $client->submit($form);
+        $client->request('POST', '/invoices/create/positions/meta', [
+            'invoiceid' => (string) $crawler->filter('#invoiceidInput')->attr('value'),
+            'invoiceDate' => (string) $crawler->filter('#invoiceDate')->attr('value'),
+            'paymentDueDate' => '2027-01-15',
+        ]);
+        self::assertResponseStatusCodeSame(204);
+        $preview = $client->request('GET', '/invoices/new/invoice/preview');
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('15.01.2027', $preview->filter('.modal-body')->text());
+        self::assertCount(0, $preview->filter('#invoice_payment_remark_paymentDueDate'), 'The preview only shows the date.');
+        $client->submit($preview->filter('form#create-new-invoice')->form());
 
         self::assertResponseIsSuccessful();
         $em = static::getContainer()->get(ManagerRegistry::class)->getManager();
@@ -150,7 +183,7 @@ final class InvoicePaymentDueFormTest extends WebTestCase
         self::assertSame('2027-01-15', $created->getPaymentDueDate()?->format('Y-m-d'));
     }
 
-    private function openNewInvoicePreview(KernelBrowser $client): Crawler
+    private function openCreationStep(KernelBrowser $client): Crawler
     {
         $em = static::getContainer()->get(ManagerRegistry::class)->getManager();
         $reservation = $em->getRepository(Reservation::class)->findOneBy([]);
@@ -158,11 +191,9 @@ final class InvoicePaymentDueFormTest extends WebTestCase
 
         $client->request('GET', '/invoices/new?createNew=true');
         $client->request('POST', '/invoices/select/reservation', ['reservationid' => $reservation->getId()]);
-        $client->request('GET', '/invoices/create/positions/create');
+        $crawler = $client->request('GET', '/invoices/create/positions/create');
         self::assertResponseIsSuccessful();
-        $crawler = $client->request('GET', '/invoices/new/invoice/preview');
-        self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('form#create-new-invoice'));
+        self::assertCount(1, $crawler->filter('#invoice-meta #paymentDueDate'));
 
         return $crawler;
     }
@@ -201,15 +232,15 @@ final class InvoicePaymentDueFormTest extends WebTestCase
     {
         $crawler = $client->request('GET', $this->editUrl($invoice));
         self::assertResponseIsSuccessful();
-        $form = $crawler->filter('form[name="invoice_payment_remark"]')->form();
-        $form['invoice_payment_remark[paymentDueDate]'] = $dueDate;
+        $form = $crawler->filter('#invoice-number-form')->form();
+        $form['payment_due_date'] = $dueDate;
 
         return $client->submit($form);
     }
 
     private function editUrl(Invoice $invoice): string
     {
-        return sprintf('/invoices/%d/edit/remark', $invoice->getId());
+        return sprintf('/invoices/%d/edit/number/show', $invoice->getId());
     }
 
     private function reload(Invoice $invoice): Invoice

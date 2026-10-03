@@ -38,7 +38,3 @@ accounting:
     rules:
       validation:
         regex_invalid: This is not a valid regular expression.
-invoice:
-  payment_due:
-    date:
-      required: Please choose a date.

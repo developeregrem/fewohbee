@@ -211,7 +211,7 @@ export default class extends Controller {
         return false;
     }
 
-    // Auto-saves invoice number and date to the session while typing (debounced).
+    // Auto-saves invoice number, date and due date to the session while typing (debounced).
     updateInvoiceMetaAction() {
         if (!this.debouncedInvoiceMeta) {
             this.debouncedInvoiceMeta = debounce(() => this.saveInvoiceMeta(), 400);
@@ -226,7 +226,9 @@ export default class extends Controller {
         if (!url) return;
         const number = document.getElementById('invoiceidInput');
         const date = document.getElementById('invoiceDate');
-        const data = `invoiceid=${encodeURIComponent(number ? number.value : '')}&invoiceDate=${encodeURIComponent(date ? date.value : '')}`;
+        const dueDate = document.getElementById('paymentDueDate');
+        let data = `invoiceid=${encodeURIComponent(number ? number.value : '')}&invoiceDate=${encodeURIComponent(date ? date.value : '')}`;
+        if (dueDate) data += `&paymentDueDate=${encodeURIComponent(dueDate.value)}`;
         // onSuccess no-op keeps the request silent; without it the shared helper would reload the page.
         httpRequest({ url, method: 'POST', data, loader: false, onSuccess: () => {} });
     }
@@ -447,37 +449,79 @@ export default class extends Controller {
         });
     }
 
-    // Payment due date helpers: days from the invoice date and the last departure both
-    // just fill in the date field, the only one that is submitted. Dates are handled as
+    // Payment due date menu: a period from the invoice date or the last departure just
+    // fills in the date field, the only one that is submitted. It works within the
+    // nearest [data-payment-due-scope], where an editable invoice date field takes
+    // precedence over the date the menu was rendered with. Filling in the date fires its
+    // change event, so an auto-save on it sees the new value too. Dates are handled as
     // UTC days so a daylight saving change cannot shift them.
-    paymentDueDaysChangedAction(event) {
-        const daysInput = event.currentTarget;
-        const days = Number.parseInt(daysInput.value, 10);
-        if (Number.isNaN(days) || days < 0) return;
-        const dateInput = daysInput.closest('form')?.querySelector('[data-payment-due-date]');
-        if (!dateInput) return;
-        dateInput.value = this._shiftIsoDate(daysInput.dataset.invoiceDate, days);
+    paymentDuePeriodAction(event) {
+        event.preventDefault();
+        this._applyPaymentDueDays(event.currentTarget, event.currentTarget.dataset.days);
+        this._closePaymentDueMenu(event.currentTarget);
     }
 
-    paymentDueDateChangedAction(event) {
-        this._syncPaymentDueDays(event.currentTarget.closest('form'));
+    // Own period typed into the menu: the date follows with every keystroke.
+    paymentDueDaysInputAction(event) {
+        this._applyPaymentDueDays(event.currentTarget, event.currentTarget.value);
+    }
+
+    // Enter only closes the menu; inside the number and date dialog it would submit it.
+    paymentDueDaysEnterAction(event) {
+        event.preventDefault();
+        this._closePaymentDueMenu(event.currentTarget);
     }
 
     paymentDueToDepartureAction(event) {
         event.preventDefault();
-        const form = event.currentTarget.closest('form');
-        const dateInput = form?.querySelector('[data-payment-due-date]');
-        if (!dateInput) return;
-        dateInput.value = event.currentTarget.dataset.departure;
-        this._syncPaymentDueDays(form);
+        const scope = event.currentTarget.closest('[data-payment-due-scope]');
+        const departure = event.currentTarget.closest('[data-payment-due-departure]')?.dataset.paymentDueDeparture;
+        if (!departure) return;
+        this._setPaymentDueDate(scope, departure);
+        this._closePaymentDueMenu(event.currentTarget);
     }
 
-    _syncPaymentDueDays(form) {
-        const dateInput = form?.querySelector('[data-payment-due-date]');
-        const daysInput = form?.querySelector('[data-payment-due-days]');
-        if (!dateInput || !daysInput) return;
-        const days = this._isoDayDiff(daysInput.dataset.invoiceDate, dateInput.value);
-        daysInput.value = days === null || days < 0 ? '' : String(days);
+    // The invoice date moved: the due date keeps its distance to it, and the departure is
+    // only offered while it does not lie before the invoice date.
+    paymentInvoiceDateChangedAction(event) {
+        const input = event.currentTarget;
+        const scope = input.closest('[data-payment-due-scope]');
+        const invoiceDate = input.value;
+        const previous = input.dataset.paymentPrevious || input.defaultValue;
+        input.dataset.paymentPrevious = invoiceDate;
+        if (!scope || !invoiceDate) return;
+        const dueDate = scope.querySelector('[data-payment-due-date]')?.value;
+        const days = this._isoDayDiff(previous, dueDate);
+        if (days !== null && days >= 0) {
+            this._setPaymentDueDate(scope, this._shiftIsoDate(invoiceDate, days));
+        }
+        scope.querySelectorAll('[data-payment-due-departure]').forEach((item) => {
+            item.classList.toggle('d-none', item.dataset.paymentDueDeparture < invoiceDate);
+        });
+    }
+
+    _applyPaymentDueDays(element, value) {
+        const scope = element.closest('[data-payment-due-scope]');
+        const days = Number.parseInt(value, 10);
+        const invoiceDate = this._paymentInvoiceDate(scope);
+        if (!invoiceDate || Number.isNaN(days) || days < 0) return;
+        this._setPaymentDueDate(scope, this._shiftIsoDate(invoiceDate, days));
+    }
+
+    _closePaymentDueMenu(element) {
+        const toggle = element.closest('.input-group')?.querySelector('[data-bs-toggle="dropdown"]');
+        if (toggle && window.bootstrap) window.bootstrap.Dropdown.getInstance(toggle)?.hide();
+    }
+
+    _setPaymentDueDate(scope, isoDate) {
+        const dateInput = scope?.querySelector('[data-payment-due-date]');
+        if (!dateInput) return;
+        dateInput.value = isoDate;
+        dateInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    _paymentInvoiceDate(scope) {
+        return scope?.querySelector('[data-payment-invoice-date]')?.value || null;
     }
 
     _shiftIsoDate(isoDate, days) {

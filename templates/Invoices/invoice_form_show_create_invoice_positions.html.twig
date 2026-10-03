@@ -2,8 +2,9 @@
 <div class="modal-body">
     <div class="ps-5 pe-5">
         <div id="flash-message-overlay">{% include 'feedback.html.twig' %}</div>
-        <div class="row" data-invoices-meta-url="{{ path('invoices.create.invoice.meta') }}" id="invoice-meta">
-            <div class="col">
+        {# Number left, invoice date right, due date between them: space-between keeps both gaps equal. #}
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3" data-invoices-meta-url="{{ path('invoices.create.invoice.meta') }}" id="invoice-meta" data-payment-due-scope="">
+            <div style="width: 14rem">
                 <label for="invoiceidInput" class="form-label">{{ 'invoice.id'|trans }}</label>
                 <input type="text" name="invoiceid" class="form-control"
                     placeholder="{{ 'invoice.id'|trans }}"
@@ -19,11 +20,27 @@
                     <small class="form-text text-muted">{{ 'invoice.id.last'|trans }} {{ lastinvoiceid }}</small>
                 {% endif %}
             </div>
-            <div class="col">
+            <div>
+                <label for="paymentDueDate" class="form-label">{{ 'invoice.payment_due.date'|trans }}</label>
+                {% set dueDateWidget %}
+                    <input type="date" name="paymentDueDate" class="form-control" style="width: 7rem" id="paymentDueDate"
+                           value="{{ invoice.paymentDueDate ? invoice.paymentDueDate|date('Y-m-d') }}"{% if dueDateRequired %} required{% endif %}
+                           data-payment-due-date=""
+                           data-action="change->invoices#updateInvoiceMetaAction">
+                {% endset %}
+                {% include 'Invoices/_payment_due_input.html.twig' with {
+                    'dateWidget': dueDateWidget,
+                    'invoiceDate': invoiceDate|date('Y-m-d'),
+                    'settingsDays': settingsDueDays,
+                    'lastDeparture': lastDeparture ? lastDeparture|date('Y-m-d') : null,
+                } %}
+            </div>
+            <div>
                 <label for="invoiceDate" class="form-label">{{ 'invoice.date'|trans }}</label>
-                <input type="date" name="invoiceDate" class="form-control" id="invoiceDate"
+                <input type="date" name="invoiceDate" class="form-control" style="width: 7rem" id="invoiceDate"
                        value="{{ invoiceDate|date("Y-m-d") }}"
-                       data-action="change->invoices#updateInvoiceMetaAction">
+                       data-payment-invoice-date=""
+                       data-action="change->invoices#paymentInvoiceDateChangedAction change->invoices#updateInvoiceMetaAction">
             </div>
         </div>
         <div class="row mt-3">

@@ -6,7 +6,7 @@
                 {% include 'feedback.html.twig' with {'error': error, 'app': app } %}
             </div>
         </div>
-        <div class="row">                
+        <div class="row">
             <div class="col">
                 <h4 class="invoice-edit-field d-none">{{ 'invoice.guest'|trans }}&nbsp;
                     <small>
@@ -16,7 +16,19 @@
                     </a>
                     </small>
                 </h4>
-                {{ invoice.salutation }}
+                {{ invoice.salutation }}<br />
+                {{ invoice.firstname }} {{ invoice.lastname }}
+                {% if invoice.company is not empty %}
+                    <br/>{{ invoice.company }}
+                {% endif %}
+                <br />{{ invoice.address }}
+                <br />{% if invoice.country is not empty %}{{ invoice.country }}-{% endif %}{{ invoice.zip }} {{ invoice.city }}
+                {% if invoice.phone is not empty %}
+                <br /><i class="fa-solid fa-phone"></i> {{ invoice.phone }}
+                {% endif %}
+                {% if invoice.email is not empty %}
+                <br /><i class="fa-solid fa-envelope"></i> {{ invoice.email }}
+                {% endif %}
             </div>
             <div class="col text-end">
                 <h4 class="invoice-edit-field d-none">
@@ -27,30 +39,10 @@
                         </a>
                     </small>
                 </h4>
-                <strong>{{ 'invoice.number'|trans }}</strong></div>
-        </div>
-        <div class="row">
-            <div class="col">{{ invoice.firstname }} {{ invoice.lastname }}
-                {% if invoice.company is not empty %}
-                    <br/>{{ invoice.company }}
-                {% endif %}
+                <div class="d-flex justify-content-end">
+                    {% include 'Invoices/_invoice_header_dates.html.twig' %}
+                </div>
             </div>
-            <div class="col text-end">{{ invoice.number }}</div>
-        </div>
-        <div class="row">
-            <div class="col">{{ invoice.address }}</div>
-            <div class="col text-end"><strong>{{ 'invoice.date'|trans }}</strong></div>
-        </div>
-        <div class="row">
-            <div class="col">
-                {% if invoice.country is not empty %}{{ invoice.country }}-{% endif %}{{ invoice.zip }} {{ invoice.city }}
-                {% if invoice.phone is not empty %}
-                <br /><i class="fa-solid fa-phone"></i> {{ invoice.phone }}
-                {% endif %}
-                {% if invoice.email is not empty %}
-                <br /><i class="fa-solid fa-envelope"></i> {{ invoice.email }}
-                {% endif %}</div>
-            <div class="col text-end">{{ invoice.date|date('d.m.Y') }}</div>
         </div>
 
         <table class="table table-hover mt-4">
@@ -279,17 +271,6 @@
                     </small>
                 </h5>
                 <div>{% if invoice.paymentMeans %}{{ invoice.paymentMeans.name|trans }}{% else %}-{% endif%}</div>
-            </div>
-            <div class="col">
-                <h5>{{ 'invoice.payment_due.label'|trans }}&nbsp;
-                    <small>
-                        <a href="#" data-action="click->invoices#changeInvoiceRemarkAction" data-url="{{ path('invoices.edit.invoice.remark.show', {'id': invoice.id}) }}"
-                           title="{{ 'button.edit'|trans }}" class="small invoice-edit-field d-none text-secondary">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                    </small>
-                </h5>
-                <div>{% if paymentDueDate %}{{ 'invoice.payment_due_date'|trans }} {{ paymentDueDate|date('d.m.Y') }}{% else %}-{% endif %}</div>
             </div>
             <div class="col">
                 <h5>{{ 'invoice.remark'|trans }}&nbsp;

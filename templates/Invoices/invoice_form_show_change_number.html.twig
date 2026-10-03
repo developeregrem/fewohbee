@@ -1,6 +1,6 @@
 <form id="invoice-number-form" class="form-horizontal" role="form" method="POST"
       action="{{ path('invoices.edit.invoice.number.save') }}"
-      data-action="submit->invoices#submitFormAction" data-controller="invoices">
+      data-action="submit->invoices#submitFormAction" data-controller="invoices" data-payment-due-scope="">
     <div class="modal-body ps-5 pe-5">
         <div class="row">
             <div class="col-md-7">
@@ -14,7 +14,24 @@
                 <div class="row">
                     <label for="firstname" class="col-sm-4 col-form-label">{{ 'invoice.date2'|trans }} *</label>
                     <div class="col-sm">
-                        <input type="date" class="form-control" id="date" name="date" value="{{ invoice.date|date("Y-m-d") }}" required>
+                        <input type="date" class="form-control" style="width: 7rem" id="date" name="date" value="{{ invoice.date|date("Y-m-d") }}" required
+                               data-payment-invoice-date="" data-action="change->invoices#paymentInvoiceDateChangedAction">
+                    </div>
+                </div>
+                <div class="row">
+                    <label for="payment_due_date" class="col-sm-4 col-form-label text-nowrap">{{ 'invoice.payment_due.date'|trans }}{% if dueDateRequired %} *{% endif %}</label>
+                    <div class="col-sm">
+                        {% set dueDateWidget %}
+                            <input type="date" class="form-control" style="width: 7rem" id="payment_due_date" name="payment_due_date"
+                                   value="{{ invoice.paymentDueDate ? invoice.paymentDueDate|date('Y-m-d') }}"{% if dueDateRequired %} required{% endif %}
+                                   data-payment-due-date="">
+                        {% endset %}
+                        {% include 'Invoices/_payment_due_input.html.twig' with {
+                            'dateWidget': dueDateWidget,
+                            'invoiceDate': invoice.date|date('Y-m-d'),
+                            'settingsDays': settingsDueDays,
+                            'lastDeparture': lastDeparture ? lastDeparture|date('Y-m-d') : null,
+                        } %}
                     </div>
                 </div>
                 </p>
