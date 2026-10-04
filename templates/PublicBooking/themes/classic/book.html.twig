@@ -470,7 +470,7 @@
                                 <div class="row g-2">
                                     <div class="col-12">
                                         <label class="form-label small mb-1" for="comment">{{ 'online_booking.public.comment'|trans }}</label>
-                                        <textarea class="form-control form-control-sm" id="comment" name="comment" rows="2">{{ booker.comment }}</textarea>
+                                        <textarea class="form-control form-control-sm" id="comment" name="comment" rows="2"{% if config.commentPlaceholder %} placeholder="{{ config.commentPlaceholder }}"{% endif %}>{{ booker.comment }}</textarea>
                                     </div>
                                 </div>
 

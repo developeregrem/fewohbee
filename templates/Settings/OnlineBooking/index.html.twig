@@ -334,6 +334,7 @@
                     <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_booking_texts_desc'|trans }}</p>
                 </div>
                 <div class="card-body">
+                    {{ form_row(form.commentPlaceholder) }}
                     {{ form_row(form.paymentTerms) }}
                     {{ form_row(form.cancellationTerms) }}
                     {{ form_row(form.successMessageText) }}

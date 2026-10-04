@@ -15,6 +15,7 @@ use App\Service\OnlineBooking\OnlineBookingConfigService;
 use App\Service\OnlineBooking\PublicBookingAbuseProtectionService;
 use App\Service\OnlineBooking\PublicBookingService;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -63,48 +64,13 @@ final class PublicBookingControllerTest extends WebTestCase
     {
         $client = self::createClient();
         $config = $this->createEnabledConfig();
-        $availability = [[
-            'typeKey' => 'category:1',
-            'typeLabel' => 'Einzelzimmer',
-            'typeDescription' => 'Ruhige Lage',
-            'maxGuests' => 1,
-            'availableCount' => 1,
-            'roomIds' => [11],
-            'subsidiaryIds' => [1],
-            'occupancyOptions' => [['persons' => 1, 'totalPrice' => 80.0, 'totalPriceFormatted' => '80,00 €']],
-        ]];
-
         $publicBookingService = $this->createMock(PublicBookingService::class);
         $publicBookingService->expects(self::once())
             ->method('validateEnabledConfig')
             ->willReturn(null);
         $publicBookingService->expects(self::once())
             ->method('buildSelectionPreview')
-            ->willReturn([
-                'availability' => $availability,
-                'selected' => ['category:1' => [1 => 1]],
-                'roomTotal' => 80.0,
-                'roomTotalFormatted' => '80,00',
-                'roomPriceBreakdown' => [[
-                    'label' => 'Einzelzimmer',
-                    'quantity' => 1,
-                    'total' => 80.0,
-                    'totalFormatted' => '80,00',
-                ]],
-                'modifierTotal' => 0.0,
-                'modifierBreakdown' => [],
-                'roomReservations' => [],
-                'touristTaxTotal' => 0.0,
-                'touristTaxTotalFormatted' => '0,00',
-                'touristTaxLines' => [],
-                'extras' => [],
-                'selectedExtras' => [],
-                'extrasTotal' => 0.0,
-                'extrasTotalFormatted' => '0,00',
-                'extrasBreakdown' => [],
-                'grandTotal' => 80.0,
-                'grandTotalFormatted' => '80,00',
-            ]);
+            ->willReturn($this->singleRoomPreview());
         $publicBookingService->expects(self::once())
             ->method('createBooking')
             ->willThrowException(new PublicBookingException('online_booking.error.booker_required'));
@@ -136,6 +102,68 @@ final class PublicBookingControllerTest extends WebTestCase
         self::assertStringContainsString('Einzelzimmer', $content);
         self::assertStringContainsString('name="comment"', $content);
         self::assertStringContainsString('name="intent" value="submit"', $content);
+    }
+
+    /** Ensure the configured placeholder reaches the comment field in both themes, escaped as plain text. */
+    #[DataProvider('themes')]
+    public function testCommentFieldShowsConfiguredPlaceholder(PublicBookingTheme $theme): void
+    {
+        $client = self::createClient();
+        $config = $this->createEnabledConfig();
+        $config->setTheme($theme);
+        $config->setCommentPlaceholder('Wann reist du an? <b>"ca. 17 Uhr"</b>');
+
+        $publicBookingService = $this->createStub(PublicBookingService::class);
+        $publicBookingService->method('validateEnabledConfig')->willReturn(null);
+        $publicBookingService->method('buildSelectionPreview')->willReturn($this->singleRoomPreview());
+        $publicBookingService->method('createBooking')
+            ->willThrowException(new PublicBookingException('online_booking.error.booker_required'));
+        $this->overrideBookingServices($publicBookingService, $config, $this->createNoopAbuseProtectionService());
+
+        $crawler = $client->request('POST', '/book', [
+            'intent' => 'submit',
+            'dateFrom' => '2099-05-10',
+            'dateTo' => '2099-05-12',
+            'persons' => 1,
+            'roomsCount' => 1,
+            'occ_category:1_p1' => 1,
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('Wann reist du an? <b>"ca. 17 Uhr"</b>', $crawler->filter('textarea[name="comment"]')->attr('placeholder'));
+        self::assertStringNotContainsString('<b>"ca. 17 Uhr"</b>', (string) $client->getResponse()->getContent());
+    }
+
+    /** Ensure an empty setting leaves the comment field without a placeholder. */
+    public function testCommentFieldHasNoPlaceholderByDefault(): void
+    {
+        $client = self::createClient();
+
+        $publicBookingService = $this->createStub(PublicBookingService::class);
+        $publicBookingService->method('validateEnabledConfig')->willReturn(null);
+        $publicBookingService->method('buildSelectionPreview')->willReturn($this->singleRoomPreview());
+        $publicBookingService->method('createBooking')
+            ->willThrowException(new PublicBookingException('online_booking.error.booker_required'));
+        $this->overrideBookingServices($publicBookingService, $this->createEnabledConfig(), $this->createNoopAbuseProtectionService());
+
+        $crawler = $client->request('POST', '/book', [
+            'intent' => 'submit',
+            'dateFrom' => '2099-05-10',
+            'dateTo' => '2099-05-12',
+            'persons' => 1,
+            'roomsCount' => 1,
+            'occ_category:1_p1' => 1,
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertNull($crawler->filter('textarea[name="comment"]')->attr('placeholder'));
+    }
+
+    /** @return iterable<string, array{PublicBookingTheme}> */
+    public static function themes(): iterable
+    {
+        yield 'modern' => [PublicBookingTheme::MODERN];
+        yield 'classic' => [PublicBookingTheme::CLASSIC];
     }
 
     /** Ensure successful submit redirects and the GET success state no longer renders the form. */
@@ -397,6 +425,52 @@ final class PublicBookingControllerTest extends WebTestCase
         }
 
         self::fail('No usable room found in the test database.');
+    }
+
+    /**
+     * Selection preview of one single room for 80 €, as step three needs it.
+     *
+     * @return array<string, mixed>
+     */
+    private function singleRoomPreview(): array
+    {
+        $availability = [[
+            'typeKey' => 'category:1',
+            'typeLabel' => 'Einzelzimmer',
+            'typeDescription' => 'Ruhige Lage',
+            'maxGuests' => 1,
+            'availableCount' => 1,
+            'roomIds' => [11],
+            'subsidiaryIds' => [1],
+            'occupancyOptions' => [['persons' => 1, 'totalPrice' => 80.0, 'totalPriceFormatted' => '80,00 €']],
+        ]];
+
+
+        return [
+            'availability' => $availability,
+            'selected' => ['category:1' => [1 => 1]],
+            'roomTotal' => 80.0,
+            'roomTotalFormatted' => '80,00',
+            'roomPriceBreakdown' => [[
+                'label' => 'Einzelzimmer',
+                'quantity' => 1,
+                'total' => 80.0,
+                'totalFormatted' => '80,00',
+            ]],
+            'modifierTotal' => 0.0,
+            'modifierBreakdown' => [],
+            'roomReservations' => [],
+            'touristTaxTotal' => 0.0,
+            'touristTaxTotalFormatted' => '0,00',
+            'touristTaxLines' => [],
+            'extras' => [],
+            'selectedExtras' => [],
+            'extrasTotal' => 0.0,
+            'extrasTotalFormatted' => '0,00',
+            'extrasBreakdown' => [],
+            'grandTotal' => 80.0,
+            'grandTotalFormatted' => '80,00',
+        ];
     }
 
     /** Replace the booking services in the test container for controller-level flow assertions. */

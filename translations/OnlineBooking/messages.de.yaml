@@ -109,6 +109,8 @@ online_booking:
     payment_terms: "Zahlungsbedingungen"
     cancellation_terms: "Stornierungsbedingungen / AGB"
     success_message_text: "Zusätzlicher Erfolgstext"
+    comment_placeholder: "Platzhaltertext im Kommentarfeld"
+    comment_placeholder_help: "Steht grau im leeren Kommentarfeld und verschwindet, sobald der Gast tippt, z. B. „Wann reist du voraussichtlich an?“. Leer lassen, wenn kein Hinweis erscheinen soll."
     save: "Onlinebuchungs-Einstellungen speichern"
     save_hint: "Änderungen wirken sofort auf die öffentliche Buchungsseite."
     booking_horizon_months: "Buchungshorizont (Monate)"
