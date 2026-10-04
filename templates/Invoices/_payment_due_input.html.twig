@@ -1,0 +1,63 @@
+{#
+    Payment due date input with a menu of quick choices, shared by the step that sets number
+    and date of a new invoice and the number and date dialog of an existing one. Both wrap
+    it in an element with data-payment-due-scope.
+
+    dateWidget     the rendered date input, carrying data-payment-due-date
+    invoiceDate    invoice date as Y-m-d; a field with data-payment-invoice-date in the
+                   same scope takes precedence, so the choices follow it while it is edited
+    settingsDays   the issuer's payment period, offered first and marked as the standard
+    firstArrival   earliest arrival of the room positions as Y-m-d, or null
+    lastDeparture  latest departure of the room positions as Y-m-d, or null
+
+    The menu only fills in the date; nothing of it is submitted.
+#}
+{# The outer block keeps it on its own line below a label; inline-flex keeps it only as wide as date and button. #}
+<div>
+<div class="input-group flex-nowrap d-inline-flex w-auto">
+    {{ dateWidget|raw }}
+    {% if invoiceDate %}
+        {# Styled like the copy buttons inside input groups elsewhere (e.g. Apartments/_sync_form). #}
+        {# auto-close outside: typing into the own period must not close the menu. #}
+        <button type="button" class="btn btn-outline-secondary border-0 shadow-none px-2" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                aria-expanded="false" aria-label="{{ 'invoice.payment_due.choose'|trans }}" title="{{ 'invoice.payment_due.choose'|trans }}">
+            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu">
+            {% if settingsDays is not null %}
+                <li>
+                    <a class="dropdown-item" href="#" data-days="{{ settingsDays }}"
+                       data-action="click->invoices#paymentDuePeriodAction">
+                        {{ 'invoice.payment_due.period'|trans({'%count%': settingsDays}) }} ({{ 'invoice.payment_due.standard'|trans }})
+                    </a>
+                </li>
+            {% endif %}
+            {# No name: only fills in the date while typing, never submitted. #}
+            <li class="px-3 py-1 d-flex align-items-center gap-2 text-nowrap">
+                <span>{{ 'invoice.payment_due.custom'|trans }}</span>
+                <input type="number" class="form-control form-control-sm" style="width: 3.5rem" min="0" max="365" step="1"
+                       aria-label="{{ 'invoice.payment_due.custom'|trans }}"
+                       data-action="input->invoices#paymentDueDaysInputAction keydown.enter->invoices#paymentDueDaysEnterAction">
+                <span>{{ 'invoice.payment_due.days'|trans }}</span>
+            </li>
+            {# Arrival and departure are offered only from the invoice date on: a due date before it makes no sense. #}
+            {% set stayDates = [
+                {'date': firstArrival, 'label': 'invoice.payment_due.first_arrival'},
+                {'date': lastDeparture, 'label': 'invoice.payment_due.last_departure'},
+            ]|filter(stay => stay.date) %}
+            {% if stayDates is not empty %}
+                <li class="{{ stayDates|filter(stay => stay.date >= invoiceDate) is empty ? 'd-none' }}" data-payment-due-stay-divider="">
+                    <hr class="dropdown-divider">
+                </li>
+                {% for stay in stayDates %}
+                    <li class="{{ stay.date < invoiceDate ? 'd-none' }}" data-payment-due-stay="{{ stay.date }}">
+                        <a class="dropdown-item" href="#" data-action="click->invoices#paymentDueToStayDateAction">
+                            {{ stay.label|trans }} ({{ stay.date|date('d.m.Y') }})
+                        </a>
+                    </li>
+                {% endfor %}
+            {% endif %}
+        </ul>
+    {% endif %}
+</div>
+</div>

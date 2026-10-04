@@ -188,3 +188,12 @@ invoice.tourist_tax.position.persons: '{0} %count% people|{1} %count% person|]1,
 invoice.tourist_tax.no_positions: No tourist tax lines were calculated for this booking.
 invoice.payment_qr.remittance: Invoice %number%
 invoice.payment_due_date: Payable by
+invoice.payment_due.date: Due date
+invoice.payment_due.choose: Choose a period
+invoice.payment_due.period: '{0}Due immediately|{1}%count% day|]1,Inf]%count% days'
+invoice.payment_due.standard: default
+invoice.payment_due.custom: Own period
+invoice.payment_due.days: days
+invoice.payment_due.first_arrival: By arrival
+invoice.payment_due.last_departure: By departure
+invoice.payment_due.date.missing: Please enter a valid due date.

@@ -114,6 +114,11 @@ final class ProcessScheduledWorkflowsCommandTest extends KernelTestCase
             'runOnDays' => $preset,
             'runAtHour' => 0,
         ], 'change_invoice_status', ['status' => 1]);
+        $this->insertWorkflow('invoice_due_range', 'invoice.days_after_due_date', [
+            'days' => 1,
+            'runOnDays' => $preset,
+            'runAtHour' => 0,
+        ], 'change_invoice_status', ['status' => 1]);
         $this->insertWorkflow('reservation_range', 'reservation.days_before_start', [
             'days' => 3,
             'runOnDays' => $preset,
