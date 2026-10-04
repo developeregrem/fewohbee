@@ -9,8 +9,10 @@ use App\Dto\GuestCheckIn\GuestCheckInGuest;
 use App\Dto\GuestCheckIn\GuestCheckInSubmission;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\Enum\GuestCheckInFieldMode;
 use App\Entity\Enum\IDCardType;
 use App\Entity\GuestCheckIn;
+use App\Entity\GuestCheckInConfig;
 use App\Entity\Reservation;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -20,8 +22,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * everything again — returning guests already have most details on file.
  *
  * The guest's own earlier submission wins. Otherwise the reservation's guest records are used:
- * the booker (or, for bookings without one, the first linked guest) as main guest, the other
- * linked guests as fellow travellers. The form is only shown after the booking-details check.
+ * the booker when linked as a guest, otherwise the first linked guest (or the booker when no
+ * guests are linked) as main guest, and the other linked guests as fellow travellers. The form
+ * is only shown after the booking-details check.
  * ID numbers are never put into the page; storedIdNumberHint() shows their last characters and
  * an empty field keeps the number on file.
  */
@@ -38,7 +41,7 @@ class GuestCheckInFormDataFactory
      * @param int          $companionCount number of fellow-traveller blocks on the form
      * @param list<string> $salutations    the configured salutations the form offers
      */
-    public function create(GuestCheckIn $checkIn, int $companionCount, array $salutations): GuestCheckInSubmission
+    public function create(GuestCheckIn $checkIn, int $companionCount, array $salutations, ?GuestCheckInConfig $config = null): GuestCheckInSubmission
     {
         $payload = $checkIn->getPayload();
         $submission = null !== $payload
@@ -51,7 +54,47 @@ class GuestCheckInFormDataFactory
             $submission->companions[] = new GuestCheckInCompanion();
         }
 
+        if (null !== $config) {
+            $this->clearHiddenFields($submission, $config);
+        }
+
         return $submission;
+    }
+
+    /** Hidden fields must never create invisible validation errors or be submitted from prefill. */
+    private function clearHiddenFields(GuestCheckInSubmission $submission, GuestCheckInConfig $config): void
+    {
+        $guest = $submission->mainGuest;
+        if (GuestCheckInFieldMode::HIDDEN === $config->getBirthdayMode()) {
+            $guest->birthday = null;
+        }
+        if (GuestCheckInFieldMode::HIDDEN === $config->getNationalityMode()) {
+            $guest->nationality = null;
+        }
+        if (GuestCheckInFieldMode::HIDDEN === $config->getIdDocumentMode()) {
+            $guest->idType = null;
+            $guest->idNumber = null;
+        }
+        if (GuestCheckInFieldMode::HIDDEN === $config->getAddressMode()) {
+            $guest->street = $guest->zip = $guest->city = $guest->country = null;
+        }
+        if (GuestCheckInFieldMode::HIDDEN === $config->getContactMode()) {
+            $guest->email = $guest->phone = null;
+        }
+        if (GuestCheckInFieldMode::HIDDEN === $config->getCompanionsMode()) {
+            $submission->companions = [];
+        }
+        foreach ($submission->companions as $companion) {
+            if (GuestCheckInFieldMode::HIDDEN === $config->getBirthdayMode()) {
+                $companion->birthday = null;
+            }
+            if (GuestCheckInFieldMode::HIDDEN === $config->getNationalityMode()) {
+                $companion->nationality = null;
+            }
+            if (GuestCheckInFieldMode::HIDDEN === $config->getAddressMode()) {
+                $companion->street = $companion->zip = $companion->city = $companion->country = null;
+            }
+        }
     }
 
     /** "•••567" when an ID number is on file (submitted before or in the guest records), else null. */
@@ -74,6 +117,11 @@ class GuestCheckInFormDataFactory
         $submission = new GuestCheckInSubmission();
         $submission->arrivalTime = self::stringOrNull($payload['arrivalTime'] ?? null);
         $submission->message = self::stringOrNull($payload['message'] ?? null);
+        foreach (\is_array($payload['extras'] ?? null) ? $payload['extras'] : [] as $extra) {
+            if (\is_array($extra) && \is_int($extra['id'] ?? null)) {
+                $submission->extras[] = $extra['id'];
+            }
+        }
 
         $main = \is_array($payload['mainGuest'] ?? null) ? $payload['mainGuest'] : [];
         $guest = $submission->mainGuest;
@@ -96,6 +144,7 @@ class GuestCheckInFormDataFactory
                 continue;
             }
             $companion = new GuestCheckInCompanion();
+            $companion->salutation = self::stringOrNull($data['salutation'] ?? null);
             $companion->firstname = self::stringOrNull($data['firstname'] ?? null);
             $companion->lastname = self::stringOrNull($data['lastname'] ?? null);
             $companion->birthday = self::dateOrNull($data['birthday'] ?? null);
@@ -129,6 +178,7 @@ class GuestCheckInFormDataFactory
                 continue;
             }
             $companion = new GuestCheckInCompanion();
+            $companion->salutation = $this->salutationChoice((string) $customer->getSalutation(), $salutations);
             $companion->firstname = self::stringOrNull($customer->getFirstname());
             $companion->lastname = self::stringOrNull($customer->getLastname());
             $companion->birthday = self::immutable($customer->getBirthday());
@@ -189,8 +239,11 @@ class GuestCheckInFormDataFactory
     private function mainGuestRecord(Reservation $reservation): ?Customer
     {
         $first = $reservation->getCustomers()->first();
+        $booker = $reservation->getBooker();
 
-        return $reservation->getBooker() ?? ($first instanceof Customer ? $first : null);
+        return null !== $booker && $reservation->getCustomers()->contains($booker)
+            ? $booker
+            : ($first instanceof Customer ? $first : $booker);
     }
 
     /**

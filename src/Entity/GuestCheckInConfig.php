@@ -29,6 +29,10 @@ class GuestCheckInConfig
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $enabled = false;
 
+    /** Whether guests may select optional prices while filling in their check-in. */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
+    private bool $extrasEnabled = true;
+
     /** Street, zip, city and country of the main guest. */
     #[ORM\Column(type: Types::STRING, length: 10, enumType: GuestCheckInFieldMode::class, options: ['default' => 'required'])]
     private GuestCheckInFieldMode $addressMode = GuestCheckInFieldMode::REQUIRED;
@@ -97,6 +101,18 @@ class GuestCheckInConfig
     public function setEnabled(bool $enabled): self
     {
         $this->enabled = $enabled;
+
+        return $this;
+    }
+
+    public function isExtrasEnabled(): bool
+    {
+        return $this->extrasEnabled;
+    }
+
+    public function setExtrasEnabled(bool $extrasEnabled): self
+    {
+        $this->extrasEnabled = $extrasEnabled;
 
         return $this;
     }

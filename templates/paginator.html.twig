@@ -1,5 +1,6 @@
 {% if pages > 1 %}
     {% set dataAction = pagination_action|default('') %}
+    {% set extraClass = pagination_class|default('') %}
     {% set querySeparator = '?' in url ? '&' : '?' %}
     {# the left and right key should not become 0 or higher than allowed #}
     {% if page == 1 %}{% set leftpage = 1 %}{% else %}{% set leftpage = page - 1 %}{% endif %}
@@ -11,7 +12,7 @@
     {# the number of pages that are displayed around the active page #}
     {% set nearbyPagesLimit = 2 %}
 
-    <ul id="pagination" class="pagination">
+    <ul id="pagination" class="pagination{% if extraClass %} {{ extraClass }}{% endif %}">
         <li class="page-item{% if page == 1 %} disabled{% endif %}">
             <a class="page-link" data-page="{{ leftpage }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %}
                href="{{ url }}{{ querySeparator }}{{ {'page': leftpage, 'search': search}|url_encode }}" aria-label="Previous">

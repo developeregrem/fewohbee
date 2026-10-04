@@ -49,7 +49,18 @@ class McpDataFilter
      */
     public function untrustedText(?string $text, int $limit = self::DEFAULT_TEXT_LIMIT): ?array
     {
-        if (!$this->mayShareGuestData() || null === $text) {
+        return $this->mayShareGuestData() ? self::wrapUntrusted($text, $limit) : null;
+    }
+
+    /**
+     * Free text as {"untrusted_text": ...} without the guest data check, for tools whose own scope
+     * already covers sharing it (e.g. bank statement purposes under bank-import:write).
+     *
+     * @return array{untrusted_text: string, truncated: bool}|null
+     */
+    public static function wrapUntrusted(?string $text, int $limit = self::DEFAULT_TEXT_LIMIT): ?array
+    {
+        if (null === $text) {
             return null;
         }
 

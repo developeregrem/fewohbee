@@ -194,3 +194,13 @@ calendar_entry.delete: Delete
 calendar_entry.unconfirm: Undo confirmation
 calendar_entry.flash.saved: Calendar entry saved.
 calendar_entry.flash.deleted: Calendar entry deleted.
+reservation.price.changed: 'The price of this booking changes from %before% to %after%.'
+reservation.price.reprice.confirm: 'Apply today''s prices'
+reservation.price.reprice.invoiced: 'This booking already has an invoice, which states its price.'
+reservation.price.list_changed.title: 'Prices have changed since the booking'
+reservation.price.list_changed.text: 'This booking keeps its prices of %date% (%promised%). At today''s prices it would cost %current%.'
+reservation.price.reprice.done: 'Today''s prices were applied. The booking now costs %total%.'
+reservation.prices.invoice_note: 'The invoice takes over these prices. You can still adjust them there.'
+reservation.price.rules_applied: 'Adjusted by'
+reservation.price.rules_nights: '{1}1 night|]1,Inf[%count% nights'
+reservation.price.day_price: 'Day price'

@@ -7,6 +7,7 @@ namespace App\Tests\Functional;
 use App\Entity\AppSettings;
 use App\Entity\Appartment;
 use App\Entity\Customer;
+use App\Entity\CustomerAddresses;
 use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\GuestCheckIn;
 use App\Entity\GuestCheckInConfig;
@@ -112,12 +113,14 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
     public function testTakingOverCreatesTheGuestsAndDropsTheSubmission(): void
     {
         $reservation = $this->createReservation();
-        $this->submit($reservation);
+        $reservation->setRemark('Existing staff note');
+        $this->submit($reservation, 'We arrive by train.');
         $this->loginAdmin();
         $token = $this->tabToken($reservation);
 
         $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
             '_token' => $token,
+            'submissionVersion' => $this->checkIn($reservation)->getSubmissionVersion(),
             'mainTarget' => 'booker',
             'companionTargets' => ['new'],
         ]);
@@ -127,12 +130,43 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         $stored = $this->em()->find(Reservation::class, $reservation->getId());
         self::assertNotNull($stored);
         self::assertSame('AT', $stored->getBooker()?->getNationality());
+        self::assertStringStartsWith("Existing staff note\n\nKommentar vom Gast am ", (string) $stored->getRemark());
+        self::assertStringContainsString("\nWe arrive by train.", (string) $stored->getRemark());
         $names = array_map(static fn (Customer $c): string => (string) $c->getFirstname(), $stored->getCustomers()->toArray());
         sort($names);
         self::assertSame(['Anna', 'Max'], $names);
         $checkIn = $this->checkIn($reservation);
         self::assertSame(GuestCheckInStatus::APPLIED, $checkIn->getStatus());
         self::assertFalse($checkIn->hasPayload());
+    }
+
+    public function testBookerTargetDistinguishesUnchangedFromUpdatedGuestData(): void
+    {
+        $reservation = $this->createReservation();
+        $this->submit($reservation);
+        $checkIn = $this->checkIn($reservation);
+        $payload = $checkIn->getPayload();
+        self::assertIsArray($payload);
+        $payload['mainGuest'] = ['firstname' => 'Anna', 'lastname' => 'Müller'];
+        $payload['companions'] = [];
+        $checkIn->recordSubmission($payload, new \DateTimeImmutable());
+        $this->em()->flush();
+        $this->loginAdmin();
+
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertResponseIsSuccessful();
+        self::assertSame('Bucher: Anna Müller (keine Aktualisierung nötig)', trim($crawler->filter('select[name="mainTarget"] option[value="booker"]')->text()));
+
+        $checkIn = $this->checkIn($reservation);
+        $payload = $checkIn->getPayload();
+        self::assertIsArray($payload);
+        $payload['mainGuest']['nationality'] = 'AT';
+        $checkIn->recordSubmission($payload, new \DateTimeImmutable());
+        $this->em()->flush();
+
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertResponseIsSuccessful();
+        self::assertSame('Bucher aktualisieren (Anna Müller)', trim($crawler->filter('select[name="mainTarget"] option[value="booker"]')->text()));
     }
 
     public function testTargetOutsideTheReservationChangesNothing(): void
@@ -150,6 +184,352 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame(GuestCheckInStatus::SUBMITTED, $this->checkIn($reservation)->getStatus());
+    }
+
+    public function testSubmissionChangedDuringReviewCannotBeAppliedEvenAtSameTimestamp(): void
+    {
+        $reservation = $this->createReservation();
+        $this->submit($reservation);
+        $this->loginAdmin();
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        $token = (string) $crawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
+        $version = (string) $crawler->filter('input[name="submissionVersion"]')->attr('value');
+
+        $checkIn = $this->checkIn($reservation);
+        $payload = $checkIn->getPayload();
+        self::assertIsArray($payload);
+        $payload['mainGuest']['nationality'] = 'CH';
+        $submittedAt = $checkIn->getLastSubmittedAt();
+        self::assertInstanceOf(\DateTimeImmutable::class, $submittedAt);
+        $checkIn->recordSubmission($payload, $submittedAt);
+        $this->em()->flush();
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
+            '_token' => $token,
+            'submissionVersion' => $version,
+            'mainTarget' => 'booker',
+        ]);
+
+        self::assertSame(GuestCheckInStatus::SUBMITTED, $this->checkIn($reservation)->getStatus());
+        self::assertNull($this->em()->find(Reservation::class, $reservation->getId())?->getBooker()?->getNationality());
+    }
+
+    public function testDifferentMainGuestDefaultsToNewAndCannotOverwriteBookerWithoutConfirmation(): void
+    {
+        $reservation = $this->createReservation();
+        $this->submit($reservation);
+        $checkIn = $this->checkIn($reservation);
+        $payload = $checkIn->getPayload();
+        self::assertIsArray($payload);
+        $payload['mainGuest']['firstname'] = 'Lea';
+        $payload['mainGuest']['lastname'] = 'Novak';
+        $payload['companions'] = [];
+        $checkIn->recordSubmission($payload, new \DateTimeImmutable());
+        $this->em()->flush();
+        $this->loginAdmin();
+
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('select[name="mainTarget"] option[value="new"][selected]');
+        self::assertSelectorExists('input[name="confirmBookerMismatch"]');
+        self::assertSelectorExists('[data-guest-checkin-target="bookerConfirmation"].d-none input[name="confirmBookerMismatch"][disabled]');
+        $token = (string) $crawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
+        $submissionVersion = (string) $crawler->filter('input[name="submissionVersion"]')->attr('value');
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
+            '_token' => $token,
+            'submissionVersion' => $submissionVersion,
+            'mainTarget' => 'booker',
+        ]);
+        self::assertResponseIsSuccessful();
+        self::assertSame(GuestCheckInStatus::SUBMITTED, $this->checkIn($reservation)->getStatus());
+        self::assertSame('Anna', $this->em()->find(Reservation::class, $reservation->getId())?->getBooker()?->getFirstname());
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
+            '_token' => $token,
+            'submissionVersion' => $submissionVersion,
+            'mainTarget' => 'new',
+        ]);
+        self::assertResponseIsSuccessful();
+        self::assertSame(GuestCheckInStatus::APPLIED, $this->checkIn($reservation)->getStatus());
+        $this->em()->clear();
+        $stored = $this->em()->find(Reservation::class, $reservation->getId());
+        self::assertInstanceOf(Reservation::class, $stored);
+        self::assertSame('Anna', $stored->getBooker()?->getFirstname());
+        self::assertSame(['Lea'], array_map(static fn (Customer $guest): ?string => $guest->getFirstname(), $stored->getCustomers()->toArray()));
+    }
+
+    public function testMatchingLinkedGuestIsSuggestedInsteadOfBooker(): void
+    {
+        $reservation = $this->createReservation();
+        $guest = new Customer();
+        $guest->setSalutation('');
+        $guest->setFirstname('Lea');
+        $guest->setLastname('Novak');
+        $this->em()->persist($guest);
+        $reservation->addCustomer($guest);
+        $this->em()->flush();
+        $this->submit($reservation);
+        $checkIn = $this->checkIn($reservation);
+        $payload = $checkIn->getPayload();
+        self::assertIsArray($payload);
+        $payload['mainGuest']['firstname'] = 'Lea';
+        $payload['mainGuest']['lastname'] = 'Novak';
+        $checkIn->recordSubmission($payload, new \DateTimeImmutable());
+        $this->em()->flush();
+        $this->loginAdmin();
+
+        $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('select[name="mainTarget"] option[value="customer:'.$guest->getId().'"][selected]');
+        self::assertStringContainsString('Bisher bei Lea Novak', (string) $this->client->getResponse()->getContent());
+    }
+
+    public function testMatchingGuestsFromOtherReservationsAreReusedForMainAndCompanion(): void
+    {
+        $reservation = $this->createReservation();
+        $main = $this->createStoredGuest('Lea', 'Fernau', '1990-01-01', 'lea.fernau@example.com');
+        $companion = $this->createStoredGuest('Max', 'Fernau', '2015-03-03');
+        $this->submit($reservation);
+        $checkIn = $this->checkIn($reservation);
+        $payload = $checkIn->getPayload();
+        self::assertIsArray($payload);
+        $payload['mainGuest'] = [
+            'firstname' => 'Lea', 'lastname' => 'Fernau', 'birthday' => '1990-01-01',
+            'email' => 'lea.fernau@example.com', 'nationality' => 'AT',
+        ];
+        $payload['companions'] = [['firstname' => 'Max', 'lastname' => 'Fernau', 'birthday' => '2015-03-03']];
+        $checkIn->recordSubmission($payload, new \DateTimeImmutable());
+        $this->em()->flush();
+        $this->loginAdmin();
+
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertSelectorExists('select[name="mainTarget"] option[value="existing:'.$main->getId().'"][selected]');
+        self::assertSelectorExists('select[name="companionTargets[]"] option[value="existing:'.$companion->getId().'"][selected]');
+        self::assertSame('Vorhandener Gast: Lea Fernau (Nr. '.$main->getId().')', trim($crawler->filter('select[name="mainTarget"] option[value="existing:'.$main->getId().'"]')->text()));
+        self::assertSame('Vorhandener Gast: Max Fernau (Nr. '.$companion->getId().')', trim($crawler->filter('select[name="companionTargets[]"] option[value="existing:'.$companion->getId().'"]')->text()));
+        $token = (string) $crawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
+        $version = (string) $crawler->filter('input[name="submissionVersion"]')->attr('value');
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
+            '_token' => $token,
+            'submissionVersion' => $version,
+            'mainTarget' => 'existing:'.$main->getId(),
+            'companionTargets' => ['existing:'.$companion->getId()],
+        ]);
+
+        self::assertResponseIsSuccessful();
+        $this->em()->clear();
+        $stored = $this->em()->find(Reservation::class, $reservation->getId());
+        self::assertInstanceOf(Reservation::class, $stored);
+        $guestIds = array_map(static fn (Customer $guest): ?int => $guest->getId(), $stored->getCustomers()->toArray());
+        sort($guestIds);
+        $expectedIds = [$main->getId(), $companion->getId()];
+        sort($expectedIds);
+        self::assertSame($expectedIds, $guestIds);
+        self::assertSame('Anna', $stored->getBooker()?->getFirstname());
+        self::assertSame(GuestCheckInStatus::APPLIED, $this->checkIn($reservation)->getStatus());
+    }
+
+    public function testUniqueSameNameCompanionWithoutStoredBirthdayNeedsManualChoice(): void
+    {
+        $reservation = $this->createReservation();
+        $existing = $this->createStoredGuest('Maxi', 'Musterfrau');
+        $this->submit($reservation);
+        $checkIn = $this->checkIn($reservation);
+        $payload = $checkIn->getPayload();
+        self::assertIsArray($payload);
+        $payload['companions'] = [[
+            'salutation' => 'Ms', 'firstname' => 'Maxi', 'lastname' => 'Musterfrau', 'birthday' => '1995-06-15',
+        ]];
+        $checkIn->recordSubmission($payload, new \DateTimeImmutable());
+        $this->em()->flush();
+        $this->loginAdmin();
+
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('select[name="companionTargets[]"] option[value=""][selected][disabled]');
+        self::assertSelectorExists('select[name="companionTargets[]"] option[value="existing:'.$existing->getId().'"]');
+        self::assertStringContainsString('Ein Gast mit diesem Namen ist vorhanden', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('Frau Maxi Musterfrau', (string) $this->client->getResponse()->getContent());
+        $token = (string) $crawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
+        $version = (string) $crawler->filter('input[name="submissionVersion"]')->attr('value');
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
+            '_token' => $token,
+            'submissionVersion' => $version,
+            'mainTarget' => 'booker',
+            'companionTargets' => ['existing:'.$existing->getId()],
+        ]);
+
+        self::assertResponseIsSuccessful();
+        $this->em()->clear();
+        $stored = $this->em()->find(Reservation::class, $reservation->getId());
+        self::assertInstanceOf(Reservation::class, $stored);
+        $guestIds = array_map(static fn (Customer $guest): ?int => $guest->getId(), $stored->getCustomers()->toArray());
+        self::assertCount(2, $guestIds);
+        self::assertContains($existing->getId(), $guestIds);
+        $matched = $this->em()->find(Customer::class, $existing->getId());
+        self::assertInstanceOf(Customer::class, $matched);
+        self::assertSame('1995-06-15', $matched->getBirthday()?->format('Y-m-d'));
+        self::assertSame('Frau', $matched->getSalutation());
+    }
+
+    public function testUniqueSameNameMainGuestWithoutStoredBirthdayIsOfferedButNotSelected(): void
+    {
+        $reservation = $this->createReservation();
+        $existing = $this->createStoredGuest('Lea', 'Fernau');
+        $this->submit($reservation);
+        $checkIn = $this->checkIn($reservation);
+        $payload = $checkIn->getPayload();
+        self::assertIsArray($payload);
+        $payload['mainGuest'] = ['firstname' => 'Lea', 'lastname' => 'Fernau', 'birthday' => '1990-01-01'];
+        $payload['companions'] = [];
+        $checkIn->recordSubmission($payload, new \DateTimeImmutable());
+        $this->em()->flush();
+        $this->loginAdmin();
+
+        $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('select[name="mainTarget"] option[value=""][selected][disabled]');
+        self::assertSelectorExists('select[name="mainTarget"] option[value="existing:'.$existing->getId().'"]');
+        self::assertStringContainsString('Ein Gast mit diesem Namen ist vorhanden', (string) $this->client->getResponse()->getContent());
+    }
+
+    public function testAmbiguousOrUnrelatedGlobalGuestsAreNotChosenAutomaticallyOrByForgedId(): void
+    {
+        $reservation = $this->createReservation();
+        $first = $this->createStoredGuest('Lea', 'Fernau', '1990-01-01');
+        $second = $this->createStoredGuest('Lea', 'Fernau', '1990-01-01');
+        $wrongBirthday = $this->createStoredGuest('Lea', 'Fernau', '1980-01-01', 'lea@example.com');
+        $this->submit($reservation);
+        $checkIn = $this->checkIn($reservation);
+        $payload = $checkIn->getPayload();
+        self::assertIsArray($payload);
+        $payload['mainGuest'] = ['firstname' => 'Lea', 'lastname' => 'Fernau', 'birthday' => '1990-01-01', 'email' => 'lea@example.com'];
+        $payload['companions'] = [];
+        $checkIn->recordSubmission($payload, new \DateTimeImmutable());
+        $this->em()->flush();
+        $this->loginAdmin();
+
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertSelectorExists('select[name="mainTarget"] option[value=""][selected][disabled]');
+        self::assertSelectorExists('select[name="mainTarget"] option[value="existing:'.$first->getId().'"]');
+        self::assertSelectorExists('select[name="mainTarget"] option[value="existing:'.$second->getId().'"]');
+        self::assertSelectorNotExists('select[name="mainTarget"] option[value="existing:'.$wrongBirthday->getId().'"]');
+        self::assertStringContainsString('mehrere passende Datensätze', (string) $this->client->getResponse()->getContent());
+        $token = (string) $crawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
+        $version = (string) $crawler->filter('input[name="submissionVersion"]')->attr('value');
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
+            '_token' => $token, 'submissionVersion' => $version, 'mainTarget' => 'existing:'.$wrongBirthday->getId(),
+        ]);
+        self::assertSame(GuestCheckInStatus::SUBMITTED, $this->checkIn($reservation)->getStatus());
+        self::assertSame('1980-01-01', $this->em()->find(Customer::class, $wrongBirthday->getId())?->getBirthday()?->format('Y-m-d'));
+
+        $this->client->loginUser($this->userWithRole('ROLE_RESERVATIONS'), 'main');
+        $restrictedCrawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertSelectorNotExists('select[name="mainTarget"] option[value^="existing:"]');
+        $restrictedToken = (string) $restrictedCrawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
+            '_token' => $restrictedToken, 'submissionVersion' => $version, 'mainTarget' => 'existing:'.$first->getId(),
+        ]);
+        self::assertSame(GuestCheckInStatus::SUBMITTED, $this->checkIn($reservation)->getStatus());
+
+        $this->loginAdmin();
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        $adminToken = (string) $crawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
+            '_token' => $adminToken, 'submissionVersion' => $version, 'mainTarget' => 'existing:'.$first->getId(),
+        ]);
+        self::assertSame(GuestCheckInStatus::APPLIED, $this->checkIn($reservation)->getStatus());
+        $stored = $this->em()->find(Reservation::class, $reservation->getId());
+        self::assertInstanceOf(Reservation::class, $stored);
+        self::assertSame([$first->getId()], array_map(static fn (Customer $guest): ?int => $guest->getId(), $stored->getCustomers()->toArray()));
+    }
+
+    public function testEmailCanIdentifySameNameGuestButNameAloneCannot(): void
+    {
+        $reservation = $this->createReservation();
+        $matching = $this->createStoredGuest('Lea', 'Fernau', null, 'lea@example.com');
+        $other = $this->createStoredGuest('Lea', 'Fernau', null, 'other@example.com');
+        $this->submit($reservation);
+        $checkIn = $this->checkIn($reservation);
+        $payload = $checkIn->getPayload();
+        self::assertIsArray($payload);
+        $payload['mainGuest'] = ['firstname' => 'Lea', 'lastname' => 'Fernau', 'email' => 'LEA@example.com'];
+        $payload['companions'] = [];
+        $checkIn->recordSubmission($payload, new \DateTimeImmutable());
+        $this->em()->flush();
+        $this->loginAdmin();
+
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertSelectorExists('select[name="mainTarget"] option[value="existing:'.$matching->getId().'"][selected]');
+        self::assertSelectorNotExists('select[name="mainTarget"] option[value="existing:'.$other->getId().'"]');
+        self::assertSame('Vorhandener Gast: Lea Fernau (Nr. '.$matching->getId().')', trim($crawler->filter('select[name="mainTarget"] option[value="existing:'.$matching->getId().'"]')->text()));
+
+        $storedMatch = $this->em()->find(Customer::class, $matching->getId());
+        self::assertInstanceOf(Customer::class, $storedMatch);
+        $address = $storedMatch->getCustomerAddresses()->first();
+        self::assertInstanceOf(CustomerAddresses::class, $address);
+        $address->setEmail('changed@example.com');
+        $this->em()->flush();
+        self::assertSame('changed@example.com', $this->em()->getConnection()->fetchOne('SELECT email FROM customer_addresses WHERE id = ?', [$address->getId()]));
+        $token = (string) $crawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
+        $version = (string) $crawler->filter('input[name="submissionVersion"]')->attr('value');
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
+            '_token' => $token, 'submissionVersion' => $version, 'mainTarget' => 'existing:'.$matching->getId(),
+        ]);
+        self::assertSame(GuestCheckInStatus::SUBMITTED, $this->checkIn($reservation)->getStatus());
+
+        unset($payload['mainGuest']['email']);
+        $checkIn = $this->checkIn($reservation);
+        $checkIn->recordSubmission($payload, new \DateTimeImmutable());
+        $this->em()->flush();
+        $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertSelectorExists('select[name="mainTarget"] option[value="new"][selected]');
+        self::assertSelectorNotExists('select[name="mainTarget"] option[value^="existing:"]');
+    }
+
+    public function testDifferentSoloMainGuestNeedsRoomPlaceAndCanLeaveBookerAsBooker(): void
+    {
+        $reservation = $this->createReservation();
+        $reservation->setPersons(1);
+        $booker = $reservation->getBooker();
+        self::assertInstanceOf(Customer::class, $booker);
+        $reservation->addCustomer($booker);
+        $this->em()->flush();
+        $this->submit($reservation);
+        $checkIn = $this->checkIn($reservation);
+        $payload = $checkIn->getPayload();
+        self::assertIsArray($payload);
+        $payload['mainGuest']['firstname'] = 'Lea';
+        $payload['mainGuest']['lastname'] = 'Novak';
+        $payload['companions'] = [];
+        $checkIn->recordSubmission($payload, new \DateTimeImmutable());
+        $this->em()->flush();
+        $this->loginAdmin();
+
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertSelectorExists('input[name="removeBookerFromGuests"]');
+        $token = (string) $crawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
+        $version = (string) $crawler->filter('input[name="submissionVersion"]')->attr('value');
+        $request = ['_token' => $token, 'submissionVersion' => $version, 'mainTarget' => 'new'];
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', $request);
+        self::assertStringContainsString('alle Plätze belegt', (string) $this->client->getResponse()->getContent());
+        self::assertSame(GuestCheckInStatus::SUBMITTED, $this->checkIn($reservation)->getStatus());
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', $request + ['removeBookerFromGuests' => '1']);
+        self::assertResponseIsSuccessful();
+        $this->em()->clear();
+        $stored = $this->em()->find(Reservation::class, $reservation->getId());
+        self::assertInstanceOf(Reservation::class, $stored);
+        self::assertSame('Anna', $stored->getBooker()?->getFirstname());
+        self::assertSame(['Lea'], array_map(static fn (Customer $guest): ?string => $guest->getFirstname(), $stored->getCustomers()->toArray()));
+        self::assertSame(GuestCheckInStatus::APPLIED, $this->checkIn($reservation)->getStatus());
     }
 
     public function testDiscardLetsTheGuestStartOver(): void
@@ -184,12 +564,13 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         self::assertSelectorExists('table .badge .fa-id-card');
     }
 
-    private function submit(Reservation $reservation): void
+    private function submit(Reservation $reservation, ?string $message = null): void
     {
         $checkIn = new GuestCheckIn($reservation, 'Sel'.bin2hex(random_bytes(9)).'x');
         $checkIn->recordSubmission([
             'v' => 1,
             'arrivalTime' => '18:00',
+            'message' => $message,
             'mainGuest' => ['salutation' => 'Ms', 'firstname' => 'Anna', 'lastname' => 'Müller', 'nationality' => 'AT', 'address' => ['street' => 'Ring 1', 'zip' => '1010', 'city' => 'Wien', 'country' => 'AT']],
             'companions' => [['firstname' => 'Max', 'lastname' => 'Müller', 'birthday' => '2015-03-03', 'nationality' => 'AT']],
         ], new \DateTimeImmutable());
@@ -269,5 +650,26 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
     private function em(): EntityManagerInterface
     {
         return self::getContainer()->get(EntityManagerInterface::class);
+    }
+
+    private function createStoredGuest(string $firstname, string $lastname, ?string $birthday = null, ?string $email = null): Customer
+    {
+        $guest = new Customer();
+        $guest->setSalutation('');
+        $guest->setFirstname($firstname);
+        $guest->setLastname($lastname);
+        if (null !== $birthday) {
+            $guest->setBirthday(new \DateTime($birthday));
+        }
+        if (null !== $email) {
+            $address = (new CustomerAddresses())->setType('CUSTOMER_ADDRESS_TYPE_PRIVATE')->setEmail($email);
+            $this->em()->persist($address);
+            $guest->addCustomerAddress($address);
+        }
+        $this->em()->persist($guest);
+        $this->em()->flush();
+        $this->customerIds[] = (int) $guest->getId();
+
+        return $guest;
     }
 }

@@ -93,10 +93,17 @@ framework:
             limit: 120
             interval: '1 minute'
             cache_pool: cache.app
-        # Reservations created through MCP, per token.
+        # Reservations and price changes through MCP, per token and kind.
         mcp_write:
             policy: 'sliding_window'
             limit: 20
+            interval: '1 hour'
+            cache_pool: cache.app
+        # Changes through the REST API (day prices), per token. One request carries up to
+        # 1000 nights, so this leaves room for an hourly sync of many room categories.
+        api_write:
+            policy: 'sliding_window'
+            limit: 60
             interval: '1 hour'
             cache_pool: cache.app
         # Guards the OIDC callback: every hit triggers an outbound token request,
@@ -168,6 +175,11 @@ when@test:
                 interval: '1 minute'
                 cache_pool: cache.app
             mcp_write:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '1 hour'
+                cache_pool: cache.app
+            api_write:
                 policy: 'sliding_window'
                 limit: 10000
                 interval: '1 hour'

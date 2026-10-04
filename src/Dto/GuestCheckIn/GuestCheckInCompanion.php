@@ -12,6 +12,9 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 final class GuestCheckInCompanion
 {
+    /** One of the salutations configured in the general settings (their untranslated key). */
+    public ?string $salutation = null;
+
     #[Assert\Length(max: 45)]
     public ?string $firstname = null;
 
@@ -45,7 +48,7 @@ final class GuestCheckInCompanion
 
     public function isEmpty(): bool
     {
-        return null === $this->firstname && null === $this->lastname && null === $this->birthday && null === $this->nationality
+        return null === $this->salutation && null === $this->firstname && null === $this->lastname && null === $this->birthday && null === $this->nationality
             && !$this->hasOwnAddress();
     }
 }

@@ -215,10 +215,11 @@ class Template
     {
         return $this->isDefault;
     }
-    
+
     public function setHidden(bool $hidden): static
     {
         $this->hidden = $hidden;
+
         return $this;
     }
 

@@ -118,13 +118,13 @@ class GuestCheckInLinkService
      */
     public function qrDataUri(string $url, int $size = 300): string
     {
-        return (new Builder(
+        return new Builder(
             writer: new PngWriter(),
             data: $url,
             // Medium keeps a printed confirmation readable after folding, like the payment code.
             errorCorrectionLevel: ErrorCorrectionLevel::Medium,
             size: max(self::QR_MIN_SIZE, min(self::QR_MAX_SIZE, $size)),
             margin: 0,
-        ))->build()->getDataUri();
+        )->build()->getDataUri();
     }
 }

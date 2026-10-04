@@ -31,8 +31,7 @@ class AppSettingsController extends AbstractController
         SmtpPasswordCrypto $smtpPasswordCrypto,
         MailService $mailService,
         PublicUrlService $publicUrlService,
-    ): Response
-    {
+    ): Response {
         $settings = $settingsService->getSettings();
 
         $form = $this->createForm(AppSettingsType::class, $settings, [

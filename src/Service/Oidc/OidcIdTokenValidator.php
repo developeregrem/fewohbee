@@ -122,7 +122,7 @@ final class OidcIdTokenValidator
     private function verifyAndDecode(string $token, string $what): array
     {
         try {
-            $jws = (new CompactSerializer())->unserialize($token);
+            $jws = new CompactSerializer()->unserialize($token);
         } catch (\Throwable $e) {
             throw new OidcConfigurationException(sprintf('The %s is not a well-formed JWS.', $what), 0, $e);
         }

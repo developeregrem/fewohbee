@@ -8,6 +8,7 @@ use App\Dto\GuestCheckIn\GuestCheckInCompanion;
 use App\Entity\Enum\GuestCheckInFieldMode;
 use App\Entity\GuestCheckInConfig;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\CountryType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -31,6 +32,13 @@ class GuestCheckInCompanionType extends AbstractType
         $config = $options['config'];
 
         $builder
+            ->add('salutation', ChoiceType::class, [
+                'label' => 'guest_checkin.public.field.salutation_optional',
+                'choices' => array_combine($options['salutations'], $options['salutations']),
+                'placeholder' => '',
+                'required' => false,
+                'attr' => ['autocomplete' => 'off'],
+            ])
             ->add('firstname', TextType::class, [
                 'label' => 'guest_checkin.public.field.firstname',
                 'required' => false,
@@ -74,8 +82,9 @@ class GuestCheckInCompanionType extends AbstractType
         $resolver->setDefaults([
             'data_class' => GuestCheckInCompanion::class,
         ]);
-        $resolver->setRequired('config');
+        $resolver->setRequired(['config', 'salutations']);
         $resolver->setAllowedTypes('config', GuestCheckInConfig::class);
+        $resolver->setAllowedTypes('salutations', 'string[]');
         $resolver->setNormalizer('constraints', static function (Options $options, mixed $constraints): array {
             /** @var GuestCheckInConfig $config */
             $config = $options['config'];

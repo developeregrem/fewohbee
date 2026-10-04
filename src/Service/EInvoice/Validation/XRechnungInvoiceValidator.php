@@ -20,7 +20,7 @@ class XRechnungInvoiceValidator implements EInvoiceValidatorInterface
         $violations = $this->baseValidator->validate($invoice, $settings)->getViolations();
 
         // BR-DE-1: payment instructions are always required.
-        if (!($invoice->getPaymentMeans() instanceof PaymentMeansCode)) {
+        if (!$invoice->getPaymentMeans() instanceof PaymentMeansCode) {
             $violations[] = new EInvoiceViolation('paymentMeans', 'invoice.einvoice.violation.paymentMeans', EInvoiceFixLocation::INVOICE);
         }
 

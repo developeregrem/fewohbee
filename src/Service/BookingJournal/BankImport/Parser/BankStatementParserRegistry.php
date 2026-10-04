@@ -34,10 +34,7 @@ final class BankStatementParserRegistry
     public function get(string $formatKey): ParserInterface
     {
         if (!isset($this->parsers[$formatKey])) {
-            throw new \InvalidArgumentException($this->trans('accounting.bank_import.parser.error.format_not_registered', [
-                '%format%' => $formatKey,
-                '%available%' => implode(', ', array_keys($this->parsers)) ?: $this->trans('accounting.bank_import.parser.error.none_available'),
-            ]));
+            throw new \InvalidArgumentException($this->trans('accounting.bank_import.parser.error.format_not_registered', ['%format%' => $formatKey, '%available%' => implode(', ', array_keys($this->parsers)) ?: $this->trans('accounting.bank_import.parser.error.none_available')]));
         }
 
         return $this->parsers[$formatKey];

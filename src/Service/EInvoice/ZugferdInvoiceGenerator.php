@@ -201,7 +201,7 @@ class ZugferdInvoiceGenerator
     }
 
     /**
-     * @return array<string, string> Constant name => ISO code.
+     * @return array<string, string> constant name => ISO code
      */
     private function getCurrencyCodeMap(): array
     {
@@ -211,7 +211,7 @@ class ZugferdInvoiceGenerator
         }
 
         /** @var array<string, mixed> $constants */
-        $constants = (new \ReflectionClass(ZugferdCurrencyCodes::class))->getConstants();
+        $constants = new \ReflectionClass(ZugferdCurrencyCodes::class)->getConstants();
 
         $map = array_filter($constants, static fn ($value): bool => is_string($value));
 

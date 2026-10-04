@@ -43,13 +43,10 @@ final class GuestCheckInSettingsController extends AbstractController
             return $this->redirectToRoute('settings.guest_checkin.index');
         }
 
-        $publicBaseUrl = $publicUrlService->getBaseUrl();
-
         return $this->render('Settings/GuestCheckIn/index.html.twig', [
             'form' => $form->createView(),
             'fieldGroups' => GuestCheckInConfigType::FIELD_GROUPS,
-            'publicBaseUrl' => $publicBaseUrl,
-            'publicBaseUrlWarning' => null !== $publicBaseUrl ? PublicUrlService::reachabilityWarning($publicBaseUrl) : null,
+            'publicBaseUrl' => $publicUrlService->getBaseUrl(),
         ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 }

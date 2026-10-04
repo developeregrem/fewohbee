@@ -70,7 +70,7 @@ class EInvoiceReadinessService
     public function check(Invoice $invoice, ?InvoiceSettingsData $settings = null): EInvoiceReadiness
     {
         $settings ??= $this->resolveSettingsFor($invoice);
-        if (!($settings instanceof InvoiceSettingsData)) {
+        if (!$settings instanceof InvoiceSettingsData) {
             return new EInvoiceReadiness(false, false, null, null);
         }
 

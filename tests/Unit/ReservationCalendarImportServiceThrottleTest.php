@@ -93,6 +93,7 @@ final class ReservationCalendarImportServiceThrottleTest extends TestCase
             $this->createStub(AvailabilityService::class),
             $this->createStub(GuestCategoryRepository::class),
             $this->createStub(ReservationService::class),
+            $this->createStub(\App\Service\Pricing\PricePromiseService::class),
         );
 
         return new ReservationCalendarImportService(

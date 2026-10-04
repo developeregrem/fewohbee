@@ -42,7 +42,7 @@ class RoomBlockService
      * @return RoomBlock[]
      *
      * @throws RoomBlockConflictException
-     * @throws \InvalidArgumentException for an empty period or missing reason
+     * @throws \InvalidArgumentException  for an empty period or missing reason
      */
     public function createBlocks(
         array $rooms,
@@ -102,13 +102,7 @@ class RoomBlockService
         $conflictingReservations = $this->availabilityService->getConflictingReservations($room, $start, $end);
         $conflictingBlocks = $this->availabilityService->getConflictingBlocks($room, $start, $end, $block);
         if (count($conflictingReservations) > 0 || count($conflictingBlocks) > 0) {
-            throw new RoomBlockConflictException([
-                $room->getId() => [
-                    'room' => $room,
-                    'reservations' => $conflictingReservations,
-                    'blocks' => $conflictingBlocks,
-                ],
-            ]);
+            throw new RoomBlockConflictException([$room->getId() => ['room' => $room, 'reservations' => $conflictingReservations, 'blocks' => $conflictingBlocks]]);
         }
 
         $block->setStartDate($start)

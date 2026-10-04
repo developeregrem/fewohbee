@@ -215,9 +215,9 @@ final class RuleActionApplicator
     }
 
     /**
-     * @return float|null|false false means invalid regex, null means no match
+     * @return float|false|null false means invalid regex, null means no match
      */
-    private function extractAmountByRegex(string $purpose, string $pattern): float|null|false
+    private function extractAmountByRegex(string $purpose, string $pattern): float|false|null
     {
         $regex = $this->regexCompiler->compile($pattern);
         if (null === $regex) {
@@ -336,9 +336,9 @@ final class RuleActionApplicator
     }
 
     /**
-     * @return string|null|false false means invalid regex, null means no match
+     * @return string|false|null false means invalid regex, null means no match
      */
-    private function extractInvoiceNumberByRegex(string $purpose, string $pattern): string|null|false
+    private function extractInvoiceNumberByRegex(string $purpose, string $pattern): string|false|null
     {
         $regex = $this->regexCompiler->compile($pattern);
         if (null === $regex) {
@@ -421,7 +421,7 @@ final class RuleActionApplicator
     }
 
     /**
-     * @param array<string, mixed> $line
+     * @param array<string, mixed>  $line
      * @param array<string, string> $params
      */
     private function markInvoiceNumberRulePending(array &$line, string $key, array $params): void
@@ -444,10 +444,10 @@ final class RuleActionApplicator
         }
 
         return strtr($template, [
-            '{counterparty}'   => (string) ($line['counterpartyName'] ?? ''),
-            '{purpose}'        => (string) ($line['purpose'] ?? ''),
-            '{date}'           => (string) ($line['valueDate'] ?? $line['bookDate'] ?? ''),
-            '{invoiceNumber}'  => (string) (($line['userInvoiceNumber'] ?? null) ?: ($line['matchedInvoiceNumber'] ?? '')),
+            '{counterparty}' => (string) ($line['counterpartyName'] ?? ''),
+            '{purpose}' => (string) ($line['purpose'] ?? ''),
+            '{date}' => (string) ($line['valueDate'] ?? $line['bookDate'] ?? ''),
+            '{invoiceNumber}' => (string) (($line['userInvoiceNumber'] ?? null) ?: ($line['matchedInvoiceNumber'] ?? '')),
         ]);
     }
 }

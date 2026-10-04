@@ -8,6 +8,7 @@ use App\Dto\GuestCheckIn\GuestCheckInSubmission;
 use App\Entity\GuestCheckInConfig;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -32,6 +33,8 @@ class GuestCheckInType extends AbstractType
                 'input' => 'string',
                 'input_format' => 'H:i',
                 'with_seconds' => false,
+                'required' => false,
+                'help' => 'guest_checkin.public.field.arrival_time_help',
                 'attr' => ['step' => 900, 'class' => 'fhb-gci-time'],
             ])
             ->add('mainGuest', GuestCheckInGuestType::class, [
@@ -45,9 +48,32 @@ class GuestCheckInType extends AbstractType
             $builder->add('companions', CollectionType::class, [
                 'label' => false,
                 'entry_type' => GuestCheckInCompanionType::class,
-                'entry_options' => ['config' => $config, 'label' => false],
+                'entry_options' => ['config' => $config, 'salutations' => $options['salutations'], 'label' => false],
                 'allow_add' => false,
                 'allow_delete' => false,
+            ]);
+        }
+
+        if ([] !== $options['extras']) {
+            $choices = [];
+            $descriptions = [];
+            $values = [];
+            foreach ($options['extras'] as $extra) {
+                $choices[] = $extra['id'];
+                $descriptions[$extra['id']] = $extra['description'];
+                // A changed price invalidates an old form post instead of silently accepting
+                // a different amount from the one the guest saw on the page.
+                $values[$extra['id']] = $extra['id'].':'.$extra['total'];
+            }
+            $builder->add('extras', ChoiceType::class, [
+                'label' => false,
+                'multiple' => true,
+                'expanded' => true,
+                'choices' => $choices,
+                'choice_label' => static fn (int $id): string => $descriptions[$id],
+                'choice_value' => static fn (?int $id): string => null === $id ? '' : $values[$id],
+                'invalid_message' => 'guest_checkin.public.extras.changed',
+                'required' => false,
             ]);
         }
 
@@ -64,6 +90,7 @@ class GuestCheckInType extends AbstractType
             'data_class' => GuestCheckInSubmission::class,
             'companion_count' => 0,
             'stored_id_hint' => null,
+            'extras' => [],
             // See GuestCheckInVerificationType: the link token is the credential, and the proof
             // of the booking-details check is a SameSite=Strict cookie browsers do not send on
             // cross-site posts.
@@ -74,5 +101,6 @@ class GuestCheckInType extends AbstractType
         $resolver->setAllowedTypes('salutations', 'string[]');
         $resolver->setAllowedTypes('companion_count', 'int');
         $resolver->setAllowedTypes('stored_id_hint', ['null', 'string']);
+        $resolver->setAllowedTypes('extras', 'array');
     }
 }

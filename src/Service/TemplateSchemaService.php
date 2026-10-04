@@ -96,9 +96,9 @@ class TemplateSchemaService
     /**
      * Resolve all public getter properties of a class recursively.
      *
-     * @param class-string         $className FQCN of the entity
-     * @param int                  $depth     current recursion depth
-     * @param array<string, bool>  $visited   already-visited class names (cycle detection)
+     * @param class-string        $className FQCN of the entity
+     * @param int                 $depth     current recursion depth
+     * @param array<string, bool> $visited   already-visited class names (cycle detection)
      *
      * @return array<string, mixed>
      */
@@ -400,7 +400,7 @@ class TemplateSchemaService
      */
     private function isEntityClass(string $className): bool
     {
-        return str_starts_with($className, self::ENTITY_NAMESPACE . '\\');
+        return str_starts_with($className, self::ENTITY_NAMESPACE.'\\');
     }
 
     /**
@@ -414,14 +414,14 @@ class TemplateSchemaService
         }
 
         // Try prepending the entity namespace
-        $fqcn = self::ENTITY_NAMESPACE . '\\' . ltrim($name, '\\');
+        $fqcn = self::ENTITY_NAMESPACE.'\\'.ltrim($name, '\\');
         if (class_exists($fqcn)) {
             return $fqcn;
         }
 
         // Try relative to the declaring class namespace
         $ns = $context->getNamespaceName();
-        $relative = $ns . '\\' . ltrim($name, '\\');
+        $relative = $ns.'\\'.ltrim($name, '\\');
         if (class_exists($relative)) {
             return $relative;
         }
@@ -447,7 +447,7 @@ class TemplateSchemaService
     private function singularize(string $plural): string
     {
         if (str_ends_with($plural, 'ies')) {
-            return substr($plural, 0, -3) . 'y';
+            return substr($plural, 0, -3).'y';
         }
         if (str_ends_with($plural, 'ses') || str_ends_with($plural, 'xes')) {
             return substr($plural, 0, -2);

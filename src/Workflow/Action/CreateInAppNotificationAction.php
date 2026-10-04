@@ -152,7 +152,7 @@ class CreateInAppNotificationAction implements WorkflowActionInterface
         }
 
         $booker = $reservation->getBooker();
-        $name = null !== $booker ? trim($booker->getFirstname() . ' ' . $booker->getLastname()) : '';
+        $name = null !== $booker ? trim($booker->getFirstname().' '.$booker->getLastname()) : '';
 
         // No booker means no name to show — a placeholder like "unknown guest"
         // is filler, not information. Separate keys rather than an empty
@@ -183,7 +183,7 @@ class CreateInAppNotificationAction implements WorkflowActionInterface
             'reservation',
             $titleKey,
             $params,
-            $hasName ? $name : ('#' . $reservation->getId()),
+            $hasName ? $name : ('#'.$reservation->getId()),
             $severity,
             $requiredRole,
             $note,

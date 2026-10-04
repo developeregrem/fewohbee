@@ -33,8 +33,8 @@ class TouristTaxReportService
      * Monthly tourist-tax totals for the REST API and the MCP tools: buildPayload() reduced to one
      * row per month with its taxes and their sum.
      *
-     * @param \DateTimeImmutable $start first day of the first month
-     * @param \DateTimeImmutable $end   last moment of the last month
+     * @param \DateTimeImmutable $start     first day of the first month
+     * @param \DateTimeImmutable $end       last moment of the last month
      * @param int[]              $statusIds
      *
      * @return array{months: list<array{month: string, taxes: list<array<string, mixed>>, total: float}>, guestCategories: list<array<string, mixed>>}
@@ -123,6 +123,7 @@ class TouristTaxReportService
             'months' => $monthlyAggregates,
         ];
     }
+
     /**
      * @return array<string, mixed>
      */
@@ -151,6 +152,7 @@ class TouristTaxReportService
             'rates' => $rates,
         ];
     }
+
     /**
      * Aggregate TouristTaxBreakdown rows from all reservations into per-tax,
      * per-(reportGroup|categoryId) groups for the given range.
@@ -160,7 +162,8 @@ class TouristTaxReportService
      * and taxes outside the validity window are dropped entirely.
      *
      * @param iterable<mixed> $reservations
-     * @param TouristTax[] $monthlyTaxes
+     * @param TouristTax[]    $monthlyTaxes
+     *
      * @return array<int, array<string, mixed>>
      */
     private function aggregateTaxBreakdowns(
@@ -227,6 +230,7 @@ class TouristTaxReportService
 
         return $result;
     }
+
     /**
      * Merge one TouristTaxBreakdown into the running aggregation map.
      *

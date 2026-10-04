@@ -20,6 +20,7 @@ online_booking:
     disabled: "Die Onlinebuchung ist deaktiviert."
     invalid_status_config: "Die Statuskonfiguration der Onlinebuchung ist ungültig."
     reservation_origin_missing: "Die konfigurierte Reservierungsherkunft fehlt oder ist ungültig."
+    price_changed: "Der Preis hat sich in der Zwischenzeit geändert. Bitte prüfen Sie den neuen Gesamtpreis und senden Sie die Buchung erneut ab."
     dates_required: "Bitte geben Sie ein gültiges An- und Abreisedatum ein."
     invalid_dates: "Bitte geben Sie gültige Datumswerte ein."
     departure_after_arrival: "Das Abreisedatum muss nach dem Anreisedatum liegen."

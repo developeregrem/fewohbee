@@ -10,6 +10,7 @@ use App\Repository\LogRepository;
 use App\Repository\McpToolCallLogRepository;
 use App\Repository\NotificationRepository;
 use App\Repository\WorkflowLogRepository;
+use App\Service\BookingJournal\BankImport\BankImportDraftStore;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -19,7 +20,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:purge-logs',
-    description: 'Delete audit log, workflow log and notification entries older than a given number of days, and expired online check-in data (run via daily cron).',
+    description: 'Delete audit log, workflow log and notification entries older than a given number of days, and expired online check-in data and bank import drafts (run via daily cron).',
     aliases: ['workflow:purge-logs'],
 )]
 class PurgeLogsCommand extends Command
@@ -30,6 +31,7 @@ class PurgeLogsCommand extends Command
         private readonly NotificationRepository $notificationRepository,
         private readonly McpToolCallLogRepository $mcpToolCallLogRepository,
         private readonly GuestCheckInRepository $guestCheckInRepository,
+        private readonly BankImportDraftStore $bankImportDrafts,
     ) {
         parent::__construct();
     }
@@ -66,15 +68,18 @@ class PurgeLogsCommand extends Command
         $checkIns = $this->guestCheckInRepository->purgePayloadsDepartedBefore(
             new \DateTimeImmutable('today -'.GuestCheckIn::RETENTION_DAYS_AFTER_DEPARTURE.' days')
         );
+        // Unfinished bank imports hold names, IBANs and purposes of third parties.
+        $drafts = $this->bankImportDrafts->purgeExpired();
 
         $io->success(sprintf(
-            'Deleted %d audit log, %d workflow log, %d notification and %d AI assistant call entries older than %d days, and the guest data of %d online check-ins.',
+            'Deleted %d audit log, %d workflow log, %d notification and %d AI assistant call entries older than %d days, the guest data of %d online check-ins and %d expired bank import drafts.',
             $audit,
             $workflow,
             $notifications,
             $mcpCalls,
             $days,
             $checkIns,
+            $drafts,
         ));
 
         return Command::SUCCESS;

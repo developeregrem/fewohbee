@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Controller\Resolver;
 
 use App\Controller\Attribute\ImportDraft;
-use App\Exception\BankImportEditException;
 use App\Dto\BookingJournal\BankImport\ImportState;
-use App\Service\BookingJournal\BankImport\BankImportDraftSession;
+use App\Exception\BankImportEditException;
+use App\Service\BookingJournal\BankImport\BankImportDraftStore;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
@@ -19,7 +19,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
  * {@see ImportDraft} by:
  *
  *  1. validating the "_token" CSRF token under id "bank_import_line_<id>",
- *  2. loading the draft via {@see BankImportDraftSession}.
+ *  2. loading the draft via {@see BankImportDraftStore}.
  *
  * Failure paths throw a {@see BankImportEditException} that the matching
  * subscriber turns into a JsonResponse, so the JSON edit endpoints no longer
@@ -28,7 +28,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 final class ImportDraftResolver implements ValueResolverInterface
 {
     public function __construct(
-        private readonly BankImportDraftSession $drafts,
+        private readonly BankImportDraftStore $drafts,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
     ) {
     }

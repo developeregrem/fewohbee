@@ -8,6 +8,7 @@ use App\Dto\GuestCheckIn\GuestCheckInCompanion;
 use App\Dto\GuestCheckIn\GuestCheckInGuest;
 use App\Dto\GuestCheckIn\GuestCheckInSubmission;
 use App\Entity\GuestCheckIn;
+use App\Entity\GuestCheckInConfig;
 use App\Event\GuestCheckInSubmittedEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -30,6 +31,7 @@ class GuestCheckInSubmissionService
         private readonly ClockInterface $clock,
         #[Autowire('%kernel.default_locale%')]
         private readonly string $installationLocale,
+        private readonly ?GuestCheckInExtrasService $extrasService = null,
     ) {
     }
 
@@ -38,18 +40,33 @@ class GuestCheckInSubmissionService
      * guest records alone: stored numbers are never shown again, so a guest correcting another
      * field cannot be asked to retype it.
      */
-    public function submit(GuestCheckIn $checkIn, GuestCheckInSubmission $submission, string $locale): void
+    public function submit(GuestCheckIn $checkIn, GuestCheckInSubmission $submission, string $locale, ?GuestCheckInConfig $config = null): void
     {
         $firstSubmission = null === $checkIn->getFirstSubmittedAt();
         $previousIdNumber = $checkIn->getPayload()['mainGuest']['idNumber'] ?? null;
+        $previousMainGuest = \is_array($checkIn->getPayload()['mainGuest'] ?? null) ? $checkIn->getPayload()['mainGuest'] : [];
 
         $payload = $this->buildPayload($submission, $locale);
-        if (null === $payload['mainGuest']['idNumber'] && \is_string($previousIdNumber)) {
+        if (null === $payload['mainGuest']['idNumber'] && \is_string($previousIdNumber)
+            && GuestCheckInPersonMatch::sameSubmittedName($payload['mainGuest'], $previousMainGuest)
+            && (null === $config || $config->getIdDocumentMode()->isShown())) {
             $payload['mainGuest']['idNumber'] = $previousIdNumber;
         }
 
         $reservation = $checkIn->getReservation();
-        $reservation->setArrivalTime(null !== $payload['arrivalTime'] ? new \DateTime($payload['arrivalTime']) : null);
+        if (null !== $config && !$config->isExtrasEnabled()) {
+            // Disabling new offers must not silently cancel a request already sent by the guest.
+            $previousExtras = $checkIn->getPayload()['extras'] ?? [];
+            $payload['extras'] = \is_array($previousExtras) ? $previousExtras : [];
+        } elseif ([] !== $submission->extras) {
+            if (null === $this->extrasService) {
+                throw new \LogicException('The check-in extras service is unavailable.');
+            }
+            $payload['extras'] = $this->extrasService->snapshot($reservation, $submission->extras);
+        }
+        if (null !== $payload['arrivalTime']) {
+            $reservation->setArrivalTime(new \DateTime($payload['arrivalTime']));
+        }
         $checkIn->recordSubmission($payload, $this->clock->now());
         $this->em->flush();
 
@@ -80,6 +97,7 @@ class GuestCheckInSubmissionService
             'message' => self::clean($submission->message, true),
             'mainGuest' => $this->guestPayload($guest),
             'companions' => array_map(static fn (GuestCheckInCompanion $companion): array => [
+                'salutation' => self::clean($companion->salutation),
                 'firstname' => self::clean($companion->firstname),
                 'lastname' => self::clean($companion->lastname),
                 'birthday' => $companion->birthday?->format('Y-m-d'),

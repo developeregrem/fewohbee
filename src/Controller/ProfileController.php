@@ -12,6 +12,7 @@ use App\Repository\ApiTokenRepository;
 use App\Repository\WebauthnCredentialRepository;
 use App\Service\ApiTokenService;
 use App\Service\Mcp\McpSettings;
+use App\Service\Mcp\McpToolCatalog;
 use App\Service\UserService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -29,6 +30,7 @@ final class ProfileController extends AbstractController
         private readonly WebauthnCredentialRepository $credentialRepository,
         private readonly ApiTokenRepository $apiTokenRepository,
         private readonly McpSettings $mcpSettings,
+        private readonly McpToolCatalog $mcpToolCatalog,
     ) {
     }
 
@@ -75,6 +77,8 @@ final class ProfileController extends AbstractController
             // AI tokens get MCP instructions instead of the REST/calendar usage hint.
             'newApiTokenIsMcp' => $newApiTokenEntity?->hasScope(ApiScope::MCP_ACCESS) ?? false,
             'mcpEndpointUrl' => $mcpActive ? $this->generateUrl('_mcp_endpoint_default', [], UrlGeneratorInterface::ABSOLUTE_URL) : null,
+            // Shown in the token form so users see which tools a permission unlocks.
+            'mcpToolsByScope' => $mcpActive ? $this->mcpToolCatalog->toolsByScope() : [],
             'apiTokenForm' => $this->createForm(ApiTokenType::class, null, [
                 'action' => $this->generateUrl('profile.apitokens.create'),
             ])->createView(),

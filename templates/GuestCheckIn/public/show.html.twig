@@ -28,6 +28,7 @@
         {% if form.vars.submitted and not form.vars.valid %}
             <div class="alert alert-warning" role="alert">{{ 'guest_checkin.public.form_invalid'|trans }}</div>
         {% endif %}
+        {{ form_errors(form) }}
 
         {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
             <div class="fhb-section">
@@ -41,6 +42,12 @@
                again when they need correcting. Native details/summary, the page has no JS. #}
             <div class="fhb-section">
                 <h2 class="fhb-section-title">{{ 'guest_checkin.public.section.guests'|trans }}</h2>
+                {% if canStartOtherGuest %}
+                    <p class="fhb-hint mb-2">
+                        {{ (otherGuestForm ? 'guest_checkin.public.other_guest_empty' : 'guest_checkin.public.other_guest_prefilled')|trans }}
+                        <a href="{{ otherGuestForm ? restoreGuestUrl : otherGuestUrl }}">{{ (otherGuestForm ? 'guest_checkin.public.other_guest_restore' : 'guest_checkin.public.other_guest_start')|trans }}</a>
+                    </p>
+                {% endif %}
                 {% set mainName = ((form.mainGuest.firstname.vars.value ?? '') ~ ' ' ~ (form.mainGuest.lastname.vars.value ?? ''))|trim %}
                 <details class="fhb-gci-person" open>
                     <summary>
@@ -101,6 +108,50 @@
                 {% endif %}
             </div>
 
+            {% if form.extras is defined or bookedExtras is not empty or extrasChanged or existingRequestedExtras is not empty %}
+                <div class="fhb-section">
+                    <h2 class="fhb-section-title">{{ 'guest_checkin.public.extras.title'|trans }}</h2>
+                    {% if existingRequestedExtras is not empty %}
+                        <p class="fhb-hint">{{ 'guest_checkin.public.extras.previous_request'|trans }}</p>
+                        <ul class="mb-0">
+                            {% for extra in existingRequestedExtras %}
+                                <li>{{ extra.description }} · {{ extra.total|number_format(2, ',', '.') }} {{ currency_symbol }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {% if extrasChanged %}
+                        <div class="alert alert-warning" role="status">{{ 'guest_checkin.public.extras.unavailable'|trans }}</div>
+                    {% endif %}
+                    {% if bookedExtras is not empty %}
+                        <p class="fhb-hint mb-2">{{ 'guest_checkin.public.extras.booked'|trans }}</p>
+                        <ul class="fhb-gci-booked-extras">
+                            {% for extra in bookedExtras %}
+                                <li><i class="fas fa-check text-success" aria-hidden="true"></i><span>{{ extra.description }}</span></li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {% if form.extras is defined %}
+                        {% form_theme form.extras 'form_div_layout.html.twig' %}
+                        <p class="fhb-hint mb-2">{{ 'guest_checkin.public.extras.help'|trans }}</p>
+                        {{ form_errors(form.extras) }}
+                        <div class="fhb-gci-extra-list">
+                            {% for choice in form.extras %}
+                                {% set extra = extras|filter(item => item.id == choice.vars.value|split(':')|first)|first %}
+                                {% if extra %}
+                                    <label class="fhb-gci-extra-choice form-check form-switch" for="{{ choice.vars.id }}">
+                                        {{ form_widget(choice, {'attr': {'class': 'form-check-input'}}) }}
+                                        <span class="fhb-gci-extra-copy">
+                                            <span class="fhb-gci-extra-name">{{ extra.description }}</span>
+                                            <span class="fhb-gci-extra-price">{{ extra.totalFormatted }} {{ currency_symbol }} · {{ 'guest_checkin.public.extras.total_stay'|trans }}</span>
+                                        </span>
+                                    </label>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
             <div class="fhb-section">
                 {{ form_row(form.message) }}
             </div>
@@ -126,6 +177,17 @@
                 <div><dt>{{ 'guest_checkin.public.guests'|trans }}</dt><dd>{{ names|join(', ') }}</dd></div>
             </dl>
         </div>
+        {% if payload.extras ?? [] %}
+            <div class="fhb-section">
+                <h2 class="fhb-section-title">{{ 'guest_checkin.public.extras.title'|trans }}</h2>
+                <p class="fhb-hint">{{ 'guest_checkin.public.extras.requested'|trans }}</p>
+                <ul class="mb-0">
+                    {% for extra in payload.extras %}
+                        <li>{{ extra.description }} · {{ extra.total|number_format(2, ',', '.') }} {{ currency_symbol }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
         {% if editable %}
             <div class="fhb-actions">
                 <a class="btn btn-outline-primary" href="{{ path('public.guest_checkin', {'token': token, 'edit': 1} + (app.request.query.get('lang') in ['de', 'en'] ? {'lang': app.request.query.get('lang')} : {})) }}">{{ 'guest_checkin.public.edit'|trans }}</a>

@@ -21,7 +21,7 @@ final readonly class PriceDto
      * @param list<array{id: int|null, name: string|null}> $roomCategories empty = misc price for every category
      * @param list<array{id: int, name: string|null}>     $origins
      * @param array<string, bool>                         $weekdays
-     * @param list<array{startDate: string, endDate: string}> $periods
+     * @param list<array{startDate: string, endDate: string, description: string|null}> $periods
      * @param list<array<string, mixed>>                  $components
      */
     public function __construct(
@@ -67,6 +67,7 @@ final readonly class PriceDto
             $periods[] = [
                 'startDate' => $period->getStart()->format('Y-m-d'),
                 'endDate' => $period->getEnd()->format('Y-m-d'),
+                'description' => $period->getDescription(),
             ];
         }
         usort($periods, static fn (array $a, array $b): int => strcmp($a['startDate'], $b['startDate']));

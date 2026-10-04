@@ -50,6 +50,38 @@ final class GuestCheckInSettingsControllerTest extends WebTestCase
         self::assertFalse($workflows->findOneBy(['systemCode' => 'example_guest_checkin_invitation'])?->isEnabled());
     }
 
+    public function testAdminCanTurnOptionalServicesOnAndOff(): void
+    {
+        $client = $this->authenticatedClient();
+
+        $this->submitSettings($client, ['guest_check_in_config[extrasEnabled]' => false]);
+        self::assertResponseRedirects('/settings/guest-checkin');
+        self::assertFalse($this->config()->isExtrasEnabled());
+
+        $this->submitSettings($client, ['guest_check_in_config[extrasEnabled]' => true]);
+        self::assertResponseRedirects('/settings/guest-checkin');
+        self::assertTrue($this->config()->isExtrasEnabled());
+    }
+
+    public function testPublicAddressHintAppearsOnlyWhenAddressIsMissing(): void
+    {
+        $client = $this->authenticatedClient();
+        $this->appSettings()->setPublicBaseUrl(null);
+        $this->em()->flush();
+
+        $client->request('GET', '/settings/guest-checkin');
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Es ist noch keine öffentliche Adresse hinterlegt.', (string) $client->getResponse()->getContent());
+        self::assertStringContainsString('Öffentliche Adresse in den allgemeinen Einstellungen hinterlegen', (string) $client->getResponse()->getContent());
+
+        $this->setPublicAddress('https://fewohbee.example.com');
+        $client->request('GET', '/settings/guest-checkin');
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString('https://fewohbee.example.com', (string) $client->getResponse()->getContent());
+        self::assertStringNotContainsString('Es ist noch keine öffentliche Adresse hinterlegt.', (string) $client->getResponse()->getContent());
+        self::assertStringNotContainsString('Öffentliche Adresse in den allgemeinen Einstellungen hinterlegen', (string) $client->getResponse()->getContent());
+    }
+
     public function testAnonymousVisitorIsSentToTheLogin(): void
     {
         $client = self::createClient();
@@ -66,6 +98,7 @@ final class GuestCheckInSettingsControllerTest extends WebTestCase
             if ($em->isOpen()) {
                 $em->clear();
                 $this->config()->setEnabled(false)->setIntroText(null)
+                    ->setExtrasEnabled(true)
                     ->setIdDocumentMode(GuestCheckInFieldMode::OPTIONAL)
                     ->setCompanionsMode(GuestCheckInFieldMode::OPTIONAL);
                 $em->getConnection()->executeStatement("DELETE FROM workflows WHERE system_code IN ('notify_guest_checkin', 'example_guest_checkin_invitation')");
@@ -84,8 +117,8 @@ final class GuestCheckInSettingsControllerTest extends WebTestCase
         $form = $crawler->filter('form[name="guest_check_in_config"]')->form();
         foreach ($values as $field => $value) {
             $formField = $form[$field];
-            if (true === $value && $formField instanceof ChoiceFormField) {
-                $formField->tick();
+            if (\is_bool($value) && $formField instanceof ChoiceFormField) {
+                $value ? $formField->tick() : $formField->untick();
             } else {
                 $form[$field] = $value;
             }

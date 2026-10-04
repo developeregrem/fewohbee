@@ -20,9 +20,9 @@ use App\Exception\CustomFontException;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomFontManager;
 use App\Service\FileUploader;
+use App\Service\TemplatePreview\TemplatePreviewProviderRegistry;
 use App\Service\TemplateSchemaService;
 use App\Service\TemplatesService;
-use App\Service\TemplatePreview\TemplatePreviewProviderRegistry;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -32,9 +32,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 
@@ -247,7 +247,7 @@ class TemplatesServiceController extends AbstractController
         $filteredContext = array_intersect_key($submittedContext, array_flip($allowedKeys));
         $context = array_merge($sampleContext, $filteredContext);
 
-        if (empty(array_filter($submittedContext, static fn ($value) => $value !== null && $value !== ''))) {
+        if (empty(array_filter($submittedContext, static fn ($value) => null !== $value && '' !== $value))) {
             $context = $sampleContext;
         }
 
@@ -326,6 +326,7 @@ class TemplatesServiceController extends AbstractController
             }
 
             $this->addFlash('warning', 'templates.preview.noprovider');
+
             return $this->redirectToRoute('settings.templates.edit.page', ['id' => $template->getId()]);
         }
 
@@ -336,7 +337,7 @@ class TemplatesServiceController extends AbstractController
         $filteredContext = array_intersect_key($submittedContext, array_flip($allowedKeys));
         $context = array_merge($provider->buildSampleContext(), $filteredContext);
 
-        if (empty(array_filter($submittedContext, static fn ($value) => $value !== null && $value !== ''))) {
+        if (empty(array_filter($submittedContext, static fn ($value) => null !== $value && '' !== $value))) {
             $context = $provider->buildSampleContext();
         }
 
@@ -368,6 +369,7 @@ class TemplatesServiceController extends AbstractController
             }
 
             $this->addFlash('warning', $e->getMessage());
+
             return $this->redirectToRoute('settings.templates.edit.page', ['id' => $template->getId()]);
         }
         $pdfOutput = $templatesService->getPDFOutput($html, 'Template-Preview-'.$template->getId(), $template);
@@ -438,8 +440,6 @@ class TemplatesServiceController extends AbstractController
         return $this->redirectToRoute('settings.templates.overview');
     }
 
-
-
     /**
      * Return available snippets for the given template type.
      */
@@ -449,8 +449,7 @@ class TemplatesServiceController extends AbstractController
         TranslatorInterface $translator,
         Environment $twig,
         TemplateType $id
-    ): Response
-    {
+    ): Response {
         $template = new Template();
         $template->setTemplateType($id);
         $provider = $previewRegistry->getProvider($template);

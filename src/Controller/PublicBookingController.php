@@ -33,8 +33,7 @@ class PublicBookingController extends AbstractController
         PublicBookingRequestMapper $requestMapper,
         PublicBookingViewModelFactory $viewFactory,
         PublicBookingCalendarService $calendarService,
-    ): Response
-    {
+    ): Response {
         $config = $configService->getConfig();
         $template = $this->resolveTemplate($config, $request);
         // In calendar mode the guest has already chosen the accommodation, so the
@@ -96,6 +95,7 @@ class PublicBookingController extends AbstractController
                     $booking->extrasSelection,
                     $booking->guestCounts,
                     $calendarRoom,
+                    $booking->quotedTotal,
                 );
 
                 $view['step'] = 4;

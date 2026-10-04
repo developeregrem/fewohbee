@@ -23,7 +23,7 @@ class FilePdfTemplatePreviewProvider implements ITemplatePreviewProvider
 {
     public function supportsPreview(Template $template): bool
     {
-        return $template->getTemplateType()?->getName() === 'TEMPLATE_FILE_PDF';
+        return 'TEMPLATE_FILE_PDF' === $template->getTemplateType()?->getName();
     }
 
     public function getPreviewContextDefinition(): array

@@ -9,7 +9,9 @@ use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\Reservation;
 use App\Repository\GuestCheckInRepository;
 use App\Service\GuestCheckIn\GuestCheckInApplyService;
+use App\Service\GuestCheckIn\GuestCheckInExtrasConflictException;
 use App\Service\GuestCheckIn\GuestCheckInLinkService;
+use App\Service\GuestCheckIn\GuestCheckInNoGuestSlotException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -71,6 +73,11 @@ final class GuestCheckInController extends AbstractController
                 mainTarget: $request->request->getString('mainTarget'),
                 setAsBooker: $request->request->getBoolean('setAsBooker'),
                 companionTargets: array_values(array_map('strval', $request->request->all('companionTargets'))),
+                expectedSubmissionVersion: $request->request->getString('submissionVersion'),
+                confirmBookerMismatch: $request->request->getBoolean('confirmBookerMismatch'),
+                applyExtras: $request->request->getBoolean('applyExtras'),
+                removeBookerFromGuests: $request->request->getBoolean('removeBookerFromGuests'),
+                allowGlobalMatch: $this->isGranted('ROLE_CUSTOMERS'),
             );
 
             try {
@@ -78,6 +85,10 @@ final class GuestCheckInController extends AbstractController
                     $this->addFlash('warning', $warning);
                 }
                 $this->addFlash('success', 'guest_checkin.apply.success');
+            } catch (GuestCheckInExtrasConflictException) {
+                $this->addFlash('warning', 'guest_checkin.apply.extras_changed');
+            } catch (GuestCheckInNoGuestSlotException) {
+                $this->addFlash('warning', 'guest_checkin.apply.no_main_guest_slot');
             } catch (\InvalidArgumentException) {
                 $this->addFlash('warning', 'guest_checkin.apply.failed');
             }

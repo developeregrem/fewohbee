@@ -42,15 +42,25 @@ class ApiTokenType extends AbstractType
     ) {
     }
 
+    /** Order of the scopes within their group in the token form. */
+    private const SCOPE_ORDER = [
+        ApiScope::RESERVATIONS_READ,
+        ApiScope::AVAILABILITY_READ,
+        ApiScope::PRICES_READ,
+        ApiScope::STATISTICS_READ,
+        ApiScope::INVOICES_READ,
+        ApiScope::TOURIST_TAX_READ,
+        ApiScope::OPERATIONS_READ,
+        ApiScope::CALENDAR_READ,
+        ApiScope::SUBSIDIARIES_READ,
+        ApiScope::GUESTS_READ,
+        ApiScope::RESERVATIONS_WRITE,
+        ApiScope::PRICES_WRITE,
+        ApiScope::BANK_IMPORT_WRITE,
+    ];
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $scopeChoices = [];
-        foreach (ApiScope::cases() as $scope) {
-            if (!$scope->isMcpScope()) {
-                $scopeChoices[$scope->labelKey()] = $scope->value;
-            }
-        }
-
         $builder->add('name', TextType::class, [
             'label' => 'profile.apitokens.name',
             'constraints' => [
@@ -74,6 +84,15 @@ class ApiTokenType extends AbstractType
             ]);
         }
 
+        // Only what the user can actually grant is a valid choice; the rest is shown greyed out
+        // with its reason (see finishView()).
+        $choices = [];
+        foreach ($this->scopeAvailability() as ['scope' => $scope, 'reason' => $reason]) {
+            if (null === $reason) {
+                $choices[$scope->labelKey()] = $scope->value;
+            }
+        }
+
         $builder
             ->add('expiresIn', ChoiceType::class, [
                 'label' => 'profile.apitokens.expiry.label',
@@ -93,35 +112,32 @@ class ApiTokenType extends AbstractType
             ])
             ->add('scopes', ChoiceType::class, [
                 'label' => 'profile.apitokens.scopes.label',
-                'choices' => $scopeChoices,
+                'choices' => $choices,
                 'expanded' => true,
                 'multiple' => true,
                 'required' => false,
+                'choice_attr' => static fn (): array => ['data-action' => 'change->api-token-form#update'],
             ])
         ;
-
-        $mcpChoices = [];
-        foreach ($this->grantableMcpScopes() as $scope) {
-            $mcpChoices[$scope->labelKey()] = $scope->value;
-        }
-        if ([] !== $mcpChoices) {
-            $builder->add('mcpScopes', ChoiceType::class, [
-                'label' => 'profile.apitokens.mcp.label',
-                'choices' => $mcpChoices,
-                'expanded' => true,
-                'multiple' => true,
-                'required' => false,
-            ]);
-        }
     }
 
-    public function buildView(FormView $view, FormInterface $form, array $options): void
+    public function finishView(FormView $view, FormInterface $form, array $options): void
     {
-        // Explains a missing "Create reservations" option: switched off for all users, not a
-        // missing role of this user.
-        $view->vars['mcp_write_globally_disabled'] = $this->mcpSettings->isActive()
-            && !$this->mcpSettings->isWriteAllowed()
-            && [] !== ApiTokenService::grantableScopes([ApiScope::RESERVATIONS_WRITE], $this->reachableRoles());
+        $children = [];
+        foreach ($view['scopes']->children as $child) {
+            $children[$child->vars['value']] = $child;
+        }
+
+        // The template renders the scopes grouped by the question they answer instead of as one list.
+        $groups = [];
+        foreach ($this->scopeAvailability() as ['scope' => $scope, 'reason' => $reason]) {
+            $groups[$scope->group()->value][] = [
+                'scope' => $scope,
+                'field' => $children[$scope->value] ?? null,
+                'reason' => $reason,
+            ];
+        }
+        $view->vars['scope_groups'] = $groups;
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -133,11 +149,11 @@ class ApiTokenType extends AbstractType
     }
 
     /**
-     * @param array{kind?: ?string, scopes?: list<string>, mcpScopes?: list<string>, expiresIn?: ?string}|null $data
+     * @param array{kind?: ?string, scopes?: list<string>, expiresIn?: ?string}|null $data
      */
     public static function validateScopes(?array $data, ExecutionContextInterface $context): void
     {
-        if ([] === ($data['scopes'] ?? [])) {
+        if ([] === array_diff(self::collectScopes($data ?? []), [ApiScope::MCP_ACCESS->value])) {
             $context->buildViolation('profile.apitokens.scopes.min')->atPath('[scopes]')->addViolation();
         }
 
@@ -147,41 +163,57 @@ class ApiTokenType extends AbstractType
     }
 
     /**
-     * The scopes stored on the token: an AI token gets mcp:access plus its AI options, a REST
-     * token only the read scopes (AI options submitted for it are ignored).
+     * The scopes stored on the token: those of the chosen ones that its kind evaluates (a REST
+     * token never gets AI scopes and vice versa), plus mcp:access for an AI token.
      *
-     * @param array{kind?: ?string, scopes?: list<string>, mcpScopes?: list<string>} $data
+     * @param array{kind?: ?string, scopes?: list<string>} $data
      *
      * @return list<string>
      */
     public static function collectScopes(array $data): array
     {
-        $scopes = $data['scopes'] ?? [];
-        if (self::KIND_MCP === ($data['kind'] ?? self::KIND_API)) {
-            $scopes = [...$scopes, ApiScope::MCP_ACCESS->value, ...($data['mcpScopes'] ?? [])];
+        $isMcp = self::KIND_MCP === ($data['kind'] ?? self::KIND_API);
+
+        $scopes = [];
+        foreach ($data['scopes'] ?? [] as $value) {
+            $scope = ApiScope::tryFrom($value);
+            if (null !== $scope && ($isMcp ? $scope->isForMcp() : $scope->isForRest())) {
+                $scopes[] = $scope->value;
+            }
+        }
+        if ($isMcp) {
+            $scopes[] = ApiScope::MCP_ACCESS->value;
         }
 
         return array_values(array_unique($scopes));
     }
 
     /**
-     * AI options the user may grant: only while MCP is on, only scopes their roles back, and
-     * "Create reservations" only while it is allowed for all users.
+     * Every scope the form shows, in display order, with the reason the user cannot grant it:
+     * "role" when their roles do not back it, "switch" when creating reservations is switched off
+     * for all users, null when it can be chosen. AI-only scopes are left out while MCP is off.
      *
-     * @return list<ApiScope>
+     * @return list<array{scope: ApiScope, reason: 'role'|'switch'|null}>
      */
-    private function grantableMcpScopes(): array
+    private function scopeAvailability(): array
     {
-        if (!$this->mcpSettings->isActive()) {
-            return [];
+        $mcpActive = $this->mcpSettings->isActive();
+        $grantable = ApiTokenService::grantableScopes(self::SCOPE_ORDER, $this->reachableRoles());
+
+        $result = [];
+        foreach (self::SCOPE_ORDER as $scope) {
+            if (!$mcpActive && !$scope->isForRest()) {
+                continue;
+            }
+            $reason = match (true) {
+                !\in_array($scope, $grantable, true) => 'role',
+                ApiScope::RESERVATIONS_WRITE === $scope && !$this->mcpSettings->isWriteAllowed() => 'switch',
+                default => null,
+            };
+            $result[] = ['scope' => $scope, 'reason' => $reason];
         }
 
-        $candidates = [ApiScope::GUESTS_READ];
-        if ($this->mcpSettings->isWriteAllowed()) {
-            $candidates[] = ApiScope::RESERVATIONS_WRITE;
-        }
-
-        return ApiTokenService::grantableScopes($candidates, $this->reachableRoles());
+        return $result;
     }
 
     /**

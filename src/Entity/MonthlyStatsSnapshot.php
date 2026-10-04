@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: 'App\Repository\MonthlyStatsSnapshotRepository')]
 #[ORM\Table(name: 'monthly_stats_snapshots')]
 #[ORM\Index(name: 'idx_month_year', columns: ['year', 'month'])]
+#[ORM\UniqueConstraint(name: 'uniq_month_year_subsidiary', columns: ['year', 'month', 'is_all', 'subsidiary_id'])]
 class MonthlyStatsSnapshot
 {
     #[ORM\Id]
@@ -104,7 +105,6 @@ class MonthlyStatsSnapshot
     {
         $this->isAll = $isAll;
     }
-
 
     /**
      * Get the subsidiary scope of this snapshot or null for "all".

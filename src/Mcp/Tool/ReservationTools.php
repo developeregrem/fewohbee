@@ -7,6 +7,8 @@ namespace App\Mcp\Tool;
 use App\Entity\Appartment;
 use App\Entity\Enum\ApiScope;
 use App\Entity\Reservation;
+use App\Entity\RoomCategory;
+use App\Entity\Subsidiary;
 use App\Mcp\Security\McpRequiresScope;
 use App\Mcp\Security\McpToolException;
 use App\Mcp\Support\McpInput;
@@ -29,6 +31,7 @@ final class ReservationTools
 {
     private const MAX_RESULTS = 200;
     private const MAX_AVAILABILITY_NIGHTS = 366;
+    private const MAX_FORECAST_NIGHTS = 366;
 
     public function __construct(
         private readonly ReservationQueryService $reservationQueryService,
@@ -192,6 +195,67 @@ final class ReservationTools
             'nights' => (int) $start->diff($end)->days,
             'persons' => $persons,
             'availableApartments' => $available,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[McpTool(
+        name: 'get_occupancy_forecast',
+        title: 'Occupancy forecast',
+        description: 'Room counts per night for a period (at most 366 nights): active rooms, rooms booked by a reservation that blocks the room, rooms blocked without a reservation, and free rooms, with totals and the room occupancy in percent (booked nights of the rooms that are not blocked). For all properties, one property or one room category.',
+        annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
+    )]
+    #[McpRequiresScope(ApiScope::RESERVATIONS_READ)]
+    public function occupancyForecast(
+        #[Schema(description: 'First night, YYYY-MM-DD.')]
+        string $start,
+        #[Schema(description: 'Last night (inclusive), YYYY-MM-DD.')]
+        string $end,
+        #[Schema(type: 'integer', description: 'Property (object) id; all properties when omitted.')]
+        ?int $objectId = null,
+        #[Schema(type: 'integer', description: 'Only rooms of this room category.')]
+        ?int $roomCategoryId = null,
+    ): array {
+        $firstNight = McpInput::date($start, 'start');
+        $lastNight = McpInput::date($end, 'end');
+        if ($lastNight < $firstNight) {
+            throw McpToolException::invalid("'end' must not be before 'start'.");
+        }
+        if ((int) $firstNight->diff($lastNight)->days >= self::MAX_FORECAST_NIGHTS) {
+            throw McpToolException::invalid(\sprintf('The range must not exceed %d nights.', self::MAX_FORECAST_NIGHTS));
+        }
+        if (null !== $objectId && !$this->em->getRepository(Subsidiary::class)->find($objectId) instanceof Subsidiary) {
+            throw McpToolException::invalid('Unknown property (object) id.');
+        }
+        if (null !== $roomCategoryId && !$this->em->getRepository(RoomCategory::class)->find($roomCategoryId) instanceof RoomCategory) {
+            throw McpToolException::invalid('Unknown room category id.');
+        }
+
+        $perNight = $this->availabilityService->getRoomNightsPerDay(
+            null !== $objectId ? $objectId : 'all',
+            $roomCategoryId,
+            $firstNight,
+            $lastNight->modify('+1 day'),
+        );
+
+        $nights = [];
+        $totals = ['roomNights' => 0, 'booked' => 0, 'blocked' => 0, 'available' => 0];
+        foreach ($perNight as $date => $counts) {
+            $nights[] = ['date' => $date] + $counts;
+            $totals['roomNights'] += $counts['rooms'];
+            $totals['booked'] += $counts['booked'];
+            $totals['blocked'] += $counts['blocked'];
+            $totals['available'] += $counts['available'];
+        }
+        $sellable = $totals['roomNights'] - $totals['blocked'];
+
+        return [
+            'objectId' => $objectId,
+            'roomCategoryId' => $roomCategoryId,
+            'totals' => $totals + ['occupancyPercent' => $sellable > 0 ? round($totals['booked'] / $sellable * 100, 1) : null],
+            'nights' => $nights,
         ];
     }
 

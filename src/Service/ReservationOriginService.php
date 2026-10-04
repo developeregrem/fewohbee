@@ -142,10 +142,10 @@ class ReservationOriginService
             $this->em->flush();
 
             return true;
-        } else {
-            $this->requestStack->getSession()->getFlashBag()->add('warning', 'reservationorigin.flash.delete.inuse.reservations');
-
-            return false;
         }
+
+        $this->requestStack->getSession()->getFlashBag()->add('warning', 'reservationorigin.flash.delete.inuse.reservations');
+
+        return false;
     }
 }

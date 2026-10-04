@@ -27,7 +27,7 @@ class OperationsFilterService
             }
         }
 
-        return (new \DateTimeImmutable('today', $tz))->setTime(0, 0, 0);
+        return new \DateTimeImmutable('today', $tz)->setTime(0, 0, 0);
     }
 
     /**
@@ -65,7 +65,7 @@ class OperationsFilterService
             }
         }
 
-        return (new \DateTimeImmutable('today', $tz))->modify('monday this week')->setTime(0, 0, 0);
+        return new \DateTimeImmutable('today', $tz)->modify('monday this week')->setTime(0, 0, 0);
     }
 
     /**

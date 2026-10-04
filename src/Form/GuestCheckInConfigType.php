@@ -43,6 +43,13 @@ class GuestCheckInConfigType extends AbstractType
             ],
         ]);
 
+        $builder->add('extrasEnabled', CheckboxType::class, [
+            'required' => false,
+            'label' => 'guest_checkin.settings.extras_enabled',
+            'help' => 'guest_checkin.settings.extras_enabled_help',
+            'label_attr' => ['class' => 'checkbox-switch'],
+        ]);
+
         foreach (self::FIELD_GROUPS as $field) {
             $builder->add($field, EnumType::class, [
                 'class' => GuestCheckInFieldMode::class,

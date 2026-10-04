@@ -237,7 +237,7 @@ class RegistrationBookServiceController extends AbstractController
     public function deleteAction(AuthorizationCheckerInterface $authChecker, RegistrationBookService $rbs, Request $request, int $id)
     {
         if ($authChecker->isGranted('ROLE_ADMIN')) {
-            if ($this->isCsrfTokenValid('delete' . $id, $request->request->get('_token'))) {
+            if ($this->isCsrfTokenValid('delete'.$id, $request->request->get('_token'))) {
                 $rbs->deleteEntry($id);
             }
         }

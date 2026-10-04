@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\PriceRounding;
 use App\Repository\AppSettingsRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -90,6 +91,17 @@ class AppSettings
     /** Whether AI assistants may create reservations (additionally needs the reservations:write scope). */
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $mcpWriteEnabled = false;
+
+    /** Price rules lower a room price by at most this many percent in total (a negative number). */
+    #[ORM\Column(type: Types::SMALLINT, options: ['default' => -30])]
+    private int $priceChangeMinPercent = -30;
+
+    /** Price rules raise a room price by at most this many percent in total. */
+    #[ORM\Column(type: Types::SMALLINT, options: ['default' => 50])]
+    private int $priceChangeMaxPercent = 50;
+
+    #[ORM\Column(type: Types::STRING, length: 10, enumType: PriceRounding::class, options: ['default' => 'euro'])]
+    private PriceRounding $priceChangeRounding = PriceRounding::EURO;
 
     /**
      * Host names the MCP endpoint answers for (DNS rebinding protection), normalized by McpSettings.
@@ -363,6 +375,40 @@ class AppSettings
     {
         $publicBaseUrl = $this->normalizeNullableString($publicBaseUrl);
         $this->publicBaseUrl = null === $publicBaseUrl ? null : rtrim($publicBaseUrl, '/');
+
+        return $this;
+    }
+
+    public function getPriceChangeMinPercent(): int
+    {
+        return $this->priceChangeMinPercent;
+    }
+
+    public function getPriceChangeMaxPercent(): int
+    {
+        return $this->priceChangeMaxPercent;
+    }
+
+    /** The lower limit is at most zero, the upper at least zero. */
+    public function setPriceChangeLimits(int $minPercent, int $maxPercent): self
+    {
+        if ($minPercent > 0 || $minPercent <= -100 || $maxPercent < 0 || $maxPercent > 500) {
+            throw new \InvalidArgumentException('Price change limits must lie between -99 and 0, and 0 and 500 percent.');
+        }
+        $this->priceChangeMinPercent = $minPercent;
+        $this->priceChangeMaxPercent = $maxPercent;
+
+        return $this;
+    }
+
+    public function getPriceChangeRounding(): PriceRounding
+    {
+        return $this->priceChangeRounding;
+    }
+
+    public function setPriceChangeRounding(PriceRounding $rounding): self
+    {
+        $this->priceChangeRounding = $rounding;
 
         return $this;
     }

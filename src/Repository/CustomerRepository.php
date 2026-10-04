@@ -16,6 +16,29 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
  */
 class CustomerRepository extends EntityRepository
 {
+    /**
+     * A narrow starting set for staff-reviewed check-in deduplication. The service checks
+     * birth date and email before any result may be offered as an existing guest.
+     *
+     * @return list<Customer>
+     */
+    public function findCheckInCandidatesByName(string $firstname, string $lastname): array
+    {
+        $result = $this->createQueryBuilder('c')
+            ->select('c', 'a')
+            ->distinct()
+            ->leftJoin('c.customerAddresses', 'a')
+            ->where('c.id > 1')
+            ->andWhere('LOWER(TRIM(c.firstname)) = :firstname')
+            ->andWhere('LOWER(TRIM(c.lastname)) = :lastname')
+            ->setParameter('firstname', mb_strtolower(trim($firstname)))
+            ->setParameter('lastname', mb_strtolower(trim($lastname)))
+            ->getQuery()
+            ->getResult();
+
+        return array_values(array_filter($result, static fn (mixed $customer): bool => $customer instanceof Customer));
+    }
+
     public function getCustomersLike($lastname, $page, $limit)
     {
         $q = $this

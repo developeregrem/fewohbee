@@ -4,17 +4,27 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Dto\BookingJournal\BankImport\ImportState;
+use App\Entity\AccountingAccount;
 use App\Entity\Appartment;
+use App\Entity\BankImportDraft;
+use App\Entity\DayPrice;
 use App\Entity\Enum\ApiScope;
+use App\Entity\Enum\DayPriceSource;
+use App\Entity\Enum\HousekeepingStatus;
 use App\Entity\Enum\McpToolCallOutcome;
 use App\Entity\Log;
 use App\Entity\McpToolCallLog;
 use App\Entity\Notification;
+use App\Entity\Price;
+use App\Entity\PriceRule;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Role;
+use App\Entity\RoomDayStatus;
 use App\Entity\User;
 use App\Entity\Workflow;
+use App\Repository\PriceRepository;
 use App\Service\ApiTokenService;
 use App\Service\AppSettingsService;
 use App\Workflow\WorkflowSeeder;
@@ -22,6 +32,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
@@ -124,7 +135,37 @@ final class McpServerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $names = array_column($this->decode()['result']['tools'] ?? [], 'name');
         self::assertContains('search_reservations', $names);
-        self::assertContains('create_reservation', $names);
+        // Only what the token may call is offered.
+        self::assertNotContains('create_reservation', $names);
+        self::assertNotContains('get_turnover', $names);
+    }
+
+    public function testToolListGrowsWithThePermissionsOfTheToken(): void
+    {
+        $this->configureMcp(enabled: true, write: true);
+        $list = function (array $scopes): array {
+            [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ...$scopes]);
+            $this->postJson($token, [
+                'jsonrpc' => '2.0',
+                'id' => 1,
+                'method' => 'tools/list',
+                'params' => ['_meta' => [
+                    'io.modelcontextprotocol/protocolVersion' => self::MODERN_VERSION,
+                    'io.modelcontextprotocol/clientCapabilities' => new \stdClass(),
+                    'io.modelcontextprotocol/clientInfo' => ['name' => 'functional-test', 'version' => '1.0'],
+                ]],
+            ], ['HTTP_MCP_PROTOCOL_VERSION' => self::MODERN_VERSION, 'HTTP_MCP_METHOD' => 'tools/list']);
+            self::assertResponseIsSuccessful();
+
+            return array_column($this->decode()['result']['tools'] ?? [], 'name');
+        };
+
+        self::assertSame([], $list([]));
+        $writer = $list([ApiScope::RESERVATIONS_WRITE, ApiScope::STATISTICS_READ]);
+        self::assertContains('create_reservation', $writer);
+        self::assertContains('get_revenue_forecast', $writer);
+        self::assertNotContains('search_reservations', $writer);
+        self::assertNotContains('update_bank_import_lines', $writer);
     }
 
     public function testNoNotificationStreamsAreOffered(): void
@@ -190,6 +231,340 @@ final class McpServerTest extends WebTestCase
         self::assertSame('Arrives late', $found['remark']['untrusted_text']);
     }
 
+    public function testOperationsReportShowsTheRoomPlanAndSharesNamesOnlyWhenPermitted(): void
+    {
+        $this->configureMcp(enabled: true, write: true);
+        $reservation = $this->bookReservation('Mustermann-Betrieb', '+600 days');
+        $day = $reservation->getStartDate()->format('Y-m-d');
+        $apartmentId = (int) $reservation->getAppartment()?->getId();
+
+        [$staff, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::OPERATIONS_READ]);
+        $em = $this->em();
+        $apartment = $em->find(Appartment::class, $apartmentId);
+        self::assertInstanceOf(Appartment::class, $apartment);
+        $status = new RoomDayStatus();
+        $status->setAppartment($apartment);
+        $status->setDate(new \DateTimeImmutable($day));
+        $status->setHkStatus(HousekeepingStatus::CLEANED);
+        $status->setAssignedTo($staff);
+        $status->setNote('Extra towels');
+        $em->persist($status);
+        $em->flush();
+
+        $result = $this->callTool($token, 'get_operations_report', ['start' => $day, 'occupancyTypes' => ['ARRIVAL']]);
+        self::assertFalse($result['isError'] ?? false, (string) json_encode($result));
+        $room = $this->findRoom($result['structuredContent'], $day, $apartmentId);
+        self::assertSame('ARRIVAL', $room['occupancy']);
+        self::assertSame([(int) $reservation->getId()], $room['reservationIds']);
+        self::assertSame('CLEANED', $room['housekeeping']['status']);
+        self::assertNull($room['housekeeping']['assignedTo']);
+        self::assertNull($room['housekeeping']['note']);
+        self::assertContains((int) $reservation->getId(), array_column($result['structuredContent']['reservations'], 'id'));
+        self::assertStringNotContainsString('Mustermann-Betrieb', (string) json_encode($result));
+
+        [, $guestToken] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::OPERATIONS_READ, ApiScope::GUESTS_READ]);
+        $result = $this->callTool($guestToken, 'get_operations_report', ['start' => $day]);
+        $room = $this->findRoom($result['structuredContent'], $day, $apartmentId);
+        self::assertSame('Mcp Tester', $room['housekeeping']['assignedTo']);
+        self::assertSame('Extra towels', $room['housekeeping']['note']['untrusted_text']);
+        self::assertStringContainsString('Mustermann-Betrieb', (string) json_encode($result['structuredContent']['reservations']));
+    }
+
+    public function testOperationsReportNeedsTheOperationsRoleAndABoundedRange(): void
+    {
+        $this->configureMcp(enabled: true);
+
+        [, $token] = $this->createUserWithToken(['ROLE_RESERVATIONS'], [ApiScope::MCP_ACCESS, ApiScope::OPERATIONS_READ]);
+        $result = $this->callTool($token, 'get_operations_report', ['start' => '2026-10-01']);
+        self::assertTrue($result['isError'] ?? false);
+        self::assertStringContainsString('operations:read', $result['content'][0]['text'] ?? '');
+
+        [, $token] = $this->createUserWithToken(['ROLE_OPERATIONS'], [ApiScope::MCP_ACCESS, ApiScope::OPERATIONS_READ]);
+        $result = $this->callTool($token, 'get_operations_report', ['start' => '2026-10-01', 'end' => '2026-10-15']);
+        self::assertTrue($result['isError'] ?? false);
+        self::assertStringContainsString('14 days', $result['content'][0]['text'] ?? '');
+
+        $result = $this->callTool($token, 'get_operations_report', ['start' => '2026-10-01', 'end' => '2026-10-14']);
+        self::assertFalse($result['isError'] ?? false, (string) json_encode($result));
+        self::assertCount(14, $result['structuredContent']['days']);
+    }
+
+    public function testOccupancyForecastAndBookingPaceCountANewBooking(): void
+    {
+        $this->configureMcp(enabled: true, write: true);
+        [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::RESERVATIONS_READ, ApiScope::STATISTICS_READ]);
+        $arrival = new \DateTimeImmutable('+620 days');
+        $range = ['start' => $arrival->format('Y-m-d'), 'end' => $arrival->modify('+2 days')->format('Y-m-d')];
+        $pace = fn (string $asOf): array => $this->callTool($token, 'get_booking_pace', $range + ['asOf' => $asOf])['structuredContent'];
+
+        $before = $this->callTool($token, 'get_occupancy_forecast', $range)['structuredContent'];
+        $this->bookReservation('Gast-Prognose', '+620 days');
+        $after = $this->callTool($token, 'get_occupancy_forecast', $range)['structuredContent'];
+
+        // Two nights booked; the departure day is free again.
+        self::assertSame([1, 1, 0], array_map(
+            static fn (array $old, array $new): int => $new['booked'] - $old['booked'],
+            $before['nights'],
+            $after['nights'],
+        ));
+        self::assertSame(2, $after['totals']['booked'] - $before['totals']['booked']);
+        foreach ($after['nights'] as $night) {
+            self::assertSame($night['rooms'], $night['booked'] + $night['blocked'] + $night['available']);
+        }
+
+        $today = $pace((new \DateTimeImmutable('today'))->format('Y-m-d'));
+        $yesterday = $pace((new \DateTimeImmutable('yesterday'))->format('Y-m-d'));
+        self::assertSame(2, $today['current']['bookedByCutOff']['roomNights'] - $yesterday['current']['bookedByCutOff']['roomNights']);
+        self::assertSame(1, $today['current']['bookedByCutOff']['reservations'] - $yesterday['current']['bookedByCutOff']['reservations']);
+        self::assertSame($arrival->modify('-1 year')->format('Y-m-d'), $today['previousYear']['firstNight']);
+    }
+
+    public function testRateCalendarAndPriceListDescribeThePrices(): void
+    {
+        $this->configureMcp(enabled: true);
+        [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::PRICES_READ]);
+        $apartment = $this->em()->getRepository(Appartment::class)->findOneBy(['active' => true], ['id' => 'ASC']);
+        self::assertInstanceOf(Appartment::class, $apartment);
+        $origin = $this->em()->getRepository(\App\Entity\ReservationOrigin::class)->findOneBy([], ['id' => 'ASC']);
+        self::assertNotNull($origin);
+        $start = new \DateTimeImmutable('+30 days');
+        $end = $start->modify('+29 days');
+
+        $result = $this->callTool($token, 'get_rate_calendar', [
+            'apartmentId' => (int) $apartment->getId(),
+            'objectId' => (int) $apartment->getObject()?->getId(),
+            'start' => $start->format('Y-m-d'),
+            'end' => $end->format('Y-m-d'),
+            'originId' => (int) $origin->getId(),
+        ]);
+        self::assertFalse($result['isError'] ?? false, (string) json_encode($result));
+        self::assertSame($apartment->getObject()?->getId(), $result['structuredContent']['branch']['id']);
+        $periods = $result['structuredContent']['periods'];
+        self::assertSame($start->format('Y-m-d'), $periods[0]['firstNight']);
+        self::assertSame($end->format('Y-m-d'), $periods[array_key_last($periods)]['lastNight']);
+        foreach ($periods as $period) {
+            self::assertNotEmpty($period['rates']);
+        }
+
+        $list = $this->callTool($token, 'get_price_list', ['type' => 'apartment'])['structuredContent'];
+        self::assertSame(['apartment'], array_values(array_unique(array_column($list['prices'], 'type'))));
+        self::assertContains($periods[0]['rates'][0]['priceId'], array_column($list['prices'], 'id'));
+
+        $invalid = $this->callTool($token, 'get_price_list', ['roomCategoryId' => 999999]);
+        self::assertTrue($invalid['isError'] ?? false);
+        self::assertStringContainsString('Unknown room category id.', $invalid['content'][0]['text'] ?? '');
+
+        $rules = $this->callTool($token, 'get_price_rules')['structuredContent'];
+        self::assertIsArray($rules['rules']);
+        self::assertSame(['minPercent', 'maxPercent', 'rounding'], array_keys($rules['limits']));
+    }
+
+    public function testPriceChangesNeedAnAdministrator(): void
+    {
+        $this->configureMcp(enabled: true);
+        [, $token] = $this->createUserWithToken(['ROLE_RESERVATIONS'], [ApiScope::MCP_ACCESS, ApiScope::PRICES_WRITE]);
+
+        $result = $this->callTool($token, 'preview_day_prices', $this->dayPriceArguments(['+700 days' => 90.0]));
+
+        self::assertTrue($result['isError'] ?? false);
+        self::assertStringContainsString('prices:write', $result['content'][0]['text'] ?? '');
+    }
+
+    public function testDayPricesAreSavedAfterPreviewAndKeepThoseSetByHand(): void
+    {
+        $this->configureMcp(enabled: true);
+        [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::PRICES_WRITE]);
+        $args = $this->dayPriceArguments(['+700 days' => 111.0, '+701 days' => null, '+702 days' => 222.0]);
+        [$set, $removed, $byHand] = array_column($args['nights'], 'night');
+        $apartment = $this->em()->getRepository(Appartment::class)->findOneBy(['active' => true], ['id' => 'ASC']);
+        self::assertInstanceOf(Appartment::class, $apartment);
+        $manual = new DayPrice($apartment->getObject() ?? self::fail('Room without subsidiary.'), $apartment->getRoomCategory() ?? self::fail('Room without category.'), new \DateTimeImmutable($byHand));
+        $manual->set(150.0, $args['persons'], DayPriceSource::MANUAL, null, new \DateTimeImmutable());
+        $this->em()->persist($manual);
+        $this->em()->flush();
+
+        try {
+            $preview = $this->callTool($token, 'preview_day_prices', $args)['structuredContent'];
+            self::assertSame(1, $preview['changes']);
+            self::assertSame([$set => null, $removed => 'no_day_price_to_remove', $byHand => 'day_price_set_by_hand'], array_column($preview['nights'], 'skipped', 'night'));
+
+            $refused = $this->callTool($token, 'set_day_prices', $args + ['previewToken' => 'pv1.0.forged']);
+            self::assertTrue($refused['isError'] ?? false);
+            // The token covers the amounts: a changed amount needs a new preview.
+            $changed = $args;
+            $changed['nights'][0]['amount'] = 112.0;
+            self::assertTrue($this->callTool($token, 'set_day_prices', $changed + ['previewToken' => $preview['previewToken']])['isError'] ?? false);
+
+            $saved = $this->callTool($token, 'set_day_prices', $args + ['previewToken' => $preview['previewToken']]);
+            self::assertFalse($saved['isError'] ?? false, (string) json_encode($saved));
+            self::assertSame(1, $saved['structuredContent']['changed']);
+            self::assertTrue($this->callTool($token, 'set_day_prices', $args + ['previewToken' => $preview['previewToken']])['structuredContent']['alreadySaved']);
+
+            $this->em()->clear();
+            $stored = [];
+            foreach ($this->em()->getRepository(DayPrice::class)->findAll() as $dayPrice) {
+                $stored[$dayPrice->getNight()->format('Y-m-d')] = [$dayPrice->getAmount(), $dayPrice->getSource(), $dayPrice->getSourceLabel()];
+            }
+            ksort($stored);
+            self::assertSame([
+                $set => [111.0, DayPriceSource::ASSISTANT, 'functional-test'],
+                $byHand => [150.0, DayPriceSource::MANUAL, null],
+            ], $stored);
+
+            // Only with consent the assistant replaces the day price set by hand.
+            $overwrite = $args + ['overwriteManual' => true];
+            $preview = $this->callTool($token, 'preview_day_prices', $overwrite)['structuredContent'];
+            self::assertNull(array_column($preview['nights'], 'skipped', 'night')[$byHand]);
+            self::assertFalse($this->callTool($token, 'set_day_prices', $overwrite + ['previewToken' => $preview['previewToken']])['isError'] ?? false);
+        } finally {
+            $this->em()->createQuery('DELETE FROM App\Entity\DayPrice d')->execute();
+        }
+    }
+
+    public function testEventRuleIsCreatedAfterPreview(): void
+    {
+        $this->configureMcp(enabled: true);
+        [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::PRICES_READ, ApiScope::PRICES_WRITE]);
+        $apartment = $this->em()->getRepository(Appartment::class)->findOneBy(['active' => true], ['id' => 'ASC']);
+        self::assertInstanceOf(Appartment::class, $apartment);
+        $fair = [
+            'name' => 'Messe MCP',
+            'firstNight' => (new \DateTimeImmutable('+705 days'))->format('Y-m-d'),
+            'lastNight' => (new \DateTimeImmutable('+707 days'))->format('Y-m-d'),
+            'percent' => 20,
+            'objectIds' => [(int) $apartment->getObject()?->getId()],
+        ];
+        $ruleId = null;
+
+        try {
+            $preview = $this->callTool($token, 'preview_event_rule', $fair);
+            self::assertFalse($preview['isError'] ?? false, (string) json_encode($preview));
+            $preview = $preview['structuredContent'];
+            self::assertSame(3, $preview['nightsInPeriod']);
+            self::assertSame(3, $preview['appliesOnNights']);
+            self::assertGreaterThan($preview['example']['before'], $preview['example']['after']);
+
+            self::assertTrue($this->callTool($token, 'create_event_rule', ['percent' => 25] + $fair + ['previewToken' => $preview['previewToken']])['isError'] ?? false);
+
+            $created = $this->callTool($token, 'create_event_rule', $fair + ['previewToken' => $preview['previewToken']]);
+            self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
+            $ruleId = $created['structuredContent']['rule']['id'];
+            self::assertSame($fair['lastNight'], $created['structuredContent']['rule']['lastNight']);
+            self::assertTrue($this->callTool($token, 'create_event_rule', $fair + ['previewToken' => $preview['previewToken']])['structuredContent']['alreadyCreated']);
+
+            $this->em()->clear();
+            $rule = $this->em()->find(PriceRule::class, $ruleId);
+            self::assertInstanceOf(PriceRule::class, $rule);
+            self::assertSame(20.0, $rule->getPercent());
+            self::assertFalse($rule->isAllSubsidiaries());
+            self::assertSame((new \DateTimeImmutable('+708 days'))->format('Y-m-d'), $rule->getEndDate()?->format('Y-m-d'));
+            self::assertContains($ruleId, array_column($this->callTool($token, 'get_price_rules')['structuredContent']['rules'], 'id'));
+        } finally {
+            if (null !== $ruleId) {
+                $this->em()->remove($this->em()->find(PriceRule::class, $ruleId) ?? self::fail('Rule vanished.'));
+                $this->em()->flush();
+            }
+        }
+    }
+
+    public function testAssistantPreparesABankImportDraftOfItsOwner(): void
+    {
+        $this->configureMcp(enabled: true);
+        [$owner, $token] = $this->createUserWithToken(['ROLE_CASHJOURNAL'], [ApiScope::MCP_ACCESS, ApiScope::BANK_IMPORT_WRITE]);
+        [$bankId, $expenseId] = $this->createBankAndExpenseAccount();
+        $draftId = $this->createBankImportDraft($owner, $bankId);
+
+        $drafts = $this->callTool($token, 'list_bank_import_drafts')['structuredContent']['drafts'];
+        self::assertSame([$draftId], array_column($drafts, 'draftId'));
+        self::assertSame('DE…0001', $drafts[0]['bankAccount']['iban']);
+
+        $result = $this->callTool($token, 'get_bank_import_lines', ['draftId' => $draftId]);
+        $lines = $result['structuredContent']['lines'];
+        self::assertCount(2, $lines);
+        self::assertSame('Rechnung Reinigung Mai', $lines[0]['purpose']['untrusted_text']);
+        self::assertSame('DE…3456', $lines[0]['counterpartyIban']);
+        self::assertStringNotContainsString('DE89370400440532013456', (string) json_encode($result));
+
+        $context = $this->callTool($token, 'get_bank_import_context', ['draftId' => $draftId])['structuredContent'];
+        self::assertContains($expenseId, array_column($context['accounts'], 'id'));
+
+        $invalid = $this->callTool($token, 'update_bank_import_lines', ['draftId' => $draftId, 'changes' => [['idx' => 0, 'debitAccountId' => 999999]]]);
+        self::assertTrue($invalid['isError'] ?? false);
+        self::assertStringContainsString('chart of accounts', $invalid['content'][0]['text'] ?? '');
+
+        $updated = $this->callTool($token, 'update_bank_import_lines', ['draftId' => $draftId, 'changes' => [
+            ['idx' => 0, 'debitAccountId' => $expenseId, 'creditAccountId' => $bankId, 'remark' => 'Reinigung Mai'],
+            ['idx' => 1, 'ignore' => true],
+        ]]);
+        self::assertFalse($updated['isError'] ?? false, (string) json_encode($updated));
+        self::assertSame(['ready', 'ignored'], array_column($updated['structuredContent']['updated'], 'status'));
+        $this->em()->clear();
+        $draft = $this->em()->find(BankImportDraft::class, $draftId);
+        self::assertInstanceOf(BankImportDraft::class, $draft);
+        self::assertSame('Reinigung Mai', $draft->getState()['lines'][0]['userRemark']);
+
+        // Drafts are private: another cash journal user's assistant neither lists nor reads them.
+        [, $colleagueToken] = $this->createUserWithToken(['ROLE_CASHJOURNAL'], [ApiScope::MCP_ACCESS, ApiScope::BANK_IMPORT_WRITE]);
+        self::assertSame([], $this->callTool($colleagueToken, 'list_bank_import_drafts')['structuredContent']['drafts']);
+        self::assertTrue($this->callTool($colleagueToken, 'get_bank_import_lines', ['draftId' => $draftId])['isError'] ?? false);
+    }
+
+    public function testBankImportToolsNeedTheCashJournalRole(): void
+    {
+        $this->configureMcp(enabled: true);
+        [, $token] = $this->createUserWithToken(['ROLE_RESERVATIONS'], [ApiScope::MCP_ACCESS, ApiScope::BANK_IMPORT_WRITE]);
+
+        $result = $this->callTool($token, 'list_bank_import_drafts');
+
+        self::assertTrue($result['isError'] ?? false);
+        self::assertStringContainsString('bank-import:write', $result['content'][0]['text'] ?? '');
+    }
+
+    public function testRevenueForecastValuesReservationsLikeTheirInvoiceInTheDepartureMonth(): void
+    {
+        $this->configureMcp(enabled: true, write: true);
+        [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::STATISTICS_READ, ApiScope::PRICES_READ]);
+        $month = (new \DateTimeImmutable('+642 days'))->format('Y-m');
+        $forecast = fn (): array => $this->callTool($token, 'get_revenue_forecast', ['startMonth' => $month])['structuredContent']['months'][0];
+
+        $before = $forecast();
+        $reservation = $this->bookReservation('Gast-Forecast', '+640 days');
+        $after = $forecast();
+
+        $quote = $this->callTool($token, 'get_price_quote', [
+            'apartmentId' => (int) $reservation->getAppartment()?->getId(),
+            'arrival' => $reservation->getStartDate()->format('Y-m-d'),
+            'departure' => $reservation->getEndDate()->format('Y-m-d'),
+            'persons' => $reservation->getPersons(),
+            'originId' => (int) $reservation->getReservationOrigin()?->getId(),
+        ])['structuredContent'];
+        $bookedExtraIds = array_map(static fn (Price $price): int => (int) $price->getId(), $reservation->getPrices()->toArray());
+        $bookedExtras = array_sum(array_map(
+            static fn (array $extra): float => \in_array((int) $extra['id'], $bookedExtraIds, true) ? (float) $extra['total'] : 0.0,
+            $quote['extras'],
+        ));
+
+        self::assertSame($month, $after['month']);
+        self::assertSame(1, $after['withoutInvoice']['reservations'] - $before['withoutInvoice']['reservations']);
+        self::assertEqualsWithDelta((float) $quote['room']['gross'], $after['withoutInvoice']['room'] - $before['withoutInvoice']['room'], 0.005);
+        self::assertGreaterThan(0.0, $bookedExtras);
+        self::assertEqualsWithDelta($bookedExtras, $after['withoutInvoice']['extras'] - $before['withoutInvoice']['extras'], 0.005);
+
+        // Once invoiced, the reservation is reported separately; a canceled invoice does not count.
+        $invoice = $this->createInvoiceFor($reservation);
+        $invoiced = $forecast();
+        self::assertSame($before['withoutInvoice']['reservations'], $invoiced['withoutInvoice']['reservations']);
+        self::assertSame($before['withInvoice']['reservations'] + 1, $invoiced['withInvoice']['reservations']);
+        self::assertEqualsWithDelta($after['total'], $invoiced['total'], 0.005);
+
+        // The request above ran in a new kernel: reload the invoice before changing it.
+        $invoice = $this->em()->find(\App\Entity\Invoice::class, $invoice->getId());
+        self::assertInstanceOf(\App\Entity\Invoice::class, $invoice);
+        $invoice->setStatus(\App\Entity\Enum\InvoiceStatus::CANCELED->value);
+        $this->em()->flush();
+        self::assertSame($after['withoutInvoice']['reservations'], $forecast()['withoutInvoice']['reservations']);
+    }
+
     public function testBookingFlowCreatesReservationNotifiesStaffAndIsIdempotent(): void
     {
         $this->configureMcp(enabled: true, write: true);
@@ -197,18 +572,21 @@ final class McpServerTest extends WebTestCase
         $args = $this->bookingArguments('Gast-Idempotenz', '+500 days');
 
         // Without preview there is no booking.
-        $withoutPreview = $this->callTool($token, 'create_reservation', $args + ['previewToken' => 'pv1.1.invalid']);
+        $withoutPreview = $this->callTool($token, 'create_reservation', $args + ['previewToken' => 'pv1.1.invalid', 'expectedTotal' => 100.0]);
         self::assertTrue($withoutPreview['isError'] ?? false);
 
         $preview = $this->callTool($token, 'preview_reservation', $args);
         self::assertFalse($preview['isError'] ?? false, (string) json_encode($preview));
         $previewToken = $preview['structuredContent']['previewToken'];
+        $confirmation = ['previewToken' => $previewToken, 'expectedTotal' => $preview['structuredContent']['estimatedTotal']];
 
-        // The confirmation only covers exactly the previewed request.
-        $changed = $this->callTool($token, 'create_reservation', ['bookerLastname' => 'Someone Else'] + $args + ['previewToken' => $previewToken]);
+        // The confirmation only covers exactly the previewed request and price.
+        $changed = $this->callTool($token, 'create_reservation', ['bookerLastname' => 'Someone Else'] + $args + $confirmation);
         self::assertTrue($changed['isError'] ?? false);
+        $cheaper = $this->callTool($token, 'create_reservation', $args + ['expectedTotal' => $confirmation['expectedTotal'] - 1] + $confirmation);
+        self::assertTrue($cheaper['isError'] ?? false);
 
-        $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $previewToken]);
+        $created = $this->callTool($token, 'create_reservation', $args + $confirmation);
         self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
         self::assertTrue($created['structuredContent']['created']);
         $reservationId = (int) $created['structuredContent']['reservation']['id'];
@@ -230,7 +608,7 @@ final class McpServerTest extends WebTestCase
         self::assertSame('mcp', $changeLog?->getChannel());
 
         // A retry with the same confirmation returns the same reservation instead of a duplicate.
-        $retry = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $previewToken]);
+        $retry = $this->callTool($token, 'create_reservation', $args + $confirmation);
         self::assertTrue($retry['structuredContent']['alreadyCreated']);
         self::assertSame($reservationId, $retry['structuredContent']['reservation']['id']);
 
@@ -263,10 +641,11 @@ final class McpServerTest extends WebTestCase
         self::assertEqualsWithDelta(30.0, $preview['structuredContent']['extrasTotal'], 0.001);
 
         // The confirmation covers the extras as well.
-        $changed = $this->callTool($token, 'create_reservation', ['extras' => [$dog, $breakfast]] + $args + ['previewToken' => $preview['structuredContent']['previewToken']]);
+        $confirmation = ['previewToken' => $preview['structuredContent']['previewToken'], 'expectedTotal' => $preview['structuredContent']['estimatedTotal']];
+        $changed = $this->callTool($token, 'create_reservation', ['extras' => [$dog, $breakfast]] + $args + $confirmation);
         self::assertTrue($changed['isError'] ?? false);
 
-        $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $preview['structuredContent']['previewToken']]);
+        $created = $this->callTool($token, 'create_reservation', $args + $confirmation);
         self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
         self::assertSame([$dog], array_column($created['structuredContent']['reservation']['extras'], 'id'));
 
@@ -385,6 +764,53 @@ final class McpServerTest extends WebTestCase
         self::assertSame('hotel.example.org', trim($crawler->filter('textarea[name="mcp_settings[allowedHosts]"]')->text()));
     }
 
+    public function testActionLogIsPaginated(): void
+    {
+        $this->configureMcp(enabled: true);
+        $admin = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::RESERVATIONS_READ], null)[0];
+        $this->client->loginUser($admin);
+
+        // Future timestamps put these entries ahead of anything other tests logged.
+        $em = $this->em();
+        $marker = 'paging_'.bin2hex(random_bytes(4));
+        for ($i = 0; $i < 30; ++$i) {
+            $em->persist(new McpToolCallLog($marker, McpToolCallOutcome::OK, new \DateTimeImmutable(sprintf('+1 day +%d minutes', $i))));
+        }
+        $em->flush();
+        $total = $em->getRepository(McpToolCallLog::class)->count([]);
+        $pages = (int) ceil($total / 25);
+        $markedRows = static fn (Crawler $crawler): Crawler => $crawler->filter('tbody tr')->reduce(
+            static fn (Crawler $row): bool => str_contains($row->text(), $marker),
+        );
+
+        $crawler = $this->client->request('GET', '/settings/mcp');
+        self::assertResponseIsSuccessful();
+        self::assertCount(25, $crawler->filter('[data-controller="log-pagination"] tbody tr'));
+        self::assertCount(25, $markedRows($crawler));
+        self::assertSame('1', $crawler->filter('[data-controller="log-pagination"] .pagination .active')->text());
+
+        $crawler = $this->client->request('GET', '/settings/mcp/logs?page=2');
+        self::assertResponseIsSuccessful();
+        self::assertCount(5, $markedRows($crawler));
+        self::assertSame('2', $crawler->filter('.pagination .active')->text());
+
+        // A page beyond the end shows the last one.
+        $crawler = $this->client->request('GET', '/settings/mcp/logs?page=999');
+        self::assertCount($total - ($pages - 1) * 25, $crawler->filter('tbody tr'));
+        self::assertSame((string) $pages, $crawler->filter('.pagination .active')->text());
+    }
+
+    public function testActionLogIsForAdministratorsOnly(): void
+    {
+        $this->configureMcp(enabled: true);
+        $user = $this->createUserWithToken(['ROLE_RESERVATIONS'], [ApiScope::RESERVATIONS_READ], null)[0];
+        $this->client->loginUser($user);
+
+        $this->client->request('GET', '/settings/mcp/logs');
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
     public function testMcpUiIsHiddenWhileSwitchedOff(): void
     {
         $admin = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::RESERVATIONS_READ], null)[0];
@@ -406,11 +832,39 @@ final class McpServerTest extends WebTestCase
         self::assertCount(2, $crawler->filter('input[name="api_token[kind]"]'));
     }
 
+    public function testABookingIsRefusedWhenThePriceChangedAfterThePreview(): void
+    {
+        $this->configureMcp(enabled: true, write: true);
+        [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::RESERVATIONS_WRITE]);
+        $args = $this->bookingArguments('Gast-Preisregel', '+760 days');
+        $preview = $this->callTool($token, 'preview_reservation', $args)['structuredContent'];
+
+        // A price rule for exactly these nights appears between preview and confirmation.
+        $rule = new PriceRule();
+        $rule->setName('mcp-test');
+        $rule->setPercent(20.0);
+        $rule->setPeriod(new \DateTimeImmutable($args['arrival']), new \DateTimeImmutable($args['departure']));
+        $this->em()->persist($rule);
+        $this->em()->flush();
+
+        try {
+            $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $preview['previewToken'], 'expectedTotal' => $preview['estimatedTotal']]);
+            self::assertTrue($created['isError'] ?? false);
+            self::assertStringContainsString('price has changed', (string) json_encode($created));
+
+            $again = $this->callTool($token, 'preview_reservation', $args)['structuredContent'];
+            self::assertGreaterThan($preview['estimatedTotal'], $again['estimatedTotal']);
+        } finally {
+            $this->em()->remove($this->em()->find(PriceRule::class, $rule->getId()));
+            $this->em()->flush();
+        }
+    }
+
     public function testCreateReservationOptionFollowsTheGlobalSwitch(): void
     {
         $admin = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::RESERVATIONS_READ], null)[0];
         $this->client->loginUser($admin);
-        $writeOption = sprintf('input[name="api_token[mcpScopes][]"][value="%s"]', ApiScope::RESERVATIONS_WRITE->value);
+        $writeOption = sprintf('input[name="api_token[scopes][]"][value="%s"]', ApiScope::RESERVATIONS_WRITE->value);
 
         $this->configureMcp(enabled: true, write: false);
         $crawler = $this->client->request('GET', '/profile/');
@@ -425,6 +879,57 @@ final class McpServerTest extends WebTestCase
         self::assertCount(1, $crawler->filter($writeOption));
     }
 
+    public function testPriceWriteOptionIsOfferedToAdministratorsOnly(): void
+    {
+        $option = sprintf('input[name="api_token[scopes][]"][value="%s"]', ApiScope::PRICES_WRITE->value);
+        $admin = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::RESERVATIONS_READ], null)[0];
+        $staff = $this->createUserWithToken(['ROLE_RESERVATIONS'], [ApiScope::RESERVATIONS_READ], null)[0];
+        $this->configureMcp(enabled: true);
+
+        $this->client->loginUser($admin);
+        self::assertCount(1, $this->client->request('GET', '/profile/')->filter($option));
+
+        // Without the role the permission is shown greyed out with its reason and cannot be submitted.
+        $this->client->loginUser($staff);
+        $crawler = $this->client->request('GET', '/profile/');
+        self::assertCount(0, $crawler->filter($option));
+        $translator = static::getContainer()->get('translator');
+        self::assertStringContainsString(
+            (string) $translator->trans('profile.apitokens.unavailable.role', ['%role%' => $translator->trans('ROLE_ADMIN')]),
+            $crawler->filter('#apiTokenOffcanvas')->text()
+        );
+        $this->submitTokenForm([
+            'name' => 'Too much',
+            'kind' => 'mcp',
+            'expiresIn' => '+30 days',
+            'scopes' => [ApiScope::RESERVATIONS_READ->value, ApiScope::PRICES_WRITE->value],
+        ]);
+        self::assertNull($this->em()->getRepository(\App\Entity\ApiToken::class)->findOneBy(['user' => $staff, 'name' => 'Too much']));
+    }
+
+    public function testTokenListSumsUpPermissionsInPlainLanguage(): void
+    {
+        $this->configureMcp(enabled: true);
+        $admin = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::RESERVATIONS_READ, ApiScope::PRICES_READ, ApiScope::BANK_IMPORT_WRITE], '+30 days')[0];
+        $this->client->loginUser($admin);
+        $translator = static::getContainer()->get('translator');
+        $and = ' '.$translator->trans('profile.apitokens.summary.and').' ';
+        $expected = [
+            $translator->trans('profile.apitokens.summary.see.mcp', ['%list%' => $translator->trans('profile.apitokens.summary.scope.reservations_read').$and.$translator->trans('profile.apitokens.summary.scope.prices_read')]),
+            $translator->trans('profile.apitokens.summary.personal.bank'),
+            $translator->trans('profile.apitokens.summary.change.some', ['%list%' => $translator->trans('profile.apitokens.summary.scope.bank_import_write')]),
+        ];
+
+        $profile = $this->client->request('GET', '/profile/')->filter('#api-tokens table')->text();
+        $settings = $this->client->request('GET', '/settings/mcp')->text();
+
+        foreach ($expected as $sentence) {
+            self::assertStringContainsString($sentence, $profile);
+            self::assertStringContainsString($sentence, $settings);
+        }
+        self::assertStringNotContainsString('bank-import:write', $profile);
+    }
+
     public function testAiTokenIsCreatedFromTheProfileDialog(): void
     {
         $this->configureMcp(enabled: true, write: true);
@@ -435,14 +940,13 @@ final class McpServerTest extends WebTestCase
             'name' => 'Claude',
             'kind' => 'mcp',
             'expiresIn' => '+30 days',
-            'scopes' => [ApiScope::RESERVATIONS_READ->value],
-            'mcpScopes' => [ApiScope::RESERVATIONS_WRITE->value],
+            'scopes' => [ApiScope::RESERVATIONS_READ->value, ApiScope::RESERVATIONS_WRITE->value],
         ]);
 
         $token = $this->em()->getRepository(\App\Entity\ApiToken::class)->findOneBy(['user' => $admin, 'name' => 'Claude']);
         self::assertNotNull($token);
         self::assertSame(
-            [ApiScope::RESERVATIONS_READ->value, ApiScope::MCP_ACCESS->value, ApiScope::RESERVATIONS_WRITE->value],
+            [ApiScope::RESERVATIONS_READ->value, ApiScope::RESERVATIONS_WRITE->value, ApiScope::MCP_ACCESS->value],
             $token->getScopes()
         );
 
@@ -464,8 +968,7 @@ final class McpServerTest extends WebTestCase
             'name' => 'Calendar',
             'kind' => 'api',
             'expiresIn' => '',
-            'scopes' => [ApiScope::CALENDAR_READ->value],
-            'mcpScopes' => [ApiScope::GUESTS_READ->value],
+            'scopes' => [ApiScope::CALENDAR_READ->value, ApiScope::GUESTS_READ->value],
         ]);
 
         $token = $this->em()->getRepository(\App\Entity\ApiToken::class)->findOneBy(['user' => $admin, 'name' => 'Calendar']);
@@ -526,13 +1029,13 @@ final class McpServerTest extends WebTestCase
         self::assertResponseRedirects('/settings/mcp');
     }
 
-    private function bookReservation(string $lastname): Reservation
+    private function bookReservation(string $lastname, string $arrivalOffset = '+540 days'): Reservation
     {
         [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::RESERVATIONS_WRITE]);
-        $args = $this->bookingArguments($lastname, '+540 days') + ['remark' => 'Arrives late'];
+        $args = $this->bookingArguments($lastname, $arrivalOffset) + ['remark' => 'Arrives late'];
         $preview = $this->callTool($token, 'preview_reservation', $args);
         self::assertFalse($preview['isError'] ?? false, (string) json_encode($preview));
-        $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $preview['structuredContent']['previewToken']]);
+        $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $preview['structuredContent']['previewToken'], 'expectedTotal' => $preview['structuredContent']['estimatedTotal']]);
         self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
 
         $reservation = $this->em()->find(Reservation::class, (int) $created['structuredContent']['reservation']['id']);
@@ -588,6 +1091,130 @@ final class McpServerTest extends WebTestCase
             'bookerLastname' => $lastname,
             'bookerEmail' => strtolower($lastname).'-'.bin2hex(random_bytes(3)).'@example.com',
         ];
+    }
+
+    private function createInvoiceFor(Reservation $reservation): \App\Entity\Invoice
+    {
+        $em = $this->em();
+        $invoice = new \App\Entity\Invoice();
+        $invoice->setNumber('MCP-'.bin2hex(random_bytes(4)));
+        $invoice->setDate(new \DateTime());
+        $invoice->setStatus(\App\Entity\Enum\InvoiceStatus::OPEN->value);
+        $invoice->setFirstname('Max');
+        $invoice->setLastname('Mustermann');
+        $em->persist($invoice);
+        $managed = $em->find(Reservation::class, $reservation->getId());
+        self::assertInstanceOf(Reservation::class, $managed);
+        $managed->addInvoice($invoice);
+        $em->flush();
+
+        return $invoice;
+    }
+
+    /**
+     * @return array{0: int, 1: int} ids of a new bank account and a new expense account
+     */
+    private function createBankAndExpenseAccount(): array
+    {
+        $em = $this->em();
+        $bank = new AccountingAccount();
+        $bank->setAccountNumber((string) random_int(900000, 999999));
+        $bank->setName('MCP Testbank');
+        $bank->setType(AccountingAccount::TYPE_ASSET);
+        $bank->setIsBankAccount(true);
+        $bank->setIban('DE00 1234 5678 0000 0000 01');
+        $expense = new AccountingAccount();
+        $expense->setAccountNumber((string) random_int(700000, 799999));
+        $expense->setName('MCP Reinigung');
+        $expense->setType(AccountingAccount::TYPE_EXPENSE);
+        $em->persist($bank);
+        $em->persist($expense);
+        $em->flush();
+
+        return [(int) $bank->getId(), (int) $expense->getId()];
+    }
+
+    private function createBankImportDraft(User $owner, int $bankAccountId): string
+    {
+        $line = static fn (int $idx, string $amount, string $name, ?string $iban, string $purpose): array => [
+            'idx' => $idx, 'bookDate' => '2026-05-03', 'valueDate' => '2026-05-03', 'amount' => $amount,
+            'counterpartyName' => $name, 'counterpartyIban' => $iban, 'purpose' => $purpose,
+            'fingerprint' => hash('sha256', $purpose), 'status' => ImportState::LINE_STATUS_PENDING,
+            'isIgnored' => false, 'isDuplicate' => false, 'forceImportDuplicate' => false,
+            'userDebitAccountId' => null, 'userCreditAccountId' => null, 'userTaxRateId' => null,
+            'userRemark' => null, 'userInvoiceNumber' => null, 'appliedRuleId' => null,
+            'matchedInvoiceId' => null, 'matchedInvoiceNumber' => null, 'matchedInvoiceAmountMatches' => false,
+            'splits' => [],
+        ];
+        $state = new ImportState(
+            sessionImportId: (string) \Symfony\Component\Uid\Uuid::v4(),
+            bankAccountId: $bankAccountId,
+            fileFormat: 'camt',
+            bankCsvProfileId: null,
+            originalFilename: 'statement.xml',
+            sourceIban: null,
+            periodFrom: '2026-05-01',
+            periodTo: '2026-05-31',
+            createdAt: new \DateTimeImmutable(),
+            lines: [
+                $line(0, '-119.00', 'Putzteufel GmbH', 'DE89370400440532013456', 'Rechnung Reinigung Mai'),
+                $line(1, '-4.90', 'Bank', null, 'Kontofuehrung'),
+            ],
+        );
+        $em = $this->em();
+        $em->persist(new BankImportDraft($state->sessionImportId, $owner, $state->toArray()));
+        $em->flush();
+
+        return $state->sessionImportId;
+    }
+
+    /**
+     * Day price arguments for the room category and subsidiary of the first active room.
+     *
+     * @param array<string, float|null> $amounts keyed by date offset, e.g. '+700 days'
+     *
+     * @return array{roomCategoryId: int, objectId: int, persons: int, nights: list<array{night: string, amount: float|null}>}
+     */
+    private function dayPriceArguments(array $amounts): array
+    {
+        $apartment = $this->em()->getRepository(Appartment::class)->findOneBy(['active' => true], ['id' => 'ASC']);
+        self::assertInstanceOf(Appartment::class, $apartment);
+        $category = $apartment->getRoomCategory();
+        self::assertNotNull($category);
+        $occupancies = static::getContainer()->get(PriceRepository::class)->findOccupanciesForRoomCategory($category);
+        self::assertNotEmpty($occupancies, 'Sample data must contain a room price for the first room.');
+
+        $nights = [];
+        foreach ($amounts as $offset => $amount) {
+            $nights[] = ['night' => (new \DateTimeImmutable($offset))->format('Y-m-d'), 'amount' => $amount];
+        }
+
+        return [
+            'roomCategoryId' => (int) $category->getId(),
+            'objectId' => (int) $apartment->getObject()?->getId(),
+            'persons' => $occupancies[0],
+            'nights' => $nights,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $report
+     *
+     * @return array<string, mixed>
+     */
+    private function findRoom(array $report, string $day, int $apartmentId): array
+    {
+        foreach ($report['days'] as $dayReport) {
+            if ($dayReport['date'] !== $day) {
+                continue;
+            }
+            foreach ($dayReport['rooms'] as $room) {
+                if ($room['apartmentId'] === $apartmentId) {
+                    return $room;
+                }
+            }
+        }
+        self::fail(\sprintf('Room %d is missing on %s.', $apartmentId, $day));
     }
 
     /**

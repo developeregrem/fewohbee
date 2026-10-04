@@ -1,0 +1,129 @@
+{# Body of the price rule offcanvas, loaded and submitted over fetch: validation errors come back
+   from the server and are rendered here. The preview below the fields is reloaded on every change. #}
+{% set allWeekdays = form.weekdays.vars.value|length == 7 %}
+{% set limited = not allWeekdays or form.firstNight.vars.value is not empty %}
+{{ form_start(form, {attr: {
+    'data-action': 'submit->price-rules#submitForm change->price-rules#changed input->price-rules#changed',
+    'data-preview-url': path('prices.rules.preview', rule ? {'id': rule.id} : {}),
+    'novalidate': 'novalidate',
+}}) }}
+    {{ form_errors(form) }}
+
+    <div class="mb-3">
+        {{ form_label(form.name, null, {label_attr: {class: 'form-label small fw-semibold'}}) }}
+        {{ form_widget(form.name, {attr: {class: 'form-control'}}) }}
+        {{ form_errors(form.name) }}
+    </div>
+
+    <fieldset class="mb-3">
+        <legend class="form-label small fw-semibold">{{ 'price_rules.section.when'|trans }}</legend>
+        {{ form_widget(form.condition, {attr: {class: 'form-select'}}) }}
+        {% for condition in ['always', 'last_minute', 'early_bird', 'occupancy_high', 'occupancy_low'] %}
+            <p class="text-body-secondary small mt-1 mb-0" data-condition-help="{{ condition }}" hidden>{{ ('price_rules.condition_help_' ~ condition)|trans }}</p>
+        {% endfor %}
+        <div class="row g-2 mt-1">
+            <div class="col-6" data-conditions="occupancy_high occupancy_low" hidden>
+                <label class="form-label small" for="{{ form.occupancy.vars.id }}">{{ 'price_rules.occupancy'|trans }}</label>
+                <div class="input-group">
+                    {{ form_widget(form.occupancy, {attr: {class: 'form-control'}}) }}
+                    <span class="input-group-text">%</span>
+                </div>
+                {{ form_errors(form.occupancy) }}
+            </div>
+            <div class="col-6" data-conditions="last_minute early_bird occupancy_low" hidden>
+                <label class="form-label small" for="{{ form.days.vars.id }}">{{ 'price_rules.days'|trans }}</label>
+                {{ form_widget(form.days, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.days) }}
+            </div>
+            {% if multipleSubsidiaries %}
+                <div class="col-12" data-conditions="occupancy_high occupancy_low" hidden>
+                    {{ form_widget(form.occupancyAcrossSubsidiaries) }}
+                    <p class="text-body-secondary small mb-0">{{ 'price_rules.occupancy_across_help'|trans }}</p>
+                </div>
+            {% else %}
+                {% do form.occupancyAcrossSubsidiaries.setRendered %}
+            {% endif %}
+        </div>
+    </fieldset>
+
+    <fieldset class="mb-3">
+        <legend class="form-label small fw-semibold">{{ 'price_rules.section.amount'|trans }}</legend>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            {# Hand-written button group; setRendered() keeps form_end() from emitting the field again. #}
+            <div class="btn-group" role="group">
+                {% for choice in form.raise %}
+                    <input type="radio" class="btn-check" id="{{ choice.vars.id }}" name="{{ choice.vars.full_name }}"
+                           value="{{ choice.vars.value }}"{{ choice.vars.checked ? ' checked' }}>
+                    <label class="btn btn-outline-primary" for="{{ choice.vars.id }}">{{ choice.vars.label|trans }}</label>
+                {% endfor %}
+            </div>
+            {% do form.raise.setRendered %}
+            <div class="input-group" style="max-width:9rem">
+                {{ form_widget(form.amount, {attr: {class: 'form-control'}}) }}
+                <span class="input-group-text">%</span>
+            </div>
+        </div>
+        {{ form_errors(form.amount) }}
+    </fieldset>
+
+    {% if multipleSubsidiaries %}
+        <fieldset class="mb-3" data-scope>
+            <legend class="form-label small fw-semibold">{{ 'price_rules.section.subsidiaries'|trans }}</legend>
+            {{ form_widget(form.allSubsidiaries, {attr: {'data-scope-all': ''}}) }}
+            <div class="border rounded p-2" style="max-height:10rem;overflow:auto" data-scope-list>
+                {% for subsidiary in form.subsidiaries %}{{ form_widget(subsidiary) }}{% endfor %}
+            </div>
+            {{ form_errors(form.subsidiaries) }}
+        </fieldset>
+    {% else %}
+        {# A single subsidiary needs no choice; the rule simply applies to it. #}
+        <input type="hidden" name="{{ form.allSubsidiaries.vars.full_name }}" value="1">
+        {% do form.allSubsidiaries.setRendered %}
+        {% do form.subsidiaries.setRendered %}
+    {% endif %}
+
+    <fieldset class="mb-3" data-scope>
+        <legend class="form-label small fw-semibold">{{ 'price_rules.section.categories'|trans }}</legend>
+        {{ form_widget(form.allCategories, {attr: {'data-scope-all': ''}}) }}
+        <div class="border rounded p-2" style="max-height:10rem;overflow:auto" data-scope-list>
+            {% for category in form.categories %}{{ form_widget(category) }}{% endfor %}
+        </div>
+        {{ form_errors(form.categories) }}
+    </fieldset>
+
+    <details class="mb-3"{{ limited ? ' open' }}>
+        <summary class="small fw-semibold mb-2">{{ 'price_rules.section.nights'|trans }}</summary>
+        <label class="form-label small">{{ 'price_rules.weekdays'|trans }}</label>
+        <div class="d-flex flex-wrap gap-1 mb-2">
+            {% for day in form.weekdays %}
+                <input type="checkbox" class="btn-check" id="{{ day.vars.id }}" name="{{ day.vars.full_name }}"
+                       value="{{ day.vars.value }}"{{ day.vars.checked ? ' checked' }}>
+                <label class="btn btn-sm btn-outline-primary" for="{{ day.vars.id }}">{{ day.vars.label|trans }}</label>
+            {% endfor %}
+        </div>
+        {% do form.weekdays.setRendered %}
+        {{ form_errors(form.weekdays) }}
+        <div class="row g-2">
+            <div class="col-6">
+                <label class="form-label small" for="{{ form.firstNight.vars.id }}">{{ 'price_rules.first_night'|trans }}</label>
+                {{ form_widget(form.firstNight, {attr: {class: 'form-control'}}) }}
+            </div>
+            <div class="col-6">
+                <label class="form-label small" for="{{ form.lastNight.vars.id }}">{{ 'price_rules.last_night'|trans }}</label>
+                {{ form_widget(form.lastNight, {attr: {class: 'form-control'}}) }}
+            </div>
+            <div class="col-12">
+                {{ form_errors(form.lastNight) }}
+                <p class="text-body-secondary small mb-0">{{ 'price_rules.period_help'|trans }}</p>
+            </div>
+        </div>
+    </details>
+
+    <div class="alert alert-light border small py-2 px-3" data-price-rules-preview aria-live="polite">
+        <i class="fas fa-spinner fa-spin text-muted"></i>
+    </div>
+
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>{{ 'price_rules.save'|trans }}</button>
+    </div>
+{{ form_end(form) }}

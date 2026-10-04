@@ -141,7 +141,7 @@ class PublicBookingCalendarService
     public function getHorizonEnd(): \DateTimeImmutable
     {
         $maxDeparture = $this->restrictionService->getMaxDepartureDate();
-        $hardLimit = (new \DateTimeImmutable('today'))->modify(sprintf('+%d months', self::MAX_HORIZON_MONTHS));
+        $hardLimit = new \DateTimeImmutable('today')->modify(sprintf('+%d months', self::MAX_HORIZON_MONTHS));
 
         if (null === $maxDeparture) {
             return $hardLimit;
@@ -229,7 +229,7 @@ class PublicBookingCalendarService
             return null;
         }
 
-        $currentMonth = (new \DateTimeImmutable('today'))->modify('first day of this month');
+        $currentMonth = new \DateTimeImmutable('today')->modify('first day of this month');
         $start = $requested < $currentMonth ? $currentMonth : $requested;
 
         $months = max(1, min(self::MAX_MONTHS_PER_REQUEST, $months));

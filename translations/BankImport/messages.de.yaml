@@ -17,12 +17,12 @@ accounting:
       open: Öffnen
       discard: Verwerfen
       account_missing: (Bankkonto wurde gelöscht)
+      retention: 'Entwürfe bleiben erhalten, bis du sie übernimmst oder verwirfst, und werden nach %days% Tagen ohne Änderung automatisch gelöscht.'
 
     draft:
-      not_found: Dieser Import-Entwurf wurde nicht gefunden (Sitzung möglicherweise abgelaufen).
+      not_found: Dieser Import-Entwurf wurde nicht gefunden (möglicherweise abgelaufen oder bereits übernommen).
       account_missing: Das Bankkonto zu diesem Entwurf existiert nicht mehr — Entwurf wurde verworfen.
       discarded: Entwurf verworfen.
-      session_required: Bankimport-Entwürfe benötigen eine aktive HTTP-Session.
 
     parser:
       warning:

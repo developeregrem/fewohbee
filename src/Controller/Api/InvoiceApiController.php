@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
-use App\Dto\Api\InvoiceDto;
 use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Invoice;
 use App\Repository\InvoiceRepository;

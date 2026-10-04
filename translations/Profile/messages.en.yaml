@@ -44,16 +44,66 @@ profile:
     scopes:
       label: Permissions
       min: Select at least one permission.
-      reservations_read: Read reservations
-      calendar_read: Read calendars (iCal export, holidays, custom calendars)
-      statistics_read: Read statistics
-      invoices_read: Read invoices
-      prices_read: Read prices (price list, price quote, rate calendar)
-      tourist_tax_read: Read tourist tax (settings and monthly report)
-      subsidiaries_read: Read branches (master data and opening hours)
+      reservations_read: Reservations and availability
+      calendar_read: Calendars (iCal export, holidays, custom calendars)
+      statistics_read: Statistics and forecast
+      invoices_read: Invoices
+      prices_read: Prices
+      tourist_tax_read: Tourist tax
+      subsidiaries_read: Branches (master data and opening hours)
+      availability_read: Availability (free and booked rooms, no reservation data)
       mcp_access: AI assistant (MCP)
-      guests_read: Share guest data (names, contact details, remarks)
+      guests_read: Guest data (names, contact details, remarks)
+      operations_read: Operations (room plan, housekeeping)
       reservations_write: Create reservations
+      prices_write: Adjust prices
+      bank_import_write: Prepare bank statements
+    groups:
+      see:
+        rest: What may this access read?
+        mcp: What may the AI see?
+      personal_data:
+        rest: Which personal data does this access receive?
+        mcp: Which personal data goes to the AI?
+      change:
+        rest: What may this access change?
+        mcp: What may the AI change?
+    hints:
+      reservations_write: Only after a preview and your consent.
+      prices_write: Existing bookings keep their price. An AI only changes prices after a preview and your consent.
+      bank_import_write: Shares names, purposes and shortened IBANs of the transactions with the AI. You commit them yourself.
+    unavailable:
+      role: Needs the role "%role%".
+    tools: 'Unlocks these tools: %tools%'
+    summary:
+      and: and
+      scope:
+        reservations_read: reservations
+        calendar_read: calendars
+        statistics_read: statistics
+        invoices_read: invoices
+        prices_read: prices
+        tourist_tax_read: tourist tax
+        subsidiaries_read: branches
+        availability_read: availability
+        operations_read: operations
+        guests_read: guest data
+        reservations_write: create reservations
+        prices_write: adjust prices
+        bank_import_write: prepare bank statements
+      see:
+        rest: This access may read %list%.
+        mcp: This AI may read %list%.
+        mcp_none: This AI may not read anything.
+      personal:
+        none: It receives no guest data.
+        guests: It receives guest data.
+        bank: It receives names and purposes from bank statements.
+        both: It receives guest data as well as names and purposes from bank statements.
+      change:
+        some: It may %list%.
+        none: It cannot change anything.
+        rest: This access may %list%.
     kind:
       label: Use
       api: REST API and calendar clients
@@ -61,14 +111,14 @@ profile:
       mcp_badge: AI assistant
       help: >-
         An access for an AI assistant only works with AI tools, not with the REST API, and expires after the
-        chosen validity. The AI may only read what you select under "Permissions".
+        chosen validity. The AI may only do what you select below.
     mcp:
-      title: Additionally for AI assistants
-      label: Additional permissions for the AI
       privacy_hint: >-
         Everything the AI assistant retrieves is transferred to the AI provider (e.g. Anthropic or OpenAI,
-        possibly outside the EU). Without "Share guest data" the AI receives no names, contact details or
-        remarks. Sharing guest data usually requires a data processing agreement with the provider.
+        possibly outside the EU). Without "Guest data" the AI receives no names, contact details or
+        remarks of your guests. With "Prepare bank statements", however, it sees names, purposes and shortened
+        IBANs of your bank transactions, often including payments by guests. Sharing such data usually
+        requires a data processing agreement with the provider.
       write_disabled: '"Create reservations" is switched off in the settings for all users.'
       write_disabled_link: Go to settings
       expiry_required: Access for AI assistants needs a limited validity.

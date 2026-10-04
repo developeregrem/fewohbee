@@ -161,9 +161,6 @@ final class BankImportRuleMatcher
         return false;
     }
 
-    /**
-     * @param mixed $warning
-     */
     private function hasRuleWarning(mixed $warning): bool
     {
         if (is_array($warning)) {
@@ -173,9 +170,6 @@ final class BankImportRuleMatcher
         return null !== $warning && '' !== (string) $warning;
     }
 
-    /**
-     * @param mixed $warning
-     */
     private function formatRuleWarning(mixed $warning): string
     {
         if (is_array($warning) && isset($warning['key'])) {

@@ -45,18 +45,12 @@
                         <li>{{ 'guest_checkin.settings.how.review'|trans }}</li>
                     </ol>
 
-                    <div class="border rounded p-3">
-                        <p class="fw-semibold small mb-1">{{ 'guest_checkin.settings.public_address'|trans }}</p>
-                        {% if publicBaseUrl %}
-                            <p class="mb-1"><code>{{ publicBaseUrl }}</code></p>
-                            {% if publicBaseUrlWarning %}
-                                <div class="alert alert-warning small mb-1">{{ ('app_settings.public_base_url.warning_' ~ publicBaseUrlWarning)|trans }}</div>
-                            {% endif %}
-                        {% else %}
-                            <div class="alert alert-info small mb-1">{{ 'guest_checkin.settings.public_address_missing'|trans }}</div>
-                        {% endif %}
-                        <a class="small" href="{{ path('settings.general.index') }}">{{ 'guest_checkin.settings.public_address_change'|trans }}</a>
-                    </div>
+                    {% if not publicBaseUrl %}
+                        <div class="alert alert-info small mb-0">
+                            {{ 'guest_checkin.settings.public_address_missing'|trans }}
+                            <a href="{{ path('settings.general.index') }}">{{ 'guest_checkin.settings.public_address_change'|trans }}</a>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -85,6 +79,17 @@
                     <div class="row">
                         <div class="col-md-6">{{ form_row(form.companionsMode) }}</div>
                     </div>
+                </div>
+            </div>
+
+            {# ── Optional services ── #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-mug-hot text-primary me-2"></i>{{ 'guest_checkin.settings.section_extras'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'guest_checkin.settings.section_extras_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {{ form_row(form.extrasEnabled) }}
                 </div>
             </div>
 

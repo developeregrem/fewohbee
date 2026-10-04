@@ -98,10 +98,7 @@ final class OidcClient
         if (isset($tokens['error'])) {
             // The provider's error code is operator diagnostics only — the
             // authenticator turns this into a generic message for the browser.
-            throw new OidcConfigurationException(sprintf(
-                'Token endpoint returned an error: %s',
-                is_string($tokens['error']) ? $tokens['error'] : 'unknown',
-            ));
+            throw new OidcConfigurationException(sprintf('Token endpoint returned an error: %s', is_string($tokens['error']) ? $tokens['error'] : 'unknown'));
         }
 
         if (!isset($tokens['id_token']) || !is_string($tokens['id_token'])) {

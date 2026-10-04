@@ -1,0 +1,24 @@
+{# What the rule on screen would do over the coming nights; see PriceRulePreview. #}
+{% import 'PriceRules/_macros.html.twig' as ruleText %}
+{% if preview is null %}
+    <span class="text-body-secondary">{{ 'price_rules.preview.incomplete'|trans }}</span>
+{% elseif preview.matches == 0 %}
+    {{ 'price_rules.preview.none'|trans({'%nights%': preview.nights}) }}
+{% else %}
+    <div class="fw-semibold">{{ 'price_rules.preview.matches'|trans({'%count%': preview.matches, '%nights%': preview.nights}) }}</div>
+    {% if preview.example %}
+        {% set example = preview.example %}
+        <div>
+            {{ 'price_rules.preview.example'|trans({
+                '%room%': example.room.roomCategory.name,
+                '%persons%': example.persons,
+                '%night%': ('booking_rules.day_' ~ example.night|date('N'))|trans ~ ' ' ~ example.night|date('d.m.'),
+            }) }}
+            <span class="text-nowrap">{{ example.before|number_format(2, ',', '.') }}&nbsp;{{ currency_symbol }} → <strong>{{ example.after|number_format(2, ',', '.') }}&nbsp;{{ currency_symbol }}</strong></span>
+            <span class="text-body-secondary">({{ ruleText.percent(example.percent) }})</span>
+        </div>
+        {% if example.limited %}
+            <div class="text-body-secondary">{{ 'price_rules.preview.limited'|trans }}</div>
+        {% endif %}
+    {% endif %}
+{% endif %}

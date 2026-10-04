@@ -52,7 +52,39 @@
             </trans-unit>
             <trans-unit id="statistics.turnover.help">
                 <source>statistics.turnover.help</source>
-                <target>Umsätze basieren auf Rechnungen (brutto) mit Rechnungsdatum im jeweiligen Monat und dem folgenden Status:</target>
+                <target>Umsätze: Rechnungen (brutto) nach Rechnungsdatum, mit dem unten gewählten Status. Prognose: erwarteter Umsatz der Reservierungen, die dabei noch nicht mitzählen, nach Abreisemonat. Stornierte Reservierungen und Konflikte zählen nicht.</target>
+            </trans-unit>
+            <trans-unit id="statistics.turnover.series.invoiced">
+                <source>statistics.turnover.series.invoiced</source>
+                <target>Rechnungen (nach Rechnungsdatum)</target>
+            </trans-unit>
+            <trans-unit id="statistics.turnover.series.forecast">
+                <source>statistics.turnover.series.forecast</source>
+                <target>Prognose (nach Abreisemonat)</target>
+            </trans-unit>
+            <trans-unit id="statistics.turnover.series.forecast_year">
+                <source>statistics.turnover.series.forecast_year</source>
+                <target>Prognose %year% (nach Abreisemonat)</target>
+            </trans-unit>
+            <trans-unit id="statistics.turnover.series.invoiced_year">
+                <source>statistics.turnover.series.invoiced_year</source>
+                <target>Rechnungen %year% (nach Rechnungsdatum)</target>
+            </trans-unit>
+            <trans-unit id="statistics.turnover.forecast.tooltip.reservations">
+                <source>statistics.turnover.forecast.tooltip.reservations</source>
+                <target>{0}keine Reservierung|{1}eine Reservierung|]1,Inf[%count% Reservierungen</target>
+            </trans-unit>
+            <trans-unit id="statistics.turnover.forecast.tooltip.invoiced">
+                <source>statistics.turnover.forecast.tooltip.invoiced</source>
+                <target>{1}davon %amount% aus einer Reservierung mit Rechnung|]1,Inf[davon %amount% aus %count% Reservierungen mit Rechnung</target>
+            </trans-unit>
+            <trans-unit id="statistics.turnover.forecast.show">
+                <source>statistics.turnover.forecast.show</source>
+                <target>Prognose aus Reservierungen anzeigen</target>
+            </trans-unit>
+            <trans-unit id="statistics.turnover.forecast.include_invoiced">
+                <source>statistics.turnover.forecast.include_invoiced</source>
+                <target>Reservierungen mit Rechnung einbeziehen</target>
             </trans-unit>
             <trans-unit id="statistics.tourism.title">
                 <source>statistics.tourism.title</source>

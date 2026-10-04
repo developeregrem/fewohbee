@@ -51,6 +51,12 @@ security:
                 form_only: true
                 enable_csrf: true
                 default_target_path: /dashboard
+            # Shared across both public hosts: switching from the custom domain to the
+            # fallback must not reset the failed-login budget.
+            login_throttling:
+                max_attempts: 5
+                interval: '1 minute'
+                cache_pool: cache.app
             logout:
                 path:   /logout
                 target: dashboard.redirect
