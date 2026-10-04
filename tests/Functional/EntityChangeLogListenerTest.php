@@ -8,6 +8,7 @@ use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\GuestCheckIn;
 use App\Entity\Price;
+use App\Entity\ReceiptProposal;
 use App\Entity\Reservation;
 use App\Entity\User;
 use Doctrine\DBAL\Connection;
@@ -260,6 +261,38 @@ final class EntityChangeLogListenerTest extends KernelTestCase
             self::assertStringNotContainsString('SelectorValue123456789', $rows[0]['changes']);
         } finally {
             $this->em->remove($checkIn);
+            $this->em->flush();
+        }
+    }
+
+    public function testReceiptDetailsAreRedactedWhileTheDecisionRemainsAuditable(): void
+    {
+        $proposal = new ReceiptProposal(
+            'Jane Example',
+            new \DateTimeImmutable('2031-08-03'),
+            'INV-PRIVATE-42',
+            '12.34',
+            'cash',
+            [['text' => 'Private purchase', 'amount' => '12.34', 'taxRate' => '19', 'accountNumber' => null]],
+            'Private note',
+            null,
+            null,
+        );
+        $this->em->persist($proposal);
+        $this->em->flush();
+
+        try {
+            $rows = $this->fetchLog();
+            self::assertCount(1, $rows);
+            $changes = $this->decode($rows[0]['changes']);
+            foreach (['supplier', 'receiptDate', 'receiptNumber', 'total', 'payment', 'lines', 'note'] as $field) {
+                self::assertSame(['***redacted***', '***redacted***'], $changes[$field]);
+            }
+            self::assertArrayHasKey('status', $changes);
+            self::assertStringNotContainsString('Jane Example', $rows[0]['changes']);
+            self::assertStringNotContainsString('Private note', $rows[0]['changes']);
+        } finally {
+            $this->em->remove($proposal);
             $this->em->flush();
         }
     }

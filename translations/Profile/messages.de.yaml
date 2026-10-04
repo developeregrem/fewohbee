@@ -58,6 +58,7 @@ profile:
       reservations_write: Reservierungen anlegen
       prices_write: Preise anpassen
       bank_import_write: Kontoauszüge vorbereiten
+      receipts_submit: Belege einreichen
     groups:
       see:
         rest: Was darf dieser Zugang lesen?
@@ -72,6 +73,7 @@ profile:
       reservations_write: Nur nach Vorschau und deiner Zustimmung.
       prices_write: Bestehende Buchungen behalten ihren Preis. Eine KI ändert Preise nur nach Vorschau und deiner Zustimmung.
       bank_import_write: Gibt Namen, Verwendungszwecke und gekürzte IBANs der Umsätze an die KI weiter. Übernehmen musst du selbst.
+      receipts_submit: Die KI sieht nur Konten und Steuersätze. Vorschläge buchst du erst nach deiner Prüfung selbst.
     unavailable:
       role: Braucht die Rolle „%role%“.
     tools: 'Schaltet diese Werkzeuge frei: %tools%'
@@ -91,10 +93,11 @@ profile:
         reservations_write: Reservierungen anlegen
         prices_write: Preise anpassen
         bank_import_write: Kontoauszüge vorbereiten
+        receipts_submit: Belege einreichen
       see:
         rest: Dieser Zugang darf %list% lesen.
         mcp: Diese KI darf %list% lesen.
-        mcp_none: Diese KI darf nichts lesen.
+        mcp_none: Diese KI hat keine zusätzlichen Leserechte.
       personal:
         none: Sie erhält keine Gästedaten.
         guests: Sie erhält Gästedaten.

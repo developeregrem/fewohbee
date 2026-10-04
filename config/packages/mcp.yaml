@@ -18,6 +18,8 @@ mcp:
                 create_reservation after the user has agreed. Likewise, before changing prices, call
                 preview_day_prices or preview_event_rule, show the current and the new prices to the user and only
                 call set_day_prices or create_event_rule after the user has agreed.
+                To submit a receipt for booking, read it and call submit_receipt with one line per account and VAT rate. Nothing
+                is booked then: tell the user the receipt waits for approval in the FewohBee booking journal.
             transports:
                 # STDIO has no user identity and therefore no authorization; keep it off.
                 stdio: false

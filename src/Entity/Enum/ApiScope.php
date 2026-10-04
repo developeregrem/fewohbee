@@ -25,6 +25,7 @@ enum ApiScope: string
     case RESERVATIONS_WRITE = 'reservations:write';
     case PRICES_WRITE = 'prices:write';
     case BANK_IMPORT_WRITE = 'bank-import:write';
+    case RECEIPTS_SUBMIT = 'receipts:submit';
 
     /** The role the token owner needs for the scope to take effect; null when any active user qualifies. */
     public function requiredRole(): ?string
@@ -45,6 +46,7 @@ enum ApiScope: string
             // Prices are configured in the settings, which only administrators reach.
             self::PRICES_WRITE => 'ROLE_ADMIN',
             self::BANK_IMPORT_WRITE => 'ROLE_CASHJOURNAL',
+            self::RECEIPTS_SUBMIT => 'ROLE_CASHJOURNAL',
         };
     }
 
@@ -57,7 +59,7 @@ enum ApiScope: string
         return match ($this) {
             self::MCP_ACCESS => null,
             self::GUESTS_READ => ApiScopeGroup::PERSONAL_DATA,
-            self::RESERVATIONS_WRITE, self::PRICES_WRITE, self::BANK_IMPORT_WRITE => ApiScopeGroup::CHANGE,
+            self::RESERVATIONS_WRITE, self::PRICES_WRITE, self::BANK_IMPORT_WRITE, self::RECEIPTS_SUBMIT => ApiScopeGroup::CHANGE,
             default => ApiScopeGroup::SEE,
         };
     }
@@ -66,7 +68,7 @@ enum ApiScope: string
     public function isForRest(): bool
     {
         return match ($this) {
-            self::MCP_ACCESS, self::GUESTS_READ, self::OPERATIONS_READ, self::RESERVATIONS_WRITE, self::BANK_IMPORT_WRITE => false,
+            self::MCP_ACCESS, self::GUESTS_READ, self::OPERATIONS_READ, self::RESERVATIONS_WRITE, self::BANK_IMPORT_WRITE, self::RECEIPTS_SUBMIT => false,
             default => true,
         };
     }
@@ -90,7 +92,7 @@ enum ApiScope: string
     public function hintKey(): ?string
     {
         return match ($this) {
-            self::RESERVATIONS_WRITE, self::PRICES_WRITE, self::BANK_IMPORT_WRITE => 'profile.apitokens.hints.'.strtolower($this->name),
+            self::RESERVATIONS_WRITE, self::PRICES_WRITE, self::BANK_IMPORT_WRITE, self::RECEIPTS_SUBMIT => 'profile.apitokens.hints.'.strtolower($this->name),
             default => null,
         };
     }
@@ -112,6 +114,7 @@ enum ApiScope: string
             self::RESERVATIONS_WRITE => 'profile.apitokens.scopes.reservations_write',
             self::PRICES_WRITE => 'profile.apitokens.scopes.prices_write',
             self::BANK_IMPORT_WRITE => 'profile.apitokens.scopes.bank_import_write',
+            self::RECEIPTS_SUBMIT => 'profile.apitokens.scopes.receipts_submit',
         };
     }
 }

@@ -5,6 +5,9 @@ notification:
     title: "Review %count% imports"
     body_conflicts: "Overlapping bookings from a calendar import."
     body_reviews: "Imported bookings without an assigned guest."
+  receipt_proposal:
+    title: "{1}One receipt awaits approval|]1,Inf[%count% receipts await approval"
+    body: "Handed in by an AI assistant – review and book them in the booking journal."
   calendar_reminder:
     title: "%count% calendar reminders"
     body: "Entries due today that still need confirming."

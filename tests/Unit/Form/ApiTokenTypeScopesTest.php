@@ -40,6 +40,19 @@ final class ApiTokenTypeScopesTest extends TestCase
         self::assertSame([ApiScope::CALENDAR_READ->value], $scopes);
     }
 
+    public function testReceiptSubmissionIsIndependentOfBankImportAndRest(): void
+    {
+        self::assertSame(
+            [ApiScope::RECEIPTS_SUBMIT->value, ApiScope::MCP_ACCESS->value],
+            ApiTokenType::collectScopes(['kind' => ApiTokenType::KIND_MCP, 'scopes' => [ApiScope::RECEIPTS_SUBMIT->value]]),
+        );
+        self::assertSame(
+            [],
+            ApiTokenType::collectScopes(['kind' => ApiTokenType::KIND_API, 'scopes' => [ApiScope::RECEIPTS_SUBMIT->value]]),
+        );
+        self::assertSame('ROLE_CASHJOURNAL', ApiScope::RECEIPTS_SUBMIT->requiredRole());
+    }
+
     public function testTokenWithoutKindIsARestToken(): void
     {
         self::assertSame([ApiScope::PRICES_READ->value], ApiTokenType::collectScopes(['scopes' => [ApiScope::PRICES_READ->value]]));

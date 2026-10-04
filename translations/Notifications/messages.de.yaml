@@ -5,6 +5,9 @@ notification:
     title: "%count% Importe prüfen"
     body_conflicts: "Überschneidende Buchungen aus einem Kalender-Import."
     body_reviews: "Importierte Buchungen ohne zugeordneten Gast."
+  receipt_proposal:
+    title: "{1}Ein Beleg wartet auf Freigabe|]1,Inf[%count% Belege warten auf Freigabe"
+    body: "Von einem KI-Assistenten eingereicht – im Buchungsjournal prüfen und buchen."
   calendar_reminder:
     title: "%count% Kalender-Erinnerungen"
     body: "Termine für heute, die noch bestätigt werden müssen."
