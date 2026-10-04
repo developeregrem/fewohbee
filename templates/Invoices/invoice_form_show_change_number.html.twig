@@ -30,6 +30,7 @@
                             'dateWidget': dueDateWidget,
                             'invoiceDate': invoice.date|date('Y-m-d'),
                             'settingsDays': settingsDueDays,
+                            'firstArrival': firstArrival ? firstArrival|date('Y-m-d') : null,
                             'lastDeparture': lastDeparture ? lastDeparture|date('Y-m-d') : null,
                         } %}
                     </div>

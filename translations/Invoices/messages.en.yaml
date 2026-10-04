@@ -194,5 +194,6 @@ invoice.payment_due.period: '{0}Due immediately|{1}%count% day|]1,Inf]%count% da
 invoice.payment_due.standard: default
 invoice.payment_due.custom: Own period
 invoice.payment_due.days: days
+invoice.payment_due.first_arrival: By arrival
 invoice.payment_due.last_departure: By departure
 invoice.payment_due.date.missing: Please enter a valid due date.

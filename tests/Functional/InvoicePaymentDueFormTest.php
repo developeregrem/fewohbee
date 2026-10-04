@@ -46,9 +46,10 @@ final class InvoicePaymentDueFormTest extends WebTestCase
         $ownPeriod = $crawler->filter('.dropdown-menu input[type="number"]');
         self::assertCount(1, $ownPeriod);
         self::assertNull($ownPeriod->attr('name'), 'The own period only fills in the date.');
-        $departure = $crawler->filter('[data-payment-due-departure]');
-        self::assertSame('2026-09-05', $departure->attr('data-payment-due-departure'));
-        self::assertStringNotContainsString('d-none', (string) $departure->attr('class'));
+        // First arrival and last departure of the room positions, both from the invoice date on.
+        $stayDates = $crawler->filter('[data-payment-due-stay]');
+        self::assertSame(['2026-09-02', '2026-09-05'], $stayDates->each(static fn (Crawler $item): string => (string) $item->attr('data-payment-due-stay')));
+        $stayDates->each(static fn (Crawler $item) => self::assertStringNotContainsString('d-none', (string) $item->attr('class')));
     }
 
     /** The menu only fills in the date in the browser; nothing of it reaches the server. */
@@ -94,8 +95,8 @@ final class InvoicePaymentDueFormTest extends WebTestCase
         self::assertSame('2026-09-11', $this->reload($invoice)->getPaymentDueDate()?->format('Y-m-d'));
     }
 
-    /** A due date before the invoice date makes no sense, so that departure is not offered. */
-    public function testADepartureBeforeTheInvoiceDateIsNotOffered(): void
+    /** A due date before the invoice date makes no sense, so arrival and departure are not offered then. */
+    public function testStayDatesBeforeTheInvoiceDateAreNotOffered(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createInvoiceUser());
@@ -103,10 +104,25 @@ final class InvoicePaymentDueFormTest extends WebTestCase
 
         $crawler = $client->request('GET', $this->editUrl($invoice));
 
-        self::assertStringContainsString('d-none', (string) $crawler->filter('[data-payment-due-departure]')->attr('class'));
+        $crawler->filter('[data-payment-due-stay], [data-payment-due-stay-divider]')
+            ->each(static fn (Crawler $item) => self::assertStringContainsString('d-none', (string) $item->attr('class')));
     }
 
-    public function testNoDepartureHelperWithoutRoomPositions(): void
+    /** Arrival on or after the invoice date stays offered while the departure is too. */
+    public function testOnlyTheArrivalBeforeTheInvoiceDateIsHidden(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createInvoiceUser());
+        $invoice = $this->createInvoice('2026-09-03', ownDueDate: '2026-09-13');
+
+        $crawler = $client->request('GET', $this->editUrl($invoice));
+
+        self::assertStringContainsString('d-none', (string) $crawler->filter('[data-payment-due-stay="2026-09-02"]')->attr('class'));
+        self::assertStringNotContainsString('d-none', (string) $crawler->filter('[data-payment-due-stay="2026-09-05"]')->attr('class'));
+        self::assertStringNotContainsString('d-none', (string) $crawler->filter('[data-payment-due-stay-divider]')->attr('class'));
+    }
+
+    public function testNoStayDatesWithoutRoomPositions(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createInvoiceUser());
@@ -114,7 +130,7 @@ final class InvoicePaymentDueFormTest extends WebTestCase
 
         $crawler = $client->request('GET', $this->editUrl($invoice));
 
-        self::assertCount(0, $crawler->filter('[data-payment-due-departure]'));
+        self::assertCount(0, $crawler->filter('[data-payment-due-stay]'));
     }
 
     /** Once the invoice exists, payment method and remark are edited without the due date. */

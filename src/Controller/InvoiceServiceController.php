@@ -304,6 +304,7 @@ class InvoiceServiceController extends AbstractController
                 'readiness' => $readinessService->check($invoice),
                 'dueDateRequired' => null !== $settings?->getPaymentDueDays(),
                 'settingsDueDays' => $settings?->getPaymentDueDays(),
+                'firstArrival' => Invoice::firstArrivalOf($newInvoicePositionsAppartmentsArray),
                 'lastDeparture' => Invoice::lastDepartureOf($newInvoicePositionsAppartmentsArray),
             ]
         );
@@ -911,6 +912,7 @@ class InvoiceServiceController extends AbstractController
                 // An issuer with a payment period always gives a due date; one without may not.
                 'dueDateRequired' => null !== $settingsDueDays,
                 'settingsDueDays' => $settingsDueDays,
+                'firstArrival' => Invoice::firstArrivalOf($invoice->getAppartments()),
                 'lastDeparture' => Invoice::lastDepartureOf($invoice->getAppartments()),
             ]
         );

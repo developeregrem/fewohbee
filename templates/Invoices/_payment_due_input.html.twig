@@ -7,6 +7,7 @@
     invoiceDate    invoice date as Y-m-d; a field with data-payment-invoice-date in the
                    same scope takes precedence, so the choices follow it while it is edited
     settingsDays   the issuer's payment period, offered first and marked as the standard
+    firstArrival   earliest arrival of the room positions as Y-m-d, or null
     lastDeparture  latest departure of the room positions as Y-m-d, or null
 
     The menu only fills in the date; nothing of it is submitted.
@@ -39,14 +40,22 @@
                        data-action="input->invoices#paymentDueDaysInputAction keydown.enter->invoices#paymentDueDaysEnterAction">
                 <span>{{ 'invoice.payment_due.days'|trans }}</span>
             </li>
-            {% if lastDeparture %}
-                {# Offered only from the invoice date on: a due date before it makes no sense. #}
-                <li class="{{ lastDeparture < invoiceDate ? 'd-none' }}" data-payment-due-departure="{{ lastDeparture }}">
+            {# Arrival and departure are offered only from the invoice date on: a due date before it makes no sense. #}
+            {% set stayDates = [
+                {'date': firstArrival, 'label': 'invoice.payment_due.first_arrival'},
+                {'date': lastDeparture, 'label': 'invoice.payment_due.last_departure'},
+            ]|filter(stay => stay.date) %}
+            {% if stayDates is not empty %}
+                <li class="{{ stayDates|filter(stay => stay.date >= invoiceDate) is empty ? 'd-none' }}" data-payment-due-stay-divider="">
                     <hr class="dropdown-divider">
-                    <a class="dropdown-item" href="#" data-action="click->invoices#paymentDueToDepartureAction">
-                        {{ 'invoice.payment_due.last_departure'|trans }} ({{ lastDeparture|date('d.m.Y') }})
-                    </a>
                 </li>
+                {% for stay in stayDates %}
+                    <li class="{{ stay.date < invoiceDate ? 'd-none' }}" data-payment-due-stay="{{ stay.date }}">
+                        <a class="dropdown-item" href="#" data-action="click->invoices#paymentDueToStayDateAction">
+                            {{ stay.label|trans }} ({{ stay.date|date('d.m.Y') }})
+                        </a>
+                    </li>
+                {% endfor %}
             {% endif %}
         </ul>
     {% endif %}

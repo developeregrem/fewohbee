@@ -774,6 +774,10 @@
                 <source>invoice.payment_due.days</source>
                 <target>Tage</target>
             </trans-unit>
+            <trans-unit id="invoice.payment_due.first_arrival">
+                <source>invoice.payment_due.first_arrival</source>
+                <target>Bis zur Anreise</target>
+            </trans-unit>
             <trans-unit id="invoice.payment_due.last_departure">
                 <source>invoice.payment_due.last_departure</source>
                 <target>Bis zur Abreise</target>

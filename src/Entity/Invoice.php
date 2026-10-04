@@ -463,6 +463,27 @@ class Invoice
     }
 
     /**
+     * The earliest start date among the given apartment positions, null without any.
+     *
+     * Static because an invoice in creation keeps its positions in the session, not
+     * in its own collection.
+     *
+     * @param iterable<InvoiceAppartment> $apartments
+     */
+    public static function firstArrivalOf(iterable $apartments): ?\DateTimeImmutable
+    {
+        $first = null;
+        foreach ($apartments as $apartment) {
+            $start = \DateTimeImmutable::createFromInterface($apartment->getStartDate())->setTime(0, 0);
+            if (null === $first || $start < $first) {
+                $first = $start;
+            }
+        }
+
+        return $first;
+    }
+
+    /**
      * The latest end date among the given apartment positions, null without any.
      *
      * Static because an invoice in creation keeps its positions in the session, not

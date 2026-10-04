@@ -449,7 +449,7 @@ export default class extends Controller {
         });
     }
 
-    // Payment due date menu: a period from the invoice date or the last departure just
+    // Payment due date menu: a period from the invoice date, arrival or departure just
     // fills in the date field, the only one that is submitted. It works within the
     // nearest [data-payment-due-scope], where an editable invoice date field takes
     // precedence over the date the menu was rendered with. Filling in the date fires its
@@ -472,17 +472,18 @@ export default class extends Controller {
         this._closePaymentDueMenu(event.currentTarget);
     }
 
-    paymentDueToDepartureAction(event) {
+    // First arrival or last departure of the room positions.
+    paymentDueToStayDateAction(event) {
         event.preventDefault();
         const scope = event.currentTarget.closest('[data-payment-due-scope]');
-        const departure = event.currentTarget.closest('[data-payment-due-departure]')?.dataset.paymentDueDeparture;
-        if (!departure) return;
-        this._setPaymentDueDate(scope, departure);
+        const stayDate = event.currentTarget.closest('[data-payment-due-stay]')?.dataset.paymentDueStay;
+        if (!stayDate) return;
+        this._setPaymentDueDate(scope, stayDate);
         this._closePaymentDueMenu(event.currentTarget);
     }
 
-    // The invoice date moved: the due date keeps its distance to it, and the departure is
-    // only offered while it does not lie before the invoice date.
+    // The invoice date moved: the due date keeps its distance to it, and arrival and
+    // departure are only offered while they do not lie before the invoice date.
     paymentInvoiceDateChangedAction(event) {
         const input = event.currentTarget;
         const scope = input.closest('[data-payment-due-scope]');
@@ -495,9 +496,13 @@ export default class extends Controller {
         if (days !== null && days >= 0) {
             this._setPaymentDueDate(scope, this._shiftIsoDate(invoiceDate, days));
         }
-        scope.querySelectorAll('[data-payment-due-departure]').forEach((item) => {
-            item.classList.toggle('d-none', item.dataset.paymentDueDeparture < invoiceDate);
+        let anyStayDate = false;
+        scope.querySelectorAll('[data-payment-due-stay]').forEach((item) => {
+            const offered = item.dataset.paymentDueStay >= invoiceDate;
+            item.classList.toggle('d-none', !offered);
+            anyStayDate ||= offered;
         });
+        scope.querySelector('[data-payment-due-stay-divider]')?.classList.toggle('d-none', !anyStayDate);
     }
 
     _applyPaymentDueDays(element, value) {

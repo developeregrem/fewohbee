@@ -69,6 +69,20 @@ final class InvoicePaymentDueDateTest extends TestCase
         self::assertNull(Invoice::lastDepartureOf([]));
     }
 
+    public function testTheFirstArrivalIsTheEarliestStartDate(): void
+    {
+        $apartments = array_map(function (string $start): InvoiceAppartment {
+            $apartment = new InvoiceAppartment();
+            $apartment->setStartDate(new \DateTime($start.' 15:00'));
+            $apartment->setEndDate(new \DateTime('2026-08-20'));
+
+            return $apartment;
+        }, ['2026-08-10', '2026-08-04', '2026-08-12']);
+
+        self::assertSame('2026-08-04 00:00', Invoice::firstArrivalOf($apartments)?->format('Y-m-d H:i'));
+        self::assertNull(Invoice::firstArrivalOf([]));
+    }
+
     private function invoice(string $date): Invoice
     {
         $invoice = new Invoice();
