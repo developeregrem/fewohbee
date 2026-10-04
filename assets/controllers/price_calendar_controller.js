@@ -34,6 +34,36 @@ export default class extends Controller {
         }
     }
 
+    /**
+     * Shows next to each occupancy what the day price being typed makes of it: the occupancy it
+     * is set for gets exactly that amount, the others change in the same proportion, rounded to
+     * the cent per unit like a saved day price.
+     */
+    preview(event) {
+        const table = this.offcanvasBodyTarget.querySelector('[data-price-calendar-occupancies]');
+        if (!table) return;
+
+        const rows = [...table.querySelectorAll('tbody tr')];
+        const unitOf = (row) => parseFloat(row.dataset.baseUnit);
+        const headsOf = (row) => parseInt(row.dataset.heads, 10);
+        const selected = rows.find((row) => row.dataset.persons === table.dataset.persons);
+        const amount = parseFloat(event.currentTarget.value);
+        const base = selected ? unitOf(selected) * headsOf(selected) : NaN;
+        const show = amount > 0 && base > 0;
+        table.querySelectorAll('[data-price-calendar-new]').forEach((cell) => { cell.hidden = !show; });
+        if (!show) return;
+
+        const format = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const factor = amount / base;
+        rows.forEach((row) => {
+            const unit = unitOf(row);
+            const price = row === selected ? amount : Math.round(unit * factor * 100) / 100 * headsOf(row);
+            row.querySelector('td[data-price-calendar-new]').textContent = unit > 0
+                ? `${format.format(price)}\u00a0${table.dataset.currency}`
+                : '—';
+        });
+    }
+
     /** Saves or resets the day price; the page reloads so the calendar shows the result. */
     async save(event) {
         event.preventDefault();

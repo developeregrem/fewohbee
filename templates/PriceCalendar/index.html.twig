@@ -54,7 +54,8 @@
             {% if previousMonth %}
                 <a class="btn btn-sm btn-outline-secondary" href="{{ path('prices.calendar', query|merge({'month': previousMonth|date('Y-m')})) }}" aria-label="{{ 'price_calendar.previous'|trans }}"><i class="fas fa-chevron-left"></i></a>
             {% else %}
-                <span class="btn btn-sm btn-outline-secondary disabled" aria-hidden="true"><i class="fas fa-chevron-left"></i></span>
+                {# Keeps the month centered; past months cannot be opened. #}
+                <span class="btn btn-sm btn-outline-secondary invisible" aria-hidden="true"><i class="fas fa-chevron-left"></i></span>
             {% endif %}
             <h5 class="mb-0">{{ ('price_calendar.month_' ~ month|date('n'))|trans }} {{ month|date('Y') }}</h5>
             <a class="btn btn-sm btn-outline-secondary" href="{{ path('prices.calendar', query|merge({'month': nextMonth|date('Y-m')})) }}" aria-label="{{ 'price_calendar.next'|trans }}"><i class="fas fa-chevron-right"></i></a>

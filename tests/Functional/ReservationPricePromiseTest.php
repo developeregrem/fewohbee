@@ -7,8 +7,10 @@ namespace App\Tests\Functional;
 use App\Entity\Appartment;
 use App\Entity\DayPrice;
 use App\Entity\Enum\DayPriceSource;
+use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Enum\PercentageBase;
 use App\Entity\Enum\TaxCalculationMode;
+use App\Entity\Invoice;
 use App\Entity\Price;
 use App\Entity\PriceRule;
 use App\Entity\Reservation;
@@ -105,6 +107,49 @@ final class ReservationPricePromiseTest extends WebTestCase
         } finally {
             $this->em()->remove($this->em()->find(TouristTax::class, $tax->getId()));
             $this->em()->flush();
+        }
+    }
+
+    public function testOnlyAnInvoiceThatIsNotCanceledFixesTheBookingsPrice(): void
+    {
+        $client = $this->authenticatedClient();
+        $price = $this->createRoomPrice('80.00');
+        $reservation = $this->createReservation('+840 days', withPromise: true);
+        $invoice = new Invoice();
+        $invoice->setNumber('T-'.bin2hex(random_bytes(3)));
+        $invoice->setDate(new \DateTime());
+        $invoice->setStatus(InvoiceStatus::CANCELED->value);
+        $this->em()->persist($invoice);
+        $reservation->addInvoice($invoice);
+        $this->em()->find(Price::class, $price->getId())?->setPrice('99.00');
+        $this->em()->flush();
+        $viewUrl = sprintf('/reservation/get/%d?tab=prices', $reservation->getId());
+        $promises = self::getContainer()->get(PricePromiseService::class);
+
+        try {
+            // A canceled invoice states no price: the booking can still take today's.
+            $notice = $client->request('GET', $viewUrl)->filter('.alert:has(form[action$="/price/reprice"])');
+            self::assertCount(1, $notice);
+            $token = $notice->filter('input[name="_token"]')->attr('value');
+            self::assertSame(1, $promises->countOpenPromisesUsing((int) $price->getId()));
+
+            $this->em()->find(Invoice::class, $invoice->getId())?->setStatus(InvoiceStatus::OPEN->value);
+            $this->em()->flush();
+
+            self::assertCount(0, $client->request('GET', $viewUrl)->filter('form[action$="/price/reprice"]'));
+            $client->request('POST', sprintf('/reservation/%d/price/reprice', $reservation->getId()), ['_token' => $token]);
+            $this->em()->clear();
+            self::assertSame('80.00', $this->promisedUnit($reservation));
+            self::assertSame(0, $promises->countOpenPromisesUsing((int) $price->getId()));
+        } finally {
+            $this->em()->clear();
+            $booked = $this->em()->find(Reservation::class, $reservation->getId());
+            $stored = $this->em()->find(Invoice::class, $invoice->getId());
+            if (null !== $booked && null !== $stored) {
+                $booked->removeInvoice($stored);
+                $this->em()->remove($stored);
+                $this->em()->flush();
+            }
         }
     }
 

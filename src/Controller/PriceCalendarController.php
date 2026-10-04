@@ -99,6 +99,7 @@ final class PriceCalendarController extends AbstractController
             'category' => $category,
             'persons' => $persons,
             'day' => $nights[0] ?? throw $this->createNotFoundException(),
+            'occupancies' => $this->calendar->occupancies($subsidiary, $category, $night, $this->prices->findOccupanciesForRoomCategory($category)),
         ]);
     }
 

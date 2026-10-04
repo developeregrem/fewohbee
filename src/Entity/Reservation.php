@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Enum\PaymentCollection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -511,6 +512,18 @@ class Reservation
     public function removeInvoice(Invoice $invoice): void
     {
         $this->invoices->removeElement($invoice);
+    }
+
+    /** Whether an invoice that is not canceled states the price of this booking. */
+    public function hasActiveInvoice(): bool
+    {
+        foreach ($this->invoices as $invoice) {
+            if (InvoiceStatus::CANCELED !== InvoiceStatus::fromStatus($invoice->getStatus())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

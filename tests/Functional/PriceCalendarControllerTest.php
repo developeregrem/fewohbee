@@ -6,8 +6,11 @@ namespace App\Tests\Functional;
 
 use App\Entity\Appartment;
 use App\Entity\DayPrice;
+use App\Entity\Price;
+use App\Entity\ReservationOrigin;
 use App\Entity\Role;
 use App\Entity\User;
+use App\Repository\PriceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -65,6 +68,48 @@ final class PriceCalendarControllerTest extends WebTestCase
             self::assertSame('6', (new \DateTimeImmutable($nights[0]))->format('N'));
         } finally {
             $this->removeDayPrices();
+        }
+    }
+
+    public function testTheNightListsEveryOccupancyOfTheCategory(): void
+    {
+        $client = $this->adminClient();
+        $month = new \DateTimeImmutable('first day of +30 months midnight');
+        $room = $this->em()->getRepository(Appartment::class)->findOneBy(['active' => true], ['id' => 'ASC']);
+        $category = $room?->getRoomCategory() ?? self::fail('Sample data must contain an active room with a category.');
+        $occupancies = static::getContainer()->get(PriceRepository::class)->findOccupanciesForRoomCategory($category);
+        // A second occupancy for the category, priced per room.
+        $price = new Price();
+        $price->setType(2);
+        $price->setActive(true);
+        $price->setAllDays(true);
+        $price->setAllPeriods(true);
+        $price->setVat(7);
+        $price->setPrice(150);
+        $price->setDescription('Occupancy test');
+        $price->setIsPerRoom(true);
+        $price->setNumberOfPersons(max($occupancies) + 1);
+        $price->setMinStay(1);
+        $price->addRoomCategory($category);
+        foreach ($this->em()->getRepository(ReservationOrigin::class)->findAll() as $origin) {
+            $price->addReservationOrigin($origin);
+        }
+        $this->em()->persist($price);
+        $this->em()->flush();
+
+        try {
+            $this->openNight($client, $month, $month->modify('+4 days'));
+            $rows = $client->getCrawler()->filter('table[data-price-calendar-occupancies] tbody tr');
+
+            self::assertSame(
+                array_map('strval', [...$occupancies, max($occupancies) + 1]),
+                $rows->each(static fn (Crawler $row): string => (string) $row->attr('data-persons')),
+            );
+            // The preview needs the unit price of every occupancy.
+            self::assertSame('150', $rows->last()->attr('data-base-unit'));
+        } finally {
+            $this->em()->remove($this->em()->find(Price::class, $price->getId()) ?? self::fail('Price vanished.'));
+            $this->em()->flush();
         }
     }
 

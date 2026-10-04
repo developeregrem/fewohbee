@@ -31,6 +31,30 @@
         <dd class="col-5 text-end border-top pt-1 fw-bold mb-0">{{ day.price|number_format(2, ',', '.') }}&nbsp;{{ currency_symbol }}</dd>
     </dl>
 
+    {% if occupancies|length > 1 %}
+        {# Every occupancy of the night; the last column shows what the day price being typed makes of them. #}
+        <table class="table table-sm small mb-3" data-price-calendar-occupancies data-persons="{{ persons }}" data-currency="{{ currency_symbol }}">
+            <thead>
+                <tr class="text-body-secondary">
+                    <th scope="col" class="fw-normal">{{ 'price_calendar.persons'|trans }}</th>
+                    <th scope="col" class="fw-normal text-end">{{ 'price_calendar.base'|trans }}</th>
+                    <th scope="col" class="fw-normal text-end">{{ 'price_calendar.column_price'|trans }}</th>
+                    <th scope="col" class="fw-normal text-end" data-price-calendar-new hidden>{{ 'price_calendar.column_new'|trans }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in occupancies %}
+                    <tr{% if row.persons == persons %} class="fw-semibold"{% endif %} data-persons="{{ row.persons }}" data-base-unit="{{ row.baseUnit }}" data-heads="{{ row.heads }}">
+                        <td>{{ row.persons }}</td>
+                        <td class="text-end">{% if row.base is null %}—{% else %}{{ row.base|number_format(2, ',', '.') }}&nbsp;{{ currency_symbol }}{% endif %}</td>
+                        <td class="text-end">{% if row.price is null %}—{% else %}{{ row.price|number_format(2, ',', '.') }}&nbsp;{{ currency_symbol }}{% endif %}</td>
+                        <td class="text-end" data-price-calendar-new hidden>—</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
     {# The buttons are named "intent", not "action": a field named "action" would hide form.action in the browser. #}
     <form method="post" action="{{ path('prices.calendar.save') }}" data-action="submit->price-calendar#save" novalidate>
         <input type="hidden" name="_token" value="{{ csrf_token('price-calendar') }}">
@@ -42,6 +66,7 @@
         <label class="form-label small fw-semibold" for="day-price-amount">{{ 'price_calendar.amount'|trans({'%count%': persons}) }}</label>
         <div class="input-group" style="max-width:12rem">
             <input type="number" class="form-control" id="day-price-amount" name="amount" min="0.01" step="0.01"
+                   data-action="input->price-calendar#preview"
                    value="{{ (day.dayPrice and day.dayPrice.persons == persons ? day.dayPrice.amount : day.price)|number_format(2, '.', '') }}">
             <span class="input-group-text">{{ currency_symbol }}</span>
         </div>

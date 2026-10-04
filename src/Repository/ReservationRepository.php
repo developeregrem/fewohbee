@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\Appartment;
 use App\Entity\CalendarSyncImport;
+use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
@@ -24,6 +25,9 @@ use Symfony\Component\Uid\Uuid;
  */
 class ReservationRepository extends ServiceEntityRepository
 {
+    /** A canceled invoice no longer states the price of a booking; needs the parameter "canceled". */
+    private const WITHOUT_ACTIVE_INVOICE = 'NOT EXISTS (SELECT i.id FROM App\Entity\Invoice i WHERE i MEMBER OF r.invoices AND COALESCE(i.status, 0) <> :canceled)';
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Reservation::class);
@@ -652,8 +656,8 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * Ids of reservations without a price promise and without an invoice whose stay ended on or
-     * after $endFrom: the bookings from before price promises that still need one.
+     * Ids of reservations without a price promise and without an active invoice whose stay ended on
+     * or after $endFrom: the bookings from before price promises that still need one.
      *
      * @return list<int>
      */
@@ -662,7 +666,8 @@ class ReservationRepository extends ServiceEntityRepository
         $rows = $this->createQueryBuilder('r')
             ->select('r.id')
             ->andWhere('r.pricePromise IS NULL')
-            ->andWhere('r.invoices IS EMPTY')
+            ->andWhere(self::WITHOUT_ACTIVE_INVOICE)
+            ->setParameter('canceled', InvoiceStatus::CANCELED->value)
             ->andWhere('r.endDate >= :endFrom')
             ->setParameter('endFrom', $endFrom->format('Y-m-d'))
             ->orderBy('r.id', 'ASC')
@@ -692,7 +697,7 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * The stored price promises of all reservations without an invoice.
+     * The stored price promises of all reservations without an active invoice.
      *
      * @return list<array<string, mixed>>
      */
@@ -701,7 +706,8 @@ class ReservationRepository extends ServiceEntityRepository
         $rows = $this->createQueryBuilder('r')
             ->select('r.pricePromise')
             ->andWhere('r.pricePromise IS NOT NULL')
-            ->andWhere('r.invoices IS EMPTY')
+            ->andWhere(self::WITHOUT_ACTIVE_INVOICE)
+            ->setParameter('canceled', InvoiceStatus::CANCELED->value)
             ->getQuery()
             ->getSingleColumnResult();
 

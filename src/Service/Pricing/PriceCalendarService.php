@@ -83,6 +83,44 @@ class PriceCalendarService
         return $nights;
     }
 
+    /**
+     * The price of one night for each occupancy: from the price list and as a guest gets it today,
+     * per room and night. The unit price and the number of guests it is charged for let the night
+     * view work out what a day price would make of each occupancy. A flat price has no price per
+     * night and comes back as null, like an occupancy without a price on that night.
+     *
+     * @param list<int> $occupancies
+     *
+     * @return list<array{persons: int, base: float|null, price: float|null, baseUnit: float|null, heads: int}>
+     */
+    public function occupancies(Subsidiary $subsidiary, RoomCategory $category, \DateTimeImmutable $night, array $occupancies): array
+    {
+        $room = $this->sampleRoom($subsidiary, $category);
+        $origin = $this->dayPrices->referenceOrigin();
+        $rates = [];
+        if (null !== $room && null !== $origin && [] !== $occupancies) {
+            foreach ($this->rateCalendar->build($room, $night, $night, 1, $occupancies, $origin)[0]['rates'] ?? [] as $rate) {
+                $rates[$rate['occupancy']] = $rate;
+            }
+        }
+
+        $result = [];
+        foreach ($occupancies as $persons) {
+            $rate = $rates[$persons] ?? null;
+            $noPrice = null === $rate || null === $rate['perNight'];
+            $heads = 'per_person_night' === ($rate['pricingModel'] ?? null) ? $persons : 1;
+            $result[] = [
+                'persons' => $persons,
+                'base' => $noPrice ? null : $rate['baseUnitPrice'] * $heads,
+                'price' => $noPrice ? null : $rate['perNight'],
+                'baseUnit' => $noPrice ? null : $rate['baseUnitPrice'],
+                'heads' => $heads,
+            ];
+        }
+
+        return $result;
+    }
+
     /** The first active room of the category in the subsidiary; prices are the category's. */
     public function sampleRoom(Subsidiary $subsidiary, RoomCategory $category): ?Appartment
     {

@@ -980,7 +980,7 @@ class ReservationServiceController extends AbstractController
     /**
      * What the price tab has to tell when the price list changed since the booking: the date and
      * total the booking keeps, and the total at today's prices. Null when there is nothing to
-     * decide - no promise, an invoice already exists, or both totals agree. Extras added later
+     * decide - no promise, an invoice that is not canceled exists, or both totals agree. Extras added later
      * are promised at today's price, so they never cause a difference.
      *
      * @return array{promisedOn: string, promised: float, current: float}|null
@@ -988,7 +988,7 @@ class ReservationServiceController extends AbstractController
     private function priceListChange(PricePromiseService $pricePromises, Reservation $reservation): ?array
     {
         $promise = PricePromise::fromArray($reservation->getPricePromise());
-        if (null === $promise || ([] === $promise->nights && [] === $promise->extras) || !$reservation->getInvoices()->isEmpty()) {
+        if (null === $promise || ([] === $promise->nights && [] === $promise->extras) || $reservation->hasActiveInvoice()) {
             return null;
         }
         $totals = $pricePromises->compareWithCurrentPrices($reservation);
@@ -1001,7 +1001,8 @@ class ReservationServiceController extends AbstractController
 
     /**
      * Gives up the promised price of a booking and prices it entirely from today's price list.
-     * Bookings with an invoice are left alone: the invoice already states their price.
+     * Bookings with an invoice are left alone: the invoice already states their price. A canceled
+     * invoice does not count, the booking is billed anew.
      */
     #[Route('/{id}/price/reprice', name: 'reservations.price.reprice', requirements: ['id' => '\\d+'], methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
@@ -1009,7 +1010,7 @@ class ReservationServiceController extends AbstractController
     {
         if (!$this->isCsrfTokenValid('reservation-reprice-'.$reservation->getId(), $request->request->getString('_token'))) {
             $this->addFlash('warning', 'flash.invalidtoken');
-        } elseif (!$reservation->getInvoices()->isEmpty()) {
+        } elseif ($reservation->hasActiveInvoice()) {
             $this->addFlash('warning', 'reservation.price.reprice.invoiced');
         } else {
             $pricePromises->reconcile($reservation, repriceAll: true);

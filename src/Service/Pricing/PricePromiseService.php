@@ -113,8 +113,9 @@ class PricePromiseService
 
     /**
      * Gives bookings made before price promises existed today's price as their promise: those
-     * without an invoice and without a promise whose stay ended at most a year ago. Call it right
-     * before the price list changes - until then they are priced from the unchanged list anyway.
+     * without an active (not canceled) invoice and without a promise whose stay ended at most a
+     * year ago. Call it right before the price list changes - until then they are priced from the
+     * unchanged list anyway.
      * Once all are handled it costs a single query.
      */
     public function promiseOpenReservations(): void
@@ -142,8 +143,9 @@ class PricePromiseService
     }
 
     /**
-     * How many bookings without an invoice were promised a price from this row. Checked in PHP:
-     * the promise is JSON and DQL has no JSON functions; it is only asked when a price is deleted.
+     * How many bookings without an active invoice were promised a price from this row. Checked in
+     * PHP: the promise is JSON and DQL has no JSON functions; it is only asked when a price is
+     * deleted.
      */
     public function countOpenPromisesUsing(int $priceId): int
     {
