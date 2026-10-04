@@ -16,8 +16,8 @@ use App\Repository\BookingBatchRepository;
 use App\Repository\BookingEntryRepository;
 use App\Service\BookingJournal\AccountingSettingsService;
 use App\Service\BookingJournal\BookingJournalService;
-use App\Service\JournalExport\DatevExportService;
 use App\Service\BookingJournal\OpeningBalanceService;
+use App\Service\JournalExport\DatevExportService;
 use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -219,7 +219,9 @@ class BookingJournalController extends AbstractController
 
         $em->flush();
 
-        $this->addFlash('success', $batch->isClosed()
+        $this->addFlash(
+            'success',
+            $batch->isClosed()
             ? 'accounting.journal.flash.batch_closed'
             : 'accounting.journal.flash.batch_reopened'
         );
@@ -481,7 +483,7 @@ class BookingJournalController extends AbstractController
             $this->addFlash('danger', 'flash.invalidtoken');
 
             return new Response('', Response::HTTP_NO_CONTENT);
-        }        
+        }
 
         if ($batch->isClosed()) {
             $this->addFlash('warning', 'journal.error.journal.closed');

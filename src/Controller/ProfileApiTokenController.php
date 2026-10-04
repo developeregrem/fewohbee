@@ -47,7 +47,7 @@ final class ProfileApiTokenController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
             $expiresIn = (string) ($data['expiresIn'] ?? '');
-            $expiresAt = '' !== $expiresIn ? (new \DateTimeImmutable())->modify($expiresIn) : null;
+            $expiresAt = '' !== $expiresIn ? new \DateTimeImmutable()->modify($expiresIn) : null;
 
             $result = $this->apiTokenService->createToken($user, (string) $data['name'], ApiTokenType::collectScopes($data), $expiresAt);
 

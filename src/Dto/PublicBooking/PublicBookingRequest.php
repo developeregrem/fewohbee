@@ -29,6 +29,8 @@ final readonly class PublicBookingRequest
         public array $occupancySelection,
         public array $extrasSelection,
         public BookerInput $booker,
+        /** Grand total in cents the guest saw in the summary; null when the form did not send it. */
+        public ?int $quotedTotal = null,
     ) {
     }
 }

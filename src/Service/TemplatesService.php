@@ -28,8 +28,8 @@ use League\Flysystem\FilesystemOperator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Twig\Error\Error as TwigError;
 use Twig\Environment;
+use Twig\Error\Error as TwigError;
 
 class TemplatesService
 {
@@ -50,30 +50,31 @@ class TemplatesService
     ];
     public const FORMAT_DEFAULT_MARGINS = [
         'A4' => [
-            'marginLeft'   => 25.0,
-            'marginRight'  => 20.0,
-            'marginTop'    => 20.0,
+            'marginLeft' => 25.0,
+            'marginRight' => 20.0,
+            'marginTop' => 20.0,
             'marginBottom' => 20.0,
             'marginHeader' => 9.0,
             'marginFooter' => 9.0,
         ],
         'A5' => [
-            'marginLeft'   => 15.0,
-            'marginRight'  => 12.0,
-            'marginTop'    => 12.0,
+            'marginLeft' => 15.0,
+            'marginRight' => 12.0,
+            'marginTop' => 12.0,
             'marginBottom' => 12.0,
             'marginHeader' => 6.0,
             'marginFooter' => 6.0,
         ],
         'A6' => [
-            'marginLeft'   => 10.0,
-            'marginRight'  => 8.0,
-            'marginTop'    => 8.0,
+            'marginLeft' => 10.0,
+            'marginRight' => 8.0,
+            'marginTop' => 8.0,
             'marginBottom' => 8.0,
             'marginHeader' => 4.0,
             'marginFooter' => 4.0,
         ],
     ];
+
     public function __construct(
         private Environment $twig,
         private EntityManagerInterface $em,
@@ -100,7 +101,7 @@ class TemplatesService
         }
         $templateId = $request->request->get('type-'.$id);
         $type = $this->em->getRepository(TemplateType::class)->find($templateId);
-        if (!($type instanceof TemplateType)) {
+        if (!$type instanceof TemplateType) {
             // throw ""
         }
         $template->setTemplateType($type);
@@ -115,6 +116,7 @@ class TemplatesService
             $template->setIsDefault(false);
         }
         $template->setHidden($request->request->has('hidden-'.$id));
+
         return $template;
     }
 
@@ -151,7 +153,7 @@ class TemplatesService
     {
         /* @var $template Template */
         $template = $this->em->getRepository(Template::class)->find($templateId);
-        if (!($template instanceof Template)) {
+        if (!$template instanceof Template) {
             throw new \InvalidArgumentException($this->translator->trans('templates.notfound'));
         }
 
@@ -432,11 +434,11 @@ class TemplatesService
         $orientationField = 'params-orientation-'.$id;
         $hasStructuredInput = $request->request->has($orientationField);
         if ($hasStructuredInput) {
-   	        $format = strtoupper((string) $request->request->get('params-format-'.$id, 'A4')); // NEU
-                $structured = [
-                    'format'      => in_array($format, ['A4', 'A5', 'A6'], true) ? $format : 'A4',
-                    'orientation' => strtoupper((string) $request->request->get($orientationField, 'P')),
-                ];
+            $format = strtoupper((string) $request->request->get('params-format-'.$id, 'A4')); // NEU
+            $structured = [
+                'format' => in_array($format, ['A4', 'A5', 'A6'], true) ? $format : 'A4',
+                'orientation' => strtoupper((string) $request->request->get($orientationField, 'P')),
+            ];
             foreach (['marginLeft', 'marginRight', 'marginTop', 'marginBottom', 'marginHeader', 'marginFooter'] as $key) {
                 $value = $request->request->get('params-'.$key.'-'.$id);
                 if (is_numeric($value)) {
@@ -622,10 +624,6 @@ class TemplatesService
      *
      * A missing/unreadable file leaves the original src untouched (mPDF then simply
      * skips the broken image, as it always did for a missing file).
-     *
-     * @param string $input
-     *
-     * @return string
      */
     public function prepareImagesForRendering(string $input): string
     {
@@ -721,10 +719,10 @@ class TemplatesService
      * - Otherwise, only templates sharing the same base type are allowed
      *   (e.g. TEMPLATE_RESERVATION_PDF ↔ TEMPLATE_RESERVATION_EMAIL)
      *
-     * @param string   $text             The template text to process
-     * @param string|null $hostTypeName  The template type name of the host template (for compatibility checks)
-     * @param int      $depth            Current recursion depth
-     * @param int[]    $visitedIds       IDs already resolved in this chain (cycle detection)
+     * @param string      $text         The template text to process
+     * @param string|null $hostTypeName The template type name of the host template (for compatibility checks)
+     * @param int         $depth        Current recursion depth
+     * @param int[]       $visitedIds   IDs already resolved in this chain (cycle detection)
      */
     public function resolveTemplateIncludes(string $text, ?string $hostTypeName = null, int $depth = 0, array $visitedIds = []): string
     {
@@ -748,10 +746,7 @@ class TemplatesService
 
                 $includedTypeName = $included->getTemplateType()?->getName() ?? '';
                 if (null !== $hostTypeName && !$this->isTemplateIncludeCompatible($hostTypeName, $includedTypeName)) {
-                    throw new \RuntimeException($this->translator->trans('templates.include.error.incompatible', [
-                        '%name%' => $included->getName(),
-                        '%type%' => $includedTypeName,
-                    ]));
+                    throw new \RuntimeException($this->translator->trans('templates.include.error.incompatible', ['%name%' => $included->getName(), '%type%' => $includedTypeName]));
                 }
 
                 $includedText = $included->getText() ?? '';
@@ -771,7 +766,7 @@ class TemplatesService
      */
     public function isTemplateIncludeCompatible(string $hostTypeName, string $includedTypeName): bool
     {
-        if ($includedTypeName === 'TEMPLATE_FILE_PDF') {
+        if ('TEMPLATE_FILE_PDF' === $includedTypeName) {
             return true;
         }
 
@@ -780,7 +775,7 @@ class TemplatesService
 
     /**
      * Extract the base type from a template type name.
-     * e.g. "TEMPLATE_RESERVATION_PDF" → "RESERVATION", "TEMPLATE_RESERVATION_EMAIL" → "RESERVATION"
+     * e.g. "TEMPLATE_RESERVATION_PDF" → "RESERVATION", "TEMPLATE_RESERVATION_EMAIL" → "RESERVATION".
      */
     private function extractTemplateBaseType(string $typeName): string
     {
@@ -892,7 +887,7 @@ class TemplatesService
             }
 
             $cleanAttributes = $this->stripControlAttributes($attributes, false);
-            $openTag = '<'.$tag.($cleanAttributes !== '' ? ' '.$cleanAttributes : '').'>';
+            $openTag = '<'.$tag.('' !== $cleanAttributes ? ' '.$cleanAttributes : '').'>';
             $element = $openTag.$content.'</'.$tag.'>';
 
             $loopExpression = null !== $key
@@ -915,7 +910,7 @@ class TemplatesService
             }
 
             $cleanAttributes = $this->stripControlAttributes($attributes);
-            $openTag = '<'.$tag.($cleanAttributes !== '' ? ' '.$cleanAttributes : '').'>';
+            $openTag = '<'.$tag.('' !== $cleanAttributes ? ' '.$cleanAttributes : '').'>';
             $element = $openTag.$content.'</'.$tag.'>';
 
             return '{% if '.$condition.' %}'."\n".$element."\n".'{% endif %}';

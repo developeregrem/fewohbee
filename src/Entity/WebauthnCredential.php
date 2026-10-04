@@ -44,7 +44,7 @@ class WebauthnCredential
     #[ORM\Column(name: 'trust_path', type: 'json')]
     private array $trustPath;
 
-    #[ORM\Column(type: 'text')]
+    #[ORM\Column(type: 'text', length: 255)]
     private string $aaguid;
 
     #[ORM\Column(name: 'credential_public_key', type: 'text')]

@@ -14,7 +14,11 @@
         {% endif %}
     </li>
     <li class="nav-item">
-        <a class="nav-link{% if tab is defined and tab == 'prices' %} active{% endif %}" href="#prices" data-bs-toggle="tab">{{ 'reservation.prices.title'|trans }}</a>
+        <a class="nav-link{% if tab is defined and tab == 'prices' %} active{% endif %}" href="#prices" data-bs-toggle="tab">
+            {{ 'reservation.prices.title'|trans }}
+            {# Invoices are usually created without opening this tab, so a changed price list must show from outside. #}
+            {% if priceListChange is defined and priceListChange is not null %}<span class="badge rounded-pill text-bg-info ms-1" title="{{ 'reservation.price.list_changed.title'|trans }}">!</span>{% endif %}
+        </a>
     </li>
     {% if guestCheckIn is defined and guestCheckIn %}
     <li class="nav-item">
@@ -439,6 +443,26 @@
         <div class="row mt-4">
             <div class="col fs-5 fw-bold ">{{ 'invoice.price.total'|trans }}: {{ brutto|number_format(2, ',', '.') }}</div>
         </div>
+        {% if mode is defined and mode == 'edit' and priceListChange is defined and priceListChange is not null %}
+            {# Only shown when there is something to decide: the price list changed since the booking. #}
+            <div class="alert alert-info d-flex flex-column flex-md-row align-items-md-center gap-2 mt-3 mb-0">
+                <div class="me-md-auto">
+                    <div class="fw-bold">{{ 'reservation.price.list_changed.title'|trans }}</div>
+                    {{ 'reservation.price.list_changed.text'|trans({
+                        '%date%': priceListChange.promisedOn|date('d.m.Y'),
+                        '%promised%': priceListChange.promised|number_format(2, ',', '.') ~ ' ' ~ currency_symbol,
+                        '%current%': priceListChange.current|number_format(2, ',', '.') ~ ' ' ~ currency_symbol,
+                    }) }}
+                </div>
+                {% if is_granted('ROLE_RESERVATIONS') %}
+                    <form action="{{ path('reservations.price.reprice', {'id': reservationId}) }}" method="post"
+                          data-action="submit->reservations#repriceReservation" class="flex-shrink-0">
+                        <input type="hidden" name="_token" value="{{ csrf_token('reservation-reprice-' ~ reservationId) }}">
+                        <button type="submit" class="btn btn-sm btn-secondary w-100">{{ 'reservation.price.reprice.confirm'|trans }}</button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endif %}
         {# variable that contains the status whether prices are used that includes vat and does not include vats
         this will lead to price sums that are displayed incorrect #}
         {% set lastIncludesVat = null %}
@@ -447,6 +471,25 @@
             <div class="col">
                 <h5>{{ 'invoice.appartment'|trans }}</h5>
                 {% include 'Invoices/invoice_table_apartment_preview_positions.html.twig' with {'mode': 'read'} %}
+                {# Which price rules or day prices are part of the room price, and on how many nights. #}
+                {% import 'PriceRules/_macros.html.twig' as ruleText %}
+                {% set ruleNights = {} %}
+                {% for rate in nightRates|default([])|filter(rate => rate and rate.adjustment) %}
+                    {% if rate.adjustment.dayPriceSource %}
+                        {% set ruleLabel = 'reservation.price.day_price'|trans %}
+                        {% set ruleNights = ruleNights|merge({(ruleLabel): (ruleNights[ruleLabel] ?? 0) + 1}) %}
+                    {% endif %}
+                    {% for applied in rate.adjustment.rules %}
+                        {% set ruleLabel = applied[0] ~ ' ' ~ ruleText.percent(applied[1]) %}
+                        {% set ruleNights = ruleNights|merge({(ruleLabel): (ruleNights[ruleLabel] ?? 0) + 1}) %}
+                    {% endfor %}
+                {% endfor %}
+                {% if ruleNights is not empty %}
+                    <p class="small text-body-secondary mb-0">
+                        {{ 'reservation.price.rules_applied'|trans }}:
+                        {% for ruleLabel, nights in ruleNights %}{{ ruleLabel }} ({{ 'reservation.price.rules_nights'|trans({'%count%': nights}) }}){{ loop.last ? '' : ', ' }}{% endfor %}
+                    </p>
+                {% endif %}
             </div>
         </div>
             
@@ -475,7 +518,8 @@
             </div>
         </div>
         <div class="row mt-3">
-            <small><span class="text-info me-auto"><i class="fas fa-info-circle"></i> {{ 'reservation.prices.preliminary'|trans }}</span></small>
+            {# An existing booking keeps its prices, so the invoice starts from exactly these. #}
+            <small><span class="text-info me-auto"><i class="fas fa-info-circle"></i> {{ (mode is defined and mode == 'edit' ? 'reservation.prices.invoice_note' : 'reservation.prices.preliminary')|trans }}</span></small>
         </div>
     </div>
 

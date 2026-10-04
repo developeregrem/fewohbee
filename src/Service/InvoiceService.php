@@ -14,11 +14,15 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Dto\OriginFee;
+use App\Dto\Pricing\GuestAdjustment;
+use App\Dto\Pricing\NightRate;
+use App\Dto\Pricing\PricePromise;
 use App\Dto\TouristTaxBreakdown;
-use App\Entity\Enum\ModifierType;
-use App\Entity\Enum\TaxCalculationMode;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\Enum\InvoiceStatus;
+use App\Entity\Enum\ModifierType;
+use App\Entity\Enum\TaxCalculationMode;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
@@ -27,7 +31,6 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
-use App\Entity\Enum\InvoiceStatus;
 use App\Service\EInvoice\EInvoiceExportService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -35,7 +38,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use App\Service\AppSettingsService;
 
 class InvoiceService
 {
@@ -163,9 +165,9 @@ class InvoiceService
             $this->em->flush();
 
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -240,7 +242,7 @@ class InvoiceService
         $pdfOutput = $ts->getPDFOutput($templateOutput, $this->buildInvoiceExportFilename($invoice, true), $template);
         $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
 
-        return (new ZugferdDocumentPdfMerger($xml, $pdfOutput))
+        return new ZugferdDocumentPdfMerger($xml, $pdfOutput)
             ->generateDocument()
             ->downloadString();
     }
@@ -374,7 +376,7 @@ class InvoiceService
         $fileNamePattern = $this->appSettingsService->getSettings()->getInvoiceFilenamePattern();
         $pattern = trim($fileNamePattern);
         if ('' === $pattern) {
-            $pattern = $this->translator->trans('invoice.number.short') . '-<number>';
+            $pattern = $this->translator->trans('invoice.number.short').'-<number>';
         }
 
         $statusLabel = '';
@@ -431,7 +433,7 @@ class InvoiceService
         $value = preg_replace('/[^A-Za-z0-9._-]/', '', $value);
         $value = preg_replace('/_+/', '_', $value);
         $value = preg_replace('/-+/', '-', $value);
-        $value = trim($value, "._-");
+        $value = trim($value, '._-');
 
         return '' !== $value ? $value : 'invoice';
     }
@@ -478,30 +480,32 @@ class InvoiceService
      */
     public function buildAppartmentPositions(Reservation $reservation): array
     {
-        $prices = $this->ps->getPricesForReservationDays($reservation, 2);
+        // Promised nights carry their own unit price, so a position ends wherever
+        // the price row or the billed unit price changes.
+        $rates = $this->ps->getNightRates($reservation);
         $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
 
         $positions = [];
         $curDate = clone $reservation->getStartDate();
-        $lastPrice = (null === $prices[0] ? null : $prices[0][0]);
+        $lastRate = $rates[0] ?? null;
         $start = clone $reservation->getStartDate();
 
         for ($i = 0; $i <= $days; ++$i) {
             // here we need to ignore the price of the last day because it's not the valid price e.g. booked from 01.01 - 02.01 we need to use the price for 01.01.
             // thats why we apply the prevois price for the last loop
             if ($i < $days) {
-                $price = (null === $prices[$i] ? null : $prices[$i][0]);
+                $rate = $rates[$i] ?? null;
             } else {
-                $price = $lastPrice;
+                $rate = $lastRate;
             }
 
             $curDate = (clone $curDate)->add(new \DateInterval('P'.(0 === $i ? 0 : 1).'D'));
-            if (null !== $price && null !== $lastPrice && ($lastPrice->getId() !== $price->getId() || $i == $days)) {
-                $positions[] = $this->makeAparmtentPosition($start, $curDate, $reservation, $lastPrice);
+            if (null !== $rate && null !== $lastRate && ($lastRate->positionKey() !== $rate->positionKey() || $i == $days)) {
+                $positions[] = $this->makeAparmtentPosition($start, $curDate, $reservation, $lastRate);
 
                 $start = clone $curDate;
             }
-            $lastPrice = $price;
+            $lastRate = $rate;
         }    // loop must run one more time to add the position for the last day of stay
 
         return $positions;
@@ -762,16 +766,21 @@ class InvoiceService
             //    categories (e.g. infants in a cot) are not part of `persons`
             //    and therefore never billed by the apartment line; emitting a
             //    delta would subtract a charge that was never added.
+            //
+            // Nights are only aggregated while their delta is the same: a stay
+            // across two price rows (weekday/weekend, season change, a promise
+            // kept for some nights only) has a different delta per row.
             $aggregates = [];
             foreach ($this->ps->getPriceBreakdownForReservation($reservation) as $breakdown) {
                 $base = $breakdown->basePrice;
-                if (null === $base || $base->getIsFlatPrice() || $base->getIsPerRoom()) {
+                $rate = $breakdown->rate;
+                if (null === $base || null === $rate || $rate->isFlatPrice || $rate->isPerRoom) {
                     continue;
                 }
-                $basePerHead = (float) $base->getPrice();
+                $basePerHead = (float) $rate->unit;
 
                 foreach ($breakdown->lines as $line) {
-                    if (null === $line->modifier) {
+                    if (null === $line->adjustment) {
                         continue;
                     }
                     if (!$line->category->isCountedInOccupancy()) {
@@ -781,16 +790,23 @@ class InvoiceService
                     if (0.0 === round($delta, 2)) {
                         continue;
                     }
-                    $key = $line->modifier->getId().':'.$line->category->getId();
+                    $key = implode(':', [
+                        $line->adjustment->key(),
+                        $line->category->getId(),
+                        $line->count,
+                        number_format($delta, 2, '.', ''),
+                        $rate->includesVat ? 'g' : 'n',
+                        $base->getId(),
+                    ]);
                     if (!isset($aggregates[$key])) {
                         $aggregates[$key] = [
-                            'modifier' => $line->modifier,
+                            'adjustment' => $line->adjustment,
                             'category' => $line->category,
                             'count' => $line->count,
                             'nights' => 0,
                             'unitDelta' => $delta,
                             'vat' => $base->getVat(),
-                            'includesVat' => (bool) $base->getIncludesVat(),
+                            'includesVat' => $rate->includesVat,
                             'revenueAccount' => $base->getRevenueAccount(),
                         ];
                     }
@@ -807,11 +823,11 @@ class InvoiceService
     }
 
     /**
-     * @param array{modifier: \App\Entity\GuestCategoryModifier, category: \App\Entity\GuestCategory, count: int, nights: int, unitDelta: float, vat: float, includesVat: bool, revenueAccount: ?\App\Entity\AccountingAccount} $a
+     * @param array{adjustment: GuestAdjustment, category: \App\Entity\GuestCategory, count: int, nights: int, unitDelta: float, vat: float, includesVat: bool, revenueAccount: ?\App\Entity\AccountingAccount} $a
      */
     private function makeApartmentModifierPosition(array $a): InvoicePosition
     {
-        $modifierLabel = $this->describeModifier($a['modifier']);
+        $modifierLabel = $this->describeAdjustment($a['adjustment']);
         $description = $this->translator->trans('invoice.apartment_modifier.position', [
             '%category%' => $a['category']->getName(),
             '%modifier%' => $modifierLabel,
@@ -837,12 +853,12 @@ class InvoiceService
         return $position;
     }
 
-    private function describeModifier(\App\Entity\GuestCategoryModifier $modifier): string
+    private function describeAdjustment(GuestAdjustment $adjustment): string
     {
-        $value = $modifier->getValueAsFloat();
-        $key = 'invoice.apartment_modifier.label.'.$modifier->getType()->value;
+        $value = $adjustment->value;
+        $key = 'invoice.apartment_modifier.label.'.$adjustment->type->value;
 
-        return match ($modifier->getType()) {
+        return match ($adjustment->type) {
             ModifierType::DISCOUNT_PERCENT => $this->translator->trans($key, ['%value%' => number_format($value, 0, ',', '.')]),
             ModifierType::SURCHARGE_ABSOLUTE,
             ModifierType::FLAT_RATE => $this->translator->trans($key, ['%value%' => number_format($value, 2, ',', '.')]),
@@ -913,8 +929,14 @@ class InvoiceService
                 continue;
             }
 
+            $promise = null;
             if ($useExistingPrices) {
-                $existingPrices = $reservation->getPrices()->filter(static fn (Price $price) => $price->getActive());
+                // A booked extra keeps its promised unit price, even once its price
+                // row has been deactivated; only unpromised extras need to be active.
+                $promise = $this->ps->promiseOf($reservation);
+                $existingPrices = $reservation->getPrices()->filter(
+                    static fn (Price $price) => $price->getActive() || null !== $promise?->extra((int) $price->getId())
+                );
             }
             $prices = $this->ps->getPricesForReservationDays($reservation, 1, $existingPrices);
 
@@ -927,20 +949,31 @@ class InvoiceService
                 }
                 foreach ($prices[$i] as $price) {
                     $amount = ($price->getIsFlatPrice() || $price->getIsPerRoom() ? 1 : $reservation->getPersons());
+                    $promised = $promise?->extra((int) $price->getId());
+                    // Reservations booked at different times may hold different unit prices
+                    // for the same extra; those must not share a position.
+                    $key = implode('|', [
+                        $price->getId(),
+                        $promised->unit ?? PricePromise::money($price->getPrice()),
+                        ($promised->includesVat ?? (bool) $price->getIncludesVat()) ? 'g' : 'n',
+                    ]);
 
                     // if key exists, add the current amount to the existing one, to have only one entry in the results list
                     // with the same price id but a total amount if the same price category occurs more than once
-                    if (array_key_exists($price->getId(), $tmpMiscArr)) {
+                    if (array_key_exists($key, $tmpMiscArr)) {
                         // add amount to an existing one only when it is not flat price or for another reservation (same flat price only once per reservation)
-                        if (!$price->getIsFlatPrice() || ($price->getIsFlatPrice() && $tmpMiscArr[$price->getId()]['reservationId'] !== $reservation->getId())) {
-                            $tmpMiscArr[$price->getId()]['amount'] += $amount;
-                            $tmpMiscArr[$price->getId()]['reservationId'] = $reservation->getId();
+                        if (!$price->getIsFlatPrice() || ($price->getIsFlatPrice() && $tmpMiscArr[$key]['reservationId'] !== $reservation->getId())) {
+                            $tmpMiscArr[$key]['amount'] += $amount;
+                            $tmpMiscArr[$key]['reservationId'] = $reservation->getId();
                         }
                     } else {
-                        $tmpMiscArr[$price->getId()] = [
+                        $tmpMiscArr[$key] = [
                             'price' => $price,
                             'amount' => $amount,
                             'reservationId' => $reservation->getId(),
+                            // null: not promised, the price row answers
+                            'unit' => $promised?->unit,
+                            'includesVat' => $promised?->includesVat,
                         ];
                     }
                 }
@@ -1091,20 +1124,21 @@ class InvoiceService
     /**
      * Creates a new InvoicePosition object based on the input.
      */
-    private function makeAparmtentPosition(\DateTime $start, \DateTime $end, Reservation $reservation, Price $price): InvoiceAppartment
+    private function makeAparmtentPosition(\DateTime $start, \DateTime $end, Reservation $reservation, NightRate $rate): InvoiceAppartment
     {
+        $price = $rate->price;
         $positionAppartment = new InvoiceAppartment();
         $positionAppartment->setDescription($reservation->getAppartment()->getDescription());
         $positionAppartment->setNumber($reservation->getAppartment()->getNumber());
         $positionAppartment->setStartDate($start);
         $positionAppartment->setEndDate($end);
         $positionAppartment->setVat($price->getVat());
-        $positionAppartment->setPrice($price->getPrice());
+        $positionAppartment->setPrice($rate->unit);
         $positionAppartment->setPersons($reservation->getPersons());
         $positionAppartment->setBeds($reservation->getAppartment()->getBedsMax());
-        $positionAppartment->setIncludesVat($price->getIncludesVat());
-        $positionAppartment->setIsFlatPrice($price->getIsFlatPrice());
-        $positionAppartment->setIsPerRoom($price->getIsPerRoom());
+        $positionAppartment->setIncludesVat($rate->includesVat);
+        $positionAppartment->setIsFlatPrice($rate->isFlatPrice);
+        $positionAppartment->setIsPerRoom($rate->isPerRoom);
         $positionAppartment->setRevenueAccount($price->getRevenueAccount());
 
         return $positionAppartment;
@@ -1135,9 +1169,9 @@ class InvoiceService
             $position = new InvoicePosition();
             $position->setAmount($tmpPrice['amount']);
             $position->setDescription($price->getDescription());
-            $position->setPrice($price->getPrice());
+            $position->setPrice($tmpPrice['unit'] ?? $price->getPrice());
             $position->setVat($price->getVat());
-            $position->setIncludesVat($price->getIncludesVat());
+            $position->setIncludesVat($tmpPrice['includesVat'] ?? $price->getIncludesVat());
             $position->setIsFlatPrice($this->isFlatAggregate($price, (int) $tmpPrice['amount']));
             $position->setIsPerRoom($price->getIsPerRoom());
             $position->setRevenueAccount($price->getRevenueAccount());
@@ -1164,9 +1198,9 @@ class InvoiceService
         $price = $tmpPrice['price'];
         $expanded = $this->ps->expandPackage(
             $price,
-            (float) $price->getPrice(),
+            (float) ($tmpPrice['unit'] ?? $price->getPrice()),
             (int) $tmpPrice['amount'],
-            (bool) $price->getIncludesVat(),
+            (bool) ($tmpPrice['includesVat'] ?? $price->getIncludesVat()),
         );
 
         $positions = [];

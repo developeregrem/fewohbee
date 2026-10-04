@@ -23,6 +23,7 @@ use App\Service\AppSettingsService;
 use App\Service\AvailabilityService;
 use App\Service\OnlineBooking\BookingRestrictionService;
 use App\Service\OnlineBooking\PublicPricingService;
+use App\Service\Pricing\PricePromiseService;
 use App\Service\ReservationPeriodService;
 use App\Service\ReservationService;
 use Doctrine\DBAL\LockMode;
@@ -56,6 +57,7 @@ class ReservationBookingService
         private readonly AppSettingsService $appSettingsService,
         private readonly PriceRepository $priceRepository,
         private readonly PublicPricingService $pricingService,
+        private readonly PricePromiseService $pricePromises,
     ) {
     }
 
@@ -151,6 +153,7 @@ class ReservationBookingService
             if ('' !== $remark) {
                 $reservation->setRemark($remark);
             }
+            $this->pricePromises->reconcile($reservation);
 
             $this->em->persist($reservation);
             $this->em->flush();
@@ -196,11 +199,7 @@ class ReservationBookingService
         foreach (array_unique($request->extraPriceIds) as $id) {
             if (!isset($applicable[$id])) {
                 $offered = array_map(static fn (Price $price): string => sprintf('%d (%s)', $price->getId(), $price->getDescription()), $applicable);
-                throw new ReservationBookingException(sprintf(
-                    'Extra %d is not available for this stay. Available: %s.',
-                    $id,
-                    [] === $offered ? 'none' : implode(', ', $offered)
-                ));
+                throw new ReservationBookingException(sprintf('Extra %d is not available for this stay. Available: %s.', $id, [] === $offered ? 'none' : implode(', ', $offered)));
             }
             $extras[] = $applicable[$id];
         }
@@ -229,10 +228,7 @@ class ReservationBookingService
         if (null !== $booker->salutation && '' !== trim($booker->salutation)
             && !\in_array(trim($booker->salutation), $this->appSettingsService->getSettings()->getCustomerSalutations(), true)
         ) {
-            throw new ReservationBookingException(sprintf(
-                'Unknown salutation. Allowed: %s.',
-                implode(', ', $this->appSettingsService->getSettings()->getCustomerSalutations())
-            ));
+            throw new ReservationBookingException(sprintf('Unknown salutation. Allowed: %s.', implode(', ', $this->appSettingsService->getSettings()->getCustomerSalutations())));
         }
     }
 

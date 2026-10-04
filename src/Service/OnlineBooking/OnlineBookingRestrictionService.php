@@ -68,7 +68,7 @@ class OnlineBookingRestrictionService implements ResetInterface
             return null;
         }
 
-        return (new \DateTimeImmutable('today'))->modify(sprintf('+%d months', $months));
+        return new \DateTimeImmutable('today')->modify(sprintf('+%d months', $months));
     }
 
     /**

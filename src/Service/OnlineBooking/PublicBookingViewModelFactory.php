@@ -58,7 +58,7 @@ class PublicBookingViewModelFactory
             'errorMessage' => $errorMessage,
             'successMessage' => $this->resolveSuccessMessage($request, $config),
             'submitFallbackNotice' => false,
-            'minArrivalDate' => (new \DateTimeImmutable('today'))->format('Y-m-d'),
+            'minArrivalDate' => new \DateTimeImmutable('today')->format('Y-m-d'),
             'maxDepartureDate' => $this->restrictionService->getMaxDepartureDate()?->format('Y-m-d'),
             'availabilityChecked' => false,
             'formState' => $this->abuseProtectionService->createFormState(false),
@@ -86,6 +86,7 @@ class PublicBookingViewModelFactory
             'selectedExtras' => [],
             'extrasTotalFormatted' => null,
             'grandTotalFormatted' => null,
+            'grandTotal' => null,
             'extrasBreakdown' => [],
             'touristTaxLines' => [],
             'touristTaxTotalFormatted' => null,
@@ -164,6 +165,7 @@ class PublicBookingViewModelFactory
         $view['extrasTotalFormatted'] = $preview['extrasTotalFormatted'];
         $view['extrasBreakdown'] = $preview['extrasBreakdown'];
         $view['grandTotalFormatted'] = $preview['grandTotalFormatted'];
+        $view['grandTotal'] = $preview['grandTotal'];
         $view['touristTaxLines'] = $preview['touristTaxLines'];
         $view['touristTaxTotalFormatted'] = $preview['touristTaxTotalFormatted'];
         $view['touristTaxTotal'] = $preview['touristTaxTotal'];
@@ -220,7 +222,7 @@ class PublicBookingViewModelFactory
     /** Whole months containing bookable nights, counted from the current month. */
     public function monthsUntil(\DateTimeImmutable $end): int
     {
-        $firstOfThisMonth = (new \DateTimeImmutable('today'))->modify('first day of this month');
+        $firstOfThisMonth = new \DateTimeImmutable('today')->modify('first day of this month');
         // The horizon is an exclusive departure boundary. If it falls on the first
         // day of a month, that month contains no bookable night and must not become
         // an otherwise empty calendar page.
@@ -276,6 +278,7 @@ class PublicBookingViewModelFactory
             $recovered['extrasTotalFormatted'] = $preview['extrasTotalFormatted'];
             $recovered['extrasBreakdown'] = $preview['extrasBreakdown'];
             $recovered['grandTotalFormatted'] = $preview['grandTotalFormatted'];
+            $recovered['grandTotal'] = $preview['grandTotal'];
         }
 
         return $recovered;

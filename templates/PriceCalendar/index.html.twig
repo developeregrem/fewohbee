@@ -1,0 +1,118 @@
+{% extends 'base.html.twig' %}
+{% import 'PriceCalendar/_macros.html.twig' as cal %}
+
+{% block title %}
+    {{ parent() }} - {{ 'price_calendar.title'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container" data-controller="price-calendar" data-price-calendar-load-error="{{ 'price_rules.load_error'|trans }}">
+    {% include 'Prices/_tabs.html.twig' with {'active': 'calendar'} %}
+
+    <p class="text-body-secondary">{{ 'price_calendar.intro'|trans }}</p>
+
+    {# Any change reloads the page with the new selection. #}
+    <form method="get" action="{{ path('prices.calendar') }}" class="row g-2 mb-3" data-action="change->price-calendar#filter">
+        {% if subsidiaries|length > 1 %}
+            <div class="col-12 col-md-4">
+                <label class="form-label small mb-1" for="calendar-subsidiary">{{ 'price_calendar.subsidiary'|trans }}</label>
+                <select class="form-select" id="calendar-subsidiary" name="subsidiary">
+                    {% for option in subsidiaries %}
+                        <option value="{{ option.id }}"{{ option == subsidiary ? ' selected' }}>{{ option.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endif %}
+        {% if categories is not empty %}
+            <div class="col-8 col-md-4">
+                <label class="form-label small mb-1" for="calendar-category">{{ 'price_calendar.category'|trans }}</label>
+                <select class="form-select" id="calendar-category" name="category">
+                    {% for option in categories %}
+                        <option value="{{ option.id }}"{{ option == category ? ' selected' }}>{{ option.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endif %}
+        {% if occupancies is not empty %}
+            <div class="col-4 col-md-2">
+                <label class="form-label small mb-1" for="calendar-persons">{{ 'price_calendar.persons'|trans }}</label>
+                <select class="form-select" id="calendar-persons" name="persons">
+                    {% for option in occupancies %}
+                        <option value="{{ option }}"{{ option == persons ? ' selected' }}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endif %}
+        <input type="hidden" name="month" value="{{ month|date('Y-m') }}">
+    </form>
+
+    {% if nights is null %}
+        <div class="alert alert-info">{{ 'price_calendar.nothing'|trans }}</div>
+    {% else %}
+        {% set query = {'subsidiary': subsidiary.id, 'category': category.id, 'persons': persons} %}
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            {% if previousMonth %}
+                <a class="btn btn-sm btn-outline-secondary" href="{{ path('prices.calendar', query|merge({'month': previousMonth|date('Y-m')})) }}" aria-label="{{ 'price_calendar.previous'|trans }}"><i class="fas fa-chevron-left"></i></a>
+            {% else %}
+                {# Keeps the month centered; past months cannot be opened. #}
+                <span class="btn btn-sm btn-outline-secondary invisible" aria-hidden="true"><i class="fas fa-chevron-left"></i></span>
+            {% endif %}
+            <h5 class="mb-0">{{ ('price_calendar.month_' ~ month|date('n'))|trans }} {{ month|date('Y') }}</h5>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ path('prices.calendar', query|merge({'month': nextMonth|date('Y-m')})) }}" aria-label="{{ 'price_calendar.next'|trans }}"><i class="fas fa-chevron-right"></i></a>
+        </div>
+        <p class="small text-body-secondary mb-2">
+            <i class="fas fa-wand-magic-sparkles text-primary"></i> {{ 'price_calendar.legend.rules'|trans }}
+            · <i class="fas fa-pen text-primary"></i> {{ 'price_calendar.legend.day_price'|trans }}
+            · {{ 'price_calendar.legend.tap'|trans }}
+        </p>
+
+        {# Phones: one row per night. #}
+        <div class="list-group d-md-none mb-3">
+            {% for day in nights %}
+                <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-3{{ day.past ? ' disabled opacity-50' }}"
+                        {% if not day.past %}data-action="price-calendar#openNight" data-url="{{ path('prices.calendar.night', query|merge({'night': day.night|date('Y-m-d')})) }}" data-title="{{ cal.nightTitle(day.night) }}"{% endif %}>
+                    <span class="text-center" style="width:4rem">
+                        <span class="d-block small text-body-secondary text-nowrap">{{ ('booking_rules.night_' ~ day.night|date('N'))|trans }}</span>
+                        <span class="d-block fw-semibold">{{ day.night|date('d.m.') }}</span>
+                    </span>
+                    <span class="flex-grow-1">{{ cal.occupancy(day) }}</span>
+                    <span class="text-end">
+                        <span class="d-block fw-bold">{{ cal.price(day) }}</span>
+                        <span class="d-block small">{{ cal.change(day) }}</span>
+                    </span>
+                </button>
+            {% endfor %}
+        </div>
+
+        {# Wider screens: the month as a grid, Monday first. #}
+        <div class="price-calendar-grid d-none d-md-grid mb-3">
+            {% for weekday in 1..7 %}
+                <div class="small text-body-secondary text-center fw-semibold">{{ ('booking_rules.night_' ~ weekday)|trans }}</div>
+            {% endfor %}
+            {% set leading = (nights|first).night|date('N') - 1 %}
+            {% if leading > 0 %}
+                {% for blank in 1..leading %}<div></div>{% endfor %}
+            {% endif %}
+            {% for day in nights %}
+                <button type="button" class="btn btn-outline-secondary text-start p-2 price-calendar-cell{{ day.past ? ' disabled opacity-50' }}"
+                        {% if not day.past %}data-action="price-calendar#openNight" data-url="{{ path('prices.calendar.night', query|merge({'night': day.night|date('Y-m-d')})) }}" data-title="{{ cal.nightTitle(day.night) }}"{% endif %}>
+                    <span class="d-flex justify-content-between align-items-start">
+                        <span class="fw-semibold">{{ day.night|date('j') }}</span>
+                        <span class="small">{{ cal.change(day) }}</span>
+                    </span>
+                    <span class="d-block fs-6 fw-bold my-1">{{ cal.price(day) }}</span>
+                    {{ cal.occupancy(day) }}
+                </button>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="offcanvas offcanvas-end price-rules-offcanvas" tabindex="-1" id="priceCalendarOffcanvas" data-price-calendar-target="offcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" data-price-calendar-target="offcanvasTitle"></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ 'button.cancel'|trans }}"></button>
+        </div>
+        <div class="offcanvas-body" data-price-calendar-target="offcanvasBody"></div>
+    </div>
+</div>
+{% endblock %}

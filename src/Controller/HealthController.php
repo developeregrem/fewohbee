@@ -43,7 +43,7 @@ class HealthController extends AbstractController
     #[Route('/health/ready', name: 'health.ready', methods: ['GET'])]
     public function ready(Request $request, Connection $db): JsonResponse
     {
-        if ($this->healthToken !== null && $request->headers->get('X-Health-Token') !== $this->healthToken) {
+        if (null !== $this->healthToken && $request->headers->get('X-Health-Token') !== $this->healthToken) {
             return new JsonResponse(['status' => 'unauthorized'], 401);
         }
 
@@ -74,7 +74,7 @@ class HealthController extends AbstractController
 
     private function isRedisInUse(): bool
     {
-        return $this->useRedisCache && $this->redisHost !== '' && \extension_loaded('redis');
+        return $this->useRedisCache && '' !== $this->redisHost && \extension_loaded('redis');
     }
 
     private function checkRedis(): bool
@@ -86,7 +86,7 @@ class HealthController extends AbstractController
             $result = $redis->ping();
             $redis->close();
 
-            return $result === true || $result === '+PONG' || $result === 'PONG';
+            return true === $result || '+PONG' === $result || 'PONG' === $result;
         } catch (\Throwable) {
             return false;
         }

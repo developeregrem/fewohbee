@@ -1,0 +1,106 @@
+{% extends 'base.html.twig' %}
+{% import 'PriceRules/_macros.html.twig' as ruleText %}
+{% use "common/delete_popover.html.twig" %}
+
+{% block title %}
+    {{ parent() }} - {{ 'price_rules.title'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container" data-controller="price-rules" data-price-rules-load-error="{{ 'price_rules.load_error'|trans }}">
+    {% include 'Prices/_tabs.html.twig' with {'active': 'rules'} %}
+
+    <p class="text-body-secondary">{{ 'price_rules.intro'|trans }}</p>
+
+    {# The limits apply to every rule, so they sit above the list. #}
+    <div class="card mb-3">
+        <div class="card-body d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+            <div class="me-sm-auto">
+                <div class="fw-semibold">{{ 'price_rules.limits.title'|trans }}</div>
+                <div class="small text-body-secondary">
+                    {{ 'price_rules.limits.summary'|trans({
+                        '%decrease%': -settings.priceChangeMinPercent,
+                        '%increase%': settings.priceChangeMaxPercent,
+                    }) }}
+                    {{ ('price_rules.limits.summary_rounding_' ~ settings.priceChangeRounding.value)|trans }}
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0"
+                    data-action="price-rules#openOffcanvas"
+                    data-url="{{ path('prices.rules.limits') }}"
+                    data-offcanvas-title="{{ 'price_rules.limits.title'|trans }}">
+                <i class="fas fa-pen me-1"></i>{{ 'price_rules.limits.edit'|trans }}
+            </button>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header d-flex align-items-center justify-content-between gap-2">
+            <h5 class="card-title fs-6 mb-0">{{ 'price_rules.list'|trans }}</h5>
+            <button type="button" class="btn btn-sm btn-primary text-nowrap"
+                    data-action="price-rules#openOffcanvas"
+                    data-url="{{ path('prices.rules.new') }}"
+                    data-offcanvas-title="{{ 'price_rules.add'|trans }}">
+                <i class="fas fa-plus me-1"></i>{{ 'price_rules.add'|trans }}
+            </button>
+        </div>
+        <ul class="list-group list-group-flush" data-price-rules-target="list" {{ rules is empty ? 'hidden' }}>
+            {% for rule in rules %}
+                <li id="price-rule-{{ rule.id }}" class="list-group-item d-flex align-items-start gap-2 {{ rule.enabled ? '' : 'opacity-50' }}">
+                    <div class="me-auto">
+                        <div class="fw-semibold">
+                            {{ rule.name }}
+                            <span class="badge text-bg-light border ms-1">{{ ruleText.percent(rule.percent) }}</span>
+                            <span class="badge text-bg-secondary ms-1" data-disabled-badge {{ rule.enabled ? 'hidden' }}>{{ 'price_rules.disabled'|trans }}</span>
+                        </div>
+                        <div class="small">{{ ruleText.when(rule) }}</div>
+                        <div class="small text-body-secondary">{{ ruleText.scope(rule, multipleSubsidiaries) }}</div>
+                    </div>
+                    <div class="text-nowrap flex-shrink-0">
+                        {# Toggled over fetch, so a long list keeps its scroll position. #}
+                        <form method="post" action="{{ path('prices.rules.toggle', {'id': rule.id}) }}" class="d-inline"
+                              data-action="submit->price-rules#toggleRule">
+                            <input type="hidden" name="_token" value="{{ csrf_token('price-rule-toggle-' ~ rule.id) }}">
+                            <button type="submit"
+                                    class="btn btn-sm {{ rule.enabled ? 'btn-success' : 'btn-outline-secondary' }}"
+                                    data-enable-label="{{ 'price_rules.enable'|trans }}"
+                                    data-disable-label="{{ 'price_rules.disable'|trans }}"
+                                    title="{{ (rule.enabled ? 'price_rules.disable' : 'price_rules.enable')|trans }}">
+                                <i class="fas {{ rule.enabled ? 'fa-toggle-on' : 'fa-toggle-off' }}"></i>
+                            </button>
+                        </form>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                title="{{ 'price_rules.edit'|trans }}"
+                                data-action="price-rules#openOffcanvas"
+                                data-url="{{ path('prices.rules.edit', {'id': rule.id}) }}"
+                                data-offcanvas-title="{{ 'price_rules.edit'|trans }}">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        {% set id = rule.id %}
+                        {% set targetUrl = path('prices.rules.delete', {'id': rule.id}) %}
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                title="{{ 'button.delete'|trans }}"
+                                data-popover="delete"
+                                data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                                data-bs-content='{{ block('deletePopoverContent') }}'>
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+        <div class="card-body text-body-secondary small text-center" data-price-rules-target="empty" {{ rules is empty ? '' : 'hidden' }}>
+            {{ 'price_rules.empty'|trans }}
+        </div>
+    </div>
+
+    {# One offcanvas for templates, rule form and limits: from the right on wide screens, from the bottom on phones. #}
+    <div class="offcanvas offcanvas-end price-rules-offcanvas" tabindex="-1" id="priceRuleOffcanvas" data-price-rules-target="offcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" data-price-rules-target="offcanvasTitle"></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ 'button.cancel'|trans }}"></button>
+        </div>
+        <div class="offcanvas-body" data-price-rules-target="offcanvasBody"></div>
+    </div>
+</div>
+{% endblock %}

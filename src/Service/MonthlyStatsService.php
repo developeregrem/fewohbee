@@ -7,11 +7,11 @@ namespace App\Service;
 use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\Enum\InvoiceStatus;
 use App\Entity\MonthlyStatsSnapshot;
 use App\Entity\Reservation;
-use App\Entity\Subsidiary;
-use App\Entity\Enum\InvoiceStatus;
 use App\Entity\ReservationStatus;
+use App\Entity\Subsidiary;
 use App\Repository\PostalCodeDataRepository;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -52,8 +52,7 @@ class MonthlyStatsService
         ?Subsidiary $subsidiary,
         array $ignoredWarnings = [],
         array $reservationStatus = []
-    ): array
-    {
+    ): array {
         $this->ensureEntityManager();
         $defaultStatusIds = $reservationStatus ?: $this->getDefaultReservationStatusIds();
         $objectId = $subsidiary?->getId() ?? 'all';
@@ -152,7 +151,7 @@ class MonthlyStatsService
             }
 
             if ($isDefaultStatus) {
-                $summary['reservations_total'] += 1;
+                ++$summary['reservations_total'];
             }
 
             $startDate = $this->toImmutable($reservation->getStartDate());
@@ -299,7 +298,7 @@ class MonthlyStatsService
                         $state = $this->resolveStateForCustomer($customer);
                         $byStatus[$statusKey]['tourism']['arrivals_by_country'][$country] =
                             ($byStatus[$statusKey]['tourism']['arrivals_by_country'][$country] ?? 0) + 1;
-                        $byStatus[$statusKey]['tourism']['arrivals_total'] += 1;
+                        ++$byStatus[$statusKey]['tourism']['arrivals_total'];
                         if (null !== $state) {
                             $byStatus[$statusKey]['tourism']['arrivals_by_state'][$state] =
                                 ($byStatus[$statusKey]['tourism']['arrivals_by_state'][$state] ?? 0) + 1;
@@ -307,9 +306,9 @@ class MonthlyStatsService
                         if ($isDefaultStatus) {
                             $tourism['arrivals_by_country'][$country] =
                                 ($tourism['arrivals_by_country'][$country] ?? 0) + 1;
-                            $tourism['arrivals_total'] += 1;
-                            $summary['arrivals_total'] += 1;
-                            $summary['guests_total'] += 1;
+                            ++$tourism['arrivals_total'];
+                            ++$summary['arrivals_total'];
+                            ++$summary['guests_total'];
                             if (null !== $state) {
                                 $tourism['arrivals_by_state'][$state] =
                                     ($tourism['arrivals_by_state'][$state] ?? 0) + 1;
@@ -565,8 +564,7 @@ class MonthlyStatsService
         int $year,
         ?Subsidiary $subsidiary,
         array $reservationStatus = []
-    ): array
-    {
+    ): array {
         $objectId = $subsidiary?->getId() ?? 'all';
         $appartmentRepo = $this->em->getRepository(Appartment::class);
         $reservationRepo = $this->em->getRepository(Reservation::class);
@@ -603,7 +601,7 @@ class MonthlyStatsService
         $month = (int) ($period['month'] ?? 0);
         $daysInMonth = 0;
         if ($year > 0 && $month > 0) {
-            $daysInMonth = (int) (new \DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month)))->format('t');
+            $daysInMonth = (int) new \DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month))->format('t');
         }
 
         $bedsTotal = (int) ($metrics['inventory']['beds_total'] ?? 0);
@@ -713,9 +711,9 @@ class MonthlyStatsService
         return $this->em->getRepository(ReservationStatus::class)->findDefaultIds();
     }
 
-     /**
-      * Loop over reservation status IDs in the 'by_status' field and calculate the summed metrics.
-      */
+    /**
+     * Loop over reservation status IDs in the 'by_status' field and calculate the summed metrics.
+     */
     private function aggregateByStatus(array $byStatus, array $statusIds, int $bedsTotal, int $daysInMonth): array
     {
         $tourism = [

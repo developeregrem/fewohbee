@@ -6,11 +6,13 @@ namespace App\Repository;
 
 use App\Entity\Appartment;
 use App\Entity\CalendarSyncImport;
+use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\NoResultException;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Uuid;
@@ -23,6 +25,9 @@ use Symfony\Component\Uid\Uuid;
  */
 class ReservationRepository extends ServiceEntityRepository
 {
+    /** A canceled invoice no longer states the price of a booking; needs the parameter "canceled". */
+    private const WITHOUT_ACTIVE_INVOICE = 'NOT EXISTS (SELECT i.id FROM App\Entity\Invoice i WHERE i MEMBER OF r.invoices AND COALESCE(i.status, 0) <> :canceled)';
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Reservation::class);
@@ -312,56 +317,13 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * Reservations whose room price a new special price could change: they block a room of one of
-     * the room categories, come from one of the origins, have the given occupancy, touch a night
-     * between $firstNight and $lastNight and have no invoice yet. Reservations do not store their
-     * price, so the invoice created later uses the price rows valid then.
-     *
-     * @param list<int> $roomCategoryIds
-     * @param list<int> $originIds
-     *
-     * @return list<array{id: int, startDate: string, endDate: string, apartmentNumber: string|null}>
-     */
-    public function findUninvoicedForPriceChange(\DateTimeImmutable $firstNight, \DateTimeImmutable $lastNight, array $roomCategoryIds, array $originIds, ?int $persons): array
-    {
-        if ([] === $roomCategoryIds || [] === $originIds) {
-            return [];
-        }
-
-        $qb = $this->createQueryBuilder('u')
-            ->select('u.id', 'u.startDate', 'u.endDate', 'a.number AS apartmentNumber')
-            ->join('u.appartment', 'a')
-            ->andWhere('u.startDate <= :lastNight AND u.endDate > :firstNight')
-            ->andWhere('u.isConflict = 0')
-            ->andWhere('IDENTITY(a.roomCategory) IN (:categories)')
-            ->andWhere('IDENTITY(u.reservationOrigin) IN (:origins)')
-            ->andWhere('u.invoices IS EMPTY')
-            ->setParameter('firstNight', $firstNight)
-            ->setParameter('lastNight', $lastNight)
-            ->setParameter('categories', $roomCategoryIds)
-            ->setParameter('origins', $originIds)
-            ->orderBy('u.startDate', 'ASC');
-        if (null !== $persons) {
-            $qb->andWhere('u.persons = :persons')->setParameter('persons', $persons);
-        }
-        $this->applyBlockingStatusFilter($qb, 'u');
-
-        return array_map(static fn (array $row): array => [
-            'id' => (int) $row['id'],
-            'startDate' => $row['startDate'] instanceof \DateTimeInterface ? $row['startDate']->format('Y-m-d') : (string) $row['startDate'],
-            'endDate' => $row['endDate'] instanceof \DateTimeInterface ? $row['endDate']->format('Y-m-d') : (string) $row['endDate'],
-            'apartmentNumber' => null !== $row['apartmentNumber'] ? (string) $row['apartmentNumber'] : null,
-        ], $qb->getQuery()->getArrayResult());
-    }
-
-    /**
      * Lightweight (appartmentId, startDate, endDate) spans of blocking, non-conflict reservations
      * that truly overlap the period, optionally scoped by subsidiary and room category and limited
      * to reservations made before $bookedBefore (exclusive).
      *
      * @return array<array{appartmentId: int, startDate: string, endDate: string}>
      */
-    public function loadBlockingSpansForPeriod(\DateTimeInterface $start, \DateTimeInterface $end, string|int $objectId = 'all', ?int $roomCategoryId = null, ?\DateTimeInterface $bookedBefore = null): array
+    public function loadBlockingSpansForPeriod(\DateTimeInterface $start, \DateTimeInterface $end, string|int $objectId = 'all', ?int $roomCategoryId = null, ?\DateTimeInterface $bookedBefore = null, ?int $excludingReservationId = null): array
     {
         $qb = $this
             ->createQueryBuilder('u')
@@ -385,6 +347,10 @@ class ReservationRepository extends ServiceEntityRepository
         if (null !== $bookedBefore) {
             $qb->andWhere('u.reservationDate < :bookedBefore')
                 ->setParameter('bookedBefore', $bookedBefore);
+        }
+        if (null !== $excludingReservationId) {
+            $qb->andWhere('u.id <> :excludingId')
+                ->setParameter('excludingId', $excludingReservationId);
         }
 
         $this->applyBlockingStatusFilter($qb, 'u');
@@ -687,5 +653,68 @@ class ReservationRepository extends ServiceEntityRepository
             ->distinct()
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Ids of reservations without a price promise and without an active invoice whose stay ended on
+     * or after $endFrom: the bookings from before price promises that still need one.
+     *
+     * @return list<int>
+     */
+    public function findIdsWithoutPricePromise(\DateTimeImmutable $endFrom): array
+    {
+        $rows = $this->createQueryBuilder('r')
+            ->select('r.id')
+            ->andWhere('r.pricePromise IS NULL')
+            ->andWhere(self::WITHOUT_ACTIVE_INVOICE)
+            ->setParameter('canceled', InvoiceStatus::CANCELED->value)
+            ->andWhere('r.endDate >= :endFrom')
+            ->setParameter('endFrom', $endFrom->format('Y-m-d'))
+            ->orderBy('r.id', 'ASC')
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        return array_map('intval', $rows);
+    }
+
+    /**
+     * Stores a price promise for a reservation that has none yet. As a DQL update it bypasses the
+     * unit of work, so it is neither written again by a later flush nor recorded in the change log.
+     *
+     * @param array<string, mixed> $promise
+     */
+    public function storePricePromise(int $reservationId, array $promise): void
+    {
+        $this->createQueryBuilder('r')
+            ->update()
+            ->set('r.pricePromise', ':promise')
+            ->andWhere('r.id = :id')
+            ->andWhere('r.pricePromise IS NULL')
+            ->setParameter('promise', $promise, Types::JSON)
+            ->setParameter('id', $reservationId)
+            ->getQuery()
+            ->execute();
+    }
+
+    /**
+     * The stored price promises of all reservations without an active invoice.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function findOpenPricePromises(): array
+    {
+        $rows = $this->createQueryBuilder('r')
+            ->select('r.pricePromise')
+            ->andWhere('r.pricePromise IS NOT NULL')
+            ->andWhere(self::WITHOUT_ACTIVE_INVOICE)
+            ->setParameter('canceled', InvoiceStatus::CANCELED->value)
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        // A single selected column is not converted by its mapping type; it arrives as JSON text.
+        return array_values(array_filter(
+            array_map(static fn (mixed $json): mixed => is_string($json) ? json_decode($json, true) : $json, $rows),
+            'is_array',
+        ));
     }
 }

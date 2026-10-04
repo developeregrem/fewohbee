@@ -84,10 +84,7 @@ final readonly class OidcProviderMetadata
             }
         }
 
-        throw new OidcConfigurationException(sprintf(
-            'The identity provider accepts none of the supported client authentication methods; it offers: %s.',
-            implode(', ', $this->tokenEndpointAuthMethods),
-        ));
+        throw new OidcConfigurationException(sprintf('The identity provider accepts none of the supported client authentication methods; it offers: %s.', implode(', ', $this->tokenEndpointAuthMethods)));
     }
 
     /**

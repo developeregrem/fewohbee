@@ -22,6 +22,7 @@ final class GuestCheckInExistingGuestMatcher
      * rule candidates out.
      *
      * @param array<string, mixed> $submitted
+     *
      * @return list<Customer>
      */
     public function matchingCandidates(Reservation $reservation, array $submitted): array

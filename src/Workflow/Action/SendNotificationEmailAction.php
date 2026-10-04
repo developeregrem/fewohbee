@@ -113,17 +113,17 @@ class SendNotificationEmailAction implements WorkflowActionInterface
         if ($first instanceof Reservation && null !== $first->getBooker()) {
             $booker = $first->getBooker();
             $bookerLabel = $this->translator->trans('app_settings.notification_mail.booker');
-            $bookerName = trim($booker->getFirstname() . ' ' . $booker->getLastname());
+            $bookerName = trim($booker->getFirstname().' '.$booker->getLastname());
             $bookerInfo = "<p><strong>{$bookerLabel}:</strong> {$this->esc($bookerName)}</p>";
         }
 
         return <<<HTML
-        <p>{$greeting}</p>
-        <p>{$intro}</p>
-        {$rows}
-        {$bookerInfo}
-        {$this->buildFooter()}
-        HTML;
+            <p>{$greeting}</p>
+            <p>{$intro}</p>
+            {$rows}
+            {$bookerInfo}
+            {$this->buildFooter()}
+            HTML;
     }
 
     private function buildCalendarImportBody(Reservation $reservation): string
@@ -141,12 +141,12 @@ class SendNotificationEmailAction implements WorkflowActionInterface
         }
 
         return <<<HTML
-        <p>{$greeting}</p>
-        <p>{$intro}</p>
-        {$row}
-        {$originInfo}
-        {$this->buildFooter()}
-        HTML;
+            <p>{$greeting}</p>
+            <p>{$intro}</p>
+            {$row}
+            {$originInfo}
+            {$this->buildFooter()}
+            HTML;
     }
 
     private function buildReservationRow(Reservation $reservation): string
@@ -161,12 +161,12 @@ class SendNotificationEmailAction implements WorkflowActionInterface
         $persons = $reservation->getPersons();
 
         return <<<HTML
-        <table style="border-collapse:collapse;margin-bottom:8px">
-            <tr><td style="padding:2px 8px 2px 0;font-weight:bold">{$roomLabel}:</td><td>{$room}</td></tr>
-            <tr><td style="padding:2px 8px 2px 0;font-weight:bold">{$periodLabel}:</td><td>{$from} – {$to}</td></tr>
-            <tr><td style="padding:2px 8px 2px 0;font-weight:bold">{$guestsLabel}:</td><td>{$persons}</td></tr>
-        </table>
-        HTML;
+            <table style="border-collapse:collapse;margin-bottom:8px">
+                <tr><td style="padding:2px 8px 2px 0;font-weight:bold">{$roomLabel}:</td><td>{$room}</td></tr>
+                <tr><td style="padding:2px 8px 2px 0;font-weight:bold">{$periodLabel}:</td><td>{$from} – {$to}</td></tr>
+                <tr><td style="padding:2px 8px 2px 0;font-weight:bold">{$guestsLabel}:</td><td>{$persons}</td></tr>
+            </table>
+            HTML;
     }
 
     private function buildFooter(): string
@@ -176,10 +176,10 @@ class SendNotificationEmailAction implements WorkflowActionInterface
         $footer = $this->translator->trans('app_settings.notification_mail.footer');
 
         return <<<HTML
-        <p><a href="{$this->esc($url)}">{$linkText}</a></p>
-        <hr>
-        <p style="color:#888;font-size:12px">{$footer}</p>
-        HTML;
+            <p><a href="{$this->esc($url)}">{$linkText}</a></p>
+            <hr>
+            <p style="color:#888;font-size:12px">{$footer}</p>
+            HTML;
     }
 
     private function esc(string $value): string

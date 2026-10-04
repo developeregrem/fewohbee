@@ -10,6 +10,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\InvoiceRepository')]
 #[ORM\Table(name: 'invoices')]
+#[ORM\Index(name: 'idx_invoice_number', columns: ['number'])]
+#[ORM\Index(name: 'idx_invoice_date', columns: ['date'])]
 class Invoice
 {
     #[ORM\Id]

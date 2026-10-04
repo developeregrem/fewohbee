@@ -7,10 +7,10 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Service\NotificationCenterService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -70,7 +70,7 @@ final class NotificationController extends AbstractController
             throw new AccessDeniedHttpException();
         }
 
-        if (!$this->isCsrfTokenValid('notification-read-' . $id, (string) $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('notification-read-'.$id, (string) $request->request->get('_token'))) {
             throw new AccessDeniedHttpException();
         }
 

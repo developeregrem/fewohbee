@@ -200,10 +200,13 @@ class AvailabilityService
      * blocking reservation, rooms blocked without such a reservation, and the free rest.
      * A room that is booked and blocked on the same night counts as booked only.
      *
+     * $excludingReservationId leaves one reservation out of the booked rooms, e.g. to judge
+     * the occupancy a booking found without counting the booking itself.
+     *
      * @return array<string, array{rooms: int, booked: int, blocked: int, available: int}> keyed by Y-m-d
      *                                                                                      (nights from $from up to, excluding, $toExclusive)
      */
-    public function getRoomNightsPerDay(string|int $objectId, ?int $roomCategoryId, \DateTimeImmutable $from, \DateTimeImmutable $toExclusive): array
+    public function getRoomNightsPerDay(string|int $objectId, ?int $roomCategoryId, \DateTimeImmutable $from, \DateTimeImmutable $toExclusive, ?int $excludingReservationId = null): array
     {
         $rooms = $this->appartmentRepository->findAllByProperty($objectId);
         if (null !== $roomCategoryId) {
@@ -216,7 +219,7 @@ class AvailabilityService
         $totalRooms = count($roomIdSet);
 
         $booked = $this->expandSpansPerDay(
-            $this->reservationRepository->loadBlockingSpansForPeriod($from, $toExclusive, $objectId, $roomCategoryId),
+            $this->reservationRepository->loadBlockingSpansForPeriod($from, $toExclusive, $objectId, $roomCategoryId, excludingReservationId: $excludingReservationId),
             $from,
             $toExclusive,
             $roomIdSet,

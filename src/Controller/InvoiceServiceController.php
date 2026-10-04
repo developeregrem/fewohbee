@@ -22,28 +22,28 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
+use App\Event\InvoiceCreatedEvent;
+use App\Event\InvoiceStatusChangedEvent;
 use App\Form\InvoiceApartmentPositionType;
 use App\Form\InvoiceCustomerType;
 use App\Form\InvoiceMiscPositionType;
 use App\Form\InvoicePaymentRemarkType;
 use App\Form\InvoiceSettingsType;
-use App\Event\InvoiceCreatedEvent;
-use App\Event\InvoiceStatusChangedEvent;
+use App\Repository\InvoiceRepository;
+use App\Repository\ReservationOriginRepository;
 use App\Service\CSRFProtectionService;
 use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\EInvoice\EInvoiceReadinessService;
 use App\Service\EInvoice\Validation\EInvoiceValidationException;
-use App\Repository\InvoiceRepository;
-use App\Repository\ReservationOriginRepository;
 use App\Service\InvoiceNumberGenerator;
 use App\Service\InvoiceService;
 use App\Service\PriceService;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -398,20 +398,19 @@ class InvoiceServiceController extends AbstractController
                 $is->saveNewAppartmentPosition($invoicePosition, $requestStack);
 
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
-            } else { // during edit process
-                $em = $doctrine->getManager();
-                $invoice = $em->getRepository(Invoice::class)->find($invoiceId);
-                $invoicePosition->setInvoice($invoice);
+            }   // during edit process
+            $em = $doctrine->getManager();
+            $invoice = $em->getRepository(Invoice::class)->find($invoiceId);
+            $invoicePosition->setInvoice($invoice);
 
-                $em->persist($invoicePosition);
-                $em->flush();
+            $em->persist($invoicePosition);
+            $em->flush();
 
-                $this->addFlash('success', 'invoice.flash.edit.success');
+            $this->addFlash('success', 'invoice.flash.edit.success');
 
-                return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
-                    'id' => $invoiceId,
-                ]);
-            }
+            return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
+                'id' => $invoiceId,
+            ]);
         }
 
         $prices = $em->getRepository(Price::class)->getActiveAppartmentPrices();
@@ -462,16 +461,15 @@ class InvoiceServiceController extends AbstractController
                 $requestStack->getSession()->set('invoicePositionsAppartments', $newInvoicePositionsAppartmentArray);
 
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
-            } else { // during edit process
-                $em->persist($invoicePosition);
-                $em->flush();
+            }   // during edit process
+            $em->persist($invoicePosition);
+            $em->flush();
 
-                $this->addFlash('success', 'invoice.flash.edit.success');
+            $this->addFlash('success', 'invoice.flash.edit.success');
 
-                return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
-                    'id' => $invoicePosition->getInvoice()->getId(),
-                ]);
-            }
+            return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
+                'id' => $invoicePosition->getInvoice()->getId(),
+            ]);
         }
 
         $prices = $em->getRepository(Price::class)->getActiveAppartmentPrices();
@@ -496,19 +494,18 @@ class InvoiceServiceController extends AbstractController
             $requestStack->getSession()->set('invoicePositionsAppartments', $newInvoicePositionsAppartmentsArray);
 
             return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
-        } else {
-            $em = $doctrine->getManager();
-            $invoiceAppartment = $em->getRepository(InvoiceAppartment::class)->find($positionId);
-            $invoiceId = $invoiceAppartment->getInvoice()->getId();
-            $em->remove($invoiceAppartment);
-            $em->flush();
-
-            $this->addFlash('success', 'invoice.flash.edit.success');
-
-            return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
-                'id' => $invoiceId,
-            ]);
         }
+        $em = $doctrine->getManager();
+        $invoiceAppartment = $em->getRepository(InvoiceAppartment::class)->find($positionId);
+        $invoiceId = $invoiceAppartment->getInvoice()->getId();
+        $em->remove($invoiceAppartment);
+        $em->flush();
+
+        $this->addFlash('success', 'invoice.flash.edit.success');
+
+        return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
+            'id' => $invoiceId,
+        ]);
     }
 
     #[Route('/{invoiceId}/new/miscellaneous', name: 'invoices.new.miscellaneous.position', methods: ['GET', 'POST'])]
@@ -589,8 +586,12 @@ class InvoiceServiceController extends AbstractController
     /**
      * @param InvoicePosition[] $positions
      */
-    private function saveMiscPositions(array $positions, string $invoiceId, ManagerRegistry $doctrine,
-        RequestStack $requestStack, InvoiceService $is,
+    private function saveMiscPositions(
+        array $positions,
+        string $invoiceId,
+        ManagerRegistry $doctrine,
+        RequestStack $requestStack,
+        InvoiceService $is,
     ): Response {
         if ('new' === $invoiceId) {
             foreach ($positions as $pos) {
@@ -644,16 +645,15 @@ class InvoiceServiceController extends AbstractController
                 $requestStack->getSession()->set('invoicePositionsMiscellaneous', $newInvoicePositionsMiscellaneousArray);
 
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
-            } else { // during edit process
-                $em->persist($positionMiscellaneous);
-                $em->flush();
+            }   // during edit process
+            $em->persist($positionMiscellaneous);
+            $em->flush();
 
-                $this->addFlash('success', 'invoice.flash.edit.success');
+            $this->addFlash('success', 'invoice.flash.edit.success');
 
-                return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
-                    'id' => $positionMiscellaneous->getInvoice()->getId(),
-                ]);
-            }
+            return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
+                'id' => $positionMiscellaneous->getInvoice()->getId(),
+            ]);
         }
 
         $prices = $em->getRepository(Price::class)->getActiveMiscellaneousPrices();
@@ -685,20 +685,19 @@ class InvoiceServiceController extends AbstractController
             $requestStack->getSession()->set('invoicePositionsMiscellaneous', $newInvoicePositionsMiscellaneousArray);
 
             return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
-        } else {
-            $em = $doctrine->getManager();
-            $invoiceMisc = $em->getRepository(InvoicePosition::class)->find($positionId);
-            $invoiceId = $invoiceMisc->getInvoice()->getId();
-
-            $em->remove($invoiceMisc);
-            $em->flush();
-
-            $this->addFlash('success', 'invoice.flash.edit.success');
-
-            return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
-                'id' => $invoiceId,
-            ]);
         }
+        $em = $doctrine->getManager();
+        $invoiceMisc = $em->getRepository(InvoicePosition::class)->find($positionId);
+        $invoiceId = $invoiceMisc->getInvoice()->getId();
+
+        $em->remove($invoiceMisc);
+        $em->flush();
+
+        $this->addFlash('success', 'invoice.flash.edit.success');
+
+        return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
+            'id' => $invoiceId,
+        ]);
     }
 
     #[Route('/new/invoice/preview', name: 'invoices.show.new.invoice.preview', methods: ['GET'])]
@@ -1042,10 +1041,10 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/{id}/export/einvoice', name: 'invoices.export.xrechnung', methods: ['GET'])]
-    public function exportToXRechnung(ManagerRegistry $doctrine, InvoiceService $is,  EInvoiceExportService $einvoice, EInvoiceReadinessService $readinessService, Invoice $invoice): Response
+    public function exportToXRechnung(ManagerRegistry $doctrine, InvoiceService $is, EInvoiceExportService $einvoice, EInvoiceReadinessService $readinessService, Invoice $invoice): Response
     {
         $invoiceSettings = $readinessService->resolveSettingsFor($invoice);
-        if (!($invoiceSettings instanceof InvoiceSettingsData)) {
+        if (!$invoiceSettings instanceof InvoiceSettingsData) {
             $this->addFlash('danger', 'invoice.settings.active.error');
 
             return $this->redirect($this->generateUrl('invoices.overview'));

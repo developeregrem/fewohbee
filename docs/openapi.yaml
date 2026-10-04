@@ -3,7 +3,8 @@ info:
   title: FewohBee REST API
   version: '1.0'
   description: |
-    Read-only REST API of the FewohBee property management system.
+    REST API of the FewohBee property management system. It reads data; the only
+    write is `PUT /day-prices`, for pricing tools and other programs.
 
     Authentication uses personal access tokens created in the user profile
     ("API access"). A token always starts with `fwb_` and can be sent either as
@@ -25,8 +26,12 @@ info:
     | `prices:read` | ROLE_RESERVATIONS_RO |
     | `tourist-tax:read` | ROLE_OPERATIONS |
     | `subsidiaries:read` | ROLE_RESERVATIONS_RO |
+    | `availability:read` | ROLE_RESERVATIONS_RO |
+    | `prices:write` | ROLE_ADMIN |
 
-    Requests are rate limited to 300 per 5 minutes per token.
+    Requests are rate limited to 300 per 5 minutes per token. Writing requests
+    need a bearer token (HTTP Basic is refused) and a JSON body, and are limited
+    to 60 per hour per token.
   license:
     name: AGPL-3.0
     url: https://github.com/developeregrem/fewohbee/blob/master/LICENSE
@@ -57,6 +62,9 @@ tags:
       The configured price catalogue, the per-night rate calendar, and price quotes.
       Only the quote computes amounts — see its description before deriving money from
       the catalogue.
+  - name: Availability
+    description: >-
+      Rooms, booked, blocked and free rooms per night, without any reservation data.
   - name: Tourist tax
     description: >-
       Tourist tax (Kurtaxe / city tax) configuration and the monthly report a municipality
@@ -633,6 +641,9 @@ paths:
         (`nights=7`) can legitimately differ from the single-night rate (`nights=1`).
 
         A night with no applicable price comes back with an empty `rates` array.
+
+        Price rules and day prices change the rates and can differ per branch: pass
+        `objectId` (or `apartmentId`) for the rates of one branch.
       parameters:
         - name: roomCategoryId
           in: query
@@ -640,7 +651,13 @@ paths:
           schema: { type: integer }
         - name: apartmentId
           in: query
-          description: Alternative to `roomCategoryId` — the room's category is used.
+          description: Alternative to `roomCategoryId` — the room's category and branch are used.
+          schema: { type: integer }
+        - name: objectId
+          in: query
+          description: >-
+            Branch whose price rules and day prices apply. Defaults to the branch of
+            `apartmentId`, otherwise to a branch with a room of the category.
           schema: { type: integer }
         - name: start
           in: query
@@ -685,12 +702,165 @@ paths:
                       end: { type: string }
                       nights: { type: integer }
                       roomCategoryId: { type: [integer, 'null'] }
+                      objectId: { type: [integer, 'null'], description: Branch of the room the rates were calculated for. }
                       occupancies: { type: array, items: { type: integer } }
                       origin:
                         type: object
                         properties:
                           id: { type: integer }
                           name: { type: [string, 'null'] }
+                      count: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /day-prices:
+    get:
+      tags: [Prices]
+      operationId: listDayPrices
+      summary: Day prices
+      description: |
+        Requires the `prices:read` scope.
+
+        A day price sets the room price of one night for a room category in a branch,
+        stated for `persons` guests; other occupancies and booking origins change in
+        proportion, and on that night it takes the place of the price rules.
+      parameters:
+        - name: start
+          in: query
+          description: First night (Y-m-d). Defaults to today.
+          schema: { type: string, format: date }
+        - name: end
+          in: query
+          description: Last night (Y-m-d), inclusive. Defaults to 499 days after `start`.
+          schema: { type: string, format: date }
+        - $ref: '#/components/parameters/ObjectId'
+        - name: roomCategoryId
+          in: query
+          schema: { type: integer }
+      responses:
+        '200':
+          description: The day prices in the range (at most 500 days), by branch, room category and night.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/DayPrice' }
+                  meta:
+                    type: object
+                    properties:
+                      start: { type: string }
+                      end: { type: string }
+                      objectId: { type: [integer, 'null'] }
+                      roomCategoryId: { type: [integer, 'null'] }
+                      count: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+    put:
+      tags: [Prices]
+      operationId: setDayPrices
+      summary: Set or remove day prices
+      description: |
+        Requires the `prices:write` scope (administrators only) and a bearer token.
+
+        Sets the day prices of the listed nights of one room category in one branch, or
+        removes them with `amount: null` so the price list and the price rules apply
+        again. Nights not listed stay as they are. Sending the same prices again changes
+        nothing.
+
+        - Day prices from programs are held within the limits of the price rules
+          (`meta.limits`); `limited` lists the nights where that happened.
+        - Day prices set by hand in FewohBee are kept unless `overwriteManual` is true.
+        - Past nights and nights without a room price are skipped.
+        - Existing bookings keep the price they were booked at.
+
+        Nothing is saved when an entry is invalid; the response lists every invalid field.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DayPriceUpdate' }
+      responses:
+        '200':
+          description: What changed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DayPriceUpdateResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403':
+          description: The token lacks the scope, its owner is no administrator, or it was sent with HTTP Basic.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '415':
+          description: The body is not `application/json`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422':
+          description: Invalid entries; nothing was saved.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValidationError' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /availability:
+    get:
+      tags: [Availability]
+      operationId: getAvailability
+      summary: Room counts per night
+      description: |
+        Requires the `availability:read` or the `reservations:read` scope.
+
+        Active rooms, rooms booked by a reservation that blocks the room, rooms blocked
+        without such a reservation, and free rooms. A room that is booked and blocked on
+        the same night counts as booked. No reservation data is returned.
+      parameters:
+        - name: start
+          in: query
+          description: First night (Y-m-d). Defaults to today.
+          schema: { type: string, format: date }
+        - name: end
+          in: query
+          description: Last night (Y-m-d), inclusive. Defaults to `start`.
+          schema: { type: string, format: date }
+        - $ref: '#/components/parameters/ObjectId'
+        - name: roomCategoryId
+          in: query
+          description: 'Only rooms of this room category. Default: all.'
+          schema: { type: integer }
+      responses:
+        '200':
+          description: One entry per night. The range must not exceed 500 days.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date: { type: string, format: date }
+                        rooms: { type: integer }
+                        booked: { type: integer }
+                        blocked: { type: integer }
+                        available: { type: integer }
+                  meta:
+                    type: object
+                    properties:
+                      start: { type: string }
+                      end: { type: string }
+                      objectId: { type: [integer, 'null'] }
+                      roomCategoryId: { type: [integer, 'null'] }
                       count: { type: integer }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -948,6 +1118,105 @@ components:
         - error:
             code: 400
             message: "Invalid parameter 'start': expected format Y-m-d."
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: integer }
+            message: { type: string }
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field: { type: string, examples: ['nights[3].amount'] }
+                  message: { type: string }
+
+    DayPrice:
+      type: object
+      properties:
+        objectId: { type: integer }
+        roomCategoryId: { type: integer }
+        night: { type: string, format: date }
+        amount: { type: number, description: Room price of the night for `persons` guests. }
+        persons: { type: integer }
+        source: { type: string, enum: [manual, assistant, api] }
+        sourceLabel: { type: [string, 'null'], description: 'Who set it, e.g. the name of the access token.' }
+        updatedAt: { type: string, format: date-time }
+
+    DayPriceUpdate:
+      type: object
+      required: [roomCategoryId, nights]
+      properties:
+        objectId: { type: integer, description: Branch. Required when there is more than one. }
+        roomCategoryId: { type: integer }
+        persons:
+          type: integer
+          description: >-
+            Number of guests the amounts are for; one of the occupancies the category has a
+            room price for. Defaults to 2 where there is a price for two, otherwise the
+            smallest priced occupancy.
+        overwriteManual: { type: boolean, default: false, description: Also replace day prices set by hand in FewohBee. }
+        nights:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            type: object
+            required: [night, amount]
+            properties:
+              night: { type: string, format: date, description: At most 730 days ahead. }
+              amount:
+                type: [number, 'null']
+                exclusiveMinimum: 0
+                description: Room price of the night for `persons` guests; null removes the day price.
+      examples:
+        - objectId: 1
+          roomCategoryId: 2
+          persons: 2
+          nights:
+            - { night: '2027-03-12', amount: 129 }
+            - { night: '2027-03-13', amount: null }
+
+    DayPriceUpdateResult:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            created: { type: integer }
+            updated: { type: integer }
+            removed: { type: integer }
+            unchanged: { type: integer, description: 'Nights that already had this day price, or none to remove.' }
+            skipped:
+              type: object
+              properties:
+                past: { type: array, items: { type: string, format: date } }
+                noPrice: { type: array, items: { type: string, format: date }, description: Nights without a room price. }
+                manual: { type: array, items: { type: string, format: date }, description: Nights with a day price set by hand. }
+            limited:
+              type: array
+              description: Nights whose day price was held within the limits.
+              items:
+                type: object
+                properties:
+                  night: { type: string, format: date }
+                  requested: { type: number }
+                  applied: { type: number }
+        meta:
+          type: object
+          properties:
+            objectId: { type: integer }
+            roomCategoryId: { type: integer }
+            persons: { type: integer }
+            limits:
+              type: object
+              properties:
+                minPercent: { type: integer }
+                maxPercent: { type: integer }
 
     Subsidiary:
       type: object
@@ -1291,7 +1560,28 @@ components:
         priceId: { type: integer }
         description: { type: [string, 'null'] }
         pricingModel: { type: string, enum: [per_person_night, per_room_night, flat] }
-        unitPrice: { type: number, description: 'The stored amount of the price row.' }
+        unitPrice: { type: number, description: 'The amount of the price row after price rules or a day price; equals baseUnitPrice when neither applies.' }
+        baseUnitPrice: { type: number, description: 'The stored amount of the price row.' }
+        adjustmentPercent: { type: number, description: 'Total change by price rules or a day price in percent; 0 when neither applies.' }
+        priceRules:
+          type: array
+          description: The price rules that changed this night. Empty when a day price applies.
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              percent: { type: number }
+        dayPrice:
+          type: [object, 'null']
+          description: >-
+            The day price that sets this night, stated as a room price for `persons` guests; other
+            occupancies and origins change in proportion. Null when the price rules apply.
+          properties:
+            amount: { type: number }
+            persons: { type: integer }
+            source: { type: string, enum: [manual, assistant, api] }
+            sourceLabel: { type: [string, 'null'], description: 'Who set it, e.g. the name of the access token.' }
+        limited: { type: boolean, description: 'Whether the change was held within the configured limits.' }
         perNight:
           type: [number, 'null']
           description: >-

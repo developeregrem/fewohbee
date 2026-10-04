@@ -1303,3 +1303,18 @@ details.einvoice-readiness > summary::-webkit-details-marker {
 .brc-swatch.has-gap::after { content: ""; width: 6px; height: 6px; border-radius: 50%; }
 .brc-swatch.is-raised::after { background-color: var(--bs-danger); }
 .brc-swatch.has-gap::after { border: 1.5px solid var(--bs-danger); }
+
+/* Price rules offcanvas: opened from the bottom on phones, tall enough for the whole form. */
+.price-rules-offcanvas.offcanvas-bottom {
+    height: 85vh;
+}
+
+/* Price calendar: the month as a seven-column grid on wider screens. */
+.price-calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: .5rem;
+}
+
+.price-calendar-cell {
+    min-height: 6.5rem;
+}

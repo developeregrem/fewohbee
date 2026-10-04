@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Controller\Attribute\ImportDraft;
-use App\Exception\BankImportEditException;
 use App\Dto\BookingJournal\BankImport\BankImportFormatChoice;
 use App\Dto\BookingJournal\BankImport\ImportState;
 use App\Dto\BookingJournal\BankImport\MultipleSourceAccountsException;
@@ -13,11 +12,11 @@ use App\Dto\BookingJournal\BankImport\ParseResult;
 use App\Entity\AccountingAccount;
 use App\Entity\BankCsvProfile;
 use App\Entity\BankImportRule;
+use App\Exception\BankImportEditException;
 use App\Form\BankStatementUploadType;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\BankStatementImportRepository;
 use App\Repository\TaxRateRepository;
-use App\Service\InvoiceNumberGenerator;
 use App\Service\BookingJournal\BankImport\BankImportDraftStore;
 use App\Service\BookingJournal\BankImport\BankImportLineEditor;
 use App\Service\BookingJournal\BankImport\BankImportRuleMatcher;
@@ -26,6 +25,7 @@ use App\Service\BookingJournal\BankImport\BankStatementDeduplicator;
 use App\Service\BookingJournal\BankImport\InvoiceMatcher;
 use App\Service\BookingJournal\BankImport\Parser\BankStatementParserRegistry;
 use App\Service\BookingJournal\BankImport\Parser\ParserInterface;
+use App\Service\InvoiceNumberGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
@@ -251,7 +251,8 @@ class BankImportController extends AbstractController
     public function updateLine(
         int $idx,
         Request $request,
-        #[ImportDraft] ImportState $state,
+        #[ImportDraft]
+        ImportState $state,
         BankImportDraftStore $drafts,
     ): JsonResponse {
         if (!isset($state->lines[$idx])) {
@@ -281,7 +282,8 @@ class BankImportController extends AbstractController
     public function splitLine(
         int $idx,
         Request $request,
-        #[ImportDraft] ImportState $state,
+        #[ImportDraft]
+        ImportState $state,
         BankImportDraftStore $drafts,
     ): JsonResponse {
         if (!isset($state->lines[$idx])) {
@@ -342,7 +344,8 @@ class BankImportController extends AbstractController
     public function saveRuleFromLine(
         int $idx,
         Request $request,
-        #[ImportDraft] ImportState $state,
+        #[ImportDraft]
+        ImportState $state,
         BankImportDraftStore $drafts,
         AccountingAccountRepository $accountRepo,
         BankImportRuleMatcher $ruleMatcher,
@@ -399,7 +402,8 @@ class BankImportController extends AbstractController
         string $sessionImportId,
         int $idx,
         Request $request,
-        #[ImportDraft] ImportState $state,
+        #[ImportDraft]
+        ImportState $state,
         BankImportDraftStore $drafts,
         AccountingAccountRepository $accountRepo,
         BankImportRuleMatcher $ruleMatcher,
@@ -446,7 +450,8 @@ class BankImportController extends AbstractController
     #[Route('/{sessionImportId}/bulk', name: 'bank_import.bulk', methods: ['POST'], requirements: ['sessionImportId' => '[0-9a-f-]{36}'])]
     public function bulkAction(
         Request $request,
-        #[ImportDraft] ImportState $state,
+        #[ImportDraft]
+        ImportState $state,
         BankImportDraftStore $drafts,
     ): JsonResponse {
         $action = (string) $request->request->get('action');

@@ -238,7 +238,7 @@ final class GuestCheckInApplyServiceTest extends TestCase
 
         $em = $this->createStub(EntityManagerInterface::class);
 
-        return new GuestCheckInApplyService($em, $translator, new MockClock(), 'de', $this->createStub(GuestCheckInExtrasService::class), $settingsRepository, new GuestCheckInExistingGuestMatcher($em));
+        return new GuestCheckInApplyService($em, $translator, new MockClock(), 'de', $this->createStub(GuestCheckInExtrasService::class), $settingsRepository, new GuestCheckInExistingGuestMatcher($em), $this->createStub(\App\Service\Pricing\PricePromiseService::class));
     }
 
     /**

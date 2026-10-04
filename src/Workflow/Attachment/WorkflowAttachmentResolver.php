@@ -109,9 +109,7 @@ class WorkflowAttachmentResolver
         $this->assertTotalSize($attachments);
 
         if (self::POLICY_REQUIRE_ALL === $policy && [] !== $warnings) {
-            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_attachment_missing', [
-                '%reason%' => implode('; ', $warnings),
-            ]));
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_attachment_missing', ['%reason%' => implode('; ', $warnings)]));
         }
 
         return new ResolvedAttachmentSet($attachments, $warnings);
@@ -448,9 +446,7 @@ class WorkflowAttachmentResolver
         }
 
         if ($total > self::MAX_TOTAL_BYTES) {
-            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_attachments_too_large', [
-                '%size%' => number_format($total / 1024 / 1024, 1),
-            ]));
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_attachments_too_large', ['%size%' => number_format($total / 1024 / 1024, 1)]));
         }
     }
 }

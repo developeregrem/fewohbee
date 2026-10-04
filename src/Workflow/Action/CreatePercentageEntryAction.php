@@ -298,9 +298,7 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
         // along. Booking one of the rates on the full amount would be wrong
         // without ever saying so, so this stops and asks for a manual entry.
         if (!$fee->isAgreedUpon()) {
-            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_mixed_rates', [
-                '%rates%' => implode(', ', $fee->rateLabels()),
-            ]));
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_mixed_rates', ['%rates%' => implode(', ', $fee->rateLabels())]));
         }
 
         // Same again for what the fee is charged on: an invoice whose stays were

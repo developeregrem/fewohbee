@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\EventListener;
 
 use App\Entity\BankImportDraft;
+use App\Entity\DayPrice;
 use App\Entity\Enum\LogAction;
 use App\Entity\GuestCheckIn;
 use App\Entity\Log;
@@ -34,6 +35,8 @@ final class EntityChangeLogListener
         BankImportDraft::class,
         WorkflowLog::class,
         MonthlyStatsSnapshot::class,
+        // One row per night; a pricing tool rewrites hundreds at once.
+        DayPrice::class,
     ];
 
     private const SENSITIVE_FIELD_NEEDLES = [

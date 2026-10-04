@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Api;
 
-use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Appartment;
+use App\Entity\Enum\InvoiceStatus;
 use App\Repository\AppartmentRepository;
 use App\Repository\ReservationRepository;
 use App\Service\InvoiceService;

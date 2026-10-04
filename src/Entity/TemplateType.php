@@ -117,5 +117,4 @@ class TemplateType
     {
         return $this->templates;
     }
-
 }

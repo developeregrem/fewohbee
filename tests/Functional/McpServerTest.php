@@ -8,20 +8,23 @@ use App\Dto\BookingJournal\BankImport\ImportState;
 use App\Entity\AccountingAccount;
 use App\Entity\Appartment;
 use App\Entity\BankImportDraft;
+use App\Entity\DayPrice;
 use App\Entity\Enum\ApiScope;
+use App\Entity\Enum\DayPriceSource;
 use App\Entity\Enum\HousekeepingStatus;
 use App\Entity\Enum\McpToolCallOutcome;
 use App\Entity\Log;
 use App\Entity\McpToolCallLog;
 use App\Entity\Notification;
 use App\Entity\Price;
-use App\Entity\PricePeriod;
+use App\Entity\PriceRule;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Role;
 use App\Entity\RoomDayStatus;
 use App\Entity\User;
 use App\Entity\Workflow;
+use App\Repository\PriceRepository;
 use App\Service\ApiTokenService;
 use App\Service\AppSettingsService;
 use App\Workflow\WorkflowSeeder;
@@ -316,7 +319,7 @@ final class McpServerTest extends WebTestCase
         self::assertSame($arrival->modify('-1 year')->format('Y-m-d'), $today['previousYear']['firstNight']);
     }
 
-    public function testRateCalendarAndPriceRulesDescribeThePriceList(): void
+    public function testRateCalendarAndPriceListDescribeThePrices(): void
     {
         $this->configureMcp(enabled: true);
         [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::PRICES_READ]);
@@ -329,11 +332,13 @@ final class McpServerTest extends WebTestCase
 
         $result = $this->callTool($token, 'get_rate_calendar', [
             'apartmentId' => (int) $apartment->getId(),
+            'objectId' => (int) $apartment->getObject()?->getId(),
             'start' => $start->format('Y-m-d'),
             'end' => $end->format('Y-m-d'),
             'originId' => (int) $origin->getId(),
         ]);
         self::assertFalse($result['isError'] ?? false, (string) json_encode($result));
+        self::assertSame($apartment->getObject()?->getId(), $result['structuredContent']['branch']['id']);
         $periods = $result['structuredContent']['periods'];
         self::assertSame($start->format('Y-m-d'), $periods[0]['firstNight']);
         self::assertSame($end->format('Y-m-d'), $periods[array_key_last($periods)]['lastNight']);
@@ -341,86 +346,125 @@ final class McpServerTest extends WebTestCase
             self::assertNotEmpty($period['rates']);
         }
 
-        $rules = $this->callTool($token, 'get_price_rules', ['type' => 'apartment'])['structuredContent'];
-        self::assertSame(['apartment'], array_values(array_unique(array_column($rules['prices'], 'type'))));
-        self::assertContains($periods[0]['rates'][0]['priceId'], array_column($rules['prices'], 'id'));
+        $list = $this->callTool($token, 'get_price_list', ['type' => 'apartment'])['structuredContent'];
+        self::assertSame(['apartment'], array_values(array_unique(array_column($list['prices'], 'type'))));
+        self::assertContains($periods[0]['rates'][0]['priceId'], array_column($list['prices'], 'id'));
 
-        $invalid = $this->callTool($token, 'get_price_rules', ['roomCategoryId' => 999999]);
+        $invalid = $this->callTool($token, 'get_price_list', ['roomCategoryId' => 999999]);
         self::assertTrue($invalid['isError'] ?? false);
         self::assertStringContainsString('Unknown room category id.', $invalid['content'][0]['text'] ?? '');
+
+        $rules = $this->callTool($token, 'get_price_rules')['structuredContent'];
+        self::assertIsArray($rules['rules']);
+        self::assertSame(['minPercent', 'maxPercent', 'rounding'], array_keys($rules['limits']));
     }
 
-    public function testSpecialPriceNeedsAnAdministrator(): void
+    public function testPriceChangesNeedAnAdministrator(): void
     {
         $this->configureMcp(enabled: true);
         [, $token] = $this->createUserWithToken(['ROLE_RESERVATIONS'], [ApiScope::MCP_ACCESS, ApiScope::PRICES_WRITE]);
 
-        $result = $this->callTool($token, 'preview_special_price', $this->specialPriceArguments('+700 days', '+700 days') + ['amount' => 90.0]);
+        $result = $this->callTool($token, 'preview_day_prices', $this->dayPriceArguments(['+700 days' => 90.0]));
 
         self::assertTrue($result['isError'] ?? false);
         self::assertStringContainsString('prices:write', $result['content'][0]['text'] ?? '');
     }
 
-    public function testSpecialPriceIsSavedAfterPreviewAndOverwritesOnlyWithConsent(): void
+    public function testDayPricesAreSavedAfterPreviewAndKeepThoseSetByHand(): void
     {
-        $this->configureMcp(enabled: true, write: true);
-        $reservation = $this->bookReservation('Gast-Messe', '+720 days');
+        $this->configureMcp(enabled: true);
         [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::PRICES_WRITE]);
+        $args = $this->dayPriceArguments(['+700 days' => 111.0, '+701 days' => null, '+702 days' => 222.0]);
+        [$set, $removed, $byHand] = array_column($args['nights'], 'night');
+        $apartment = $this->em()->getRepository(Appartment::class)->findOneBy(['active' => true], ['id' => 'ASC']);
+        self::assertInstanceOf(Appartment::class, $apartment);
+        $manual = new DayPrice($apartment->getObject() ?? self::fail('Room without subsidiary.'), $apartment->getRoomCategory() ?? self::fail('Room without category.'), new \DateTimeImmutable($byHand));
+        $manual->set(150.0, $args['persons'], DayPriceSource::MANUAL, null, new \DateTimeImmutable());
+        $this->em()->persist($manual);
+        $this->em()->flush();
 
-        // A new row copied from the year-round single room price, over the booked nights.
-        $fair = $this->specialPriceArguments('+720 days', '+722 days') + ['amount' => 99.0];
-        $preview = $this->callTool($token, 'preview_special_price', $fair)['structuredContent'];
-        self::assertSame([], $preview['conflicts']);
-        self::assertContains((int) $reservation->getId(), array_column($preview['affectedReservations']['reservations'], 'id'));
-        $created = $this->callTool($token, 'create_special_price', $fair + ['previewToken' => $preview['previewToken']]);
-        self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
-        $fairRow = $created['structuredContent']['price'];
-        self::assertSame(99.0, (float) $fairRow['amount']);
-        self::assertSame(99.0, (float) $created['structuredContent']['rates'][0]['rates'][0]['perNight']);
-        self::assertTrue($this->callTool($token, 'create_special_price', $fair + ['previewToken' => $preview['previewToken']])['structuredContent']['alreadyCreated']);
+        try {
+            $preview = $this->callTool($token, 'preview_day_prices', $args)['structuredContent'];
+            self::assertSame(1, $preview['changes']);
+            self::assertSame([$set => null, $removed => 'no_day_price_to_remove', $byHand => 'day_price_set_by_hand'], array_column($preview['nights'], 'skipped', 'night'));
 
-        // A second special price inside the first one conflicts and is refused without consent.
-        $festival = $this->specialPriceArguments('+721 days', '+721 days', 'Stadtfest') + ['amount' => 120.0];
-        $preview = $this->callTool($token, 'preview_special_price', $festival)['structuredContent'];
-        self::assertFalse($preview['canApply']);
-        self::assertArrayNotHasKey('previewToken', $preview);
-        self::assertSame($fairRow['id'], $preview['conflicts'][0]['id']);
-        self::assertSame('split', $preview['conflicts'][0]['periods'][0]['whenOverwritten']);
-        $refused = $this->callTool($token, 'create_special_price', $festival + ['previewToken' => 'pv1.0.forged']);
-        self::assertTrue($refused['isError'] ?? false);
+            $refused = $this->callTool($token, 'set_day_prices', $args + ['previewToken' => 'pv1.0.forged']);
+            self::assertTrue($refused['isError'] ?? false);
+            // The token covers the amounts: a changed amount needs a new preview.
+            $changed = $args;
+            $changed['nights'][0]['amount'] = 112.0;
+            self::assertTrue($this->callTool($token, 'set_day_prices', $changed + ['previewToken' => $preview['previewToken']])['isError'] ?? false);
 
-        $preview = $this->callTool($token, 'preview_special_price', $festival + ['overwriteConflicts' => true])['structuredContent'];
-        $created = $this->callTool($token, 'create_special_price', $festival + ['overwriteConflicts' => true, 'previewToken' => $preview['previewToken']]);
-        self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
+            $saved = $this->callTool($token, 'set_day_prices', $args + ['previewToken' => $preview['previewToken']]);
+            self::assertFalse($saved['isError'] ?? false, (string) json_encode($saved));
+            self::assertSame(1, $saved['structuredContent']['changed']);
+            self::assertTrue($this->callTool($token, 'set_day_prices', $args + ['previewToken' => $preview['previewToken']])['structuredContent']['alreadySaved']);
 
-        $this->em()->clear();
-        $fairPrice = $this->em()->find(Price::class, $fairRow['id']);
-        self::assertInstanceOf(Price::class, $fairPrice);
-        $ranges = array_map(
-            static fn (PricePeriod $period): string => $period->getStart()?->format('Y-m-d').'/'.$period->getEnd()?->format('Y-m-d').'/'.$period->getDescription(),
-            $fairPrice->getPricePeriods()->toArray(),
-        );
-        sort($ranges);
-        self::assertSame([
-            $fair['firstNight'].'/'.$fair['firstNight'].'/Messe',
-            $fair['lastNight'].'/'.$fair['lastNight'].'/Messe',
-        ], $ranges);
+            $this->em()->clear();
+            $stored = [];
+            foreach ($this->em()->getRepository(DayPrice::class)->findAll() as $dayPrice) {
+                $stored[$dayPrice->getNight()->format('Y-m-d')] = [$dayPrice->getAmount(), $dayPrice->getSource(), $dayPrice->getSourceLabel()];
+            }
+            ksort($stored);
+            self::assertSame([
+                $set => [111.0, DayPriceSource::ASSISTANT, 'functional-test'],
+                $byHand => [150.0, DayPriceSource::MANUAL, null],
+            ], $stored);
 
-        // A special price for longer stays on the same nights is no conflict: it wins for those stays.
-        $longStays = $this->specialPriceArguments('+721 days', '+721 days', 'Stadtfest lang') + ['amount' => 150.0];
-        $longStays['priceId'] = $this->createLongStayRoomPrice($longStays['priceId'], 2);
-        $preview = $this->callTool($token, 'preview_special_price', $longStays)['structuredContent'];
-        self::assertSame([], $preview['conflicts']);
-        self::assertTrue($preview['canApply']);
-        $festivalRow = $this->findRowCovering($preview['rowsForOtherStayLengths'], 'Stadtfest');
-        self::assertStringStartsWith('Stays of 2 or more nights get the new price', $festivalRow['stays']);
+            // Only with consent the assistant replaces the day price set by hand.
+            $overwrite = $args + ['overwriteManual' => true];
+            $preview = $this->callTool($token, 'preview_day_prices', $overwrite)['structuredContent'];
+            self::assertNull(array_column($preview['nights'], 'skipped', 'night')[$byHand]);
+            self::assertFalse($this->callTool($token, 'set_day_prices', $overwrite + ['previewToken' => $preview['previewToken']])['isError'] ?? false);
+        } finally {
+            $this->em()->createQuery('DELETE FROM App\Entity\DayPrice d')->execute();
+        }
+    }
 
-        // Adding a further period to the special row needs no amount; a year-round row refuses it.
-        $again = $this->specialPriceArguments('+730 days', '+731 days', 'Messe Herbst');
-        $preview = $this->callTool($token, 'preview_special_price', ['priceId' => $fairRow['id']] + $again)['structuredContent'];
-        self::assertSame('add_period_to_row', $preview['action']);
-        $yearRound = $this->callTool($token, 'preview_special_price', $again);
-        self::assertStringContainsString('applies all year', $yearRound['content'][0]['text'] ?? '');
+    public function testEventRuleIsCreatedAfterPreview(): void
+    {
+        $this->configureMcp(enabled: true);
+        [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::PRICES_READ, ApiScope::PRICES_WRITE]);
+        $apartment = $this->em()->getRepository(Appartment::class)->findOneBy(['active' => true], ['id' => 'ASC']);
+        self::assertInstanceOf(Appartment::class, $apartment);
+        $fair = [
+            'name' => 'Messe MCP',
+            'firstNight' => (new \DateTimeImmutable('+705 days'))->format('Y-m-d'),
+            'lastNight' => (new \DateTimeImmutable('+707 days'))->format('Y-m-d'),
+            'percent' => 20,
+            'objectIds' => [(int) $apartment->getObject()?->getId()],
+        ];
+        $ruleId = null;
+
+        try {
+            $preview = $this->callTool($token, 'preview_event_rule', $fair);
+            self::assertFalse($preview['isError'] ?? false, (string) json_encode($preview));
+            $preview = $preview['structuredContent'];
+            self::assertSame(3, $preview['nightsInPeriod']);
+            self::assertSame(3, $preview['appliesOnNights']);
+            self::assertGreaterThan($preview['example']['before'], $preview['example']['after']);
+
+            self::assertTrue($this->callTool($token, 'create_event_rule', ['percent' => 25] + $fair + ['previewToken' => $preview['previewToken']])['isError'] ?? false);
+
+            $created = $this->callTool($token, 'create_event_rule', $fair + ['previewToken' => $preview['previewToken']]);
+            self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
+            $ruleId = $created['structuredContent']['rule']['id'];
+            self::assertSame($fair['lastNight'], $created['structuredContent']['rule']['lastNight']);
+            self::assertTrue($this->callTool($token, 'create_event_rule', $fair + ['previewToken' => $preview['previewToken']])['structuredContent']['alreadyCreated']);
+
+            $this->em()->clear();
+            $rule = $this->em()->find(PriceRule::class, $ruleId);
+            self::assertInstanceOf(PriceRule::class, $rule);
+            self::assertSame(20.0, $rule->getPercent());
+            self::assertFalse($rule->isAllSubsidiaries());
+            self::assertSame((new \DateTimeImmutable('+708 days'))->format('Y-m-d'), $rule->getEndDate()?->format('Y-m-d'));
+            self::assertContains($ruleId, array_column($this->callTool($token, 'get_price_rules')['structuredContent']['rules'], 'id'));
+        } finally {
+            if (null !== $ruleId) {
+                $this->em()->remove($this->em()->find(PriceRule::class, $ruleId) ?? self::fail('Rule vanished.'));
+                $this->em()->flush();
+            }
+        }
     }
 
     public function testAssistantPreparesABankImportDraftOfItsOwner(): void
@@ -528,18 +572,21 @@ final class McpServerTest extends WebTestCase
         $args = $this->bookingArguments('Gast-Idempotenz', '+500 days');
 
         // Without preview there is no booking.
-        $withoutPreview = $this->callTool($token, 'create_reservation', $args + ['previewToken' => 'pv1.1.invalid']);
+        $withoutPreview = $this->callTool($token, 'create_reservation', $args + ['previewToken' => 'pv1.1.invalid', 'expectedTotal' => 100.0]);
         self::assertTrue($withoutPreview['isError'] ?? false);
 
         $preview = $this->callTool($token, 'preview_reservation', $args);
         self::assertFalse($preview['isError'] ?? false, (string) json_encode($preview));
         $previewToken = $preview['structuredContent']['previewToken'];
+        $confirmation = ['previewToken' => $previewToken, 'expectedTotal' => $preview['structuredContent']['estimatedTotal']];
 
-        // The confirmation only covers exactly the previewed request.
-        $changed = $this->callTool($token, 'create_reservation', ['bookerLastname' => 'Someone Else'] + $args + ['previewToken' => $previewToken]);
+        // The confirmation only covers exactly the previewed request and price.
+        $changed = $this->callTool($token, 'create_reservation', ['bookerLastname' => 'Someone Else'] + $args + $confirmation);
         self::assertTrue($changed['isError'] ?? false);
+        $cheaper = $this->callTool($token, 'create_reservation', $args + ['expectedTotal' => $confirmation['expectedTotal'] - 1] + $confirmation);
+        self::assertTrue($cheaper['isError'] ?? false);
 
-        $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $previewToken]);
+        $created = $this->callTool($token, 'create_reservation', $args + $confirmation);
         self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
         self::assertTrue($created['structuredContent']['created']);
         $reservationId = (int) $created['structuredContent']['reservation']['id'];
@@ -561,7 +608,7 @@ final class McpServerTest extends WebTestCase
         self::assertSame('mcp', $changeLog?->getChannel());
 
         // A retry with the same confirmation returns the same reservation instead of a duplicate.
-        $retry = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $previewToken]);
+        $retry = $this->callTool($token, 'create_reservation', $args + $confirmation);
         self::assertTrue($retry['structuredContent']['alreadyCreated']);
         self::assertSame($reservationId, $retry['structuredContent']['reservation']['id']);
 
@@ -594,10 +641,11 @@ final class McpServerTest extends WebTestCase
         self::assertEqualsWithDelta(30.0, $preview['structuredContent']['extrasTotal'], 0.001);
 
         // The confirmation covers the extras as well.
-        $changed = $this->callTool($token, 'create_reservation', ['extras' => [$dog, $breakfast]] + $args + ['previewToken' => $preview['structuredContent']['previewToken']]);
+        $confirmation = ['previewToken' => $preview['structuredContent']['previewToken'], 'expectedTotal' => $preview['structuredContent']['estimatedTotal']];
+        $changed = $this->callTool($token, 'create_reservation', ['extras' => [$dog, $breakfast]] + $args + $confirmation);
         self::assertTrue($changed['isError'] ?? false);
 
-        $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $preview['structuredContent']['previewToken']]);
+        $created = $this->callTool($token, 'create_reservation', $args + $confirmation);
         self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
         self::assertSame([$dog], array_column($created['structuredContent']['reservation']['extras'], 'id'));
 
@@ -784,6 +832,34 @@ final class McpServerTest extends WebTestCase
         self::assertCount(2, $crawler->filter('input[name="api_token[kind]"]'));
     }
 
+    public function testABookingIsRefusedWhenThePriceChangedAfterThePreview(): void
+    {
+        $this->configureMcp(enabled: true, write: true);
+        [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::RESERVATIONS_WRITE]);
+        $args = $this->bookingArguments('Gast-Preisregel', '+760 days');
+        $preview = $this->callTool($token, 'preview_reservation', $args)['structuredContent'];
+
+        // A price rule for exactly these nights appears between preview and confirmation.
+        $rule = new PriceRule();
+        $rule->setName('mcp-test');
+        $rule->setPercent(20.0);
+        $rule->setPeriod(new \DateTimeImmutable($args['arrival']), new \DateTimeImmutable($args['departure']));
+        $this->em()->persist($rule);
+        $this->em()->flush();
+
+        try {
+            $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $preview['previewToken'], 'expectedTotal' => $preview['estimatedTotal']]);
+            self::assertTrue($created['isError'] ?? false);
+            self::assertStringContainsString('price has changed', (string) json_encode($created));
+
+            $again = $this->callTool($token, 'preview_reservation', $args)['structuredContent'];
+            self::assertGreaterThan($preview['estimatedTotal'], $again['estimatedTotal']);
+        } finally {
+            $this->em()->remove($this->em()->find(PriceRule::class, $rule->getId()));
+            $this->em()->flush();
+        }
+    }
+
     public function testCreateReservationOptionFollowsTheGlobalSwitch(): void
     {
         $admin = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::RESERVATIONS_READ], null)[0];
@@ -803,7 +879,7 @@ final class McpServerTest extends WebTestCase
         self::assertCount(1, $crawler->filter($writeOption));
     }
 
-    public function testSpecialPriceOptionIsOfferedToAdministratorsOnly(): void
+    public function testPriceWriteOptionIsOfferedToAdministratorsOnly(): void
     {
         $option = sprintf('input[name="api_token[scopes][]"][value="%s"]', ApiScope::PRICES_WRITE->value);
         $admin = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::RESERVATIONS_READ], null)[0];
@@ -959,7 +1035,7 @@ final class McpServerTest extends WebTestCase
         $args = $this->bookingArguments($lastname, $arrivalOffset) + ['remark' => 'Arrives late'];
         $preview = $this->callTool($token, 'preview_reservation', $args);
         self::assertFalse($preview['isError'] ?? false, (string) json_encode($preview));
-        $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $preview['structuredContent']['previewToken']]);
+        $created = $this->callTool($token, 'create_reservation', $args + ['previewToken' => $preview['structuredContent']['previewToken'], 'expectedTotal' => $preview['structuredContent']['estimatedTotal']]);
         self::assertFalse($created['isError'] ?? false, (string) json_encode($created));
 
         $reservation = $this->em()->find(Reservation::class, (int) $created['structuredContent']['reservation']['id']);
@@ -1093,74 +1169,31 @@ final class McpServerTest extends WebTestCase
     }
 
     /**
-     * A year-round copy of the given room price with another minimum stay.
-     */
-    private function createLongStayRoomPrice(int $sourceId, int $minStay): int
-    {
-        $em = $this->em();
-        $source = $em->find(Price::class, $sourceId);
-        self::assertInstanceOf(Price::class, $source);
-        $price = new Price();
-        $price->setType(2);
-        $price->setActive(true);
-        $price->setAllDays(true);
-        $price->setAllPeriods(true);
-        $price->setVat(7);
-        $price->setPrice(30);
-        $price->setDescription('Long stay test');
-        $price->setIsPerRoom(true);
-        $price->setNumberOfPersons($source->getNumberOfPersons());
-        $price->setMinStay($minStay);
-        foreach ($source->getReservationOrigins() as $origin) {
-            $price->addReservationOrigin($origin);
-        }
-        foreach ($source->getRoomCategories() as $category) {
-            $price->addRoomCategory($category);
-        }
-        $em->persist($price);
-        $em->flush();
-
-        return (int) $price->getId();
-    }
-
-    /**
-     * @param list<array<string, mixed>> $rows
+     * Day price arguments for the room category and subsidiary of the first active room.
      *
-     * @return array<string, mixed>
-     */
-    private function findRowCovering(array $rows, string $descriptionPart): array
-    {
-        foreach ($rows as $row) {
-            if (str_contains((string) $row['description'], $descriptionPart)) {
-                return $row;
-            }
-        }
-        self::fail(\sprintf('No row containing "%s".', $descriptionPart));
-    }
-
-    /**
-     * Special price arguments based on the year-round price of the room bookReservation() uses.
+     * @param array<string, float|null> $amounts keyed by date offset, e.g. '+700 days'
      *
-     * @return array{priceId: int, firstNight: string, lastNight: string, periodDescription: string}
+     * @return array{roomCategoryId: int, objectId: int, persons: int, nights: list<array{night: string, amount: float|null}>}
      */
-    private function specialPriceArguments(string $firstOffset, string $lastOffset, string $label = 'Messe'): array
+    private function dayPriceArguments(array $amounts): array
     {
         $apartment = $this->em()->getRepository(Appartment::class)->findOneBy(['active' => true], ['id' => 'ASC']);
         self::assertInstanceOf(Appartment::class, $apartment);
-        $price = null;
-        foreach ($this->em()->getRepository(Price::class)->findBy(['type' => 2, 'allPeriods' => true, 'numberOfPersons' => 1, 'active' => true], ['id' => 'ASC']) as $candidate) {
-            if ($candidate->getRoomCategories()->contains($apartment->getRoomCategory())) {
-                $price = $candidate;
-                break;
-            }
+        $category = $apartment->getRoomCategory();
+        self::assertNotNull($category);
+        $occupancies = static::getContainer()->get(PriceRepository::class)->findOccupanciesForRoomCategory($category);
+        self::assertNotEmpty($occupancies, 'Sample data must contain a room price for the first room.');
+
+        $nights = [];
+        foreach ($amounts as $offset => $amount) {
+            $nights[] = ['night' => (new \DateTimeImmutable($offset))->format('Y-m-d'), 'amount' => $amount];
         }
-        self::assertInstanceOf(Price::class, $price, 'Sample data must contain a year-round price for one person in the first room.');
 
         return [
-            'priceId' => (int) $price->getId(),
-            'firstNight' => (new \DateTimeImmutable($firstOffset))->format('Y-m-d'),
-            'lastNight' => (new \DateTimeImmutable($lastOffset))->format('Y-m-d'),
-            'periodDescription' => $label,
+            'roomCategoryId' => (int) $category->getId(),
+            'objectId' => (int) $apartment->getObject()?->getId(),
+            'persons' => $occupancies[0],
+            'nights' => $nights,
         ];
     }
 

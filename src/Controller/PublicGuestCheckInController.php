@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Dto\GuestCheckIn\GuestCheckInSubmission;
 use App\Dto\GuestCheckIn\GuestCheckInGuest;
+use App\Dto\GuestCheckIn\GuestCheckInSubmission;
 use App\Dto\GuestCheckIn\GuestCheckInVerification;
 use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\GuestCheckIn;
@@ -14,8 +14,8 @@ use App\Form\GuestCheckInVerificationType;
 use App\Repository\OnlineBookingConfigRepository;
 use App\Service\AppSettingsService;
 use App\Service\GuestCheckIn\GuestCheckInConfigService;
-use App\Service\GuestCheckIn\GuestCheckInFormDataFactory;
 use App\Service\GuestCheckIn\GuestCheckInExtrasService;
+use App\Service\GuestCheckIn\GuestCheckInFormDataFactory;
 use App\Service\GuestCheckIn\GuestCheckInLinkService;
 use App\Service\GuestCheckIn\GuestCheckInLinkState;
 use App\Service\GuestCheckIn\GuestCheckInPolicy;

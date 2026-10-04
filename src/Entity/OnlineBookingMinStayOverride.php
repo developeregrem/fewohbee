@@ -18,7 +18,7 @@ class OnlineBookingMinStayOverride
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: RoomCategory::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
     private ?RoomCategory $roomCategory = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]

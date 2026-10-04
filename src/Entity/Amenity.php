@@ -36,7 +36,7 @@ class Amenity
     private string $category;
 
     /** Display order within the category group */
-    #[ORM\Column(type: 'smallint')]
+    #[ORM\Column(type: 'smallint', options: ['default' => 0])]
     private int $sortOrder = 0;
 
     /** Booking.com Room Amenity Code (OTA 2014B Standard) — nullable, for future use */

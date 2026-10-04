@@ -179,8 +179,8 @@ final class BankStatementCommitter
     }
 
     /**
-     * @param list<BookingEntry>      $entries
-     * @param array<string, mixed>    $line
+     * @param list<BookingEntry>   $entries
+     * @param array<string, mixed> $line
      */
     private function updateExistingInvoiceEntries(array $entries, array $line, \DateTimeImmutable $valueDate, AccountingAccount $bankAccount): void
     {
@@ -198,8 +198,8 @@ final class BankStatementCommitter
     }
 
     /**
-     * @param array<string, mixed>          $line
-     * @param array<int, AccountingAccount> $accounts
+     * @param array<string, mixed>            $line
+     * @param array<int, AccountingAccount>   $accounts
      * @param array<int, \App\Entity\TaxRate> $taxRates
      *
      * @return list<BookingEntry>
@@ -219,7 +219,7 @@ final class BankStatementCommitter
                 $accounts[(int) ($line['userCreditAccountId'] ?? 0)] ?? null,
                 $line['userRemark'] ?? null,
                 $invoiceNumber,
-                $invoiceId !== null ? (int) $invoiceId : null,
+                null !== $invoiceId ? (int) $invoiceId : null,
                 null,
                 $taxRates[(int) ($line['userTaxRateId'] ?? 0)] ?? null,
             );
@@ -237,7 +237,7 @@ final class BankStatementCommitter
                 $accounts[(int) ($split['creditAccountId'] ?? 0)] ?? null,
                 $split['remark'] ?? null,
                 $invoiceNumber,
-                $invoiceId !== null ? (int) $invoiceId : null,
+                null !== $invoiceId ? (int) $invoiceId : null,
                 $groupUuid,
                 $taxRates[(int) ($split['taxRateId'] ?? 0)] ?? null,
             );

@@ -51,11 +51,12 @@ profile:
       prices_read: Prices
       tourist_tax_read: Tourist tax
       subsidiaries_read: Branches (master data and opening hours)
+      availability_read: Availability (free and booked rooms, no reservation data)
       mcp_access: AI assistant (MCP)
       guests_read: Guest data (names, contact details, remarks)
       operations_read: Operations (room plan, housekeeping)
       reservations_write: Create reservations
-      prices_write: Add special prices
+      prices_write: Adjust prices
       bank_import_write: Prepare bank statements
     groups:
       see:
@@ -69,7 +70,7 @@ profile:
         mcp: What may the AI change?
     hints:
       reservations_write: Only after a preview and your consent.
-      prices_write: Only after a preview and your consent.
+      prices_write: Existing bookings keep their price. An AI only changes prices after a preview and your consent.
       bank_import_write: Shares names, purposes and shortened IBANs of the transactions with the AI. You commit them yourself.
     unavailable:
       role: Needs the role "%role%".
@@ -84,10 +85,11 @@ profile:
         prices_read: prices
         tourist_tax_read: tourist tax
         subsidiaries_read: branches
+        availability_read: availability
         operations_read: operations
         guests_read: guest data
         reservations_write: create reservations
-        prices_write: add special prices
+        prices_write: adjust prices
         bank_import_write: prepare bank statements
       see:
         rest: This access may read %list%.
@@ -101,6 +103,7 @@ profile:
       change:
         some: It may %list%.
         none: It cannot change anything.
+        rest: This access may %list%.
     kind:
       label: Use
       api: REST API and calendar clients

@@ -22,6 +22,7 @@ use Symfony\Component\Form\Extension\Core\Type\ColorType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
@@ -180,6 +181,12 @@ class OnlineBookingConfigType extends AbstractType
                     'rows' => 8,
                     'data-online-booking-settings-editor' => 'cancellation',
                 ],
+            ])
+            ->add('commentPlaceholder', TextType::class, [
+                'label' => 'online_booking.settings.comment_placeholder',
+                'help' => 'online_booking.settings.comment_placeholder_help',
+                'required' => false,
+                'attr' => ['maxlength' => 255],
             ])
             ->add('successMessageText', TextareaType::class, [
                 'label' => 'online_booking.settings.success_message_text',

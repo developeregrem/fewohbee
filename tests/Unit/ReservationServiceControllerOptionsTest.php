@@ -36,7 +36,7 @@ final class ReservationServiceControllerOptionsTest extends TestCase
             ->with([7 => 1])
             ->willReturn(1);
 
-        $controller = new ReservationServiceController();
+        $controller = new ReservationServiceController($this->createStub(\App\Service\AppSettingsService::class));
         $controller->modifyAppartmentOptionsAction(
             $this->makeKernel(),
             $this->makeRequestStack($request),
@@ -58,7 +58,7 @@ final class ReservationServiceControllerOptionsTest extends TestCase
         ]);
         $request->setSession($session);
 
-        $controller = new ReservationServiceController();
+        $controller = new ReservationServiceController($this->createStub(\App\Service\AppSettingsService::class));
         $response = $controller->modifyAppartmentOptionsAction(
             $this->makeKernel(),
             $this->makeRequestStack($request),
