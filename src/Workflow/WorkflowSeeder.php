@@ -7,7 +7,6 @@ namespace App\Workflow;
 use App\Entity\Workflow;
 use App\Repository\WorkflowRepository;
 use App\Workflow\Trigger\AssistantReservationCreatedTrigger;
-use App\Workflow\Trigger\GuestCheckInSubmittedTrigger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -96,27 +95,15 @@ class WorkflowSeeder
     }
 
     /**
-     * Seeds the workflows of the online check-in. Called when an administrator switches the
-     * check-in on, so installations that never use it do not see them. Idempotent; switching it
-     * on again neither duplicates the workflows nor re-enables them.
+     * Seeds the invitation example of the online check-in. Called when an administrator switches
+     * the check-in on, so installations that never use it do not see it. Idempotent; switching it
+     * on again neither duplicates the workflow nor re-enables it.
+     *
+     * Submissions waiting for review need no workflow: GuestCheckInReviewProvider lists them in
+     * the notification centre until they are confirmed or discarded.
      */
     public function seedGuestCheckInWorkflows(): void
     {
-        $this->createOrUpdate(
-            systemCode: 'notify_guest_checkin',
-            name: 'workflow.system.notify_guest_checkin.name',
-            description: 'workflow.system.notify_guest_checkin.description',
-            triggerType: GuestCheckInSubmittedTrigger::TYPE,
-            actionType: 'create_in_app_notification',
-            defaultEnabled: true,
-            actionConfig: [
-                'severity' => 'info',
-                'requiredRole' => '',
-                'note' => $this->translator->trans('workflow.system.notify_guest_checkin.note'),
-            ],
-            isSystem: true,
-        );
-
         $this->createOrUpdate(
             systemCode: 'example_guest_checkin_invitation',
             name: 'workflow.system.example_guest_checkin_invitation.name',

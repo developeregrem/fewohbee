@@ -113,23 +113,21 @@ final class WorkflowSeederTest extends TestCase
         self::assertFalse($existing->isEnabled());
     }
 
-    public function testSeedsCheckInNotificationEnabledAndInvitationDisabled(): void
+    public function testSeedsOnlyTheDisabledCheckInInvitation(): void
     {
         $repository = $this->createStub(WorkflowRepository::class);
         $repository->method('findBySystemCode')->willReturn(null);
 
         $persisted = [];
         $entityManager = $this->createMock(EntityManagerInterface::class);
-        $entityManager->expects(self::exactly(2))->method('persist')->willReturnCallback(static function (object $entity) use (&$persisted): void {
+        $entityManager->expects(self::once())->method('persist')->willReturnCallback(static function (object $entity) use (&$persisted): void {
             $persisted[] = $entity;
         });
 
         (new WorkflowSeeder($entityManager, $repository, $this->translator()))->seedGuestCheckInWorkflows();
 
-        [$notification, $invitation] = $persisted;
-        self::assertInstanceOf(Workflow::class, $notification);
-        self::assertSame('guest_checkin.submitted', $notification->getTriggerType());
-        self::assertTrue($notification->isEnabled());
+        // Submissions to review are a derived notification (GuestCheckInReviewProvider), not a workflow.
+        [$invitation] = $persisted;
         self::assertInstanceOf(Workflow::class, $invitation);
         self::assertFalse($invitation->isEnabled(), 'Sending mails to guests needs a template first.');
         self::assertContains(['type' => 'reservation.guest_checkin', 'config' => ['state' => 'open']], $invitation->getConditions());

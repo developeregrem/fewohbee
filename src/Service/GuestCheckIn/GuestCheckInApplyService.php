@@ -11,21 +11,24 @@ use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\Enum\IDCardType;
 use App\Entity\GuestCheckIn;
 use App\Entity\Reservation;
+use App\Event\GuestCheckInConfirmedEvent;
 use App\Repository\AppSettingsRepository;
 use App\Service\Pricing\PricePromiseService;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Takes a reviewed online check-in over into the guest records.
+ * Confirms a reviewed online check-in by taking it over into the guest records.
  *
  * - Only values the guest actually entered overwrite existing ones; nothing is cleared.
  * - Linked guests are always available; a customer outside the reservation can only be selected
  *   with customer access and a fresh identity suggestion that the hotelier confirms.
  * - An address shared with other customers is left alone; the guest gets an own copy.
- * - Everyone taken over ends up among the reservation's guests, up to the number of guests booked.
+ * - Everyone taken over ends up among the reservation's guests, up to the number of guests booked;
+ *   linked guests the hotelier marks as not travelling make room first.
  * - Afterwards the submission itself is dropped; the audit log records who took it over.
  */
 class GuestCheckInApplyService
@@ -42,6 +45,7 @@ class GuestCheckInApplyService
         private readonly AppSettingsRepository $settingsRepository,
         private readonly GuestCheckInExistingGuestMatcher $existingGuestMatcher,
         private readonly PricePromiseService $pricePromises,
+        private readonly EventDispatcherInterface $dispatcher,
     ) {
     }
 
@@ -63,14 +67,6 @@ class GuestCheckInApplyService
 
         $reservation = $checkIn->getReservation();
         $main = \is_array($payload['mainGuest'] ?? null) ? $payload['mainGuest'] : [];
-        $booker = $reservation->getBooker();
-        if (null !== $booker
-            && \in_array($request->mainTarget, [GuestCheckInApplyRequest::TARGET_BOOKER, GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX.$booker->getId()], true)
-            && GuestCheckInPersonMatch::hasFullName($main)
-            && !GuestCheckInPersonMatch::likelySamePerson($main, $booker)
-            && !$request->confirmBookerMismatch) {
-            throw new \InvalidArgumentException('The submitted main guest differs from the booker and needs explicit confirmation.');
-        }
         // "booker" and "customer:<booker id>" name the same person. Canonicalise them before
         // changing any customer, or the second traveller can silently overwrite the first.
         $usedTargets = [];
@@ -89,14 +85,14 @@ class GuestCheckInApplyService
             $usedTargets[$target] = true;
         }
 
-        $removeBooker = $request->removeBookerFromGuests;
-        if ($removeBooker) {
-            if (null === $booker || !$reservation->getCustomers()->contains($booker)
-                || !GuestCheckInPersonMatch::hasFullName($main)
-                || GuestCheckInPersonMatch::likelySamePerson($main, $booker)
-                || isset($usedTargets[GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX.$booker->getId()])) {
-                throw new \InvalidArgumentException('The booker cannot be removed from the room in this review.');
+        $guestsToRemove = [];
+        foreach (array_unique($request->removeGuestIds) as $id) {
+            $guest = $reservation->getCustomers()->findFirst(static fn (int $key, Customer $customer): bool => $customer->getId() === $id);
+            // Somebody taken over from the check-in obviously travels.
+            if (null === $guest || isset($usedTargets[GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX.$id])) {
+                throw new \InvalidArgumentException('Only linked guests not taken over can be removed.');
             }
+            $guestsToRemove[] = $guest;
         }
 
         $existingMainCustomer = GuestCheckInApplyRequest::TARGET_NEW === $request->mainTarget
@@ -110,7 +106,7 @@ class GuestCheckInApplyService
             }
         }
         $mainAlreadyInRoom = null !== $existingMainCustomer && $reservation->getCustomers()->contains($existingMainCustomer);
-        if (!$mainAlreadyInRoom && \count($reservation->getCustomers()) - (int) $removeBooker >= $reservation->getTotalGuests()) {
+        if (!$mainAlreadyInRoom && \count($reservation->getCustomers()) - \count($guestsToRemove) >= $reservation->getTotalGuests()) {
             throw new GuestCheckInNoGuestSlotException('No room for the arriving main guest.');
         }
 
@@ -124,8 +120,8 @@ class GuestCheckInApplyService
             : null;
         $warnings = [];
 
-        if ($removeBooker) {
-            $reservation->removeCustomer($booker);
+        foreach ($guestsToRemove as $guest) {
+            $reservation->removeCustomer($guest);
         }
 
         $mainCustomer = $existingMainCustomer ?? $this->resolveTarget($reservation, $request->mainTarget, false, $main, $request->allowGlobalMatch)
@@ -181,6 +177,7 @@ class GuestCheckInApplyService
 
         $checkIn->markApplied($this->clock->now());
         $this->em->flush();
+        $this->dispatcher->dispatch(new GuestCheckInConfirmedEvent($reservation, $checkIn));
 
         return array_values(array_unique($warnings));
     }

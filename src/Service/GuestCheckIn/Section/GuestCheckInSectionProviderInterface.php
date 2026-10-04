@@ -11,7 +11,7 @@ use App\Entity\GuestCheckIn;
  *
  * Implementations are collected by tag (config/services.yaml). Intended for information a
  * guest needs for the stay — arrival instructions today, e.g. door codes of a lock integration
- * later; such content sets the visibility flags of GuestCheckInSection accordingly. Section
+ * later; such content sets availableFrom and duringStayOnly of GuestCheckInSection accordingly. Section
  * templates get their own vars plus `formShown` (whether the check-in form is on the page).
  */
 interface GuestCheckInSectionProviderInterface

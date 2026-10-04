@@ -8,6 +8,9 @@ notification:
   calendar_reminder:
     title: "%count% calendar reminders"
     body: "Entries due today that still need confirming."
+  guest_checkin_review:
+    title: "Review online check-in: %name%"
+    body: "Room %room% from %from%"
   release_note:
     title: "New in fewohbee %version%"
     body: "See what has changed."

@@ -8,6 +8,7 @@ use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\GuestCheckIn;
 use App\Entity\Reservation;
 use App\Service\GuestCheckIn\Section\GuestCheckInSection;
+use App\Service\GuestCheckIn\Section\GuestCheckInSectionAvailability;
 use Symfony\Component\Clock\ClockInterface;
 
 /**
@@ -61,7 +62,12 @@ class GuestCheckInPolicy
      */
     public function isSectionVisible(GuestCheckInSection $section, GuestCheckIn $checkIn): bool
     {
-        if ($section->requiresSubmission && null === $checkIn->getFirstSubmittedAt()) {
+        $reached = match ($section->availableFrom) {
+            GuestCheckInSectionAvailability::ALWAYS => true,
+            GuestCheckInSectionAvailability::AFTER_SUBMISSION => GuestCheckInStatus::OPEN !== $checkIn->getStatus(),
+            GuestCheckInSectionAvailability::AFTER_CONFIRMATION => GuestCheckInStatus::APPLIED === $checkIn->getStatus(),
+        };
+        if (!$reached) {
             return false;
         }
 

@@ -159,5 +159,6 @@ final class RoleAccessTest extends WebTestCase
         // that every other reservation-mutating action carries.
         yield 'reservations ro user on new calendar entry' => ['ROLE_RESERVATIONS_RO', '/reservation/calendar-entry/new'];
         yield 'reservations user on online check-in settings' => ['ROLE_RESERVATIONS', '/settings/guest-checkin'];
+        yield 'reservations user on online check-in preview' => ['ROLE_RESERVATIONS', '/settings/guest-checkin/preview'];
     }
 }

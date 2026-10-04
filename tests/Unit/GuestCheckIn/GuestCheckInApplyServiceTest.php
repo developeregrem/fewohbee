@@ -11,12 +11,15 @@ use App\Entity\CustomerAddresses;
 use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\GuestCheckIn;
 use App\Entity\Reservation;
+use App\Event\GuestCheckInConfirmedEvent;
 use App\Repository\AppSettingsRepository;
 use App\Service\GuestCheckIn\GuestCheckInApplyService;
 use App\Service\GuestCheckIn\GuestCheckInExtrasService;
 use App\Service\GuestCheckIn\GuestCheckInExistingGuestMatcher;
+use App\Service\GuestCheckIn\GuestCheckInNoGuestSlotException;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -176,23 +179,65 @@ final class GuestCheckInApplyServiceTest extends TestCase
         }
     }
 
-    public function testDifferentMainGuestCannotOverwriteBookerWithoutConfirmationEvenThroughCustomerAlias(): void
+    public function testChoosingTheBookerForADifferentPersonOverwritesTheBooker(): void
     {
+        // The review never preselects a record whose name differs; picking it is the decision.
         $booker = $this->customer(1, 'Anna', 'Müller');
         $checkIn = $this->submitted($this->reservation($booker, 2), ['firstname' => 'Lea', 'lastname' => 'Novak']);
 
-        foreach (['booker', 'customer:1'] as $target) {
+        $this->service()->apply($checkIn, new GuestCheckInApplyRequest('customer:1', false, []));
+
+        self::assertSame('Lea', $booker->getFirstname());
+        self::assertSame(GuestCheckInStatus::APPLIED, $checkIn->getStatus());
+    }
+
+    public function testGuestMarkedAsNotTravellingMakesRoomForTheArrivingGuest(): void
+    {
+        $booker = $this->customer(1, 'Anna', 'Müller');
+        $reservation = $this->reservation($booker, 1);
+        $reservation->addCustomer($booker);
+        $checkIn = $this->submitted($reservation, ['firstname' => 'Lea', 'lastname' => 'Novak']);
+
+        try {
+            $this->service()->apply($checkIn, new GuestCheckInApplyRequest('new', false, []));
+            self::fail('Without a free place the arriving guest cannot be added.');
+        } catch (GuestCheckInNoGuestSlotException) {
+            self::assertTrue($checkIn->hasPayload());
+        }
+
+        $this->service()->apply($checkIn, new GuestCheckInApplyRequest('new', false, [], removeGuestIds: [1]));
+
+        self::assertSame(['Lea'], array_map(static fn (Customer $guest): ?string => $guest->getFirstname(), array_values($reservation->getCustomers()->toArray())));
+        self::assertSame($booker, $reservation->getBooker(), 'Not travelling does not change who booked.');
+    }
+
+    public function testGuestTakenOverOrNotLinkedCannotBeRemoved(): void
+    {
+        $booker = $this->customer(1, 'Anna', 'Müller');
+        $reservation = $this->reservation($booker, 2);
+        $reservation->addCustomer($booker);
+        $checkIn = $this->submitted($reservation, ['firstname' => 'Anna', 'lastname' => 'Müller']);
+
+        foreach ([[1], [999]] as $removeGuestIds) {
             try {
-                $this->service()->apply($checkIn, new GuestCheckInApplyRequest($target, false, []));
-                self::fail('A different main guest must not overwrite the booker without confirmation.');
+                $this->service()->apply($checkIn, new GuestCheckInApplyRequest('booker', false, [], removeGuestIds: $removeGuestIds));
+                self::fail('Only linked guests nobody was matched to can be removed.');
             } catch (\InvalidArgumentException) {
-                self::assertSame('Anna', $booker->getFirstname());
+                self::assertTrue($reservation->getCustomers()->contains($booker));
                 self::assertTrue($checkIn->hasPayload());
             }
         }
+    }
 
-        $this->service()->apply($checkIn, new GuestCheckInApplyRequest('booker', false, [], confirmBookerMismatch: true));
-        self::assertSame('Lea', $booker->getFirstname());
+    public function testConfirmingDispatchesTheConfirmedEventAfterwards(): void
+    {
+        $checkIn = $this->submitted($this->reservation($this->customer(1, 'Anna', 'Müller'), 2), ['firstname' => 'Anna', 'lastname' => 'Müller']);
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::once())->method('dispatch')->with(self::callback(
+            static fn (object $event): bool => $event instanceof GuestCheckInConfirmedEvent && $event->checkIn === $checkIn && !$checkIn->hasPayload(),
+        ))->willReturnArgument(0);
+
+        $this->service($dispatcher)->apply($checkIn, new GuestCheckInApplyRequest('booker', false, []));
     }
 
     public function testDeferredServiceRequestIsKeptInReservationRemarksWithoutBookingPrice(): void
@@ -213,19 +258,7 @@ final class GuestCheckInApplyServiceTest extends TestCase
         self::assertSame(GuestCheckInStatus::APPLIED, $checkIn->getStatus());
     }
 
-    public function testDifferentBirthDateAlsoProtectsBookerWithSameName(): void
-    {
-        $booker = $this->customer(1, 'Anna', 'Müller');
-        $booker->setBirthday(new \DateTime('1980-05-01'));
-        $checkIn = $this->submitted($this->reservation($booker, 2), [
-            'firstname' => 'Anna', 'lastname' => 'Müller', 'birthday' => '1990-05-01',
-        ]);
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->service()->apply($checkIn, new GuestCheckInApplyRequest('booker', false, []));
-    }
-
-    private function service(): GuestCheckInApplyService
+    private function service(?EventDispatcherInterface $dispatcher = null): GuestCheckInApplyService
     {
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $parameters = []): string => strtr([
@@ -238,7 +271,7 @@ final class GuestCheckInApplyServiceTest extends TestCase
 
         $em = $this->createStub(EntityManagerInterface::class);
 
-        return new GuestCheckInApplyService($em, $translator, new MockClock(), 'de', $this->createStub(GuestCheckInExtrasService::class), $settingsRepository, new GuestCheckInExistingGuestMatcher($em), $this->createStub(\App\Service\Pricing\PricePromiseService::class));
+        return new GuestCheckInApplyService($em, $translator, new MockClock(), 'de', $this->createStub(GuestCheckInExtrasService::class), $settingsRepository, new GuestCheckInExistingGuestMatcher($em), $this->createStub(\App\Service\Pricing\PricePromiseService::class), $dispatcher ?? $this->createStub(EventDispatcherInterface::class));
     }
 
     /**

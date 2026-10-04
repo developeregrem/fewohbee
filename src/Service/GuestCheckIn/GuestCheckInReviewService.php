@@ -15,8 +15,12 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Data for the "Check-in" tab of the reservation dialog: state, link availability and
- * the submitted details next to what the guest records hold today.
+ * Data for the "Check-in" tab of the reservation dialog.
+ *
+ * While a submission waits for review, every submitted person comes with each record it could be
+ * stored as and, per record, what confirming would write there — the tab shows the changes for
+ * whichever record the hotelier picks. A record is preselected only on an unambiguous identity
+ * match, never one whose name differs from the submission.
  */
 class GuestCheckInReviewService
 {
@@ -28,6 +32,7 @@ class GuestCheckInReviewService
         private readonly TranslatorInterface $translator,
         private readonly GuestCheckInExtrasService $extrasService,
         private readonly GuestCheckInExistingGuestMatcher $existingGuestMatcher,
+        private readonly GuestCheckInInvitationService $invitationService,
         #[Autowire('%kernel.default_locale%')]
         private readonly string $installationLocale,
     ) {
@@ -47,26 +52,52 @@ class GuestCheckInReviewService
         }
 
         $state = $this->policy->linkState($reservation, $checkIn, $enabled);
+        $status = $checkIn?->getStatus() ?? GuestCheckInStatus::OPEN;
         $payload = $checkIn?->getPayload();
-        $mainGuest = \is_array($payload['mainGuest'] ?? null) ? $payload['mainGuest'] : [];
-        $mainGlobalCandidates = $maySeeGlobalCandidates && null !== $payload
-            ? $this->existingGuestMatcher->matchingCandidates($reservation, $mainGuest)
-            : [];
-        [$defaultMainTarget, $comparisonGuest] = $this->suggestMainTarget($reservation, $mainGuest, $mainGlobalCandidates);
-        $mainNameOnlyMatch = $this->hasNameOnlyCandidate($mainGuest, $mainGlobalCandidates);
-        $bookerDiffers = null !== $reservation->getBooker()
-            && GuestCheckInPersonMatch::hasFullName($mainGuest)
-            && !GuestCheckInPersonMatch::likelySamePerson($mainGuest, $reservation->getBooker());
-        $bookerRows = null !== $payload && null !== $reservation->getBooker()
-            ? $this->mainGuestRows($mainGuest, $reservation->getBooker())
-            : [];
-        $bookerNeedsUpdate = false;
-        foreach ($bookerRows as $row) {
-            if ($row['differs']) {
-                $bookerNeedsUpdate = true;
-                break;
+        $unavailableReason = $this->unavailableReason($state, $enabled);
+
+        return [
+            'checkIn' => $checkIn,
+            'status' => $status,
+            'unavailableReason' => $unavailableReason,
+            // Only worth telling while the guest still has to act.
+            'invitation' => GuestCheckInStatus::OPEN === $status && null === $unavailableReason ? [
+                'workflows' => $this->invitationService->findInvitationWorkflows(),
+                'sentAt' => $this->invitationService->lastSentAt($reservation),
+            ] : null,
+            'review' => GuestCheckInStatus::SUBMITTED === $status && null !== $payload
+                ? $this->review($reservation, $payload, $maySeeGlobalCandidates)
+                : null,
+        ];
+    }
+
+    /**
+     * "simple" means nothing needs a decision: every person has a unique suggestion, nobody
+     * linked to the room is left unaccounted for, everyone fits the booked number of guests and
+     * the requested services can be booked as shown.
+     *
+     * @param array<string, mixed> $payload
+     *
+     * @return array<string, mixed>
+     */
+    private function review(Reservation $reservation, array $payload, bool $maySeeGlobalCandidates): array
+    {
+        $booker = $reservation->getBooker();
+        $main = \is_array($payload['mainGuest'] ?? null) ? $payload['mainGuest'] : [];
+        $mainAddress = \is_array($main['address'] ?? null) ? $main['address'] : [];
+        $mainCandidates = $maySeeGlobalCandidates ? $this->existingGuestMatcher->matchingCandidates($reservation, $main) : [];
+        $mainDefault = $this->suggestMainTarget($reservation, $main, $mainCandidates);
+
+        $persons = [$this->person($reservation, $main, true, $mainDefault, $this->mainTargets($reservation, $mainCandidates), $mainCandidates, $mainAddress)];
+        foreach (\is_array($payload['companions'] ?? null) ? $payload['companions'] : [] as $companion) {
+            if (!\is_array($companion)) {
+                continue;
             }
+            $candidates = $maySeeGlobalCandidates ? $this->existingGuestMatcher->matchingCandidates($reservation, $companion) : [];
+            $default = $this->matchingGuest($reservation, $companion, $mainDefault, $candidates);
+            $persons[] = $this->person($reservation, $companion, false, $default, $this->companionTargets($reservation, $candidates), $candidates, $mainAddress);
         }
+
         $extras = \is_array($payload['extras'] ?? null) ? $payload['extras'] : [];
         $extrasConflict = false;
         if ([] !== $extras) {
@@ -77,46 +108,165 @@ class GuestCheckInReviewService
             }
         }
 
+        $roomGuests = [];
+        foreach ($reservation->getCustomers() as $customer) {
+            $roomGuests[] = ['id' => (int) $customer->getId(), 'name' => self::name($customer), 'isBooker' => $customer === $booker];
+        }
+
         return [
-            'checkIn' => $checkIn,
-            'status' => $checkIn?->getStatus() ?? GuestCheckInStatus::OPEN,
-            'linkAvailable' => GuestCheckInLinkState::UNAVAILABLE !== $state && null !== $this->publicUrlService->getBaseUrl(),
-            'unavailableReason' => $this->unavailableReason($state, $enabled),
             'arrivalTime' => $payload['arrivalTime'] ?? null,
             'message' => $payload['message'] ?? null,
             'extras' => $extras,
             'extrasConflict' => $extrasConflict,
-            'mainGuestRows' => null !== $payload ? $this->mainGuestRows($mainGuest, $comparisonGuest) : [],
-            'comparisonGuestName' => null !== $comparisonGuest ? self::name($comparisonGuest) : null,
-            'mainGlobalTargets' => $this->globalTargets($mainGlobalCandidates),
-            'mainNeedsChoice' => '' === $defaultMainTarget,
-            'mainNameOnlyMatch' => $mainNameOnlyMatch,
-            'bookerDiffers' => $bookerDiffers,
-            'bookerNeedsUpdate' => $bookerNeedsUpdate,
-            'bookerIsGuest' => null !== $reservation->getBooker() && $reservation->getCustomers()->contains($reservation->getBooker()),
-            'companions' => null !== $payload ? $this->companions($payload['companions'] ?? [], $reservation, $defaultMainTarget, $maySeeGlobalCandidates) : [],
-            'mainTargets' => $this->mainTargets($reservation),
-            'defaultMainTarget' => $defaultMainTarget,
-            'companionTargets' => $this->companionTargets($reservation, $defaultMainTarget),
+            'persons' => $persons,
+            'roomGuests' => $roomGuests,
+            'capacity' => $reservation->getTotalGuests(),
+            'simple' => !$extrasConflict && $this->fitsWithSuggestions($reservation, $persons),
         ];
     }
 
     /**
-     * Prefer an unambiguous identity match. Multiple matches require an explicit choice;
+     * @param array<string, mixed>                                          $submitted
+     * @param list<array{value: string, kind: string, customer: ?Customer}> $targets
+     * @param list<Customer>                                                $globalCandidates
+     * @param array<string, mixed>                                          $mainAddress
+     *
+     * @return array<string, mixed>
+     */
+    private function person(Reservation $reservation, array $submitted, bool $isMain, string $defaultTarget, array $targets, array $globalCandidates, array $mainAddress): array
+    {
+        $options = [];
+        foreach ($targets as ['value' => $value, 'kind' => $kind, 'customer' => $customer]) {
+            $options[] = [
+                'value' => $value,
+                'kind' => $kind,
+                'name' => null !== $customer ? self::name($customer) : null,
+                'customerId' => $customer?->getId(),
+                'inRoom' => null !== $customer && $reservation->getCustomers()->contains($customer),
+                // Picking a record of somebody else replaces that person's details.
+                'overwrites' => null !== $customer && !GuestCheckInPersonMatch::likelySamePerson($submitted, $customer),
+                'changes' => GuestCheckInApplyRequest::TARGET_SKIP === $value ? null : $this->changes($submitted, $customer, $isMain, $mainAddress),
+            ];
+        }
+
+        $booker = $reservation->getBooker();
+
+        return [
+            'main' => $isMain,
+            'name' => trim(self::text($submitted['firstname'] ?? null).' '.self::text($submitted['lastname'] ?? null)),
+            'livesWithMain' => !$isMain && !\is_array($submitted['address'] ?? null),
+            'differsFromBooker' => $isMain && null !== $booker && GuestCheckInPersonMatch::hasFullName($submitted)
+                && !GuestCheckInPersonMatch::likelySamePerson($submitted, $booker),
+            'options' => $options,
+            'defaultTarget' => $defaultTarget,
+            'needsChoice' => '' === $defaultTarget,
+            'nameOnlyMatch' => $this->hasNameOnlyCandidate($submitted, $globalCandidates),
+        ];
+    }
+
+    /**
+     * What confirming would write into $target (null: a new record), mirroring
+     * GuestCheckInApplyService: only entered values count, and a fellow traveller without an own
+     * address gets the main guest's when the record has none yet. Values are compared ignoring case.
+     *
+     * @param array<string, mixed> $submitted
+     * @param array<string, mixed> $mainAddress
+     *
+     * @return array{new: list<array{label: string, value: string, old: ?string, translatable: bool}>, changed: list<array{label: string, value: string, old: ?string, translatable: bool}>, same: list<array{label: string, value: string, old: ?string, translatable: bool}>}
+     */
+    private function changes(array $submitted, ?Customer $target, bool $isMain, array $mainAddress): array
+    {
+        if ($isMain || \is_array($submitted['address'] ?? null)) {
+            $address = \is_array($submitted['address'] ?? null) ? $submitted['address'] : [];
+        } else {
+            $address = null === $target || $target->getCustomerAddresses()->isEmpty() ? $mainAddress : [];
+        }
+        $currentAddress = null !== $target ? GuestCheckInApplyService::preferredAddress($target) : null;
+        // Stored the way GuestCheckInApplyService will write it, so equal values do not look changed.
+        $salutation = \is_string($submitted['salutation'] ?? null) ? $this->translator->trans($submitted['salutation'], [], null, $this->installationLocale) : null;
+
+        // Salutation and ID type are stored as translation keys or configured salutations.
+        $fields = [
+            ['customer.salutation', $salutation, $target?->getSalutation(), true],
+            ['customer.firstname', $submitted['firstname'] ?? null, $target?->getFirstname(), false],
+            ['customer.lastname', $submitted['lastname'] ?? null, $target?->getLastname(), false],
+            ['customer.birthday', self::date($submitted['birthday'] ?? null), $target?->getBirthday()?->format('d.m.Y'), false],
+            ['customer.nationality', $submitted['nationality'] ?? null, $target?->getNationality(), false],
+        ];
+        if ($isMain) {
+            $fields[] = ['customer.id.type.name', IDCardType::tryFrom((string) ($submitted['idType'] ?? ''))?->value, $target?->getIdType()?->value, true];
+            $fields[] = ['customer.id.number', $submitted['idNumber'] ?? null, $target?->getIDNumber(), false];
+        }
+        $fields[] = ['customer.address', $address['street'] ?? null, $currentAddress?->getAddress(), false];
+        $fields[] = ['customer.zip', $address['zip'] ?? null, $currentAddress?->getZip(), false];
+        $fields[] = ['customer.city', $address['city'] ?? null, $currentAddress?->getCity(), false];
+        $fields[] = ['customer.country', $address['country'] ?? null, $currentAddress?->getCountry(), false];
+        if ($isMain) {
+            $fields[] = ['customer.email', $submitted['email'] ?? null, $currentAddress?->getEmail(), false];
+            $fields[] = ['customer.phone', $submitted['phone'] ?? null, $currentAddress?->getPhone(), false];
+        }
+
+        $changes = ['new' => [], 'changed' => [], 'same' => []];
+        foreach ($fields as [$label, $value, $current, $translatable]) {
+            $value = self::text($value);
+            if (null === $value) {
+                // Nothing entered, nothing written.
+                continue;
+            }
+            $current = self::text($current);
+            $kind = match (true) {
+                null === $current => 'new',
+                mb_strtolower($value) !== mb_strtolower($current) => 'changed',
+                default => 'same',
+            };
+            $changes[$kind][] = ['label' => $label, 'value' => $value, 'old' => $current, 'translatable' => $translatable];
+        }
+
+        return $changes;
+    }
+
+    /**
+     * Whether the suggestions alone can be confirmed without a second look.
+     *
+     * @param list<array<string, mixed>> $persons
+     */
+    private function fitsWithSuggestions(Reservation $reservation, array $persons): bool
+    {
+        $matchedRoomGuests = [];
+        $added = 0;
+        foreach ($persons as $person) {
+            if ($person['needsChoice']) {
+                return false;
+            }
+            foreach ($person['options'] as $option) {
+                if ($option['value'] === $person['defaultTarget']) {
+                    if ($option['inRoom']) {
+                        $matchedRoomGuests[$option['customerId']] = true;
+                    } else {
+                        ++$added;
+                    }
+                }
+            }
+        }
+
+        $roomGuests = $reservation->getCustomers()->count();
+
+        // A linked guest nobody matched may not travel: that is for the hotelier to say.
+        return \count($matchedRoomGuests) === $roomGuests && $roomGuests + $added <= $reservation->getTotalGuests();
+    }
+
+    /**
+     * Prefer an unambiguous identity match. Multiple matches require an explicit choice ('');
      * without a match, suggest a new guest instead of overwriting another person.
      *
      * @param array<string, mixed> $submitted
      * @param list<Customer>       $globalCandidates
-     *
-     * @return array{string, ?Customer}
      */
-    private function suggestMainTarget(Reservation $reservation, array $submitted, array $globalCandidates): array
+    private function suggestMainTarget(Reservation $reservation, array $submitted, array $globalCandidates): string
     {
         $booker = $reservation->getBooker();
         if (!GuestCheckInPersonMatch::hasFullName($submitted)) {
-            return null !== $booker
-                ? [GuestCheckInApplyRequest::TARGET_BOOKER, $booker]
-                : [GuestCheckInApplyRequest::TARGET_NEW, null];
+            return null !== $booker ? GuestCheckInApplyRequest::TARGET_BOOKER : GuestCheckInApplyRequest::TARGET_NEW;
         }
 
         $strong = [];
@@ -125,55 +275,171 @@ class GuestCheckInReviewService
         if (null !== $booker && GuestCheckInPersonMatch::likelySamePerson($submitted, $booker)) {
             $target = GuestCheckInApplyRequest::TARGET_BOOKER;
             if ($this->existingGuestMatcher->hasStrongMatch($submitted, $booker)) {
-                $strong[$target] = $booker;
+                $strong[$target] = true;
             } else {
-                $weak[$target] = $booker;
+                $weak[$target] = true;
             }
         }
         foreach ($reservation->getCustomers() as $customer) {
             if ($customer !== $booker && GuestCheckInPersonMatch::likelySamePerson($submitted, $customer)) {
                 $target = GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX.$customer->getId();
                 if ($this->existingGuestMatcher->hasStrongMatch($submitted, $customer)) {
-                    $strong[$target] = $customer;
+                    $strong[$target] = true;
                 } else {
-                    $weak[$target] = $customer;
+                    $weak[$target] = true;
                 }
             }
         }
         foreach ($globalCandidates as $candidate) {
             if ($this->existingGuestMatcher->hasStrongMatch($submitted, $candidate)) {
-                $strong[GuestCheckInApplyRequest::TARGET_EXISTING_PREFIX.$candidate->getId()] = $candidate;
+                $strong[GuestCheckInApplyRequest::TARGET_EXISTING_PREFIX.$candidate->getId()] = true;
             } else {
                 $nameOnlyGlobal = true;
             }
         }
 
-        if ([] !== $strong) {
-            return self::uniqueTarget($strong);
-        }
-
-        if ([] !== $weak) {
-            return self::uniqueTarget($weak);
-        }
-
-        return [$nameOnlyGlobal ? '' : GuestCheckInApplyRequest::TARGET_NEW, null];
+        return self::uniqueTarget($strong) ?? self::uniqueTarget($weak) ?? ($nameOnlyGlobal ? '' : GuestCheckInApplyRequest::TARGET_NEW);
     }
 
-    /** @param array<string, Customer> $matches
-     * @return array{string, ?Customer}
+    /**
+     * Same rules for a fellow traveller; the main guest's suggestion is not offered twice.
+     *
+     * @param array<string, mixed> $submitted
+     * @param list<Customer>       $globalCandidates
      */
-    private static function uniqueTarget(array $matches): array
+    private function matchingGuest(Reservation $reservation, array $submitted, string $defaultMainTarget, array $globalCandidates): string
     {
-        if ([] === $matches) {
-            return [GuestCheckInApplyRequest::TARGET_NEW, null];
+        $strong = [];
+        $weak = [];
+        $nameOnlyGlobal = false;
+        $booker = $reservation->getBooker();
+        $known = $reservation->getCustomers()->toArray();
+        if (null !== $booker && !\in_array($booker, $known, true)) {
+            $known[] = $booker;
         }
-        if (1 !== \count($matches)) {
-            return ['', null];
+        foreach ($known as $customer) {
+            if (!GuestCheckInPersonMatch::likelySamePerson($submitted, $customer)) {
+                continue;
+            }
+            $target = $customer === $booker
+                ? GuestCheckInApplyRequest::TARGET_BOOKER
+                : GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX.$customer->getId();
+            if ($target === $defaultMainTarget) {
+                continue;
+            }
+            if ($this->existingGuestMatcher->hasStrongMatch($submitted, $customer)) {
+                $strong[$target] = true;
+            } else {
+                $weak[$target] = true;
+            }
+        }
+        foreach ($globalCandidates as $candidate) {
+            $target = GuestCheckInApplyRequest::TARGET_EXISTING_PREFIX.$candidate->getId();
+            if ($target === $defaultMainTarget) {
+                continue;
+            }
+            if ($this->existingGuestMatcher->hasStrongMatch($submitted, $candidate)) {
+                $strong[$target] = true;
+            } else {
+                $nameOnlyGlobal = true;
+            }
         }
 
-        $target = array_key_first($matches);
+        return self::uniqueTarget($strong) ?? self::uniqueTarget($weak) ?? ($nameOnlyGlobal ? '' : GuestCheckInApplyRequest::TARGET_NEW);
+    }
 
-        return [$target, $matches[$target]];
+    /**
+     * The one target of a set of matches; '' when several compete, null when there are none.
+     *
+     * @param array<string, true> $matches
+     */
+    private static function uniqueTarget(array $matches): ?string
+    {
+        return match (\count($matches)) {
+            0 => null,
+            1 => (string) array_key_first($matches),
+            default => '',
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $submitted
+     * @param list<Customer>       $globalCandidates
+     */
+    private function hasNameOnlyCandidate(array $submitted, array $globalCandidates): bool
+    {
+        return 1 === \count($globalCandidates)
+            && !$this->existingGuestMatcher->hasStrongMatch($submitted, $globalCandidates[0]);
+    }
+
+    /**
+     * Booker, linked guests, verified global candidates, new — in this order.
+     *
+     * @param list<Customer> $globalCandidates
+     *
+     * @return list<array{value: string, kind: string, customer: ?Customer}>
+     */
+    private function mainTargets(Reservation $reservation, array $globalCandidates): array
+    {
+        $targets = [];
+        if (null !== $reservation->getBooker()) {
+            $targets[] = ['value' => GuestCheckInApplyRequest::TARGET_BOOKER, 'kind' => 'booker', 'customer' => $reservation->getBooker()];
+        }
+
+        return [
+            ...$targets,
+            ...$this->linkedGuests($reservation),
+            ...self::globalTargets($globalCandidates),
+            ['value' => GuestCheckInApplyRequest::TARGET_NEW, 'kind' => 'new', 'customer' => null],
+        ];
+    }
+
+    /**
+     * New first (fellow travellers are mostly not on file), then the records, then "skip".
+     *
+     * @param list<Customer> $globalCandidates
+     *
+     * @return list<array{value: string, kind: string, customer: ?Customer}>
+     */
+    private function companionTargets(Reservation $reservation, array $globalCandidates): array
+    {
+        $targets = [['value' => GuestCheckInApplyRequest::TARGET_NEW, 'kind' => 'new', 'customer' => null], ...$this->linkedGuests($reservation)];
+        if (null !== $reservation->getBooker()) {
+            $targets[] = ['value' => GuestCheckInApplyRequest::TARGET_BOOKER, 'kind' => 'booker', 'customer' => $reservation->getBooker()];
+        }
+
+        return [
+            ...$targets,
+            ...self::globalTargets($globalCandidates),
+            ['value' => GuestCheckInApplyRequest::TARGET_SKIP, 'kind' => 'skip', 'customer' => null],
+        ];
+    }
+
+    /** @return list<array{value: string, kind: string, customer: ?Customer}> */
+    private function linkedGuests(Reservation $reservation): array
+    {
+        $targets = [];
+        foreach ($reservation->getCustomers() as $customer) {
+            if ($customer !== $reservation->getBooker()) {
+                $targets[] = ['value' => GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX.$customer->getId(), 'kind' => 'guest', 'customer' => $customer];
+            }
+        }
+
+        return $targets;
+    }
+
+    /**
+     * @param list<Customer> $candidates
+     *
+     * @return list<array{value: string, kind: string, customer: ?Customer}>
+     */
+    private static function globalTargets(array $candidates): array
+    {
+        return array_map(static fn (Customer $candidate): array => [
+            'value' => GuestCheckInApplyRequest::TARGET_EXISTING_PREFIX.$candidate->getId(),
+            'kind' => 'existing',
+            'customer' => $candidate,
+        ], $candidates);
     }
 
     private function unavailableReason(GuestCheckInLinkState $state, bool $enabled): ?string
@@ -184,204 +450,6 @@ class GuestCheckInReviewService
             GuestCheckInLinkState::UNAVAILABLE === $state => 'guest_checkin.tab.unavailable_reservation',
             default => null,
         };
-    }
-
-    /**
-     * @param array<string, mixed> $guest
-     *
-     * @return list<array{label: string, submitted: ?string, current: ?string, differs: bool}>
-     */
-    private function mainGuestRows(array $guest, ?Customer $currentGuest): array
-    {
-        $address = \is_array($guest['address'] ?? null) ? $guest['address'] : [];
-        $currentAddress = null !== $currentGuest ? GuestCheckInApplyService::preferredAddress($currentGuest) : null;
-        $idType = IDCardType::tryFrom((string) ($guest['idType'] ?? ''));
-        // Stored the way GuestCheckInApplyService will write it, so equal values do not look changed.
-        $salutation = \is_string($guest['salutation'] ?? null) ? $this->translator->trans($guest['salutation'], [], null, $this->installationLocale) : null;
-
-        $rows = [
-            ['customer.salutation', $salutation, $currentGuest?->getSalutation()],
-            ['customer.firstname', $guest['firstname'] ?? null, $currentGuest?->getFirstname()],
-            ['customer.lastname', $guest['lastname'] ?? null, $currentGuest?->getLastname()],
-            ['customer.birthday', self::date($guest['birthday'] ?? null), $currentGuest?->getBirthday()?->format('d.m.Y')],
-            ['customer.nationality', $guest['nationality'] ?? null, $currentGuest?->getNationality()],
-            ['customer.id.type.name', $idType?->value, $currentGuest?->getIdType()?->value],
-            ['customer.id.number', $guest['idNumber'] ?? null, $currentGuest?->getIDNumber()],
-            ['customer.address', $address['street'] ?? null, $currentAddress?->getAddress()],
-            ['customer.zip', $address['zip'] ?? null, $currentAddress?->getZip()],
-            ['customer.city', $address['city'] ?? null, $currentAddress?->getCity()],
-            ['customer.country', $address['country'] ?? null, $currentAddress?->getCountry()],
-            ['customer.email', $guest['email'] ?? null, $currentAddress?->getEmail()],
-            ['customer.phone', $guest['phone'] ?? null, $currentAddress?->getPhone()],
-        ];
-
-        $result = [];
-        foreach ($rows as [$label, $submitted, $current]) {
-            $submitted = self::text($submitted);
-            $current = self::text($current);
-            if (null === $submitted && null === $current) {
-                continue;
-            }
-            $result[] = [
-                'label' => $label,
-                'submitted' => $submitted,
-                'current' => $current,
-                'differs' => null !== $submitted && mb_strtolower($submitted) !== mb_strtolower((string) $current),
-            ];
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param array<mixed> $companions
-     *
-     * @return list<array{name: string, salutation: ?string, birthday: ?string, nationality: ?string, address: ?string, defaultTarget: string, globalTargets: array<string, array{id: int, name: string}>, needsChoice: bool, nameOnlyMatch: bool}>
-     */
-    private function companions(array $companions, Reservation $reservation, string $defaultMainTarget, bool $maySeeGlobalCandidates): array
-    {
-        $result = [];
-        foreach ($companions as $companion) {
-            if (!\is_array($companion)) {
-                continue;
-            }
-            $firstname = self::text($companion['firstname'] ?? null);
-            $lastname = self::text($companion['lastname'] ?? null);
-            $globalCandidates = $maySeeGlobalCandidates ? $this->existingGuestMatcher->matchingCandidates($reservation, $companion) : [];
-            $defaultTarget = $this->matchingGuest($reservation, $companion, $defaultMainTarget, $globalCandidates);
-            $result[] = [
-                'name' => trim($firstname.' '.$lastname),
-                'salutation' => \is_string($companion['salutation'] ?? null)
-                    ? $this->translator->trans($companion['salutation'], [], null, $this->installationLocale)
-                    : null,
-                'birthday' => self::date($companion['birthday'] ?? null),
-                'nationality' => self::text($companion['nationality'] ?? null),
-                // Null: lives with the main guest.
-                'address' => \is_array($companion['address'] ?? null) ? self::addressLine($companion['address']) : null,
-                'defaultTarget' => $defaultTarget,
-                'globalTargets' => $this->globalTargets($globalCandidates),
-                'needsChoice' => '' === $defaultTarget,
-                'nameOnlyMatch' => $this->hasNameOnlyCandidate($companion, $globalCandidates),
-            ];
-        }
-
-        return $result;
-    }
-
-    /** @param array<string, mixed> $submitted
-     * @param list<Customer> $globalCandidates
-     */
-    private function matchingGuest(Reservation $reservation, array $submitted, string $defaultMainTarget, array $globalCandidates): string
-    {
-        $strong = [];
-        $weak = [];
-        $nameOnlyGlobal = false;
-        foreach ($reservation->getCustomers() as $customer) {
-            if (!GuestCheckInPersonMatch::likelySamePerson($submitted, $customer)) {
-                continue;
-            }
-            $target = $customer === $reservation->getBooker()
-                ? GuestCheckInApplyRequest::TARGET_BOOKER
-                : GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX.$customer->getId();
-            if ($target === $defaultMainTarget) {
-                continue;
-            }
-            if ($this->existingGuestMatcher->hasStrongMatch($submitted, $customer)) {
-                $strong[$target] = $customer;
-            } else {
-                $weak[$target] = $customer;
-            }
-        }
-        foreach ($globalCandidates as $candidate) {
-            $target = GuestCheckInApplyRequest::TARGET_EXISTING_PREFIX.$candidate->getId();
-            if ($target !== $defaultMainTarget) {
-                if ($this->existingGuestMatcher->hasStrongMatch($submitted, $candidate)) {
-                    $strong[$target] = $candidate;
-                } else {
-                    $nameOnlyGlobal = true;
-                }
-            }
-        }
-
-        if ([] !== $strong) {
-            return self::uniqueTarget($strong)[0];
-        }
-        if ([] !== $weak) {
-            return self::uniqueTarget($weak)[0];
-        }
-
-        return $nameOnlyGlobal ? '' : GuestCheckInApplyRequest::TARGET_NEW;
-    }
-
-    /** @param array<string, mixed> $submitted
-     * @param list<Customer> $globalCandidates
-     */
-    private function hasNameOnlyCandidate(array $submitted, array $globalCandidates): bool
-    {
-        return 1 === \count($globalCandidates)
-            && !$this->existingGuestMatcher->hasStrongMatch($submitted, $globalCandidates[0]);
-    }
-
-    /**
-     * @param list<Customer> $candidates
-     *
-     * @return array<string, array{id: int, name: string}>
-     */
-    private function globalTargets(array $candidates): array
-    {
-        $targets = [];
-        foreach ($candidates as $candidate) {
-            $targets[GuestCheckInApplyRequest::TARGET_EXISTING_PREFIX.$candidate->getId()] = [
-                'id' => (int) $candidate->getId(),
-                'name' => self::name($candidate),
-            ];
-        }
-
-        return $targets;
-    }
-
-    /** @return array<string, string> target => label (customer name) */
-    private function mainTargets(Reservation $reservation): array
-    {
-        $targets = [];
-        if (null !== $reservation->getBooker()) {
-            $targets[GuestCheckInApplyRequest::TARGET_BOOKER] = self::name($reservation->getBooker());
-        }
-
-        return $targets + $this->linkedGuests($reservation);
-    }
-
-    /** @return array<string, string> */
-    private function companionTargets(Reservation $reservation, string $defaultMainTarget): array
-    {
-        $targets = $this->linkedGuests($reservation);
-        $booker = $reservation->getBooker();
-        if (GuestCheckInApplyRequest::TARGET_BOOKER !== $defaultMainTarget && null !== $booker && $reservation->getCustomers()->contains($booker)) {
-            $targets[GuestCheckInApplyRequest::TARGET_BOOKER] = self::name($booker);
-        }
-
-        return $targets;
-    }
-
-    /** @return array<string, string> */
-    private function linkedGuests(Reservation $reservation): array
-    {
-        $targets = [];
-        foreach ($reservation->getCustomers() as $customer) {
-            if ($customer !== $reservation->getBooker()) {
-                $targets[GuestCheckInApplyRequest::TARGET_CUSTOMER_PREFIX.$customer->getId()] = self::name($customer);
-            }
-        }
-
-        return $targets;
-    }
-
-    /** @param array<string, mixed> $address */
-    private static function addressLine(array $address): string
-    {
-        $cityLine = trim(self::text($address['zip'] ?? null).' '.self::text($address['city'] ?? null));
-
-        return implode(', ', array_filter([self::text($address['street'] ?? null), $cityLine, self::text($address['country'] ?? null)]));
     }
 
     private static function name(Customer $customer): string

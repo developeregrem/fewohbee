@@ -2,6 +2,21 @@
 
 {% block house %}{{ reservation.appartment.object.name }}{% endblock %}
 
+{% block banner %}
+    {% if preview|default(false) %}
+        {# Settings preview with sample data; nothing on this page reaches the server. #}
+        <div class="alert alert-info small d-flex flex-wrap align-items-center gap-2">
+            <span class="me-auto">{{ 'guest_checkin.settings.preview_banner'|trans }}</span>
+            {# Light buttons: the theme draws info alerts as a solid purple gradient with white text. #}
+            <div class="btn-group btn-group-sm" role="group">
+                {% for view in ['form', 'stay'] %}
+                    <a class="btn {{ previewView == view ? 'btn-light fw-semibold' : 'btn-outline-light' }}" href="{{ path('settings.guest_checkin.preview', {'view': view}) }}"{% if previewView == view %} aria-current="page"{% endif %}>{{ ('guest_checkin.settings.preview_' ~ view)|trans }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
 {% block body %}
     {% set dateFormat = 'guest_checkin.public.date_format'|trans %}
     {% set apartment = reservation.appartment %}
@@ -30,7 +45,8 @@
         {% endif %}
         {{ form_errors(form) }}
 
-        {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+        {# The id lets the language buttons in the page header post this form. #}
+        {{ form_start(form, {'attr': {'id': form.vars.id, 'novalidate': 'novalidate'}}) }}
             <div class="fhb-section">
                 <h2 class="fhb-section-title">{{ 'guest_checkin.public.section.arrival'|trans }}</h2>
                 {# The house's check-in window right where the time is picked. #}
@@ -157,46 +173,64 @@
             </div>
 
             <div class="fhb-actions">
-                <button type="submit" class="btn btn-primary">{{ 'guest_checkin.public.submit'|trans }}</button>
+                <button type="submit" class="btn btn-primary"{% if preview|default(false) %} disabled{% endif %}>{{ 'guest_checkin.public.submit'|trans }}</button>
             </div>
         {{ form_end(form) }}
-    {% elseif checkIn.payload %}
-        {# ── Sent: confirm what arrived by name and time, nothing more ── #}
+    {% elseif submitted %}
+        {# ── Checked in (online or at the desk): the stay at a glance, the page guests come back to ── #}
         {% set payload = checkIn.payload %}
+        {% set confirmed = checkIn.status.value == 'applied' %}
+        <div class="alert alert-success" role="status">{{ (confirmed ? 'guest_checkin.public.stay.confirmed' : 'guest_checkin.public.stay.submitted')|trans }}</div>
+
+        {# Names as sent while the house reviews them, as filed once it confirmed. #}
         {% set names = [] %}
-        {% for person in [payload.mainGuest ?? {}]|merge(payload.companions ?? []) %}
+        {% for person in payload ? [payload.mainGuest ?? {}]|merge(payload.companions ?? []) : reservation.customers %}
             {% set name = ((person.firstname ?? '') ~ ' ' ~ (person.lastname ?? ''))|trim %}
             {% if name %}{% set names = names|merge([name]) %}{% endif %}
         {% endfor %}
-        <div class="alert alert-success" role="status">{{ 'guest_checkin.public.thank_you'|trans }}</div>
+        {% set requestedExtras = payload.extras ?? [] %}
         <div class="fhb-section">
-            <dl class="fhb-gci-facts">
-                {% if payload.arrivalTime ?? null %}
-                    <div><dt>{{ 'guest_checkin.public.field.arrival_time'|trans }}</dt><dd>{{ payload.arrivalTime }}</dd></div>
+            <h2 class="fhb-section-title">{{ 'guest_checkin.public.stay.title'|trans }}</h2>
+            <ul class="fhb-gci-checklist">
+                {# Empty after a desk check-in without guests on file. #}
+                {% if names is not empty %}
+                    <li>
+                        <i class="fas fa-check text-success" aria-hidden="true"></i>
+                        <div><span class="fhb-gci-checklist-label">{{ 'guest_checkin.public.stay.guests'|trans }}</span>{{ names|join(', ') }}</div>
+                    </li>
                 {% endif %}
-                <div><dt>{{ 'guest_checkin.public.guests'|trans }}</dt><dd>{{ names|join(', ') }}</dd></div>
-            </dl>
+                <li>
+                    <i class="fas {{ reservation.arrivalTime ? 'fa-check text-success' : 'fa-clock text-body-secondary' }}" aria-hidden="true"></i>
+                    <div>
+                        <span class="fhb-gci-checklist-label">{{ 'guest_checkin.public.stay.arrival_time'|trans }}</span>
+                        {{ reservation.arrivalTime ? reservation.arrivalTime|date('H:i') : 'guest_checkin.public.stay.arrival_time_open'|trans }}
+                    </div>
+                </li>
+                {% if bookedExtras is not empty or requestedExtras is not empty %}
+                    <li>
+                        <i class="fas fa-check text-success" aria-hidden="true"></i>
+                        <div>
+                            <span class="fhb-gci-checklist-label">{{ 'guest_checkin.public.stay.extras'|trans }}</span>
+                            <ul>
+                                {% for extra in bookedExtras %}<li>{{ extra.description }}</li>{% endfor %}
+                                {% for extra in requestedExtras %}
+                                    <li>{{ extra.description }} · {{ extra.total|number_format(2, ',', '.') }} {{ currency_symbol }} <span class="badge text-bg-light border">{{ 'guest_checkin.public.stay.extra_requested'|trans }}</span></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </li>
+                {% endif %}
+            </ul>
         </div>
-        {% if payload.extras ?? [] %}
-            <div class="fhb-section">
-                <h2 class="fhb-section-title">{{ 'guest_checkin.public.extras.title'|trans }}</h2>
-                <p class="fhb-hint">{{ 'guest_checkin.public.extras.requested'|trans }}</p>
-                <ul class="mb-0">
-                    {% for extra in payload.extras %}
-                        <li>{{ extra.description }} · {{ extra.total|number_format(2, ',', '.') }} {{ currency_symbol }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
         {% if editable %}
             <div class="fhb-actions">
-                <a class="btn btn-outline-primary" href="{{ path('public.guest_checkin', {'token': token, 'edit': 1} + (app.request.query.get('lang') in ['de', 'en'] ? {'lang': app.request.query.get('lang')} : {})) }}">{{ 'guest_checkin.public.edit'|trans }}</a>
+                <a class="btn btn-outline-primary" href="{{ preview|default(false) ? '#' : path('public.guest_checkin', {'token': token, 'edit': 1} + (app.request.query.get('lang') in ['de', 'en'] ? {'lang': app.request.query.get('lang')} : {})) }}">{{ 'guest_checkin.public.edit'|trans }}</a>
             </div>
+        {% else %}
+            <p class="fhb-hint">{{ 'guest_checkin.public.stay.locked'|trans }}</p>
         {% endif %}
     {% else %}
-        <div class="alert alert-secondary" role="status">
-            {{ (submitted ? 'guest_checkin.public.done' : 'guest_checkin.public.closed')|trans }}
-        </div>
+        <div class="alert alert-secondary" role="status">{{ 'guest_checkin.public.closed'|trans }}</div>
     {% endif %}
 
     {% for section in sections %}

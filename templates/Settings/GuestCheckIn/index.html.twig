@@ -14,7 +14,7 @@
         <div class="col-lg-10 col-xl-9">
 
             {# ── Header ── #}
-            <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                 <div>
                     <h2 class="fs-4 mb-1">
                         <i class="fas fa-id-card text-primary me-1"></i>
@@ -25,6 +25,10 @@
                         {{ form.vars.value.enabled ? ('guest_checkin.settings.status_enabled'|trans) : ('guest_checkin.settings.status_disabled'|trans) }}
                     </span>
                 </div>
+                {# Shows the saved settings; unsaved changes on this page are not part of it. #}
+                <a class="btn btn-outline-primary btn-sm" href="{{ path('settings.guest_checkin.preview') }}" target="_blank" rel="noopener">
+                    <i class="fas fa-eye me-1"></i>{{ 'guest_checkin.settings.preview'|trans }}
+                </a>
             </div>
 
             {{ form_start(form) }}
@@ -51,6 +55,27 @@
                             <a href="{{ path('settings.general.index') }}">{{ 'guest_checkin.settings.public_address_change'|trans }}</a>
                         </div>
                     {% endif %}
+                </div>
+            </div>
+
+            {# ── Invitation: without it the feature stays unused ── #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-envelope text-primary me-2"></i>{{ 'guest_checkin.settings.section_invitation'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'guest_checkin.settings.section_invitation_desc'|trans }}</p>
+                </div>
+                <div class="card-body small">
+                    {% if invitationWorkflows is not empty %}
+                        <p class="mb-1"><i class="fas fa-circle-check text-success me-1"></i>{{ 'guest_checkin.settings.invitation_active'|trans }}</p>
+                        <ul class="mb-2">
+                            {% for workflow in invitationWorkflows %}
+                                <li><a href="{{ path('settings.workflows.edit', {'id': workflow.id}) }}">{{ workflow.system ? workflow.name|trans : workflow.name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="mb-2"><i class="fas fa-circle-info text-body-secondary me-1"></i>{{ 'guest_checkin.settings.invitation_none'|trans }}</p>
+                    {% endif %}
+                    <a href="{{ path('settings.workflows.index') }}">{{ 'guest_checkin.settings.invitation_manage'|trans }}</a>
                 </div>
             </div>
 

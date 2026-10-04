@@ -17,7 +17,10 @@ enum GuestCheckInStatus: string
     /** The guest sent the form; the data waits for the hotelier's review. */
     case SUBMITTED = 'submitted';
 
-    /** The hotelier took the data over into the guest records; the submission itself is gone. */
+    /**
+     * Checked in: staff confirmed the online check-in, which took the data over into the guest
+     * records (the submission itself is gone), or marked the guest as checked in at the desk.
+     */
     case APPLIED = 'applied';
 
     public function labelKey(): string

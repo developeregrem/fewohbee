@@ -13,16 +13,15 @@ namespace App\Service\GuestCheckIn\Section;
 final readonly class GuestCheckInSection
 {
     /**
-     * @param string               $template           Twig template rendering the block
-     * @param array<string, mixed> $vars               variables for that template
-     * @param bool                 $requiresSubmission shown only once the guest sent the form
-     * @param bool                 $duringStayOnly     shown only from the arrival day to the departure day
+     * @param string               $template       Twig template rendering the block
+     * @param array<string, mixed> $vars           variables for that template
+     * @param bool                 $duringStayOnly shown only from the arrival day to the departure day
      */
     public function __construct(
         public string $key,
         public string $template,
         public array $vars = [],
-        public bool $requiresSubmission = false,
+        public GuestCheckInSectionAvailability $availableFrom = GuestCheckInSectionAvailability::ALWAYS,
         public bool $duringStayOnly = false,
     ) {
     }

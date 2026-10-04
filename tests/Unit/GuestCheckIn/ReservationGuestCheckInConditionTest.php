@@ -41,13 +41,39 @@ final class ReservationGuestCheckInConditionTest extends TestCase
         self::assertFalse($condition->evaluate(['state' => 'open'], $reservation, []));
     }
 
-    public function testTakenOverCountsAsCompleted(): void
+    public function testConfirmedCountsAsCompleted(): void
     {
         $reservation = $this->reservation();
         $checkIn = new GuestCheckIn($reservation, 'selector');
         $checkIn->markApplied(new \DateTimeImmutable());
 
         self::assertTrue($this->condition($checkIn, true)->evaluate(['state' => 'completed'], $reservation, []));
+    }
+
+    public function testWaitingForReviewAndConfirmedAreToldApart(): void
+    {
+        $reservation = $this->reservation();
+        $checkIn = new GuestCheckIn($reservation, 'selector');
+        $checkIn->recordSubmission(['v' => 1], new \DateTimeImmutable());
+        $condition = $this->condition($checkIn, true);
+
+        self::assertTrue($condition->evaluate(['state' => 'submitted'], $reservation, []));
+        self::assertFalse($condition->evaluate(['state' => 'confirmed'], $reservation, []));
+
+        $checkIn->markApplied(new \DateTimeImmutable());
+        self::assertFalse($condition->evaluate(['state' => 'submitted'], $reservation, []));
+        self::assertTrue($condition->evaluate(['state' => 'confirmed'], $reservation, []));
+    }
+
+    public function testDeskCheckInIsConfirmedAndNoLongerOpen(): void
+    {
+        $reservation = $this->reservation();
+        $checkIn = new GuestCheckIn($reservation, 'selector');
+        $checkIn->markCheckedInAtDesk(new \DateTimeImmutable());
+        $condition = $this->condition($checkIn, true);
+
+        self::assertTrue($condition->evaluate(['state' => 'confirmed'], $reservation, []));
+        self::assertFalse($condition->evaluate(['state' => 'open'], $reservation, []), 'No more invitations.');
     }
 
     private function condition(?GuestCheckIn $checkIn, bool $enabled): ReservationGuestCheckInCondition

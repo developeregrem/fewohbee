@@ -119,7 +119,8 @@ workflow:
     online_booking_created: "Neue Online-Buchung eingegangen"
     calendar_import_created: "Neue Buchung via Kalenderimport"
     assistant_booking_created: "Neue Reservierung durch KI-Assistent"
-    guest_checkin_submitted: "Gast hat den Online-Check-in ausgefüllt"
+    guest_checkin_submitted: "Gast hat online eingecheckt"
+    guest_checkin_confirmed: "Check-in erledigt (online bestätigt oder am Empfang)"
     reservation_created: "Neue Reservierung angelegt (manuell)"
     invoice_created: "Neue Rechnung erstellt"
     invoice_status_changed: "Rechnungsstatus geändert"
@@ -154,8 +155,10 @@ workflow:
     has_invoice.open: "Mindestens eine offene Rechnung"
     reservation_guest_checkin: "Online-Check-in"
     guest_checkin.label: "Stand des Online-Check-ins"
-    guest_checkin.open: "Noch offen (Gast kann noch einchecken)"
-    guest_checkin.completed: "Vom Gast ausgefüllt"
+    guest_checkin.open: "Noch offen (Gast kann noch online einchecken)"
+    guest_checkin.submitted: "Online eingecheckt, wartet auf Prüfung"
+    guest_checkin.confirmed: "Eingecheckt (online bestätigt oder am Empfang)"
+    guest_checkin.completed: "Nicht mehr offen (wartet auf Prüfung oder eingecheckt)"
 
   # Action labels
   action:
@@ -225,13 +228,9 @@ workflow:
       name: "KI-Reservierungen im Benachrichtigungsfenster anzeigen"
       description: "Legt für jede Reservierung, die ein KI-Assistent angelegt hat, einen Eintrag im Benachrichtigungsfenster an."
       note: "Angelegt durch einen KI-Assistenten."
-    notify_guest_checkin:
-      name: "Online-Check-ins im Benachrichtigungsfenster anzeigen"
-      description: "Legt einen Eintrag im Benachrichtigungsfenster an, sobald ein Gast den Online-Check-in ausgefüllt hat."
-      note: "Bitte prüfe die Angaben im Reiter „Check-in“ der Reservierung."
     example_guest_checkin_invitation:
       name: "Beispiel: Einladung zum Online-Check-in (7 Tage vorher)"
-      description: "Sendet 7 Tage vor der Anreise den Link zum Online-Check-in an den Gast, sofern er das Formular noch nicht ausgefüllt hat (E-Mail-Vorlage mit dem Baustein „Link zum Online-Check-in“ erforderlich)."
+      description: "Sendet 7 Tage vor der Anreise den Link zum Online-Check-in an den Gast, sofern er noch nicht eingecheckt hat (E-Mail-Vorlage mit dem Baustein „Link zum Online-Check-in“ erforderlich)."
     notify_calendar_import_inapp:
       name: "Kalender-Import im Benachrichtigungsfenster anzeigen"
       description: "Legt für jede importierte Buchung einen Eintrag im Benachrichtigungsfenster an."

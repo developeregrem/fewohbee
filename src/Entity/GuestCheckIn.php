@@ -169,10 +169,46 @@ class GuestCheckIn
         $this->payload = null;
     }
 
-    /** Throws the submission away and lets the guest start over with the same link. */
+    /**
+     * The guest checked in at the desk instead of online. Counts like a confirmed check-in (the
+     * link no longer offers the form); only possible while nothing waits for review.
+     */
+    public function markCheckedInAtDesk(\DateTimeImmutable $now): void
+    {
+        if (GuestCheckInStatus::OPEN !== $this->status) {
+            throw new \LogicException('Only an open check-in can be marked as done at the desk.');
+        }
+
+        $this->status = GuestCheckInStatus::APPLIED;
+        $this->appliedAt = $now;
+    }
+
+    /** Done at the desk: confirmed without anything sent online. */
+    public function isCheckedInAtDesk(): bool
+    {
+        return GuestCheckInStatus::APPLIED === $this->status && null === $this->firstSubmittedAt;
+    }
+
+    /** Takes back a desk check-in marked by mistake; the guest can check in online again. */
+    public function undoDeskCheckIn(): void
+    {
+        if (!$this->isCheckedInAtDesk()) {
+            throw new \LogicException('Only a check-in done at the desk can be taken back.');
+        }
+
+        $this->status = GuestCheckInStatus::OPEN;
+        $this->appliedAt = null;
+    }
+
+    /**
+     * Throws the submission away and lets the guest start over with the same link, as if nothing
+     * had been sent: content shown only to checked-in guests disappears again.
+     */
     public function discard(): void
     {
         $this->status = GuestCheckInStatus::OPEN;
         $this->payload = null;
+        $this->firstSubmittedAt = null;
+        $this->lastSubmittedAt = null;
     }
 }

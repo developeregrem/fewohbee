@@ -57,6 +57,34 @@ class WorkflowLogRepository extends ServiceEntityRepository
     }
 
     /**
+     * When one of the workflows last ran successfully for the entity, e.g. when an invitation mail
+     * went out; null if none did.
+     *
+     * @param list<int> $workflowIds
+     */
+    public function findLastSuccessfulExecutionAt(array $workflowIds, string $entityClass, int $entityId): ?\DateTimeImmutable
+    {
+        if ([] === $workflowIds) {
+            return null;
+        }
+
+        $executedAt = $this->createQueryBuilder('l')
+            ->select('MAX(l.executedAt)')
+            ->where('l.workflow IN (:workflowIds)')
+            ->andWhere('l.entityClass = :entityClass')
+            ->andWhere('l.entityId = :entityId')
+            ->andWhere('l.status = :status')
+            ->setParameter('workflowIds', $workflowIds)
+            ->setParameter('entityClass', $entityClass)
+            ->setParameter('entityId', $entityId)
+            ->setParameter('status', 'success')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return \is_string($executedAt) ? new \DateTimeImmutable($executedAt) : null;
+    }
+
+    /**
      * Load all entity IDs that were successfully processed for a given workflow+entityClass combination.
      * Use this instead of N individual hasSuccessfulExecution() calls.
      *

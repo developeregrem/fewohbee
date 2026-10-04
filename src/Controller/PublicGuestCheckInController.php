@@ -11,8 +11,6 @@ use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\GuestCheckIn;
 use App\Form\GuestCheckInType;
 use App\Form\GuestCheckInVerificationType;
-use App\Repository\OnlineBookingConfigRepository;
-use App\Service\AppSettingsService;
 use App\Service\GuestCheckIn\GuestCheckInConfigService;
 use App\Service\GuestCheckIn\GuestCheckInExtrasService;
 use App\Service\GuestCheckIn\GuestCheckInFormDataFactory;
@@ -46,6 +44,9 @@ final class PublicGuestCheckInController extends AbstractController
 {
     private const SUPPORTED_LOCALES = ['de', 'en'];
 
+    /** Sent by the language buttons on the form page (base template); see index(). */
+    private const SWITCH_LANGUAGE_FIELD = 'switch_language';
+
     /** The token travels in the URL: nothing may leak it, cache it or index it. */
     private const CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
 
@@ -59,8 +60,6 @@ final class PublicGuestCheckInController extends AbstractController
         private readonly GuestCheckInSubmissionService $submissionService,
         private readonly GuestCheckInFormDataFactory $formDataFactory,
         private readonly GuestCheckInExtrasService $extrasService,
-        private readonly AppSettingsService $appSettingsService,
-        private readonly OnlineBookingConfigRepository $onlineBookingConfigRepository,
         private readonly LocaleSwitcher $localeSwitcher,
         #[Autowire('%kernel.default_locale%')]
         private readonly string $installationLocale,
@@ -116,7 +115,7 @@ final class PublicGuestCheckInController extends AbstractController
         $otherGuestForm = false;
         if ($showForm) {
             $companionCount = $this->policy->companionCount($reservation);
-            $salutations = array_values(array_filter($this->appSettingsService->getSettings()->getCustomerSalutations(), static fn (string $s): bool => '' !== trim($s)));
+            $salutations = $this->configService->offeredSalutations();
             $formData = $this->formDataFactory->create($checkIn, $companionCount, $salutations, $config);
             $canStartOtherGuest = null !== $formData->mainGuest->firstname || null !== $formData->mainGuest->lastname;
             $otherGuestForm = $canStartOtherGuest && 'other' === $request->query->getString('main');
@@ -127,17 +126,22 @@ final class PublicGuestCheckInController extends AbstractController
             $bookedIds = array_column($bookedExtras, 'id');
             $extrasChanged = $config->isExtrasEnabled() && [] !== array_diff($formData->extras, [...$selectableIds, ...$bookedIds]);
             $formData->extras = array_values(array_intersect($formData->extras, $selectableIds));
-            $form = $this->createForm(GuestCheckInType::class, $formData, [
+            $formOptions = [
                 'config' => $config,
                 'salutations' => $salutations,
                 'companion_count' => $companionCount,
                 'stored_id_hint' => $otherGuestForm ? null : $this->formDataFactory->storedIdNumberHint($checkIn),
                 'extras' => $selectableExtras,
                 'action' => $this->pageUrl($request, $token, ['edit' => 1]),
-            ]);
+            ];
+            $form = $this->createForm(GuestCheckInType::class, $formData, $formOptions);
             $form->handleRequest($request);
 
-            if ($form->isSubmitted()) {
+            if ($form->isSubmitted() && $request->request->has(self::SWITCH_LANGUAGE_FIELD)) {
+                // The language switch posts the form, so nothing typed so far is lost (the page has
+                // no JavaScript to keep it). Shown again in the new language: no errors, nothing stored.
+                $form = $this->createForm(GuestCheckInType::class, $form->getData(), $formOptions);
+            } elseif ($form->isSubmitted()) {
                 if ($this->rateLimiter->isSubmissionBlocked($checkIn->getSelector())) {
                     return $this->unavailable(Response::HTTP_TOO_MANY_REQUESTS);
                 }
@@ -176,8 +180,9 @@ final class PublicGuestCheckInController extends AbstractController
             'restoreGuestUrl' => $this->pageUrl($request, $token, ['edit' => 1]),
             'form' => $form?->createView(),
             'editable' => GuestCheckInLinkState::EDITABLE === $state,
-            'submitted' => null !== $checkIn->getFirstSubmittedAt(),
-            'primaryColor' => $this->primaryColor(),
+            // Checked in, online or at the desk: the page shows the stay instead of the form.
+            'submitted' => GuestCheckInStatus::OPEN !== $checkIn->getStatus(),
+            'primaryColor' => $this->configService->pageAccentColor(),
         ], new Response(status: null !== $form && $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK)));
     }
 
@@ -215,7 +220,7 @@ final class PublicGuestCheckInController extends AbstractController
             'reservation' => $reservation,
             'form' => $form->createView(),
             'failed' => $failed,
-            'primaryColor' => $this->primaryColor(),
+            'primaryColor' => $this->configService->pageAccentColor(),
         ], new Response(status: $failed ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK)));
     }
 
@@ -253,16 +258,8 @@ final class PublicGuestCheckInController extends AbstractController
     {
         return $this->secure($this->render('GuestCheckIn/public/unavailable.html.twig', [
             'tooManyRequests' => Response::HTTP_TOO_MANY_REQUESTS === $status,
-            'primaryColor' => $this->primaryColor(),
+            'primaryColor' => $this->configService->pageAccentColor(),
         ], new Response(status: $status)));
-    }
-
-    /** Same accent colour as the online booking page, read without creating its settings row. */
-    private function primaryColor(): string
-    {
-        $color = $this->onlineBookingConfigRepository->findSingleton()?->getThemePrimaryColor();
-
-        return \is_string($color) && 1 === preg_match('/^#[0-9a-f]{6}$/i', $color) ? $color : '#1f6feb';
     }
 
     private function secure(Response $response): Response

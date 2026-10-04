@@ -25,6 +25,9 @@ use Symfony\Component\Uid\Uuid;
 /** Staff side of the online check-in in the reservation dialog. */
 final class GuestCheckInAdminControllerTest extends WebTestCase
 {
+    /** The frontdesk state button carries every label for its width; only one is visible. */
+    private const VISIBLE_STATE = '.fd-checkin-labels > span:not([aria-hidden])';
+
     private KernelBrowser $client;
     private ?int $reservationId = null;
     /** @var list<int> */
@@ -155,7 +158,8 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
         self::assertResponseIsSuccessful();
-        self::assertSame('Bucher: Anna Müller (keine Aktualisierung nötig)', trim($crawler->filter('select[name="mainTarget"] option[value="booker"]')->text()));
+        self::assertSame('Bucher: Anna Müller', trim($crawler->filter('select[name="mainTarget"] option[value="booker"][selected]')->text()));
+        self::assertSame('keine Änderungen', $crawler->filter('[data-diff-for="booker"]')->attr('data-summary'));
 
         $checkIn = $this->checkIn($reservation);
         $payload = $checkIn->getPayload();
@@ -166,7 +170,8 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
         self::assertResponseIsSuccessful();
-        self::assertSame('Bucher aktualisieren (Anna Müller)', trim($crawler->filter('select[name="mainTarget"] option[value="booker"]')->text()));
+        self::assertSame('1 neue Angabe', $crawler->filter('[data-diff-for="booker"]')->attr('data-summary'));
+        self::assertStringContainsString('AT', $crawler->filter('[data-diff-for="booker"]')->text());
     }
 
     public function testTargetOutsideTheReservationChangesNothing(): void
@@ -214,7 +219,7 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         self::assertNull($this->em()->find(Reservation::class, $reservation->getId())?->getBooker()?->getNationality());
     }
 
-    public function testDifferentMainGuestDefaultsToNewAndCannotOverwriteBookerWithoutConfirmation(): void
+    public function testDifferentMainGuestDefaultsToNewAndOffersTheBookerOnlyAsOverwrite(): void
     {
         $reservation = $this->createReservation();
         $this->submit($reservation);
@@ -231,19 +236,10 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('select[name="mainTarget"] option[value="new"][selected]');
-        self::assertSelectorExists('input[name="confirmBookerMismatch"]');
-        self::assertSelectorExists('[data-guest-checkin-target="bookerConfirmation"].d-none input[name="confirmBookerMismatch"][disabled]');
+        self::assertSame('Bucher Anna Müller überschreiben', trim($crawler->filter('select[name="mainTarget"] option[value="booker"]')->text()));
+        self::assertStringContainsString('Die Angaben passen nicht zum Bucher Anna Müller', (string) $this->client->getResponse()->getContent());
         $token = (string) $crawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
         $submissionVersion = (string) $crawler->filter('input[name="submissionVersion"]')->attr('value');
-
-        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
-            '_token' => $token,
-            'submissionVersion' => $submissionVersion,
-            'mainTarget' => 'booker',
-        ]);
-        self::assertResponseIsSuccessful();
-        self::assertSame(GuestCheckInStatus::SUBMITTED, $this->checkIn($reservation)->getStatus());
-        self::assertSame('Anna', $this->em()->find(Reservation::class, $reservation->getId())?->getBooker()?->getFirstname());
 
         $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', [
             '_token' => $token,
@@ -283,7 +279,7 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('select[name="mainTarget"] option[value="customer:'.$guest->getId().'"][selected]');
-        self::assertStringContainsString('Bisher bei Lea Novak', (string) $this->client->getResponse()->getContent());
+        self::assertSame('Gast: Lea Novak', trim($this->client->getCrawler()->filter('select[name="mainTarget"] option[selected]')->text()));
     }
 
     public function testMatchingGuestsFromOtherReservationsAreReusedForMainAndCompanion(): void
@@ -352,7 +348,7 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         self::assertSelectorExists('select[name="companionTargets[]"] option[value=""][selected][disabled]');
         self::assertSelectorExists('select[name="companionTargets[]"] option[value="existing:'.$existing->getId().'"]');
         self::assertStringContainsString('Ein Gast mit diesem Namen ist vorhanden', (string) $this->client->getResponse()->getContent());
-        self::assertStringContainsString('Frau Maxi Musterfrau', (string) $this->client->getResponse()->getContent());
+        self::assertSame('Maxi Musterfrau', trim($crawler->filter('[data-guest-checkin-target="person"]')->eq(1)->filter('summary .fw-semibold')->text()));
         $token = (string) $crawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
         $version = (string) $crawler->filter('input[name="submissionVersion"]')->attr('value');
 
@@ -493,7 +489,7 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         self::assertSelectorNotExists('select[name="mainTarget"] option[value^="existing:"]');
     }
 
-    public function testDifferentSoloMainGuestNeedsRoomPlaceAndCanLeaveBookerAsBooker(): void
+    public function testBookerNotTravellingMakesRoomForTheArrivingGuestAndStaysBooker(): void
     {
         $reservation = $this->createReservation();
         $reservation->setPersons(1);
@@ -513,16 +509,17 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         $this->loginAdmin();
 
         $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
-        self::assertSelectorExists('input[name="removeBookerFromGuests"]');
+        self::assertSelectorExists('[data-room-guest="'.$booker->getId().'"] input[name="removeGuests[]"][value="'.$booker->getId().'"]');
+        self::assertSelectorNotExists('details[data-guest-checkin-target="person"]:not([open])', 'Not a one-click case: the booker may not travel.');
         $token = (string) $crawler->filter('[data-controller="guest-checkin"]')->attr('data-guest-checkin-token-value');
         $version = (string) $crawler->filter('input[name="submissionVersion"]')->attr('value');
         $request = ['_token' => $token, 'submissionVersion' => $version, 'mainTarget' => 'new'];
 
         $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', $request);
-        self::assertStringContainsString('alle Plätze belegt', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('alle Plätze belegt sind', (string) $this->client->getResponse()->getContent());
         self::assertSame(GuestCheckInStatus::SUBMITTED, $this->checkIn($reservation)->getStatus());
 
-        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', $request + ['removeBookerFromGuests' => '1']);
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', $request + ['removeGuests' => [(string) $booker->getId()]]);
         self::assertResponseIsSuccessful();
         $this->em()->clear();
         $stored = $this->em()->find(Reservation::class, $reservation->getId());
@@ -547,6 +544,61 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         $checkIn = $this->checkIn($reservation);
         self::assertSame(GuestCheckInStatus::OPEN, $checkIn->getStatus());
         self::assertFalse($checkIn->hasPayload());
+        self::assertNull($checkIn->getLastSubmittedAt(), 'Nothing left that looks sent.');
+        self::assertSelectorTextContains('#guest-checkin', 'Der Gast hat noch nicht online eingecheckt.');
+    }
+
+    public function testConfirmedCheckInCannotBeDiscardedFromAStaleDialog(): void
+    {
+        $reservation = $this->createReservation();
+        $this->submit($reservation);
+        $this->loginAdmin();
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        $popover = $crawler->filter('[data-popover="delete"][data-delete-target]')->attr('data-bs-content');
+        preg_match('/name="_token" value="([^"]+)"/', (string) $popover, $match);
+        $checkIn = $this->checkIn($reservation);
+        $checkIn->markApplied(new \DateTimeImmutable());
+        $this->em()->flush();
+
+        $this->client->request('DELETE', '/reservation/'.$reservation->getId().'/checkin/discard', ['_token' => $match[1] ?? '']);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(GuestCheckInStatus::APPLIED, $this->checkIn($reservation)->getStatus());
+    }
+
+    public function testConfirmedTabOffersTheRegistrationForm(): void
+    {
+        $reservation = $this->createReservation();
+        $this->submit($reservation);
+        $checkIn = $this->checkIn($reservation);
+        $checkIn->markApplied(new \DateTimeImmutable());
+        $this->em()->flush();
+        $this->loginAdmin();
+
+        $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('#guest-checkin .badge', 'Eingecheckt');
+        self::assertSelectorExists('#guest-checkin a[href$="/registration/download/'.$reservation->getId().'"]');
+        self::assertSelectorNotExists('#guest-checkin form[action$="/checkin/apply"]');
+    }
+
+    public function testWaitingCheckInsAreListedInTheNotificationCentreUntilConfirmed(): void
+    {
+        $reservation = $this->createReservation();
+        $this->submit($reservation);
+        $this->loginAdmin();
+
+        $this->client->request('GET', '/notifications/panel');
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Online-Check-in prüfen: Anna Müller', (string) $this->client->getResponse()->getContent());
+
+        $checkIn = $this->checkIn($reservation);
+        $checkIn->markApplied(new \DateTimeImmutable());
+        $this->em()->flush();
+
+        $this->client->request('GET', '/notifications/panel');
+        self::assertStringNotContainsString('Online-Check-in prüfen: Anna Müller', (string) $this->client->getResponse()->getContent());
     }
 
     public function testFrontdeskShowsArrivalTimeAndCheckInState(): void
@@ -561,7 +613,92 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('table', '18:30');
-        self::assertSelectorExists('table .badge .fa-id-card');
+        $cell = $this->frontdeskCell($reservation);
+        self::assertSelectorTextSame($cell.' '.self::VISIBLE_STATE, 'Prüfen');
+        self::assertSelectorNotExists($cell.' [data-frontdesk-checkin-intent-param="mark"]', 'A waiting submission is reviewed, not marked.');
+    }
+
+    public function testFrontdeskFlagsArrivalsWithoutOnlineCheckIn(): void
+    {
+        $reservation = $this->createReservation();
+        $this->loginAdmin();
+
+        $this->client->request('GET', '/operations/frontdesk', ['date' => $reservation->getStartDate()->format('Y-m-d'), 'subsidiary' => 'all']);
+
+        self::assertResponseIsSuccessful();
+        $cell = $this->frontdeskCell($reservation);
+        self::assertSelectorTextSame($cell.' '.self::VISIBLE_STATE, 'Offen');
+        self::assertSelectorExists($cell.' [data-frontdesk-checkin-intent-param="mark"]');
+    }
+
+    public function testFrontdeskStaffMarkAndTakeBackADeskCheckIn(): void
+    {
+        $reservation = $this->createReservation();
+        $this->client->loginUser($this->userWithRole('ROLE_OPERATIONS'), 'main');
+        $crawler = $this->client->request('GET', '/operations/frontdesk', ['date' => $reservation->getStartDate()->format('Y-m-d'), 'subsidiary' => 'all']);
+        $cell = $crawler->filter($this->frontdeskCell($reservation));
+        $url = (string) $cell->attr('data-frontdesk-checkin-url-value');
+        $token = (string) $cell->attr('data-frontdesk-checkin-token-value');
+
+        $this->client->request('POST', $url, ['_token' => 'wrong', 'intent' => 'mark']);
+        self::assertResponseStatusCodeSame(400);
+        self::assertNull($this->em()->getRepository(GuestCheckIn::class)->findOneBy(['reservation' => $reservation->getId()]));
+
+        $crawler = $this->client->request('POST', $url, ['_token' => $token, 'intent' => 'mark']);
+        self::assertResponseIsSuccessful();
+        self::assertSame('Eingecheckt', $crawler->filter(self::VISIBLE_STATE)->text());
+        self::assertCount(1, $crawler->filter('[data-frontdesk-checkin-intent-param="undo"]'));
+        $checkIn = $this->checkIn($reservation);
+        self::assertSame(GuestCheckInStatus::APPLIED, $checkIn->getStatus());
+        self::assertTrue($checkIn->isCheckedInAtDesk());
+
+        $crawler = $this->client->request('POST', $url, ['_token' => $token, 'intent' => 'undo']);
+        self::assertResponseIsSuccessful();
+        self::assertSame('Offen', $crawler->filter(self::VISIBLE_STATE)->text());
+        self::assertSame(GuestCheckInStatus::OPEN, $this->checkIn($reservation)->getStatus());
+    }
+
+    public function testDeskCheckInFromTheReservationTabAndUndo(): void
+    {
+        $reservation = $this->createReservation();
+        $this->loginAdmin();
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        $deskForm = $crawler->filter('form[action$="/checkin/desk"]');
+        self::assertCount(1, $deskForm);
+        $token = (string) $deskForm->filter('input[name="_token"]')->attr('value');
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/desk', ['_token' => $token]);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('#guest-checkin .badge', 'Eingecheckt');
+        self::assertSelectorTextContains('#guest-checkin', 'als am Empfang eingecheckt markiert');
+        self::assertSelectorExists('#guest-checkin form[action$="/checkin/desk/undo"]');
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/desk/undo', ['_token' => $token]);
+        self::assertResponseIsSuccessful();
+        self::assertSame(GuestCheckInStatus::OPEN, $this->checkIn($reservation)->getStatus());
+        self::assertSelectorExists('#guest-checkin form[action$="/checkin/desk"]');
+    }
+
+    public function testWaitingSubmissionIsNotOverriddenByADeskCheckIn(): void
+    {
+        $reservation = $this->createReservation();
+        $this->submit($reservation);
+        $this->loginAdmin();
+        $token = $this->tabToken($reservation);
+        self::assertSelectorNotExists('#guest-checkin form[action$="/checkin/desk"]');
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/desk', ['_token' => $token]);
+
+        self::assertResponseIsSuccessful();
+        $checkIn = $this->checkIn($reservation);
+        self::assertSame(GuestCheckInStatus::SUBMITTED, $checkIn->getStatus());
+        self::assertTrue($checkIn->hasPayload());
+    }
+
+    /** The frontdesk check-in cell of this reservation; other bookings share the date. */
+    private function frontdeskCell(Reservation $reservation): string
+    {
+        return 'table [data-controller="frontdesk-checkin"][data-frontdesk-checkin-url-value$="/reservation/'.$reservation->getId().'/checkin"]';
     }
 
     private function submit(Reservation $reservation, ?string $message = null): void

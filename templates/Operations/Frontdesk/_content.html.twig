@@ -8,7 +8,7 @@
             <th>{{ 'operations.frontdesk.period'|trans }}</th>
             <th class="text-center">{{ 'operations.frontdesk.category'|trans }}</th>
             <th class="text-center">{{ 'reservation.status'|trans }}</th>
-            <th class="text-center">{{ 'operations.frontdesk.header.registration'|trans }}</th>
+            <th class="text-center">{{ (guestCheckInEnabled|default(false) ? 'guest_checkin.frontdesk.header' : 'operations.frontdesk.header.registration')|trans }}</th>
             <th class="text-center">{{ 'operations.frontdesk.header.invoice'|trans }}</th>
             <th class="text-center">{{ 'operations.frontdesk.header.email'|trans }}</th>
             <th class="text-center">{{ 'operations.frontdesk.header.note'|trans }}</th>
@@ -72,13 +72,7 @@
                     </select>
                 </td>
                 <td class="text-center">
-                    <a class="btn btn-outline-primary btn-sm" title="{{ 'operations.frontdesk.registration.print'|trans }}"
-                       href="{{ path('correspondence.registration.download', { id: reservation.id }) }}"
-                       target="_blank" rel="noopener">
-                        <i class="fas fa-print"></i>
-                        <span class="visually-hidden">{{ 'operations.frontdesk.registration.print'|trans }}</span>
-                    </a>
-                    {{ include('Operations/Frontdesk/_guest_checkin_badge.html.twig', {'status': checkInStatuses[reservation.id] ?? null}) }}
+                    {{ include('Operations/Frontdesk/_checkin_cell.html.twig', {'checkInState': checkInStates[reservation.id] ?? null, 'guestCheckInEnabled': guestCheckInEnabled|default(false)}) }}
                 </td>
                 <td class="text-center">
                     {% if reservation.invoices|length > 0 %}
@@ -215,13 +209,7 @@
                     </select>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-outline-secondary btn-sm"
-                       href="{{ path('correspondence.registration.download', { id: reservation.id }) }}"
-                       target="_blank" rel="noopener">
-                        <i class="fas fa-print"></i>
-                        <span class="visually-hidden">{{ 'operations.frontdesk.registration.print'|trans }}</span>
-                    </a>
-                    {{ include('Operations/Frontdesk/_guest_checkin_badge.html.twig', {'status': checkInStatuses[reservation.id] ?? null}) }}
+                    {{ include('Operations/Frontdesk/_checkin_cell.html.twig', {'checkInState': checkInStates[reservation.id] ?? null, 'guestCheckInEnabled': guestCheckInEnabled|default(false)}) }}
                     {% if reservation.invoices|length > 0 %}
                         {% set invoice = reservation.invoices|first %}
                         {% set invoiceBadgeClass = 'text-bg-light' %}

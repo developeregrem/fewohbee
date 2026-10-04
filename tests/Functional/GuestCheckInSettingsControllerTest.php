@@ -46,8 +46,30 @@ final class GuestCheckInSettingsControllerTest extends WebTestCase
         self::assertSame('Schön, dass du kommst!', $config->getIntroText());
 
         $workflows = $this->em()->getRepository(Workflow::class);
-        self::assertTrue($workflows->findOneBy(['systemCode' => 'notify_guest_checkin'])?->isEnabled());
+        self::assertNull($workflows->findOneBy(['systemCode' => 'notify_guest_checkin']), 'Reviews are a derived notification now.');
         self::assertFalse($workflows->findOneBy(['systemCode' => 'example_guest_checkin_invitation'])?->isEnabled());
+
+        // The disabled example does not count as an invitation.
+        $client->request('GET', '/settings/guest-checkin');
+        self::assertSelectorTextContains('body', 'Noch keine automatische Einladung aktiv');
+        self::assertSelectorTextContains('select#guest_check_in_config_companionsMode', 'Nur den Hauptgast erfassen');
+    }
+
+    public function testPreviewShowsTheGuestPageWithSampleDataAndCannotSend(): void
+    {
+        $client = $this->authenticatedClient();
+
+        $client->request('GET', '/settings/guest-checkin/preview');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('form[name="guest_check_in"][action="#"]');
+        self::assertSelectorExists('form[name="guest_check_in"] button[type="submit"][disabled]');
+        self::assertSelectorNotExists('.fhb-gci-lang');
+
+        $client->request('GET', '/settings/guest-checkin/preview', ['view' => 'stay']);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('form[name="guest_check_in"]');
+        self::assertSelectorTextContains('.fhb-gci-checklist', 'Erika Mustermann');
+        self::assertSelectorTextContains('.fhb-gci-checklist', '16:00');
     }
 
     public function testAdminCanTurnOptionalServicesOnAndOff(): void
@@ -89,6 +111,9 @@ final class GuestCheckInSettingsControllerTest extends WebTestCase
 
         self::assertResponseRedirects();
         self::assertStringContainsString('/login', (string) $client->getResponse()->headers->get('Location'));
+
+        $client->request('GET', '/settings/guest-checkin/preview');
+        self::assertResponseRedirects();
     }
 
     protected function tearDown(): void

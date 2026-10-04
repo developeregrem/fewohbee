@@ -18,8 +18,8 @@
         .fhb-gci-top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .5rem; }
         .fhb-gci-house { color: var(--fhb-text-muted); font-size: .95rem; margin: 0; }
         .fhb-gci-lang { display: flex; flex-shrink: 0; }
-        .fhb-gci-lang a { color: var(--fhb-text-muted); text-decoration: none; font-size: .9rem; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
-        .fhb-gci-lang a[aria-current="true"] { color: var(--fhb-text); font-weight: 600; }
+        .fhb-gci-lang a, .fhb-gci-lang button { color: var(--fhb-text-muted); text-decoration: none; font-size: .9rem; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; padding: 0; }
+        .fhb-gci-lang [aria-current="true"] { color: var(--fhb-text); font-weight: 600; }
         .fhb-gci-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: .75rem 1.25rem; margin: 0; }
         .fhb-gci-facts dt { font-weight: 400; color: var(--fhb-text-muted); font-size: .8125rem; }
         .fhb-gci-facts dd { margin: 0; font-weight: 500; }
@@ -51,6 +51,11 @@
         .fhb-gci-booked-extras { list-style: none; padding: 0; margin: 0 0 1rem; }
         .fhb-gci-booked-extras li { display: flex; align-items: center; gap: .625rem; padding: .5rem .75rem; border-radius: var(--fhb-radius-sm); background: var(--fhb-surface-muted); overflow-wrap: anywhere; }
         .fhb-gci-booked-extras li + li { margin-top: .375rem; }
+        .fhb-gci-checklist { list-style: none; padding: 0; margin: 0; display: grid; gap: .875rem; }
+        .fhb-gci-checklist > li { display: flex; align-items: flex-start; gap: .75rem; }
+        .fhb-gci-checklist > li > i { margin-top: .2rem; width: 1rem; text-align: center; }
+        .fhb-gci-checklist-label { display: block; color: var(--fhb-text-muted); font-size: .8125rem; }
+        .fhb-gci-checklist ul { list-style: none; padding: 0; margin: 0; }
         /* iOS Safari collapses empty date/time inputs and centres their text. */
         .fhb-booking-root input[type="date"].form-control,
         .fhb-booking-root input[type="time"].form-control { -webkit-appearance: none; appearance: none; min-height: calc(1.5em + 1.1rem + 2px); }
@@ -67,12 +72,22 @@
 <div class="fhb-booking-root">
     <div class="fhb-shell">
         <div class="fhb-booking-card">
+            {% block banner %}{% endblock %}
             <div class="fhb-gci-top">
                 <p class="fhb-gci-house">{% block house %}{% endblock %}</p>
                 {% if token is defined %}
                     <nav class="fhb-gci-lang" aria-label="{{ 'guest_checkin.public.language'|trans }}">
+                        {# Switching language keeps the guest where they are. On the check-in form it
+                           posts what was typed so far (PublicGuestCheckInController), so nothing is lost. #}
+                        {% set keep = (app.request.query.has('edit') ? {'edit': 1} : {}) + (app.request.query.get('main') == 'other' ? {'main': 'other'} : {}) %}
+                        {% set checkInForm = form is defined and form and form.vars.name == 'guest_check_in' ? form : null %}
                         {% for lang in ['de', 'en'] %}
-                            <a href="{{ path('public.guest_checkin', {'token': token, 'lang': lang}) }}" hreflang="{{ lang }}" lang="{{ lang }}"{% if app.request.locale == lang %} aria-current="true"{% endif %}>{{ lang|upper }}</a>
+                            {% if checkInForm %}
+                                <button type="submit" form="{{ checkInForm.vars.id }}" formaction="{{ path('public.guest_checkin', {'token': token, 'lang': lang, 'edit': 1} + keep) }}" formnovalidate
+                                        name="switch_language" value="1" lang="{{ lang }}"{% if app.request.locale == lang %} aria-current="true"{% endif %}>{{ lang|upper }}</button>
+                            {% else %}
+                                <a href="{{ path('public.guest_checkin', {'token': token, 'lang': lang} + keep) }}" hreflang="{{ lang }}" lang="{{ lang }}"{% if app.request.locale == lang %} aria-current="true"{% endif %}>{{ lang|upper }}</a>
+                            {% endif %}
                         {% endfor %}
                     </nav>
                 {% endif %}

@@ -29,11 +29,13 @@ class GuestCheckInGuestType extends AbstractType
         $config = $options['config'];
 
         $builder
+            // Optional: no registration form needs it, and it would only hold up guests whose
+            // form of address is not on the list.
             ->add('salutation', ChoiceType::class, [
-                'label' => 'guest_checkin.public.field.salutation',
+                'label' => 'guest_checkin.public.field.salutation_optional',
                 'choices' => array_combine($options['salutations'], $options['salutations']),
                 'placeholder' => '',
-                'constraints' => [new Assert\NotBlank()],
+                'required' => false,
                 'attr' => ['autocomplete' => 'honorific-prefix'],
             ])
             ->add('firstname', TextType::class, $this->text('firstname', GuestCheckInFieldMode::REQUIRED, 'given-name', 45))

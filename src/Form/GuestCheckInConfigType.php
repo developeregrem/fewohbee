@@ -53,7 +53,10 @@ class GuestCheckInConfigType extends AbstractType
         foreach (self::FIELD_GROUPS as $field) {
             $builder->add($field, EnumType::class, [
                 'class' => GuestCheckInFieldMode::class,
-                'choice_label' => static fn (GuestCheckInFieldMode $mode): string => $mode->labelKey(),
+                // For fellow travellers the mode says who is asked, not how a field behaves.
+                'choice_label' => 'companionsMode' === $field
+                    ? static fn (GuestCheckInFieldMode $mode): string => 'guest_checkin.companions_mode.'.$mode->value
+                    : static fn (GuestCheckInFieldMode $mode): string => $mode->labelKey(),
                 'label' => 'guest_checkin.settings.field.'.$field,
                 'help' => 'guest_checkin.settings.field.'.$field.'_help',
             ]);

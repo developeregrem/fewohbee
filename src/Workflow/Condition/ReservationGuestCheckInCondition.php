@@ -16,8 +16,10 @@ use App\Service\GuestCheckIn\GuestCheckInPolicy;
  * checked in yet.
  *
  * Config:
- *   state string – completed (guest sent the form, taken over or not)
- *                | open (the guest can still check in and has not done so)
+ *   state string – open (the guest can still check in and has not done so)
+ *                | submitted (the guest checked in, staff have not confirmed it yet)
+ *                | confirmed (staff confirmed the check-in)
+ *                | completed (the guest checked in, confirmed or not)
  */
 class ReservationGuestCheckInCondition implements WorkflowConditionInterface
 {
@@ -54,6 +56,8 @@ class ReservationGuestCheckInCondition implements WorkflowConditionInterface
                 'default' => 'open',
                 'options' => [
                     ['value' => 'open', 'label' => 'workflow.condition.guest_checkin.open'],
+                    ['value' => 'submitted', 'label' => 'workflow.condition.guest_checkin.submitted'],
+                    ['value' => 'confirmed', 'label' => 'workflow.condition.guest_checkin.confirmed'],
                     ['value' => 'completed', 'label' => 'workflow.condition.guest_checkin.completed'],
                 ],
             ],
@@ -71,14 +75,15 @@ class ReservationGuestCheckInCondition implements WorkflowConditionInterface
         }
 
         $checkIn = $this->repository->findOneByReservation($entity);
-        $completed = null !== $checkIn && GuestCheckInStatus::OPEN !== $checkIn->getStatus();
+        $status = $checkIn?->getStatus() ?? GuestCheckInStatus::OPEN;
 
-        if ('completed' === ($config['state'] ?? 'open')) {
-            return $completed;
-        }
-
-        // "Open" only while an invitation still makes sense: feature on, link editable.
-        return !$completed
-            && GuestCheckInLinkState::EDITABLE === $this->policy->linkState($entity, $checkIn, $this->configService->isEnabled());
+        return match ($config['state'] ?? 'open') {
+            'submitted' => GuestCheckInStatus::SUBMITTED === $status,
+            'confirmed' => GuestCheckInStatus::APPLIED === $status,
+            'completed' => GuestCheckInStatus::OPEN !== $status,
+            // "Open" only while an invitation still makes sense: feature on, link editable.
+            default => GuestCheckInStatus::OPEN === $status
+                && GuestCheckInLinkState::EDITABLE === $this->policy->linkState($entity, $checkIn, $this->configService->isEnabled()),
+        };
     }
 }

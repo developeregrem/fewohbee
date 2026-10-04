@@ -8,6 +8,9 @@ notification:
   calendar_reminder:
     title: "%count% Kalender-Erinnerungen"
     body: "Termine für heute, die noch bestätigt werden müssen."
+  guest_checkin_review:
+    title: "Online-Check-in prüfen: %name%"
+    body: "Zimmer %room% ab %from%"
   release_note:
     title: "Neu in FewohBee %version%"
     body: "Sieh dir an, was sich geändert hat."

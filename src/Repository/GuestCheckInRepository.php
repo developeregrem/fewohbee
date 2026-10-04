@@ -105,35 +105,70 @@ class GuestCheckInRepository extends ServiceEntityRepository
         )->setParameter('ids', $reservationIds)->execute();
     }
 
+    /** Submissions waiting for staff review; a COUNT for the notification badge. */
+    public function countAwaitingReview(): int
+    {
+        return (int) $this->createQueryBuilder('g')
+            ->select('COUNT(g.id)')
+            ->where('g.status = :status')
+            ->andWhere('g.payload IS NOT NULL')
+            ->setParameter('status', GuestCheckInStatus::SUBMITTED)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     /**
-     * Check-in state per reservation for list views, in one query.
+     * Submissions waiting for staff review, the earliest arrival first.
+     *
+     * @return list<GuestCheckIn>
+     */
+    public function findAwaitingReview(int $limit): array
+    {
+        return $this->createQueryBuilder('g')
+            ->addSelect('r')
+            ->join('g.reservation', 'r')
+            ->where('g.status = :status')
+            ->andWhere('g.payload IS NOT NULL')
+            ->setParameter('status', GuestCheckInStatus::SUBMITTED)
+            ->orderBy('r.startDate', 'ASC')
+            ->addOrderBy('g.lastSubmittedAt', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Check-in state per reservation for list views, in one query and without the guest data.
      *
      * @param list<int> $reservationIds
      *
-     * @return array<int, GuestCheckInStatus> keyed by reservation id; reservations without a
-     *                                         check-in row are missing
+     * @return array<int, array{status: GuestCheckInStatus, atDesk: bool}> keyed by reservation id;
+     *                                                                     reservations without a
+     *                                                                     check-in row are missing
      */
-    public function findStatusesForReservations(array $reservationIds): array
+    public function findStatesForReservations(array $reservationIds): array
     {
         if ([] === $reservationIds) {
             return [];
         }
 
         $rows = $this->createQueryBuilder('g')
-            ->select('IDENTITY(g.reservation) AS reservationId', 'g.status AS status')
+            ->select('IDENTITY(g.reservation) AS reservationId', 'g.status AS status', 'g.firstSubmittedAt AS firstSubmittedAt')
             ->where('g.reservation IN (:ids)')
             ->setParameter('ids', $reservationIds)
             ->getQuery()
             ->getArrayResult();
 
-        $statuses = [];
+        $states = [];
         foreach ($rows as $row) {
-            $status = $row['status'];
-            $statuses[(int) $row['reservationId']] = $status instanceof GuestCheckInStatus
-                ? $status
-                : GuestCheckInStatus::from((string) $status);
+            $status = $row['status'] instanceof GuestCheckInStatus ? $row['status'] : GuestCheckInStatus::from((string) $row['status']);
+            $states[(int) $row['reservationId']] = [
+                'status' => $status,
+                // Same rule as GuestCheckIn::isCheckedInAtDesk().
+                'atDesk' => GuestCheckInStatus::APPLIED === $status && null === $row['firstSubmittedAt'],
+            ];
         }
 
-        return $statuses;
+        return $states;
     }
 }

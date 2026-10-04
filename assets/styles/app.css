@@ -1020,6 +1020,33 @@ details.einvoice-readiness > summary::-webkit-details-marker {
     display: none;
 }
 
+/* Person cards of the online check-in review: a whole-row summary with its own chevron */
+details > summary:has(> .fhb-details-chevron) {
+    list-style: none;
+    cursor: pointer;
+}
+details > summary:has(> .fhb-details-chevron)::-webkit-details-marker {
+    display: none;
+}
+details[open] > summary > .fhb-details-chevron {
+    transform: rotate(180deg);
+}
+
+/* Frontdesk check-in state: one width for every state, so the rows line up. The labels of all
+   states share one grid cell; the hidden ones only lend their width. */
+.fd-checkin-state {
+    text-align: start;
+}
+.fd-checkin-labels {
+    display: inline-grid;
+}
+.fd-checkin-labels > * {
+    grid-area: 1 / 1;
+}
+.fd-checkin-labels > [aria-hidden="true"] {
+    visibility: hidden;
+}
+
 /*
  * Rendered release-note markdown. The source is written as a GitHub release
  * body, so it leans on h2/h3 and long bullet lists; without these rules the

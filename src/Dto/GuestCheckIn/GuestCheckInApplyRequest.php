@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Dto\GuestCheckIn;
 
 /**
- * The hotelier's choices when taking an online check-in over into the guest records.
+ * The hotelier's choices when confirming an online check-in, i.e. taking it over into the guest
+ * records.
  *
  * Targets are "booker", "new", "skip" (companions only), "customer:<id>" for a linked guest,
- * or "existing:<id>" for a verified global candidate when customer access is granted.
+ * or "existing:<id>" for a verified global candidate when customer access is granted. Choosing a
+ * record whose name differs from the submission is deliberate: the review never preselects one.
  */
 final class GuestCheckInApplyRequest
 {
@@ -20,15 +22,15 @@ final class GuestCheckInApplyRequest
 
     /**
      * @param list<string> $companionTargets one per submitted fellow traveller, in order
+     * @param list<int>    $removeGuestIds   guests linked to the reservation who do not travel
      */
     public function __construct(
         public readonly string $mainTarget,
         public readonly bool $setAsBooker,
         public readonly array $companionTargets,
         public readonly ?string $expectedSubmissionVersion = null,
-        public readonly bool $confirmBookerMismatch = false,
         public readonly bool $applyExtras = true,
-        public readonly bool $removeBookerFromGuests = false,
+        public readonly array $removeGuestIds = [],
         public readonly bool $allowGlobalMatch = false,
     ) {
     }

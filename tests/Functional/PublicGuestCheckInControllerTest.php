@@ -201,11 +201,82 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertNull($booker->getNationality());
         self::assertCount(1, $stored->getCustomers());
 
-        // The confirmation shows names and time, never the ID number.
+        // The stay page shows names and time, never the ID number.
         $crawler = $this->client->followRedirect();
         self::assertSelectorExists('.alert-success');
+        self::assertSelectorTextContains('.fhb-gci-checklist', '18:00');
         self::assertStringContainsString('Max Müller', $crawler->html());
         self::assertStringNotContainsString('P1234567', $crawler->html());
+        self::assertSelectorNotExists('form[name="guest_check_in"]');
+        self::assertSelectorExists('.fhb-actions a[href*="edit=1"]');
+    }
+
+    public function testMainGuestNeedsNoSalutationAndTheLanguageSwitchKeepsEditing(): void
+    {
+        $reservation = $this->createReservation();
+        $path = $this->linkPath($reservation);
+        $this->verify($path, 'Müller');
+        $crawler = $this->client->followRedirect();
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $form['guest_check_in[mainGuest][salutation]'] = '';
+        $form['guest_check_in[mainGuest][firstname]'] = 'Anna';
+        $form['guest_check_in[mainGuest][lastname]'] = 'Müller';
+        $form['guest_check_in[mainGuest][birthday]'] = '1980-05-01';
+        $form['guest_check_in[mainGuest][nationality]'] = 'AT';
+        $form['guest_check_in[mainGuest][street]'] = 'Hauptstraße 1';
+        $form['guest_check_in[mainGuest][zip]'] = '1010';
+        $form['guest_check_in[mainGuest][city]'] = 'Wien';
+        $form['guest_check_in[mainGuest][country]'] = 'AT';
+        $this->client->submit($form);
+        self::assertResponseStatusCodeSame(303);
+        self::assertNull($this->checkIn()->getPayload()['mainGuest']['salutation'] ?? null);
+
+        $this->client->request('GET', $path, ['edit' => 1]);
+        self::assertSelectorExists('form[name="guest_check_in"]');
+        self::assertSelectorExists('.fhb-gci-lang button[form="guest_check_in"][formaction*="lang=en"][formaction*="edit=1"]');
+    }
+
+    public function testGuestCheckedInAtTheDeskSeesTheStayInsteadOfTheForm(): void
+    {
+        $reservation = $this->createReservation();
+        $path = $this->linkPath($reservation);
+        $this->checkIn()->markCheckedInAtDesk(new \DateTimeImmutable());
+        $this->em()->flush();
+
+        $this->verify($path, 'Müller');
+        $this->client->followRedirect();
+
+        self::assertSelectorNotExists('form[name="guest_check_in"]');
+        self::assertSelectorExists('.fhb-gci-checklist');
+        self::assertSelectorExists('.alert-success');
+    }
+
+    public function testSwitchingLanguageKeepsWhatWasTypedAndStoresNothing(): void
+    {
+        $reservation = $this->createReservation();
+        $path = $this->linkPath($reservation);
+        $this->verify($path, 'Müller');
+        $crawler = $this->client->followRedirect();
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $form['guest_check_in[arrivalTime]'] = '18:30';
+        $form['guest_check_in[mainGuest][firstname]'] = 'Annabell';
+        $form['guest_check_in[mainGuest][lastname]'] = '';
+        $form['guest_check_in[companions][0][firstname]'] = 'Max';
+        $switch = (string) $crawler->filter('.fhb-gci-lang button[lang="en"]')->attr('formaction');
+        $crawler = $this->client->request('POST', $switch, $form->getPhpValues() + ['switch_language' => '1']);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('html[lang="en"]');
+        self::assertSame('18:30', $crawler->filter('[name="guest_check_in[arrivalTime]"]')->attr('value'));
+        self::assertSame('Annabell', $crawler->filter('[name="guest_check_in[mainGuest][firstname]"]')->attr('value'));
+        self::assertSame('Max', $crawler->filter('[name="guest_check_in[companions][0][firstname]"]')->attr('value'));
+        self::assertSelectorNotExists('.invalid-feedback', 'The empty last name is not complained about yet.');
+        self::assertSelectorNotExists('.alert-warning');
+        $this->em()->clear();
+        self::assertFalse($this->checkIn()->hasPayload());
+        self::assertNull($this->em()->find(Reservation::class, $reservation->getId())?->getArrivalTime());
     }
 
     public function testReturningGuestFindsTheFormPrefilledButNoIdNumber(): void

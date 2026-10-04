@@ -49,4 +49,41 @@ final class GuestCheckInTest extends TestCase
         self::assertSame(GuestCheckInStatus::OPEN, $checkIn->getStatus());
         self::assertFalse($checkIn->hasPayload());
     }
+
+    public function testDeskCheckInCountsAsCheckedInAndCanBeTakenBack(): void
+    {
+        $checkIn = new GuestCheckIn(new Reservation(), 'selector');
+        $at = new \DateTimeImmutable('2026-09-03 15:00');
+
+        $checkIn->markCheckedInAtDesk($at);
+
+        self::assertSame(GuestCheckInStatus::APPLIED, $checkIn->getStatus());
+        self::assertSame($at, $checkIn->getAppliedAt());
+        self::assertTrue($checkIn->isCheckedInAtDesk());
+
+        $checkIn->undoDeskCheckIn();
+
+        self::assertSame(GuestCheckInStatus::OPEN, $checkIn->getStatus());
+        self::assertNull($checkIn->getAppliedAt());
+    }
+
+    public function testWaitingSubmissionCannotBeMarkedAtTheDesk(): void
+    {
+        $checkIn = new GuestCheckIn(new Reservation(), 'selector');
+        $checkIn->recordSubmission(['v' => 1], new \DateTimeImmutable());
+
+        $this->expectException(\LogicException::class);
+        $checkIn->markCheckedInAtDesk(new \DateTimeImmutable());
+    }
+
+    public function testConfirmedOnlineCheckInIsNotADeskCheckInAndCannotBeTakenBack(): void
+    {
+        $checkIn = new GuestCheckIn(new Reservation(), 'selector');
+        $checkIn->recordSubmission(['v' => 1], new \DateTimeImmutable());
+        $checkIn->markApplied(new \DateTimeImmutable());
+
+        self::assertFalse($checkIn->isCheckedInAtDesk());
+        $this->expectException(\LogicException::class);
+        $checkIn->undoDeskCheckIn();
+    }
 }

@@ -9,6 +9,7 @@ use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\Reservation;
 use App\Repository\GuestCheckInRepository;
 use App\Service\GuestCheckIn\GuestCheckInApplyService;
+use App\Service\GuestCheckIn\GuestCheckInDeskService;
 use App\Service\GuestCheckIn\GuestCheckInExtrasConflictException;
 use App\Service\GuestCheckIn\GuestCheckInLinkService;
 use App\Service\GuestCheckIn\GuestCheckInNoGuestSlotException;
@@ -22,9 +23,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Staff side of the online check-in, from the reservation dialog: hand out or renew the link and
- * review, take over or discard what the guest sent. The link itself is only handed out on
- * request, so read-only users never find it in the page.
+ * Staff side of the online check-in, from the reservation dialog: hand out or renew the link,
+ * review, confirm or discard what the guest sent, or mark a check-in at the desk. The link
+ * itself is only handed out on request, so read-only users never find it in the page.
  */
 #[Route('/reservation/{id}/checkin', requirements: ['id' => '\d+'])]
 #[IsGranted('ROLE_RESERVATIONS')]
@@ -74,9 +75,8 @@ final class GuestCheckInController extends AbstractController
                 setAsBooker: $request->request->getBoolean('setAsBooker'),
                 companionTargets: array_values(array_map('strval', $request->request->all('companionTargets'))),
                 expectedSubmissionVersion: $request->request->getString('submissionVersion'),
-                confirmBookerMismatch: $request->request->getBoolean('confirmBookerMismatch'),
                 applyExtras: $request->request->getBoolean('applyExtras'),
-                removeBookerFromGuests: $request->request->getBoolean('removeBookerFromGuests'),
+                removeGuestIds: array_values(array_map('intval', $request->request->all('removeGuests'))),
                 allowGlobalMatch: $this->isGranted('ROLE_CUSTOMERS'),
             );
 
@@ -97,16 +97,48 @@ final class GuestCheckInController extends AbstractController
         return $this->showReservation($reservation);
     }
 
-    /** Drops the submission; the guest can fill in the form again with the same link. */
+    /**
+     * Drops a submission waiting for review; the guest can fill in the form again with the same
+     * link. A confirmed check-in stays as it is, even when a stale dialog still offers the button.
+     */
     #[Route('/discard', name: 'reservations.guest_checkin.discard', methods: ['DELETE'])]
     public function discard(Request $request, Reservation $reservation, GuestCheckInRepository $repository, EntityManagerInterface $em): Response
     {
         $checkIn = $repository->findOneByReservation($reservation);
         // Token id as rendered by the shared delete popover ('delete' ~ id).
-        if ($this->isCsrfTokenValid('delete'.self::tokenId($reservation), $request->request->getString('_token')) && null !== $checkIn) {
+        if (!$this->isCsrfTokenValid('delete'.self::tokenId($reservation), $request->request->getString('_token'))) {
+            $this->addFlash('warning', 'guest_checkin.tab.invalid_token');
+        } elseif (null === $checkIn || GuestCheckInStatus::SUBMITTED !== $checkIn->getStatus()) {
+            $this->addFlash('warning', 'guest_checkin.apply.nothing');
+        } else {
             $checkIn->discard();
             $em->flush();
             $this->addFlash('success', 'guest_checkin.discard.success');
+        }
+
+        return $this->showReservation($reservation);
+    }
+
+    /** The guest checked in at the desk; see GuestCheckInDeskService. */
+    #[Route('/desk', name: 'reservations.guest_checkin.desk', methods: ['POST'])]
+    public function desk(Request $request, Reservation $reservation, GuestCheckInDeskService $deskService): Response
+    {
+        if (!$this->isCsrfTokenValid(self::tokenId($reservation), $request->request->getString('_token'))) {
+            $this->addFlash('warning', 'guest_checkin.tab.invalid_token');
+        } elseif ($deskService->markCheckedIn($reservation)) {
+            $this->addFlash('success', 'guest_checkin.desk.success');
+        }
+
+        return $this->showReservation($reservation);
+    }
+
+    #[Route('/desk/undo', name: 'reservations.guest_checkin.desk_undo', methods: ['POST'])]
+    public function deskUndo(Request $request, Reservation $reservation, GuestCheckInDeskService $deskService): Response
+    {
+        if (!$this->isCsrfTokenValid(self::tokenId($reservation), $request->request->getString('_token'))) {
+            $this->addFlash('warning', 'guest_checkin.tab.invalid_token');
+        } elseif ($deskService->undo($reservation)) {
+            $this->addFlash('success', 'guest_checkin.desk.undone');
         }
 
         return $this->showReservation($reservation);
