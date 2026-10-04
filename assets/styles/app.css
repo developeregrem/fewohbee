@@ -1345,3 +1345,9 @@ details[open] > summary > .fhb-details-chevron {
 .price-calendar-cell {
     min-height: 6.5rem;
 }
+
+/* Popovers listing one entry per line (e.g. "payment method → template"); Bootstrap's 276px
+   default would break the longer entries. */
+.popover-wide {
+    --bs-popover-max-width: 420px;
+}

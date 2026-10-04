@@ -71,7 +71,8 @@ invoice.status.unpaid: Open
 invoice.status.paid: Paid
 invoice.status.prepaid: partially paid
 invoice.template: Select invoice template
-invoice.template.bound_hint: "Invoices with payment method “%means%” are printed with “%name%” automatically."
+invoice.template.bound_count: "{1} 1 template is picked automatically by payment method|]1,Inf[ %count% templates are picked automatically by payment method"
+invoice.template.none_found: There is no matching invoice template for this invoice. Create an invoice template without a payment method that is not embedded.
 invoice.title: Invoice management
 invoice.vat: VAT
 invoice.vatwarning: >-

@@ -698,9 +698,13 @@
                 <source>templates.flash.payment_means.conflict</source>
                 <target>„%name%“ ist bereits die Standardvorlage für %means%. Entferne dort erst die Zuordnung.</target>
             </trans-unit>
+            <trans-unit id="templates.flash.payment_means.no_unbound">
+                <source>templates.flash.payment_means.no_unbound</source>
+                <target>Eine Rechnungsvorlage muss ohne Zahlungsmethode bleiben – sie gilt für alle übrigen Rechnungen.</target>
+            </trans-unit>
             <trans-unit id="templates.payment_means.tooltip">
                 <source>templates.payment_means.tooltip</source>
-                <target>Rechnungen mit dieser Zahlungsmethode werden automatisch mit dieser Vorlage gedruckt.</target>
+                <target>Rechnungen mit dieser Zahlungsmethode werden automatisch mit dieser Vorlage erstellt.</target>
             </trans-unit>
             <trans-unit id="templates.recipient">
                 <source>templates.recipient</source>

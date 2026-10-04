@@ -67,9 +67,10 @@ templates.default: Default template
 templates.hidden: Embedded template
 templates.hidden.tooltip: "Active: Template is meant to be embedded in other templates and therefore does not appear in the template selection."
 templates.flash.payment_means.conflict: "“%name%” is already the default template for %means%. Remove its assignment first."
+templates.flash.payment_means.no_unbound: One invoice template has to stay without a payment method – it applies to all other invoices.
 templates.payment_means: Default template for payment method
 templates.payment_means.all: "Default template for payment method …"
-templates.payment_means.tooltip: Invoices with this payment method are printed with this template automatically.
+templates.payment_means.tooltip: Invoices with this payment method are created with this template automatically.
 templates.delete.ask: Are you sure you want to delete the template?
 templates.description: Templates for emails, invoices, etc.
 templates.edit: Edit template

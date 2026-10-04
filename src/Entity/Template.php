@@ -30,7 +30,7 @@ class Template
     #[ORM\Column(type: 'boolean', nullable: false, options: ['default' => false])]
     private bool $hidden = false;
     /**
-     * Invoice templates only: when set, invoices with this payment means are printed with this
+     * Invoice templates only: when set, invoices with this payment means are created with this
      * template instead of the default one.
      */
     #[ORM\Column(nullable: true, enumType: PaymentMeansCode::class)]

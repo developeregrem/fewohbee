@@ -21,6 +21,7 @@ use App\Entity\MailAttachment;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
+use App\Repository\TemplateRepository;
 use App\Service\TemplatePreview\TemplateRenderParamsResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -118,8 +119,9 @@ class TemplatesService
         }
         $template->setHidden($request->request->has('hidden-'.$id));
         $paymentMeans = (string) $request->request->get('paymentMeans-'.$id, '');
+        // Only invoice templates can be bound; embedded ones are never picked, so they are not either.
         $template->setPaymentMeans(
-            'TEMPLATE_INVOICE_PDF' === $type?->getName() && '' !== $paymentMeans
+            'TEMPLATE_INVOICE_PDF' === $type?->getName() && !$template->isHidden() && '' !== $paymentMeans
                 ? PaymentMeansCode::tryFrom((int) $paymentMeans)
                 : null
         );
@@ -703,16 +705,18 @@ class TemplatesService
     }
 
     /**
-     * The template to print an invoice with.
+     * The template to create an invoice with.
      *
      * A template bound to the invoice's payment means wins, so e.g. cash invoices get their own
      * layout without switching the selection by hand. Otherwise $preferred is used (the selection
      * made in the invoice settings), unless it is bound to another payment means itself - then
-     * the default among the unbound templates takes over.
+     * the default among the unbound templates takes over. Embedded (hidden) templates are never
+     * picked. Null when no template fits: a template bound to another payment means is never used
+     * as a fallback.
      */
     public function resolveInvoiceTemplate(Invoice $invoice, ?Template $preferred = null): ?Template
     {
-        $templates = $this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
+        $templates = $this->loadInvoiceTemplates();
 
         $paymentMeans = $invoice->getPaymentMeans();
         if (null !== $paymentMeans) {
@@ -725,21 +729,48 @@ class TemplatesService
             }
         }
 
-        if ($preferred instanceof Template && null === $preferred->getPaymentMeans()) {
+        if ($preferred instanceof Template && !$preferred->isHidden() && null === $preferred->getPaymentMeans()) {
             return $preferred;
         }
 
-        $unbound = array_values(array_filter(
+        return $this->getDefaultTemplate(array_values(array_filter(
             $templates,
-            static fn (Template $t): bool => null === $t->getPaymentMeans()
-        ));
+            static fn (Template $t): bool => !$t->isHidden() && null === $t->getPaymentMeans()
+        )));
+    }
 
-        return $this->getDefaultTemplate([] !== $unbound ? $unbound : $templates);
+    /**
+     * Whether saving (or deleting) $template would leave only invoice templates bound to a payment
+     * means. Invoices without a payment means, or with one no template is bound to, would then
+     * have no template at all. Embedded (hidden) templates count on neither side, since they are
+     * never picked.
+     */
+    public function leavesNoUnboundInvoiceTemplate(Template $template, bool $deleting = false): bool
+    {
+        $templates = $this->loadInvoiceTemplates();
+        if (!in_array($template, $templates, true)) {
+            $templates[] = $template;
+        }
+
+        $hasBound = false;
+        $hasUnbound = false;
+        foreach ($templates as $t) {
+            if (($deleting && $t === $template) || $t->isHidden() || 'TEMPLATE_INVOICE_PDF' !== $t->getTemplateType()?->getName()) {
+                continue;
+            }
+            if (null === $t->getPaymentMeans()) {
+                $hasUnbound = true;
+            } else {
+                $hasBound = true;
+            }
+        }
+
+        return $hasBound && !$hasUnbound;
     }
 
     /**
      * Another invoice template already bound to the same payment means, if any. Only one may
-     * be, or it would be left to chance which of them is printed.
+     * be, or it would be left to chance which of them is used.
      */
     public function findPaymentMeansConflict(Template $template): ?Template
     {
@@ -748,13 +779,24 @@ class TemplatesService
             return null;
         }
 
-        foreach ($this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']) as $other) {
+        foreach ($this->loadInvoiceTemplates() as $other) {
             if ($other !== $template && !$other->isHidden() && $other->getPaymentMeans() === $paymentMeans) {
                 return $other;
             }
         }
 
         return null;
+    }
+
+    /**
+     * @return Template[]
+     */
+    private function loadInvoiceTemplates(): array
+    {
+        /** @var TemplateRepository $repository */
+        $repository = $this->em->getRepository(Template::class);
+
+        return $repository->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
     }
 
     public function getTemplateId(ManagerRegistry $doctrine, RequestStack $requestStack, string $typeName, string $sessionName): int

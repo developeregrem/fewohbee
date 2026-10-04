@@ -321,23 +321,24 @@ class CorrespondenceController extends AbstractController
         $cId = $request->request->get('id');
         if ('false' != $isInvoice) {
             $invoice = $cId ? $em->getRepository(Invoice::class)->find($cId) : null;
+            $invoiceTemplate = $invoice instanceof Invoice ? $ts->resolveInvoiceTemplate($invoice) : null;
             if (!$invoice instanceof Invoice) {
                 $this->addFlash('warning', 'templates.attachment.notfound');
+                $error = true;
+            } elseif (!$invoiceTemplate instanceof Template) {
+                $this->addFlash('warning', 'invoice.template.none_found');
                 $error = true;
             } else {
                 $binaryPayload = null;
                 $asEInvoice = false;
                 $readiness = $readinessService->check($invoice);
                 if ($readiness->ready) {
-                    $defaultTemplate = $ts->resolveInvoiceTemplate($invoice);
-                    if (null !== $defaultTemplate) {
-                        try {
-                            $binaryPayload = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $defaultTemplate, $readinessService->resolveSettingsFor($invoice));
-                            $asEInvoice = true;
-                        } catch (\Throwable $e) {
-                            $this->addFlash('warning', 'invoice.einvoice.export.fallback');
-                            $binaryPayload = null;
-                        }
+                    try {
+                        $binaryPayload = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $invoiceTemplate, $readinessService->resolveSettingsFor($invoice));
+                        $asEInvoice = true;
+                    } catch (\Throwable $e) {
+                        $this->addFlash('warning', 'invoice.einvoice.export.fallback');
+                        $binaryPayload = null;
                     }
                 }
                 $cId = $ts->makeCorespondenceOfInvoice($cId, $is, $binaryPayload, $asEInvoice);

@@ -152,6 +152,9 @@ class TemplatesServiceController extends AbstractController
             } elseif (null !== $conflict) {
                 $error = true;
                 $this->addFlash('warning', $this->paymentMeansConflictMessage($translator, $template, $conflict));
+            } elseif ($ts->leavesNoUnboundInvoiceTemplate($template)) {
+                $error = true;
+                $this->addFlash('warning', 'templates.flash.payment_means.no_unbound');
             } else {
                 $em = $doctrine->getManager();
                 $em->persist($template);
@@ -188,7 +191,11 @@ class TemplatesServiceController extends AbstractController
             } elseif (null !== $conflict) {
                 $error = true;
                 $this->addFlash('warning', $this->paymentMeansConflictMessage($translator, $template, $conflict));
-                $em->clear(Template::class);
+                $em->clear();
+            } elseif ($ts->leavesNoUnboundInvoiceTemplate($template)) {
+                $error = true;
+                $this->addFlash('warning', 'templates.flash.payment_means.no_unbound');
+                $em->clear();
             } else {
                 $em->persist($template);
                 $em->flush();
@@ -214,6 +221,8 @@ class TemplatesServiceController extends AbstractController
 
             if ($countCor > 0) {
                 $this->addFlash('warning', 'templates.flash.delete.inuse.reservations');
+            } elseif ($ts->leavesNoUnboundInvoiceTemplate($template, true)) {
+                $this->addFlash('warning', 'templates.flash.payment_means.no_unbound');
             } else {
                 $template = $ts->deleteEntity($template->getId());
                 if ($template) {
@@ -685,7 +694,7 @@ class TemplatesServiceController extends AbstractController
     private function paymentMeansConflictMessage(TranslatorInterface $translator, Template $template, Template $conflict): string
     {
         return $translator->trans('templates.flash.payment_means.conflict', [
-            '%means%' => $translator->trans($template->getPaymentMeans()?->name ?? ''),
+            '%means%' => $translator->trans($template->getPaymentMeans()->name ?? ''),
             '%name%' => (string) $conflict->getName(),
         ]);
     }

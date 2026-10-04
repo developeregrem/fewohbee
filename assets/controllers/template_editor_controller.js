@@ -407,6 +407,7 @@ export default class extends Controller {
         'pdfParamsPanel',
         'subjectRow',
         'paymentMeansField',
+        'hiddenSwitch',
         'subjectInputGroup',
         'subjectInput',
         'previewSubjectResult',
@@ -1079,14 +1080,18 @@ export default class extends Controller {
         this.subjectRowTarget.classList.toggle('d-none', !this.isCurrentTemplateTypeEmail());
     }
 
-    /** Only invoice templates can be bound to a payment means. */
+    /**
+     * Only invoice templates can be bound to a payment means, and embedded ones are never picked,
+     * so the binding would have no effect there.
+     */
     updatePaymentMeansVisibility() {
         if (!this.hasPaymentMeansFieldTarget || !this.templateTypeSelect) {
             return;
         }
         const selectedOption = this.templateTypeSelect.options[this.templateTypeSelect.selectedIndex];
         const isInvoicePdf = selectedOption?.dataset?.templateTypeName === 'TEMPLATE_INVOICE_PDF';
-        this.paymentMeansFieldTarget.classList.toggle('d-none', !isInvoicePdf);
+        const isEmbedded = this.hasHiddenSwitchTarget && this.hiddenSwitchTarget.checked;
+        this.paymentMeansFieldTarget.classList.toggle('d-none', !isInvoicePdf || isEmbedded);
     }
 
     async refreshSnippets() {

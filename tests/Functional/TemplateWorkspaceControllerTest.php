@@ -67,6 +67,33 @@ final class TemplateWorkspaceControllerTest extends WebTestCase
         self::assertNull($em->getRepository(Template::class)->find($id)?->getPaymentMeans());
     }
 
+    public function testEmbeddedInvoiceTemplateIsSavedWithoutPaymentMeans(): void
+    {
+        $client = self::createClient();
+        $client->loginUser($this->getAdminUser(), 'main');
+
+        $template = $this->createTemplate('TEMPLATE_INVOICE_PDF', '[[ invoice.number ]]');
+        $id = $template->getId();
+
+        $crawler = $client->request('GET', '/settings/templates/'.$id.'/edit-page');
+        $client->request('POST', '/settings/templates/'.$id.'/edit', [
+            '_csrf_token' => $crawler->filter('input[name="_csrf_token"]')->last()->attr('value'),
+            'type-'.$id => (string) $template->getTemplateType()->getId(),
+            'name-'.$id => 'Embedded block',
+            'text-'.$id => '[[ invoice.number ]]',
+            'hidden-'.$id => 'on',
+            'paymentMeans-'.$id => (string) PaymentMeansCode::CASH->value,
+        ]);
+
+        self::assertResponseIsSuccessful();
+
+        $em = self::getContainer()->get('doctrine')->getManager();
+        $em->clear();
+        $saved = $em->getRepository(Template::class)->find($id);
+        self::assertTrue($saved->isHidden());
+        self::assertNull($saved->getPaymentMeans());
+    }
+
     private function createTemplate(string $typeName, string $text): Template
     {
         /** @var EntityManagerInterface $em */

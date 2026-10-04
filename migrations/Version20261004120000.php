@@ -11,7 +11,7 @@ use Doctrine\Migrations\AbstractMigration;
  * Invoice templates can be bound to a payment means, so e.g. cash invoices are printed with
  * their own template without switching the selection by hand.
  */
-final class Version20260927120000 extends AbstractMigration
+final class Version20261004120000 extends AbstractMigration
 {
     public function getDescription(): string
     {

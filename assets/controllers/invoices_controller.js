@@ -10,6 +10,7 @@ import {
     enableDeletePopover,
     enableTooltips,
     disposeTooltips,
+    enablePopovers,
     setModalTitle
 } from '../js/utils.js';
 
@@ -48,6 +49,7 @@ export default class extends Controller {
 
     async initTooltips() {
         await enableTooltips(this.element);
+        await enablePopovers(this.element);
     }
 
     disconnect() {

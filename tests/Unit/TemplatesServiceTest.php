@@ -554,14 +554,83 @@ final class TemplatesServiceTest extends TestCase
         self::assertNull($service->findPaymentMeansConflict($default));
     }
 
+    public function testTemplateBoundToAnotherPaymentMeansIsNeverAFallback(): void
+    {
+        [, $cash] = $this->invoiceTemplates();
+        $service = $this->createServiceWithInvoiceTemplates([$cash]);
+
+        self::assertNull($service->resolveInvoiceTemplate(new Invoice()));
+        self::assertNull($service->resolveInvoiceTemplate((new Invoice())->setPaymentMeans(PaymentMeansCode::SEPA_CREDIT_TRANSFER), $cash));
+    }
+
+    public function testBindingTheLastUnboundInvoiceTemplateIsRefused(): void
+    {
+        [$default, $cash] = $this->invoiceTemplates();
+        $service = $this->createServiceWithInvoiceTemplates([$cash, $default]);
+
+        $default->setPaymentMeans(PaymentMeansCode::CARD_PAYMENT);
+
+        self::assertTrue($service->leavesNoUnboundInvoiceTemplate($default));
+    }
+
+    public function testDeletingTheLastUnboundInvoiceTemplateIsRefused(): void
+    {
+        [$default, $cash] = $this->invoiceTemplates();
+        $service = $this->createServiceWithInvoiceTemplates([$cash, $default]);
+
+        self::assertTrue($service->leavesNoUnboundInvoiceTemplate($default, true));
+        self::assertFalse($service->leavesNoUnboundInvoiceTemplate($cash, true));
+    }
+
+    public function testAnotherUnboundInvoiceTemplateOrNoBindingAtAllIsFine(): void
+    {
+        [$default, $cash, $other] = $this->invoiceTemplates();
+
+        $service = $this->createServiceWithInvoiceTemplates([$cash, $default, $other]);
+        self::assertFalse($service->leavesNoUnboundInvoiceTemplate($default, true));
+
+        $service = $this->createServiceWithInvoiceTemplates([$default]);
+        self::assertFalse($service->leavesNoUnboundInvoiceTemplate($default, true));
+    }
+
+    public function testEmbeddedTemplateIsNeverPickedForAnInvoice(): void
+    {
+        [$default, , $other] = $this->invoiceTemplates();
+        $default->setHidden(true);
+        $service = $this->createServiceWithInvoiceTemplates([$default, $other]);
+
+        self::assertSame($other, $service->resolveInvoiceTemplate(new Invoice()));
+        self::assertSame($other, $service->resolveInvoiceTemplate(new Invoice(), $default));
+
+        $other->setHidden(true);
+        self::assertNull($service->resolveInvoiceTemplate(new Invoice()));
+    }
+
+    public function testEmbeddedTemplateDoesNotCountAsTheRemainingUnboundOne(): void
+    {
+        [$default, $cash, $other] = $this->invoiceTemplates();
+        $other->setHidden(true);
+        $service = $this->createServiceWithInvoiceTemplates([$cash, $default, $other]);
+
+        // Binding or embedding the last visible unbound template is refused alike.
+        $default->setPaymentMeans(PaymentMeansCode::CARD_PAYMENT);
+        self::assertTrue($service->leavesNoUnboundInvoiceTemplate($default));
+
+        $default->setPaymentMeans(null)->setHidden(true);
+        self::assertTrue($service->leavesNoUnboundInvoiceTemplate($default));
+    }
+
     /**
      * @return array{Template, Template, Template} default, bound to cash, plain
      */
     private function invoiceTemplates(): array
     {
-        $default = (new Template())->setName('Rechnung')->setIsDefault(true);
-        $cash = (new Template())->setName('Rechnung A5 bar')->setPaymentMeans(PaymentMeansCode::CASH);
-        $other = (new Template())->setName('Rechnung Bemerkungen');
+        $type = new TemplateType();
+        $type->setName('TEMPLATE_INVOICE_PDF');
+
+        $default = (new Template())->setName('Rechnung')->setIsDefault(true)->setTemplateType($type);
+        $cash = (new Template())->setName('Rechnung A5 bar')->setPaymentMeans(PaymentMeansCode::CASH)->setTemplateType($type);
+        $other = (new Template())->setName('Rechnung Bemerkungen')->setTemplateType($type);
 
         return [$default, $cash, $other];
     }

@@ -18,15 +18,25 @@
 					<label for="object" class="col-sm-4 col-form-label text-end">{{ 'invoice.template'|trans }}</label>
 					<div class="col-sm">
 						<select id="template" name="template" class="form-select" data-action="change->invoices#persistTemplateSelectionAction">
-							{# Templates bound to a payment means are picked automatically, not here. #}
-							{% for template in templates|filter(t => t.paymentMeans is null) %}
+							{# Templates bound to a payment means are picked automatically, not here; embedded ones never. #}
+							{% for template in templates|filter(t => t.paymentMeans is null and not t.hidden) %}
 								<option value="{{ template.id }}" {% if template.id==templateId %} selected {% endif %}>{{
                         template.name }}</option>
 							{% endfor %}
 						</select>
-						{% for template in templates|filter(t => t.paymentMeans is not null and not t.hidden) %}
-							<div class="form-text">{{ 'invoice.template.bound_hint'|trans({'%name%': template.name, '%means%': template.paymentMeans.name|trans}) }}</div>
-						{% endfor %}
+						{% set boundTemplates = templates|filter(t => t.paymentMeans is not null and not t.hidden)|sort((a, b) => a.paymentMeans.value <=> b.paymentMeans.value) %}
+						{% if boundTemplates is not empty %}
+							{# Names are escaped before joining, the popover renders the <br> separators as HTML. #}
+							{% set boundLines = boundTemplates|map(t => ((t.paymentMeans.name|trans) ~ ' → ' ~ t.name)|e)|join('<br>') %}
+							<div class="form-text">
+								<span class="text-muted" style="cursor: help;"
+									  tabindex="0"
+									  data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top"
+									  data-bs-trigger="hover focus" data-bs-html="true" data-bs-custom-class="popover-wide"
+									  data-bs-content="{{ boundLines|e('html_attr') }}"><i class="fas fa-info-circle"></i></span>
+								{{ 'invoice.template.bound_count'|trans({'%count%': boundTemplates|length}) }}
+							</div>
+						{% endif %}
 					</div>
 				</div>
 			</div>

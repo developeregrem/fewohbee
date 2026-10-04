@@ -258,7 +258,7 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
     /**
      * The invoice layout to render. Picking one is optional — without an explicit
      * choice the invoice gets the template bound to its payment means, or else the
-     * default invoice template, just like an invoice printed by hand.
+     * default invoice template, just like an invoice created by hand.
      */
     private function resolvePdfTemplate(array $config, Invoice $invoice): Template
     {

@@ -67,7 +67,7 @@
                         <label for="default-{{ template.id }}" class="form-check-label small">{{ 'templates.default'|trans }}</label>
                     </div>
                     <div class="form-check form-switch form-check-inline m-0 ms-2">
-                    <input type="checkbox" class="form-check-input" name="hidden-{{ template.id }}" id="hidden-{{ template.id }}" {% if not isNew|default(false) and template.isHidden %}checked{% endif %}>
+                    <input type="checkbox" class="form-check-input" name="hidden-{{ template.id }}" id="hidden-{{ template.id }}" data-template-editor-target="hiddenSwitch" data-action="change->template-editor#updatePaymentMeansVisibility" {% if not isNew|default(false) and template.isHidden %}checked{% endif %}>
                     <label for="hidden-{{ template.id }}" class="form-check-label small" data-bs-toggle="tooltip" title="{{ 'templates.hidden.tooltip'|trans }}">{{ 'templates.hidden'|trans }}</label>
                     </div>
                     <div class="ms-auto d-flex align-items-center gap-1">
