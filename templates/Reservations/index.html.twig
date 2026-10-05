@@ -114,6 +114,11 @@
             </div>
         </div>
     </form>
+    {% if show == 'table' %}
+    {# Way back out of the swipe-only week view on touch devices (see
+       initWeekMode in reservations_controller.js) #}
+    <button type="button" class="btn-close reservations-week-close" data-reservations-week-close title="{{ 'button.close'|trans }}" aria-label="{{ 'button.close'|trans }}"></button>
+    {% endif %}
     <div class="row mt-2" >
         <div class="col" id="table-ajax" data-reservations-add-appartment-selectable-url="{{ path('reservations.add.appartment.to.reservation.selectable') }}">
         </div>

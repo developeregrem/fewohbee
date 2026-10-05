@@ -61,6 +61,7 @@ export default class extends Controller {
         this.setupTableFilterListeners();
         this.setupCalendarEntryDeleteListener();
         this.applyStoredTableSettings();
+        this.initWeekMode();
         this.observeModalContent();
         this.boundResize = this.handleResize.bind(this);
         window.addEventListener('load', this.boundResize);
@@ -1042,6 +1043,10 @@ export default class extends Controller {
             return false;
         }
 
+        if (this.weekMode) {
+            this.snapToWeek();
+        }
+
         this.setLocalTableSetting('interval', 'reservations-intervall', 'int');
         this.setLocalTableSetting('apartment', 'reservations-apartment', 'int');
         this.setLocalTableSetting('showCalendarEntries', 'reservation-settings-show-calendar-entries', 'checkbox');
@@ -1150,7 +1155,8 @@ export default class extends Controller {
             return;
         }
         const intervalValue = parseInt(intervalInput.value, 10);
-        const interval = !isNaN(intervalValue) && intervalValue > 0 ? intervalValue : 1;
+        // In week mode the input holds 6 (the server counts days inclusively), but a step is 7 days
+        const interval = this.weekMode ? 7 : (!isNaN(intervalValue) && intervalValue > 0 ? intervalValue : 1);
         const currentDate = startInput.value ? new Date(startInput.value) : new Date();
         if (Number.isNaN(currentDate.getTime())) {
             return;
@@ -1159,6 +1165,80 @@ export default class extends Controller {
         currentDate.setDate(currentDate.getDate() + offset);
         startInput.value = this.formatDateInputValue(currentDate);
         startInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    // ----- week mode (touch devices only) -----
+
+    /**
+     * On phones and tablets the table view shows exactly one week, Monday to
+     * Sunday, and is paged by swiping. The first swipe also hides the navbar
+     * and the filter row, leaving only the table; a close button in the
+     * top corner brings them back.
+     */
+    initWeekMode() {
+        const startInput = document.getElementById('start');
+        const intervalInput = this.tableFilter?.querySelector('input[name="interval"]');
+        if (!startInput || !intervalInput || !this.tableContainer || !window.matchMedia('(pointer: coarse)').matches) {
+            return;
+        }
+        this.weekMode = true;
+        document.body.classList.add('reservations-week-mode');
+        // A fixed span makes the day count field meaningless
+        intervalInput.closest('.col-md-auto')?.classList.add('d-none');
+        this.snapToWeek();
+
+        document.querySelector('[data-reservations-week-close]')?.addEventListener('click', () => this.setWeekFocus(false));
+
+        // Listening on the persistent container keeps the gesture working
+        // across table reloads, which replace its content.
+        let touchStart = null;
+        this.tableContainer.addEventListener('touchstart', (event) => {
+            touchStart = event.touches.length === 1
+                ? { x: event.touches[0].clientX, y: event.touches[0].clientY, time: Date.now() }
+                : null;
+        }, { passive: true });
+        this.tableContainer.addEventListener('touchend', (event) => {
+            if (!touchStart || event.changedTouches.length !== 1) {
+                return;
+            }
+            const dx = event.changedTouches[0].clientX - touchStart.x;
+            const dy = event.changedTouches[0].clientY - touchStart.y;
+            const duration = Date.now() - touchStart.time;
+            touchStart = null;
+            // Clearly horizontal and reasonably quick, so vertical scrolling
+            // and slow drags are not taken for a page turn
+            if (Math.abs(dx) < 60 || Math.abs(dx) < 1.5 * Math.abs(dy) || duration > 800) {
+                return;
+            }
+            this.setWeekFocus(true);
+            this.shiftStartDate(dx < 0 ? 'forward' : 'backward');
+        }, { passive: true });
+    }
+
+    /** Moves the start date back to Monday and fixes the span to one week. */
+    snapToWeek() {
+        const startInput = document.getElementById('start');
+        const intervalInput = this.tableFilter?.querySelector('input[name="interval"]');
+        if (!startInput || !intervalInput) {
+            return;
+        }
+        const [year, month, day] = (startInput.value || this.formatDateInputValue(new Date())).split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        if (Number.isNaN(date.getTime())) {
+            return;
+        }
+        date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+        startInput.value = this.formatDateInputValue(date);
+        intervalInput.value = 6;
+    }
+
+    setWeekFocus(enabled) {
+        if (document.body.classList.contains('reservations-week-focus') === enabled) {
+            return;
+        }
+        document.body.classList.toggle('reservations-week-focus', enabled);
+        // The table's height is fitted to the space below it, which just changed
+        this.handleResize();
     }
 
     formatDateInputValue(date) {
@@ -1203,6 +1283,55 @@ export default class extends Controller {
         if (table) {
             table.classList.toggle('weekday-row-visible', showWeekday === 'true');
         }
+        if (this.weekMode) {
+            this.compactWeekHeader();
+        }
+    }
+
+    /**
+     * Week mode: adds a single-row header - the calendar week above the room
+     * names, then weekday and date per day (Mo / 05.10.). It is a copy of the
+     * date row, so popovers and calendar accents come along; CSS shows it in
+     * place of the regular header rows only after the first swipe.
+     */
+    compactWeekHeader() {
+        const table = document.getElementById('reservation-table');
+        const dayRow = table?.querySelector('thead tr.table-days');
+        if (!dayRow || table.querySelector('thead tr.table-days-compact')) {
+            return;
+        }
+        // Not .table-days: drag and drop maps days through that row's cells
+        const compactRow = dayRow.cloneNode(true);
+        compactRow.className = 'table-days-compact';
+
+        // The weekday row carries the translated weekday abbreviations
+        const weekdays = new Map(Array.from(
+            table.querySelectorAll('#reservation-table-header-weekday th[data-day]'),
+            (cell) => [cell.dataset.day, cell.textContent.trim()],
+        ));
+        const dayCells = compactRow.querySelectorAll('th[data-day]');
+        dayCells.forEach((cell) => {
+            const [, month, day] = cell.dataset.day.split('-');
+            const target = cell.querySelector('a') || cell;
+            target.textContent = '';
+            const weekday = document.createElement('span');
+            weekday.className = 'd-block fw-normal';
+            weekday.textContent = weekdays.get(cell.dataset.day) || '';
+            target.append(weekday, `${day}.${month}.`);
+        });
+        if (dayCells.length > 0) {
+            const [year, month, day] = dayCells[0].dataset.day.split('-').map(Number);
+            compactRow.firstElementChild.textContent = `${table.dataset.calendarWeekLabel} ${this.isoWeek(new Date(year, month - 1, day))}`;
+        }
+        dayRow.after(compactRow);
+        this.initStickyTables();
+    }
+
+    isoWeek(date) {
+        // The ISO week is the one containing the Thursday of the same week
+        const thursday = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 3 - ((date.getDay() + 6) % 7));
+        const firstThursday = new Date(thursday.getFullYear(), 0, 4);
+        return 1 + Math.round(((thursday - firstThursday) / 86400000 - 3 + ((firstThursday.getDay() + 6) % 7)) / 7);
     }
 
     toggleRow(name, show) {
@@ -1246,6 +1375,48 @@ export default class extends Controller {
 
     initFit() {
         document.querySelectorAll('.js-fit-vh').forEach((el) => this.fitTableToViewport(el));
+        if (this.weekMode) {
+            this.stretchRoomRows();
+        }
+    }
+
+    /**
+     * Week mode: spreads the free space below the table over the rooms, so a
+     * short room list fills the screen instead of leaving it half empty. Each
+     * room gets the same share; a room split into several lines divides its
+     * share among them. The reservation bars grow along with their row.
+     */
+    stretchRoomRows() {
+        const table = document.getElementById('reservation-table');
+        const container = table?.closest('.js-fit-vh');
+        if (!container) {
+            return;
+        }
+        const rows = Array.from(table.querySelectorAll('tbody tr[data-appartment]'));
+        rows.forEach((row) => {
+            row.style.height = '';
+            row.style.removeProperty('--week-bar-height');
+        });
+        // Unstretched bar height, measured before the rows grow
+        const barHeight = table.querySelector('.reservation-inner')?.getBoundingClientRect().height;
+        const free = parseFloat(container.style.maxHeight) - table.offsetHeight
+            - parseFloat(getComputedStyle(table).marginBottom);
+        const rowsPerRoom = new Map();
+        rows.forEach((row) => rowsPerRoom.set(row.dataset.appartment, (rowsPerRoom.get(row.dataset.appartment) || 0) + 1));
+        if (!(free > 0) || rowsPerRoom.size === 0) {
+            return;
+        }
+        const perRoom = free / rowsPerRoom.size;
+        // Rounded down: fractional heights add up past the container and bring back a scrollbar.
+        // The bars grow by the same factor as their row, so they keep their proportions.
+        rows.forEach((row) => {
+            const height = row.getBoundingClientRect().height;
+            const stretched = Math.floor(height + perRoom / rowsPerRoom.get(row.dataset.appartment));
+            row.style.height = `${stretched}px`;
+            if (barHeight) {
+                row.style.setProperty('--week-bar-height', `${Math.floor(barHeight * stretched / height)}px`);
+            }
+        });
     }
 
     handleResize() {

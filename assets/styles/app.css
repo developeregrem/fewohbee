@@ -266,6 +266,69 @@ body {
     width: calc(var(--reservation-name-col, 8ch) + 1.5rem);
 }
 
+/* Week view on touch devices (initWeekMode in reservations_controller.js):
+   seven days always fit the screen, so a horizontal swipe never competes
+   with scrolling the table sideways. */
+body.reservations-week-mode #reservation-table {
+    width: 100%;
+}
+
+/* Rooms are stretched to fill the screen (stretchRoomRows), keep the bars
+   level with the room names */
+body.reservations-week-mode #reservation-table tbody td {
+    vertical-align: middle;
+}
+
+/* --week-bar-height is set per row by stretchRoomRows; the line height centres
+   the text (padding 3px and border 1px on each side) */
+body.reservations-week-mode #reservation-table tr[style*="--week-bar-height"] .reservation-inner {
+    height: var(--week-bar-height);
+    line-height: calc(var(--week-bar-height) - 8px);
+}
+
+.reservations-week-close {
+    display: none;
+}
+
+/* After the first swipe only the table remains, plus a small close button
+   floating in the top corner */
+body.reservations-week-focus .reservations-week-close {
+    display: block;
+    position: fixed;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 1030;
+    padding: 0.75rem;
+    background-color: var(--bs-body-bg);
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    opacity: 0.9;
+}
+
+/* Single-row header (compactWeekHeader) replaces the regular header rows
+   after the first swipe; before that the header stays as configured */
+#reservation-table thead tr.table-days-compact {
+    display: none;
+}
+
+body.reservations-week-focus #reservation-table thead tr.table-days-compact {
+    display: table-row;
+}
+
+body.reservations-week-focus #reservation-table thead tr:not(.table-days-compact) {
+    display: none !important;
+}
+
+.table-reservation .table-days-compact > th {
+    position: relative;
+}
+
+body.reservations-week-focus > nav.navbar,
+body.reservations-week-focus #table-filter,
+body.reservations-week-focus #flash-message-container {
+    display: none !important;
+}
+
 /* Right border on the last cell of each row */
 #reservation-table tbody tr > :last-child {
     border-right: 1px solid var(--feb-border-muted) !important;
