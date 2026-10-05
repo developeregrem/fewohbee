@@ -35,10 +35,10 @@ class GuestCategoryModifier
     #[ORM\Column(name: 'valid_to', type: 'date', nullable: true)]
     private ?\DateTimeInterface $validTo = null;
 
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $active = true;
 
-    #[ORM\Column(name: 'sort_order', type: 'integer')]
+    #[ORM\Column(name: 'sort_order', type: 'integer', options: ['default' => 0])]
     private int $sortOrder = 0;
 
     public function getId(): ?int

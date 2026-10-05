@@ -1,0 +1,213 @@
+{% use "common/delete_popover.html.twig" %}
+{% import _self as m %}
+{# Review of a submission: one card per person with the record it is stored as and what changes
+   there (the guest-checkin controller shows the changes of whichever record is picked), the room
+   afterwards, the requested services, and one button to confirm. When the suggestions need no
+   decision the cards stay folded, so the normal case is a single click. #}
+
+{% macro value(value, translatable) %}{{ translatable ? value|trans : value }}{% endmacro %}
+
+{% macro option(option, person) %}
+    {% set labelKey = {
+        'booker': option.overwrites ? 'guest_checkin.tab.target_booker_overwrite' : 'guest_checkin.tab.target_booker',
+        'guest': option.overwrites ? 'guest_checkin.tab.target_guest_overwrite' : 'guest_checkin.tab.target_guest',
+        'existing': 'guest_checkin.tab.target_existing',
+        'new': 'guest_checkin.tab.target_new',
+        'skip': 'guest_checkin.tab.target_skip',
+    }[option.kind] %}
+    <option value="{{ option.value }}"
+            {%- if option.customerId %} data-key="customer:{{ option.customerId }}"{% endif %}
+            {%- if option.inRoom %} data-room-guest="{{ option.customerId }}"{% endif %}
+            {%- if option.value == person.defaultTarget %} selected{% endif %}>{{ labelKey|trans({'%name%': option.name, '%id%': option.customerId}) }}</option>
+{% endmacro %}
+
+{% macro rows(rows, showOld) %}
+    {% import _self as m %}
+    <table class="table table-sm small mb-1">
+        <tbody>
+        {% for row in rows %}
+            <tr>
+                <th scope="row" class="fw-normal text-body-secondary w-25">{{ row.label|trans }}</th>
+                <td>
+                    {% if showOld and row.old is not null %}<del class="text-body-secondary">{{ m.value(row.old, row.translatable) }}</del> <i class="fas fa-arrow-right-long small text-body-secondary mx-1" aria-hidden="true"></i>{% endif %}
+                    {{ m.value(row.value, row.translatable) }}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endmacro %}
+
+<form action="{{ path('reservations.guest_checkin.apply', {'id': reservation.id}) }}" method="post"
+      data-action="submit->guest-checkin#post change->guest-checkin#sync">
+    <input type="hidden" name="_token" value="{{ csrf_token('guest-checkin-' ~ reservation.id) }}">
+    <input type="hidden" name="submissionVersion" value="{{ checkIn.submissionVersion }}">
+    <fieldset{% if not canEdit %} disabled{% endif %}>
+
+    {% if review.arrivalTime or review.message %}
+        <dl class="row small mb-3">
+            {% if review.arrivalTime %}
+                <dt class="col-sm-4 fw-normal text-body-secondary">{{ 'reservation.arrivalTime'|trans }}</dt>
+                <dd class="col-sm-8">{{ review.arrivalTime }}</dd>
+            {% endif %}
+            {% if review.message %}
+                <dt class="col-sm-4 fw-normal text-body-secondary">{{ 'guest_checkin.tab.message'|trans }}</dt>
+                <dd class="col-sm-8">{{ review.message|nl2br }}</dd>
+            {% endif %}
+        </dl>
+    {% endif %}
+
+    {# ── Persons ── #}
+    <h6 class="fw-semibold">{{ 'guest_checkin.tab.persons'|trans }}</h6>
+    {% if review.simple %}
+        <p class="small text-body-secondary mb-2">{{ 'guest_checkin.tab.simple_hint'|trans }}</p>
+    {% endif %}
+    {% for person in review.persons %}
+        {% set personId = 'guest-checkin-' ~ reservation.id ~ '-person-' ~ loop.index0 %}
+        {% set existingOptions = person.options|filter(option => option.kind == 'existing') %}
+        <details class="border rounded mb-2" data-guest-checkin-target="person"{% if person.needsChoice or person.differsFromBooker %} open{% endif %}>
+            <summary class="d-flex flex-wrap align-items-center column-gap-2 px-3 py-2">
+                <span class="fw-semibold">{{ person.name }}</span>
+                <span class="small text-body-secondary">{{ (person.main ? 'guest_checkin.tab.person_main' : 'guest_checkin.tab.person_companion')|trans }}</span>
+                <span class="small ms-auto" data-person-summary data-empty="{{ 'guest_checkin.tab.needs_choice'|trans }}"></span>
+                <i class="fas fa-chevron-down small text-body-secondary fhb-details-chevron" aria-hidden="true"></i>
+            </summary>
+            <div class="px-3 pb-3">
+                {% if person.needsChoice %}
+                    <div class="alert alert-warning small py-2" role="alert">{{ (person.nameOnlyMatch ? 'guest_checkin.apply.name_only_match' : 'guest_checkin.apply.ambiguous_matches')|trans }}</div>
+                {% endif %}
+                {% if person.differsFromBooker %}
+                    <div class="alert alert-info small py-2">{{ 'guest_checkin.tab.differs_from_booker'|trans({'%name%': (reservation.booker.firstname ~ ' ' ~ reservation.booker.lastname)|trim}) }}</div>
+                {% endif %}
+                {% if person.livesWithMain %}
+                    <p class="small text-body-secondary mb-2">{{ 'guest_checkin.tab.lives_with_main'|trans }}</p>
+                {% endif %}
+
+                <div class="row g-2 align-items-center mb-2">
+                    <label class="col-sm-4 col-form-label col-form-label-sm" for="{{ personId }}">{{ 'guest_checkin.tab.save_as'|trans }}</label>
+                    <div class="col-sm-8">
+                        <select class="form-select form-select-sm" id="{{ personId }}" name="{{ person.main ? 'mainTarget' : 'companionTargets[]' }}" required>
+                            {% if person.needsChoice %}
+                                <option value="" selected disabled>{{ 'guest_checkin.tab.target_choose'|trans }}</option>
+                            {% endif %}
+                            {% for option in person.options %}
+                                {% if option.kind != 'existing' %}
+                                    {{ m.option(option, person) }}
+                                {% elseif option.value == (existingOptions|first).value %}
+                                    <optgroup label="{{ 'guest_checkin.tab.existing_matches'|trans }}">
+                                        {% for existing in existingOptions %}{{ m.option(existing, person) }}{% endfor %}
+                                    </optgroup>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                {% for option in person.options %}
+                    {% set changes = option.changes %}
+                    {% if option.kind == 'skip' %}
+                        {% set summary = 'guest_checkin.tab.changes.skip'|trans %}
+                    {% elseif option.kind == 'new' %}
+                        {% set summary = 'guest_checkin.tab.changes.fields'|trans({'%count%': changes.new|length}) %}
+                    {% else %}
+                        {% set parts = [] %}
+                        {% if changes.changed is not empty %}{% set parts = parts|merge(['guest_checkin.tab.changes.changed'|trans({'%count%': changes.changed|length})]) %}{% endif %}
+                        {% if changes.new is not empty %}{% set parts = parts|merge(['guest_checkin.tab.changes.new'|trans({'%count%': changes.new|length})]) %}{% endif %}
+                        {% set summary = parts is empty ? 'guest_checkin.tab.changes.none'|trans : parts|join(', ') %}
+                    {% endif %}
+                    <div{% if option.value != person.defaultTarget %} class="d-none"{% endif %} data-diff-for="{{ option.value }}" data-summary="{{ summary }}">
+                        {% if option.kind == 'skip' %}
+                            <p class="small text-body-secondary mb-0">{{ 'guest_checkin.tab.changes.skip_hint'|trans }}</p>
+                        {% else %}
+                            {% if changes.changed is not empty %}
+                                <p class="small fw-semibold mb-1">{{ 'guest_checkin.tab.changes.changed_title'|trans }}</p>
+                                {{ m.rows(changes.changed, true) }}
+                            {% endif %}
+                            {% if changes.new is not empty %}
+                                <p class="small fw-semibold mb-1">{{ (option.kind == 'new' ? 'guest_checkin.tab.changes.new_record_title' : 'guest_checkin.tab.changes.new_title')|trans }}</p>
+                                {{ m.rows(changes.new, false) }}
+                            {% endif %}
+                            {% if changes.same is not empty %}
+                                <details class="small">
+                                    <summary class="text-body-secondary">{{ 'guest_checkin.tab.changes.unchanged'|trans({'%count%': changes.same|length}) }}</summary>
+                                    {{ m.rows(changes.same, false) }}
+                                </details>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                {% if person.main and reservation.booker %}
+                    <details class="small mt-2" data-guest-checkin-target="moreOptions">
+                        <summary class="text-body-secondary">{{ 'guest_checkin.tab.more_options'|trans }}</summary>
+                        <div class="form-check mt-1">
+                            <input class="form-check-input" type="checkbox" name="setAsBooker" value="1" id="{{ personId }}-booker">
+                            <label class="form-check-label" for="{{ personId }}-booker">{{ 'guest_checkin.tab.set_as_booker'|trans }}</label>
+                        </div>
+                    </details>
+                {% endif %}
+            </div>
+        </details>
+    {% endfor %}
+
+    {# ── The room afterwards ── #}
+    <h6 class="fw-semibold mt-3">
+        {{ 'guest_checkin.tab.room_title'|trans }}
+        <small class="fw-normal text-body-secondary">{{ 'guest_checkin.tab.room_capacity'|trans({'%count%': review.capacity}) }}</small>
+    </h6>
+    <ul class="list-group small mb-2" data-guest-checkin-target="room" data-capacity="{{ review.capacity }}">
+        {% for guest in review.roomGuests %}
+            <li class="list-group-item d-flex flex-wrap align-items-center column-gap-2" data-room-guest="{{ guest.id }}">
+                <span data-name>{{ guest.name }}</span>
+                {% if guest.isBooker %}<span class="badge text-bg-light border">{{ 'guest_checkin.tab.room_booker'|trans }}</span>{% endif %}
+                <span class="text-success-emphasis d-none" data-checked-in><i class="fas fa-check me-1"></i>{{ 'guest_checkin.tab.room_checked_in'|trans }}</span>
+                <div class="form-check ms-auto mb-0" data-remove>
+                    <input class="form-check-input" type="checkbox" name="removeGuests[]" value="{{ guest.id }}" id="guest-checkin-{{ reservation.id }}-remove-{{ guest.id }}">
+                    <label class="form-check-label" for="guest-checkin-{{ reservation.id }}-remove-{{ guest.id }}">{{ 'guest_checkin.tab.room_not_travelling'|trans }}</label>
+                </div>
+            </li>
+        {% endfor %}
+        {% for person in review.persons %}
+            <li class="list-group-item d-flex flex-wrap align-items-center column-gap-2 d-none" data-room-person="{{ loop.index0 }}">
+                <span>{{ person.name }}</span>
+                <span class="text-body-secondary">{{ 'guest_checkin.tab.room_added'|trans }}</span>
+                <span class="text-warning-emphasis ms-auto d-none" data-no-place><i class="fas fa-triangle-exclamation me-1"></i>{{ 'guest_checkin.tab.room_no_place'|trans }}</span>
+            </li>
+        {% endfor %}
+    </ul>
+    <div class="alert alert-warning small d-none" role="alert" data-guest-checkin-target="overflow">{{ 'guest_checkin.tab.room_overflow'|trans }}</div>
+
+    {# ── Requested services ── #}
+    {% if review.extras is not empty %}
+        <h6 class="fw-semibold mt-3">{{ 'guest_checkin.tab.extras'|trans }}</h6>
+        <ul class="small mb-2">
+            {% for extra in review.extras %}
+                <li>{{ extra.description }} · {{ extra.total|number_format(2, ',', '.') }} {{ currency_symbol }}</li>
+            {% endfor %}
+        </ul>
+        {% if review.extrasConflict %}
+            <div class="alert alert-warning small" role="alert">{{ 'guest_checkin.apply.extras_conflict_hint'|trans }}</div>
+        {% endif %}
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="applyExtras" value="1" id="guest-checkin-apply-extras-{{ reservation.id }}"{% if review.extrasConflict %} disabled{% else %} checked{% endif %}>
+            <label class="form-check-label small" for="guest-checkin-apply-extras-{{ reservation.id }}">{{ 'guest_checkin.apply.apply_extras'|trans }}</label>
+        </div>
+        <p class="small text-body-secondary mb-0">{{ 'guest_checkin.apply.extras_defer_hint'|trans }}</p>
+    {% endif %}
+
+    </fieldset>
+
+    {% if canEdit %}
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4">
+            {% set id = 'guest-checkin-' ~ reservation.id %}
+            {% set targetUrl = path('reservations.guest_checkin.discard', {'id': reservation.id}) %}
+            {% set deletePopoverHint = 'guest_checkin.discard.hint'|trans %}
+            <button type="button" class="btn btn-sm btn-outline-danger" title="{{ 'guest_checkin.discard.title'|trans }}"
+                    data-popover="delete" data-delete-target="#modal-content-ajax" data-bs-content='{{ block('deletePopoverContent') }}'>
+                <i class="fas fa-trash me-1"></i>{{ 'guest_checkin.discard.title'|trans }}
+            </button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-check me-1"></i>{{ 'guest_checkin.apply.submit'|trans }}</button>
+        </div>
+        <p class="small text-body-secondary text-end mt-2 mb-0">{{ 'guest_checkin.apply.hint'|trans }}</p>
+    {% endif %}
+</form>

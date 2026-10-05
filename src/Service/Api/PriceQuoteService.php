@@ -35,7 +35,7 @@ class PriceQuoteService
     }
 
     /**
-     * @param array<int, int> $guestCounts guest category id => head count
+     * @param array<int, int> $guestCounts       guest category id => head count
      * @param bool            $includeTouristTax false when the token may not see tourist tax
      */
     public function quote(

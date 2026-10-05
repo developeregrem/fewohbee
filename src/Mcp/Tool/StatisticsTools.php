@@ -1,0 +1,239 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Mcp\Tool;
+
+use App\Entity\Enum\ApiScope;
+use App\Entity\Enum\InvoiceStatus;
+use App\Entity\RoomCategory;
+use App\Entity\Subsidiary;
+use App\Mcp\Security\McpRequiresScope;
+use App\Mcp\Security\McpToolException;
+use App\Mcp\Support\McpInput;
+use App\Service\Api\StatisticsQueryService;
+use App\Service\MonthlyStatsService;
+use App\Service\Statistics\RevenueForecastService;
+use Doctrine\ORM\EntityManagerInterface;
+use Mcp\Capability\Attribute\McpTool;
+use Mcp\Capability\Attribute\Schema;
+use Mcp\Schema\ToolAnnotations;
+
+/**
+ * Key figures for operations reports: utilization, turnover and the monthly statistics.
+ */
+final class StatisticsTools
+{
+    public function __construct(
+        private readonly StatisticsQueryService $statisticsQueryService,
+        private readonly MonthlyStatsService $monthlyStatsService,
+        private readonly RevenueForecastService $revenueForecastService,
+        private readonly EntityManagerInterface $em,
+    ) {
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[McpTool(
+        name: 'get_occupancy_statistics',
+        title: 'Occupancy statistics',
+        description: 'Bed utilization in percent per month (at most 60 months), for all properties or one.',
+        annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
+    )]
+    #[McpRequiresScope(ApiScope::STATISTICS_READ)]
+    public function occupancy(
+        #[Schema(description: 'First month, YYYY-MM.')]
+        string $startMonth,
+        #[Schema(type: 'string', description: 'Last month (inclusive), YYYY-MM. Defaults to startMonth.')]
+        ?string $endMonth = null,
+        #[Schema(type: 'integer', description: 'Property (object) id; all properties when omitted.')]
+        ?int $objectId = null,
+    ): array {
+        $start = McpInput::month($startMonth, 'startMonth');
+        $end = null !== $endMonth ? McpInput::month($endMonth, 'endMonth') : $start;
+        if ($end < $start) {
+            throw McpToolException::invalid("'endMonth' must not be before 'startMonth'.");
+        }
+        $months = ((int) $end->format('Y') - (int) $start->format('Y')) * 12 + ((int) $end->format('n') - (int) $start->format('n')) + 1;
+        if ($months > StatisticsQueryService::MAX_MONTHS) {
+            throw McpToolException::invalid(\sprintf('The range must not exceed %d months.', StatisticsQueryService::MAX_MONTHS));
+        }
+
+        $result = $this->statisticsQueryService->utilizationByMonth($start, $end, $this->resolveObjectId($objectId), []);
+
+        return [
+            'months' => $result['data'],
+            'beds' => $result['beds'],
+            'objectId' => $objectId,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[McpTool(
+        name: 'get_turnover',
+        title: 'Turnover',
+        description: 'Invoice-based gross turnover per year or month (at most 5 years). Canceled invoices are excluded.',
+        annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
+    )]
+    #[McpRequiresScope(ApiScope::STATISTICS_READ)]
+    public function turnover(
+        #[Schema(description: 'First year.', minimum: 1970, maximum: 2999)]
+        int $startYear,
+        #[Schema(type: 'integer', description: 'Last year (inclusive). Defaults to startYear.', minimum: 1970, maximum: 2999)]
+        ?int $endYear = null,
+        #[Schema(description: 'One value per year or per month.', enum: ['year', 'month'])]
+        string $granularity = 'year',
+    ): array {
+        $endYear ??= $startYear;
+        if ($endYear < $startYear) {
+            throw McpToolException::invalid("'endYear' must not be before 'startYear'.");
+        }
+        if ($endYear - $startYear + 1 > StatisticsQueryService::MAX_YEARS) {
+            throw McpToolException::invalid(\sprintf('The range must not exceed %d years.', StatisticsQueryService::MAX_YEARS));
+        }
+        if (!\in_array($granularity, ['year', 'month'], true)) {
+            throw McpToolException::invalid("'granularity' must be 'year' or 'month'.");
+        }
+
+        return [
+            'turnover' => $this->statisticsQueryService->turnover($startYear, $endYear, $granularity, StatisticsQueryService::DEFAULT_INVOICE_STATUS),
+            'invoiceStatus' => array_map(static fn (int $status): ?string => InvoiceStatus::fromStatus($status)?->name, StatisticsQueryService::DEFAULT_INVOICE_STATUS),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[McpTool(
+        name: 'get_monthly_metrics',
+        title: 'Monthly key figures',
+        description: 'Key figures of one month as shown in the monthly statistics: stays and overnight stays, arrivals, utilization per day, guests by country, booking origins, blocked rooms, turnover (all properties only) and data quality warnings.',
+        annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
+    )]
+    #[McpRequiresScope(ApiScope::STATISTICS_READ)]
+    public function monthlyMetrics(
+        #[Schema(description: 'Month, YYYY-MM.')]
+        string $month,
+        #[Schema(type: 'integer', description: 'Property (object) id; all properties when omitted.')]
+        ?int $objectId = null,
+    ): array {
+        $monthStart = McpInput::month($month, 'month');
+        $subsidiary = $this->resolveSubsidiary($objectId);
+
+        // Computed live; unlike the statistics page this does not store a snapshot.
+        $result = $this->monthlyStatsService->buildMetrics((int) $monthStart->format('n'), (int) $monthStart->format('Y'), $subsidiary);
+
+        return $result['metrics'];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[McpTool(
+        name: 'get_booking_pace',
+        title: 'Booking pace',
+        description: 'Booked room nights for a stay period (at most 366 nights) as of a cut-off day, compared with the same period one year earlier as of the same cut-off day, plus what is booked for both periods now. Shows whether bookings run ahead of or behind last year and how much the previous year still gained after the cut-off. Canceled or deleted reservations are not counted, not even for the time before their cancellation.',
+        annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
+    )]
+    #[McpRequiresScope(ApiScope::STATISTICS_READ)]
+    public function bookingPace(
+        #[Schema(description: 'First night of the stay period, YYYY-MM-DD.')]
+        string $start,
+        #[Schema(description: 'Last night of the stay period (inclusive), YYYY-MM-DD.')]
+        string $end,
+        #[Schema(type: 'string', description: 'Last booking day that counts, YYYY-MM-DD. Defaults to today.')]
+        ?string $asOf = null,
+        #[Schema(type: 'integer', description: 'Property (object) id; all properties when omitted.')]
+        ?int $objectId = null,
+        #[Schema(type: 'integer', description: 'Only rooms of this room category.')]
+        ?int $roomCategoryId = null,
+    ): array {
+        $firstNight = McpInput::date($start, 'start');
+        $lastNight = McpInput::date($end, 'end');
+        $cutOff = null !== $asOf ? McpInput::date($asOf, 'asOf') : new \DateTimeImmutable('today');
+        if ($lastNight < $firstNight) {
+            throw McpToolException::invalid("'end' must not be before 'start'.");
+        }
+        if ((int) $firstNight->diff($lastNight)->days >= StatisticsQueryService::MAX_PACE_NIGHTS) {
+            throw McpToolException::invalid(\sprintf('The period must not exceed %d nights.', StatisticsQueryService::MAX_PACE_NIGHTS));
+        }
+        if (null !== $roomCategoryId && !$this->em->getRepository(RoomCategory::class)->find($roomCategoryId) instanceof RoomCategory) {
+            throw McpToolException::invalid('Unknown room category id.');
+        }
+
+        return $this->statisticsQueryService->bookingPace($firstNight, $lastNight, $cutOff, $this->resolveObjectId($objectId), $roomCategoryId);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[McpTool(
+        name: 'get_revenue_forecast',
+        title: 'Revenue forecast',
+        description: 'Expected gross revenue from the existing reservations per month of departure (at most 36 months), for all properties or one. Every reservation is valued like the invoice FewohBee would prefill for it: room price, guest category surcharges and discounts, booked extras and tourist tax. All reservations count except canceled / no-show and conflicts. "withoutInvoice" is revenue that is not invoiced yet; "withInvoice" are reservations that already have an invoice, valued the same way (their real invoices are in get_turnover, by invoice date). Use this instead of pricing reservations one by one.',
+        annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
+    )]
+    #[McpRequiresScope(ApiScope::STATISTICS_READ)]
+    public function revenueForecast(
+        #[Schema(description: 'First month of departure, YYYY-MM.')]
+        string $startMonth,
+        #[Schema(type: 'string', description: 'Last month (inclusive), YYYY-MM. Defaults to startMonth.')]
+        ?string $endMonth = null,
+        #[Schema(type: 'integer', description: 'Property (object) id; all properties when omitted.')]
+        ?int $objectId = null,
+    ): array {
+        $start = McpInput::month($startMonth, 'startMonth');
+        $end = null !== $endMonth ? McpInput::month($endMonth, 'endMonth') : $start;
+        if ($end < $start) {
+            throw McpToolException::invalid("'endMonth' must not be before 'startMonth'.");
+        }
+        $months = ((int) $end->format('Y') - (int) $start->format('Y')) * 12 + ((int) $end->format('n') - (int) $start->format('n')) + 1;
+        if ($months > RevenueForecastService::MAX_MONTHS) {
+            throw McpToolException::invalid(\sprintf('The range must not exceed %d months.', RevenueForecastService::MAX_MONTHS));
+        }
+
+        $rows = [];
+        $totals = ['withoutInvoice' => 0.0, 'withInvoice' => 0.0];
+        foreach ($this->revenueForecastService->byDepartureMonth($start, $end, $this->resolveSubsidiary($objectId)) as $month => $forecast) {
+            $rows[] = [
+                'month' => $month,
+                'withoutInvoice' => $forecast['open'],
+                'withInvoice' => $forecast['invoiced'],
+                'total' => round($forecast['open']['total'] + $forecast['invoiced']['total'], 2),
+            ];
+            $totals['withoutInvoice'] += $forecast['open']['total'];
+            $totals['withInvoice'] += $forecast['invoiced']['total'];
+        }
+
+        return [
+            'objectId' => $objectId,
+            'months' => $rows,
+            'totals' => [
+                'withoutInvoice' => round($totals['withoutInvoice'], 2),
+                'withInvoice' => round($totals['withInvoice'], 2),
+                'total' => round($totals['withoutInvoice'] + $totals['withInvoice'], 2),
+            ],
+        ];
+    }
+
+    private function resolveObjectId(?int $objectId): string
+    {
+        return null === $this->resolveSubsidiary($objectId) ? 'all' : (string) $objectId;
+    }
+
+    private function resolveSubsidiary(?int $objectId): ?Subsidiary
+    {
+        if (null === $objectId) {
+            return null;
+        }
+        $subsidiary = $this->em->getRepository(Subsidiary::class)->find($objectId);
+        if (!$subsidiary instanceof Subsidiary) {
+            throw McpToolException::invalid('Unknown property (object) id.');
+        }
+
+        return $subsidiary;
+    }
+}

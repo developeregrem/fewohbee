@@ -750,6 +750,42 @@
                 <source>invoice.payment_due_date</source>
                 <target>Zahlbar bis</target>
             </trans-unit>
+            <trans-unit id="invoice.payment_due.date">
+                <source>invoice.payment_due.date</source>
+                <target>Fälligkeitsdatum</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.choose">
+                <source>invoice.payment_due.choose</source>
+                <target>Frist wählen</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.period">
+                <source>invoice.payment_due.period</source>
+                <target>{0}Sofort fällig|{1}%count% Tag|]1,Inf]%count% Tage</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.standard">
+                <source>invoice.payment_due.standard</source>
+                <target>Standard</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.custom">
+                <source>invoice.payment_due.custom</source>
+                <target>Eigene Frist</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.days">
+                <source>invoice.payment_due.days</source>
+                <target>Tage</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.first_arrival">
+                <source>invoice.payment_due.first_arrival</source>
+                <target>Bis zur Anreise</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.last_departure">
+                <source>invoice.payment_due.last_departure</source>
+                <target>Bis zur Abreise</target>
+            </trans-unit>
+            <trans-unit id="invoice.payment_due.date.missing">
+                <source>invoice.payment_due.date.missing</source>
+                <target>Bitte gib ein gültiges Fälligkeitsdatum an.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

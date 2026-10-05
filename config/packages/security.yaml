@@ -26,6 +26,16 @@ security:
             custom_authenticators:
                 - App\Security\ApiTokenBasicAuthenticator
             entry_point: App\Security\ApiTokenBasicAuthenticator
+        # MCP endpoint for AI assistants: bearer tokens carrying the mcp:access scope only.
+        # Deliberately no HTTP Basic: browsers cache Basic credentials and replay them on
+        # cross-site requests. McpAccessSubscriber answers 404 before this runs when MCP is off.
+        mcp:
+            pattern: ^/mcp
+            stateless: true
+            provider: our_db_provider
+            access_token:
+                token_handler: App\Security\McpTokenHandler
+            entry_point: App\Security\McpAuthenticationEntryPoint
         main:
             #pattern:    ^/
             provider: our_db_provider
@@ -41,6 +51,12 @@ security:
                 form_only: true
                 enable_csrf: true
                 default_target_path: /dashboard
+            # Shared across both public hosts: switching from the custom domain to the
+            # fallback must not reset the failed-login budget.
+            login_throttling:
+                max_attempts: 5
+                interval: '1 minute'
+                cache_pool: cache.app
             logout:
                 path:   /logout
                 target: dashboard.redirect
@@ -68,7 +84,10 @@ security:
         - { path: ^/register,  roles: PUBLIC_ACCESS}
         - { path: ^/book, roles: PUBLIC_ACCESS }
         - { path: ^/apartments/calendar, roles: PUBLIC_ACCESS }
+        # Online check-in for guests: the link token and the booking-details check guard it.
+        - { path: ^/checkin/, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/mcp, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/reservation/*, roles: [ROLE_RESERVATIONS_RO, ROLE_RESERVATIONS] }
         - { path: ^/correspondence, roles: [ROLE_RESERVATIONS, ROLE_OPERATIONS] }
         - { path: ^/operations/housekeeping, roles: ROLE_OPERATIONS }

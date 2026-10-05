@@ -36,7 +36,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
 
     public function supportsPreview(Template $template): bool
     {
-        return $template->getTemplateType()?->getName() === 'TEMPLATE_INVOICE_PDF';
+        return 'TEMPLATE_INVOICE_PDF' === $template->getTemplateType()?->getName();
     }
 
     public function getPreviewContextDefinition(): array
@@ -113,7 +113,8 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             'numbers' => ['type' => 'array'],
             'appartmentTotal' => ['type' => 'scalar'],
             'miscTotal' => ['type' => 'scalar'],
-            'paymentDueDate' => ['type' => 'date'],
+            // Null when the invoice's branch has no payment period configured.
+            'paymentDueDate' => ['type' => 'date', 'nullable' => true],
             'originName' => ['type' => 'scalar'],
             'originCommission' => ['type' => 'scalar'],
             'originCommissionFormated' => ['type' => 'scalar'],
@@ -284,7 +285,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
                 'description' => 'templates.editor.payment_qr.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
-                'content' => "<div data-if=\"payment_qr(invoice)\"><img src=\"[[ payment_qr(invoice, 300) ]]\" alt=\"\" width=\"30mm\"></div>",
+                'content' => '<div data-if="payment_qr(invoice)"><img src="[[ payment_qr(invoice, 300) ]]" alt="" width="30mm"></div>',
             ],
             [
                 'id' => 'invoice.payment_due_date',
@@ -297,6 +298,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.origin_name',
                 'label' => 'templates.editor.origin_name',
+                'description' => 'templates.editor.origin_name.desc',
                 'group' => 'Invoice',
                 'complexity' => 'simple',
                 'content' => '<span data-if="originName">[[ originName ]]</span>',
@@ -304,6 +306,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.origin_commission',
                 'label' => 'templates.editor.origin_commission',
+                'description' => 'templates.editor.origin_commission.desc',
                 'group' => 'Invoice',
                 'complexity' => 'simple',
                 'content' => '<span data-if="originCommission">[[ originCommissionFormated ]] €</span>',
@@ -311,6 +314,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.origin_payment_fee',
                 'label' => 'templates.editor.origin_payment_fee',
+                'description' => 'templates.editor.origin_payment_fee.desc',
                 'group' => 'Invoice',
                 'complexity' => 'simple',
                 'content' => '<span data-if="originPaymentFee">[[ originPaymentFeeFormated ]] €</span>',
@@ -412,7 +416,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             'miscTotal' => number_format($miscTotal, 2, ',', '.'),
             // A sample invoice has no issuer behind it, so the preview shows what a
             // ten-day period would look like rather than leaving the line empty.
-            'paymentDueDate' => (new \DateTimeImmutable('today'))->modify('+10 days'),
+            'paymentDueDate' => new \DateTimeImmutable('today')->modify('+10 days'),
             'originName' => 'Booking.com',
             'originCommission' => $sampleCommission,
             'originCommissionFormated' => number_format($sampleCommission, 2, ',', '.'),

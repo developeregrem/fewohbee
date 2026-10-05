@@ -63,7 +63,7 @@ class BankImportRule
 
     /**
      * Array of condition objects. All conditions must match (AND logic).
-     * Each element: { field: string, operator: string, value: mixed }
+     * Each element: { field: string, operator: string, value: mixed }.
      *
      * @var list<array{field: string, operator: string, value: mixed}>
      */
@@ -74,7 +74,7 @@ class BankImportRule
      * Action to perform when all conditions match.
      * Mode "assign": { mode: "assign", debitAccountId: int|null, creditAccountId: int|null, taxRateId: int|null, remarkTemplate: string|null }
      * Mode "split":  { mode: "split", splits: [{ amount: float|null, percent: float|null, remainder: bool, amountSource: "purpose_marker"|"purpose_regex"|null, marker: string|null, pattern: string|null, debitAccountId: int, creditAccountId: int, taxRateId: int|null, remarkTemplate: string|null }] }
-     * Mode "ignore": { mode: "ignore" }
+     * Mode "ignore": { mode: "ignore" }.
      *
      * @var array<string, mixed>
      */

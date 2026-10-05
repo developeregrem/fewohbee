@@ -7,6 +7,9 @@ namespace App\Controller;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
+use App\Repository\GuestCheckInRepository;
+use App\Service\GuestCheckIn\GuestCheckInConfigService;
+use App\Service\GuestCheckIn\GuestCheckInDeskService;
 use App\Service\FrontdeskViewService;
 use App\Service\HousekeepingViewService;
 use App\Service\OperationsFilterService;
@@ -16,9 +19,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * Frontdesk checklist view for arrivals, departures and inhouse guests.
@@ -36,7 +39,9 @@ class OperationsFrontdeskController extends AbstractController
         Request $request,
         HousekeepingViewService $viewService,
         OperationsFilterService $filterService,
-        FrontdeskViewService $frontdeskViewService
+        FrontdeskViewService $frontdeskViewService,
+        GuestCheckInRepository $guestCheckInRepository,
+        GuestCheckInConfigService $guestCheckInConfigService,
     ): Response {
         $session = $request->getSession();
         $em = $doctrine->getManager();
@@ -87,6 +92,11 @@ class OperationsFrontdeskController extends AbstractController
             'selectedCategories' => $selectedCategories,
             'selectedStatusIds' => $selectedStatusIds,
             'frontdeskItems' => $items,
+            // One query for the whole list, not one per row.
+            'checkInStates' => $guestCheckInRepository->findStatesForReservations(
+                array_values(array_map(static fn (array $item): int => (int) $item['reservation']->getId(), $items))
+            ),
+            'guestCheckInEnabled' => $guestCheckInConfigService->isEnabled(),
             'reservationStatuses' => $reservationStatuses,
         ];
 
@@ -96,6 +106,35 @@ class OperationsFrontdeskController extends AbstractController
         }
 
         return $this->render('Operations/Frontdesk/index.html.twig', $viewData);
+    }
+
+    /**
+     * Marks the guest as checked in at the desk (intent "mark") or takes that back ("undo"), and
+     * answers with the row's check-in cell, which replaces the old one in place.
+     */
+    #[Route('/reservation/{id}/checkin', name: 'operations.frontdesk.checkin', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function checkInAction(
+        Request $request,
+        Reservation $reservation,
+        GuestCheckInDeskService $deskService,
+        GuestCheckInRepository $guestCheckInRepository,
+        GuestCheckInConfigService $guestCheckInConfigService,
+    ): Response {
+        if (!$this->isCsrfTokenValid('frontdesk-checkin-'.$reservation->getId(), $request->request->getString('_token'))) {
+            return new Response('invalid token', Response::HTTP_BAD_REQUEST);
+        }
+
+        if ('undo' === $request->request->getString('intent')) {
+            $deskService->undo($reservation);
+        } else {
+            $deskService->markCheckedIn($reservation);
+        }
+
+        return $this->render('Operations/Frontdesk/_checkin_cell.html.twig', [
+            'reservation' => $reservation,
+            'checkInState' => $guestCheckInRepository->findStatesForReservations([(int) $reservation->getId()])[(int) $reservation->getId()] ?? null,
+            'guestCheckInEnabled' => $guestCheckInConfigService->isEnabled(),
+        ]);
     }
 
     /**
@@ -141,5 +180,4 @@ class OperationsFrontdeskController extends AbstractController
 
         return $this->forward('App\\Controller\\ReservationServiceController::selectTemplateAction', [], $request->request->all());
     }
-
 }

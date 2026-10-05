@@ -14,6 +14,9 @@ parameters:
     env(OIDC_ENFORCE): 'false'
     env(OIDC_END_SESSION): 'false'
     env(TRUSTED_PROXIES): ''
+    # MCP server for AI assistants; see config/packages/mcp.yaml
+    env(MCP_ENABLED): 'false'
+    env(MCP_ALLOW_INSECURE_HTTP): 'false'
 
 framework:
     secret: '%env(APP_SECRET)%'
@@ -54,6 +57,25 @@ framework:
             limit: 40
             interval: '5 minutes'
             cache_pool: cache.app
+        # Online check-in (GuestCheckInRateLimiter): only failures count, so guests sharing the
+        # house's WiFi never block each other. Links that do not work per visitor, wrong booking
+        # details per link (dates and last name are guessable in theory) and stored
+        # submissions per link.
+        guest_checkin_invalid_link:
+            policy: 'sliding_window'
+            limit: 20
+            interval: '15 minutes'
+            cache_pool: cache.app
+        guest_checkin_verify:
+            policy: 'sliding_window'
+            limit: 5
+            interval: '15 minutes'
+            cache_pool: cache.app
+        guest_checkin_submit:
+            policy: 'sliding_window'
+            limit: 10
+            interval: '1 hour'
+            cache_pool: cache.app
         api:
             policy: 'sliding_window'
             limit: 300
@@ -63,6 +85,26 @@ framework:
             policy: 'sliding_window'
             limit: 20
             interval: '15 minutes'
+            cache_pool: cache.app
+        # AI assistants fire bursts of tool calls, but a runaway agent must not
+        # starve the few PHP-FPM workers the web interface shares with it.
+        mcp:
+            policy: 'sliding_window'
+            limit: 120
+            interval: '1 minute'
+            cache_pool: cache.app
+        # Reservations and price changes through MCP, per token and kind.
+        mcp_write:
+            policy: 'sliding_window'
+            limit: 20
+            interval: '1 hour'
+            cache_pool: cache.app
+        # Changes through the REST API (day prices), per token. One request carries up to
+        # 1000 nights, so this leaves room for an hourly sync of many room categories.
+        api_write:
+            policy: 'sliding_window'
+            limit: 60
+            interval: '1 hour'
             cache_pool: cache.app
         # Guards the OIDC callback: every hit triggers an outbound token request,
         # so cap how often an unauthenticated client can force one.
@@ -97,6 +139,21 @@ when@test:
                 enabled: false
         rate_limiter:
             # Generous limits so repeated test runs never trip the limiters.
+            guest_checkin_invalid_link:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '5 minutes'
+                cache_pool: cache.app
+            guest_checkin_verify:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '15 minutes'
+                cache_pool: cache.app
+            guest_checkin_submit:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '1 hour'
+                cache_pool: cache.app
             api:
                 policy: 'sliding_window'
                 limit: 10000
@@ -111,6 +168,21 @@ when@test:
                 policy: 'sliding_window'
                 limit: 10000
                 interval: '5 minutes'
+                cache_pool: cache.app
+            mcp:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '1 minute'
+                cache_pool: cache.app
+            mcp_write:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '1 hour'
+                cache_pool: cache.app
+            api_write:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '1 hour'
                 cache_pool: cache.app
 
 when@dev:

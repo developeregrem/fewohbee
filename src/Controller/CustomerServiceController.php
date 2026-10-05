@@ -116,8 +116,8 @@ class CustomerServiceController extends AbstractController
             : [];
 
         return $this->render('Customers/customer_form_show.html.twig', [
-            'customer'     => $customer,
-            'token'        => $csrf->getCSRFTokenForForm(),
+            'customer' => $customer,
+            'token' => $csrf->getCSRFTokenForForm(),
             'reservations' => $reservations,
         ]);
     }
@@ -232,13 +232,13 @@ class CustomerServiceController extends AbstractController
             }
 
             return new Response('ok');
-        } else {
-            // initial get load (ask for deleting)
-            return $this->render('Customers/customer_form_delete.html.twig', [
-                'id' => $id,
-                'token' => $csrf->getCSRFTokenForForm(),
-            ]);
         }
+
+        // initial get load (ask for deleting)
+        return $this->render('Customers/customer_form_delete.html.twig', [
+            'id' => $id,
+            'token' => $csrf->getCSRFTokenForForm(),
+        ]);
     }
 
     /**

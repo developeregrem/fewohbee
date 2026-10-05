@@ -14,17 +14,11 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Dto\Api\ReservationDto;
-use App\Entity\Appartment;
-use App\Entity\Enum\InvoiceStatus;
-use App\Entity\ReservationStatus;
 use App\Repository\InvoiceRepository;
-use App\Repository\ReservationRepository;
 use App\Security\Voter\ApiScopeVoter;
-use App\Service\Api\ReservationTypeClassifier;
-use App\Service\HousekeepingViewService;
-use App\Service\OperationsFilterService;
+use App\Service\Api\InvoiceDtoBuilder;
+use App\Service\Api\ReservationQueryService;
 use App\Service\ReservationNameResolver;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -36,17 +30,11 @@ use Symfony\Component\Serializer\SerializerInterface;
 #[Route('/api/v1')]
 class ReservationApiController extends AbstractController
 {
-    private const MAX_RANGE_DAYS = 180;
-
     public function __construct(
-        private readonly ReservationRepository $reservationRepository,
+        private readonly ReservationQueryService $reservationQueryService,
         private readonly InvoiceRepository $invoiceRepository,
-        private readonly OperationsFilterService $operationsFilterService,
-        private readonly HousekeepingViewService $housekeepingViewService,
-        private readonly ReservationTypeClassifier $typeClassifier,
         private readonly ReservationNameResolver $nameResolver,
         private readonly SerializerInterface $serializer,
-        private readonly EntityManagerInterface $em,
     ) {
     }
 
@@ -56,61 +44,21 @@ class ReservationApiController extends AbstractController
     {
         $start = $this->parseDate($request->query->get('start'), 'start') ?? new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
         $end = $this->parseDate($request->query->get('end'), 'end') ?? $start;
-
-        if ($end < $start) {
-            throw new BadRequestHttpException("Parameter 'end' must not be before 'start'.");
-        }
-        if ((int) $start->diff($end)->format('%a') > self::MAX_RANGE_DAYS) {
-            throw new BadRequestHttpException(sprintf('Date range must not exceed %d days.', self::MAX_RANGE_DAYS));
-        }
-
-        $subsidiary = null;
-        $objectId = $request->query->get('objectId');
-        if (null !== $objectId && '' !== $objectId && 'all' !== $objectId) {
-            $subsidiary = $this->operationsFilterService->resolveSubsidiary($this->em, (string) $objectId);
-            if (null === $subsidiary) {
-                throw new BadRequestHttpException("Unknown 'objectId'.");
-            }
-        }
-
-        $statusIds = $this->resolveStatusIds($request);
-
-        $apartment = null;
         $apartmentId = $request->query->get('apartmentId');
-        if (null !== $apartmentId && '' !== $apartmentId) {
-            $apartment = $this->em->getRepository(Appartment::class)->find((int) $apartmentId);
-            if (!$apartment instanceof Appartment) {
-                throw new BadRequestHttpException("Unknown 'apartmentId'.");
-            }
-            if (null !== $subsidiary && $apartment->getObject()?->getId() !== $subsidiary->getId()) {
-                throw new BadRequestHttpException("Apartment does not belong to the given 'objectId'.");
-            }
-        }
+        $objectId = $request->query->get('objectId');
 
-        $type = $request->query->get('type');
-        if (null !== $type && !\in_array($type, ReservationTypeClassifier::TYPES, true)) {
-            throw new BadRequestHttpException(sprintf("Parameter 'type' must be one of: %s.", implode(', ', ReservationTypeClassifier::TYPES)));
-        }
-
-        // Repository expects an exclusive end date (same convention as HousekeepingViewService::buildRangeView()).
-        $reservations = $this->reservationRepository->findForHousekeepingRange(
-            $start,
-            $end->modify('+1 day'),
-            $subsidiary,
-            'blocking',
-            $statusIds
-        );
-
-        $matched = [];
-        foreach ($reservations as $reservation) {
-            if (null !== $apartment && $reservation->getAppartment()?->getId() !== $apartment->getId()) {
-                continue;
-            }
-            $types = $this->typeClassifier->classify($reservation, $start, $end);
-            if (null !== $type && !\in_array($type, $types, true)) {
-                continue;
-            }
-            $matched[] = [$reservation, $types];
+        try {
+            $matched = $this->reservationQueryService->find(
+                $start,
+                $end,
+                null !== $objectId ? (string) $objectId : null,
+                null !== $apartmentId && '' !== $apartmentId ? (int) $apartmentId : null,
+                // Accept both statusId=1,2 and statusId[]=1&statusId[]=2.
+                $request->query->all()['statusId'] ?? null,
+                $request->query->get('type'),
+            );
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage(), $e);
         }
 
         // Linked invoices are only disclosed to tokens that may read invoices;
@@ -130,7 +78,7 @@ class ReservationApiController extends AbstractController
                 $this->nameResolver->resolve($reservation),
                 null === $invoicesByReservation
                     ? null
-                    : $this->mapInvoiceSummaries($invoicesByReservation[(int) $reservation->getId()] ?? [])
+                    : InvoiceDtoBuilder::mapSummaries($invoicesByReservation[(int) $reservation->getId()] ?? [])
             );
         }
 
@@ -144,27 +92,6 @@ class ReservationApiController extends AbstractController
         ], 'json'));
     }
 
-    /**
-     * @param list<array{id: int, number: string, date: \DateTimeInterface, status: int}> $rows
-     *
-     * @return list<array<string, mixed>>
-     */
-    private function mapInvoiceSummaries(array $rows): array
-    {
-        $result = [];
-        foreach ($rows as $row) {
-            $statusId = (int) $row['status'];
-            $result[] = [
-                'id' => (int) $row['id'],
-                'number' => $row['number'],
-                'date' => $row['date']->format('Y-m-d'),
-                'status' => ['id' => $statusId, 'code' => InvoiceStatus::fromStatus($statusId)?->name],
-            ];
-        }
-
-        return $result;
-    }
-
     private function parseDate(?string $value, string $paramName): ?\DateTimeImmutable
     {
         if (null === $value || '' === $value) {
@@ -176,25 +103,5 @@ class ReservationApiController extends AbstractController
         }
 
         return $parsed->setTime(0, 0);
-    }
-
-    /**
-     * @return int[]|null null = default blocking-status behaviour
-     */
-    private function resolveStatusIds(Request $request): ?array
-    {
-        // Accept both statusId=1,2 and statusId[]=1&statusId[]=2.
-        $param = $request->query->all()['statusId'] ?? null;
-        if (null === $param || '' === $param || [] === $param) {
-            return null;
-        }
-
-        $allStatuses = $this->em->getRepository(ReservationStatus::class)->findAll();
-        $ids = $this->housekeepingViewService->normalizeReservationStatusIds($param, $allStatuses);
-        if ([] === $ids) {
-            throw new BadRequestHttpException("Unknown 'statusId'.");
-        }
-
-        return $ids;
     }
 }

@@ -111,7 +111,7 @@ final class RoleAccessTest extends WebTestCase
     }
 
     /**
-     * @return iterable<string, array{roles: string[], expectedRoute: string}>
+     * @return iterable<string, array{string[], string}>
      */
     private function dashboardCases(): iterable
     {
@@ -128,7 +128,7 @@ final class RoleAccessTest extends WebTestCase
     }
 
     /**
-     * @return iterable<string, array{role: string, path: string}>
+     * @return iterable<string, array{string, string}>
      */
     private function authorizedRoutes(): iterable
     {
@@ -145,7 +145,7 @@ final class RoleAccessTest extends WebTestCase
     }
 
     /**
-     * @return iterable<string, array{role: string, path: string}>
+     * @return iterable<string, array{string, string}>
      */
     private function unauthorizedRoutes(): iterable
     {
@@ -158,5 +158,7 @@ final class RoleAccessTest extends WebTestCase
         // actions were missing the #[IsGranted('ROLE_RESERVATIONS')] check
         // that every other reservation-mutating action carries.
         yield 'reservations ro user on new calendar entry' => ['ROLE_RESERVATIONS_RO', '/reservation/calendar-entry/new'];
+        yield 'reservations user on online check-in settings' => ['ROLE_RESERVATIONS', '/settings/guest-checkin'];
+        yield 'reservations user on online check-in preview' => ['ROLE_RESERVATIONS', '/settings/guest-checkin/preview'];
     }
 }

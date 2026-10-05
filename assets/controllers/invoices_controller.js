@@ -184,6 +184,9 @@ export default class extends Controller {
         const successUrl = event.currentTarget.dataset.successUrl;
         const form = event.target.closest('form');
         if (!url || !successUrl || !form) return;
+        // The request leaves for the overview whatever the server answers, so a field the
+        // server would reject has to be caught here, e.g. a payment period without days.
+        if (!form.reportValidity()) return;
         httpRequest({ 
             url, 
             method: 'POST', 
@@ -208,7 +211,7 @@ export default class extends Controller {
         return false;
     }
 
-    // Auto-saves invoice number and date to the session while typing (debounced).
+    // Auto-saves invoice number, date and due date to the session while typing (debounced).
     updateInvoiceMetaAction() {
         if (!this.debouncedInvoiceMeta) {
             this.debouncedInvoiceMeta = debounce(() => this.saveInvoiceMeta(), 400);
@@ -223,7 +226,9 @@ export default class extends Controller {
         if (!url) return;
         const number = document.getElementById('invoiceidInput');
         const date = document.getElementById('invoiceDate');
-        const data = `invoiceid=${encodeURIComponent(number ? number.value : '')}&invoiceDate=${encodeURIComponent(date ? date.value : '')}`;
+        const dueDate = document.getElementById('paymentDueDate');
+        let data = `invoiceid=${encodeURIComponent(number ? number.value : '')}&invoiceDate=${encodeURIComponent(date ? date.value : '')}`;
+        if (dueDate) data += `&paymentDueDate=${encodeURIComponent(dueDate.value)}`;
         // onSuccess no-op keeps the request silent; without it the shared helper would reload the page.
         httpRequest({ url, method: 'POST', data, loader: false, onSuccess: () => {} });
     }
@@ -442,6 +447,97 @@ export default class extends Controller {
             method: 'GET',
             target: this.modalContent,
         });
+    }
+
+    // Payment due date menu: a period from the invoice date, arrival or departure just
+    // fills in the date field, the only one that is submitted. It works within the
+    // nearest [data-payment-due-scope], where an editable invoice date field takes
+    // precedence over the date the menu was rendered with. Filling in the date fires its
+    // change event, so an auto-save on it sees the new value too. Dates are handled as
+    // UTC days so a daylight saving change cannot shift them.
+    paymentDuePeriodAction(event) {
+        event.preventDefault();
+        this._applyPaymentDueDays(event.currentTarget, event.currentTarget.dataset.days);
+        this._closePaymentDueMenu(event.currentTarget);
+    }
+
+    // Own period typed into the menu: the date follows with every keystroke.
+    paymentDueDaysInputAction(event) {
+        this._applyPaymentDueDays(event.currentTarget, event.currentTarget.value);
+    }
+
+    // Enter only closes the menu; inside the number and date dialog it would submit it.
+    paymentDueDaysEnterAction(event) {
+        event.preventDefault();
+        this._closePaymentDueMenu(event.currentTarget);
+    }
+
+    // First arrival or last departure of the room positions.
+    paymentDueToStayDateAction(event) {
+        event.preventDefault();
+        const scope = event.currentTarget.closest('[data-payment-due-scope]');
+        const stayDate = event.currentTarget.closest('[data-payment-due-stay]')?.dataset.paymentDueStay;
+        if (!stayDate) return;
+        this._setPaymentDueDate(scope, stayDate);
+        this._closePaymentDueMenu(event.currentTarget);
+    }
+
+    // The invoice date moved: the due date keeps its distance to it, and arrival and
+    // departure are only offered while they do not lie before the invoice date.
+    paymentInvoiceDateChangedAction(event) {
+        const input = event.currentTarget;
+        const scope = input.closest('[data-payment-due-scope]');
+        const invoiceDate = input.value;
+        const previous = input.dataset.paymentPrevious || input.defaultValue;
+        input.dataset.paymentPrevious = invoiceDate;
+        if (!scope || !invoiceDate) return;
+        const dueDate = scope.querySelector('[data-payment-due-date]')?.value;
+        const days = this._isoDayDiff(previous, dueDate);
+        if (days !== null && days >= 0) {
+            this._setPaymentDueDate(scope, this._shiftIsoDate(invoiceDate, days));
+        }
+        let anyStayDate = false;
+        scope.querySelectorAll('[data-payment-due-stay]').forEach((item) => {
+            const offered = item.dataset.paymentDueStay >= invoiceDate;
+            item.classList.toggle('d-none', !offered);
+            anyStayDate ||= offered;
+        });
+        scope.querySelector('[data-payment-due-stay-divider]')?.classList.toggle('d-none', !anyStayDate);
+    }
+
+    _applyPaymentDueDays(element, value) {
+        const scope = element.closest('[data-payment-due-scope]');
+        const days = Number.parseInt(value, 10);
+        const invoiceDate = this._paymentInvoiceDate(scope);
+        if (!invoiceDate || Number.isNaN(days) || days < 0) return;
+        this._setPaymentDueDate(scope, this._shiftIsoDate(invoiceDate, days));
+    }
+
+    _closePaymentDueMenu(element) {
+        const toggle = element.closest('.input-group')?.querySelector('[data-bs-toggle="dropdown"]');
+        if (toggle && window.bootstrap) window.bootstrap.Dropdown.getInstance(toggle)?.hide();
+    }
+
+    _setPaymentDueDate(scope, isoDate) {
+        const dateInput = scope?.querySelector('[data-payment-due-date]');
+        if (!dateInput) return;
+        dateInput.value = isoDate;
+        dateInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    _paymentInvoiceDate(scope) {
+        return scope?.querySelector('[data-payment-invoice-date]')?.value || null;
+    }
+
+    _shiftIsoDate(isoDate, days) {
+        const [y, m, d] = isoDate.split('-').map(Number);
+        return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+    }
+
+    _isoDayDiff(fromIso, toIso) {
+        if (!fromIso || !toIso) return null;
+        const toUtc = (iso) => { const [y, m, d] = iso.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+        return Math.round((toUtc(toIso) - toUtc(fromIso)) / 86400000);
     }
 
     showCreateInvoicePositionsAction(event) {

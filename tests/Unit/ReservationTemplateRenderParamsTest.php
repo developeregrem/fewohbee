@@ -35,6 +35,7 @@ final class ReservationTemplateRenderParamsTest extends TestCase
             $this->createStub(GuestCategoryRepository::class),
             $this->createStub(AvailabilityService::class),
             new \App\Service\ReservationPeriodService(),
+            $this->createStub(\App\Service\Pricing\PricePromiseService::class),
         );
         $reservation = new Reservation();
 

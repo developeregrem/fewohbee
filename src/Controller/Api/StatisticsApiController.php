@@ -13,15 +13,13 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
-use App\Entity\Appartment;
 use App\Entity\Enum\InvoiceStatus;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
 use App\Repository\ReservationRepository;
+use App\Service\Api\StatisticsQueryService;
 use App\Service\HousekeepingViewService;
-use App\Service\InvoiceService;
-use App\Service\StatisticsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -39,12 +37,12 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('API_SCOPE_STATISTICS_READ')]
 class StatisticsApiController extends AbstractController
 {
-    private const MAX_MONTHS = 60;
-    private const MAX_YEARS = 5;
+    private const MAX_MONTHS = StatisticsQueryService::MAX_MONTHS;
+    private const MAX_YEARS = StatisticsQueryService::MAX_YEARS;
 
     public function __construct(
         private readonly EntityManagerInterface $em,
-        private readonly StatisticsService $statisticsService,
+        private readonly StatisticsQueryService $statisticsQueryService,
         private readonly HousekeepingViewService $housekeepingViewService,
         private readonly ReservationRepository $reservationRepository,
     ) {
@@ -60,21 +58,9 @@ class StatisticsApiController extends AbstractController
         $objectId = $this->resolveObjectId($request);
         $statusIds = $this->resolveStatusIds($request);
 
-        $beds = (int) $this->em->getRepository(Appartment::class)->loadSumBedsMinForObject($objectId);
-        $beds = 0 === $beds ? 1 : $beds;
-
-        $data = [];
-        $yearCache = [];
-        $period = new \DatePeriod($start, new \DateInterval('P1M'), $end->modify('first day of next month'));
-        foreach ($period as $month) {
-            $year = (int) $month->format('Y');
-            // loadUtilizationForYear computes all 12 months of a year; cache per year.
-            $yearCache[$year] ??= $this->statisticsService->loadUtilizationForYear($objectId, $year, $beds, $statusIds);
-            $data[] = [
-                'month' => $month->format('Y-m'),
-                'utilization' => round($yearCache[$year][(int) $month->format('n') - 1], 2),
-            ];
-        }
+        $utilization = $this->statisticsQueryService->utilizationByMonth($start, $end, $objectId, $statusIds);
+        $data = $utilization['data'];
+        $beds = $utilization['beds'];
 
         return $this->envelope($data, [
             'start' => $start->format('Y-m'),
@@ -122,7 +108,7 @@ class StatisticsApiController extends AbstractController
      * Turnover (gross, invoice-based) per year or per month.
      */
     #[Route('/turnover', name: 'api.statistics.turnover', methods: ['GET'])]
-    public function turnover(Request $request, InvoiceService $invoiceService): JsonResponse
+    public function turnover(Request $request): JsonResponse
     {
         $startYear = $this->parseYear($request->query->get('start'), 'start');
         $endYear = $this->parseYear($request->query->get('end'), 'end') ?? $startYear;
@@ -143,22 +129,7 @@ class StatisticsApiController extends AbstractController
 
         $invoiceStatus = $this->resolveInvoiceStatus($request);
 
-        $data = [];
-        for ($year = $startYear; $year <= $endYear; ++$year) {
-            if ('year' === $granularity) {
-                $data[] = [
-                    'year' => $year,
-                    'turnover' => round($this->statisticsService->loadTurnoverForYear($invoiceService, $year, $invoiceStatus), 2),
-                ];
-                continue;
-            }
-            foreach ($this->statisticsService->loadTurnoverForMonth($invoiceService, $year, $invoiceStatus) as $index => $turnover) {
-                $data[] = [
-                    'month' => sprintf('%d-%02d', $year, $index + 1),
-                    'turnover' => round($turnover, 2),
-                ];
-            }
-        }
+        $data = $this->statisticsQueryService->turnover($startYear, $endYear, $granularity, $invoiceStatus);
 
         return $this->envelope($data, [
             'start' => $startYear,
@@ -256,8 +227,7 @@ class StatisticsApiController extends AbstractController
     {
         $param = $request->query->all()['invoiceStatus'] ?? null;
         if (null === $param || '' === $param || [] === $param) {
-            // Default: everything except canceled invoices.
-            return [InvoiceStatus::OPEN->value, InvoiceStatus::PAID->value, InvoiceStatus::PREPAID->value];
+            return StatisticsQueryService::DEFAULT_INVOICE_STATUS;
         }
 
         $values = \is_array($param) ? $param : explode(',', (string) $param);

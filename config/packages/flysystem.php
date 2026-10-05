@@ -7,8 +7,8 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 /**
  * Conditional Flysystem storage configuration.
  *
- * STORAGE_ADAPTER=local (default) — uploads stay in the local public/ tree, no behaviour
- *   change for existing self-hosting installations.
+ * STORAGE_ADAPTER=local (default) — images stay in the local public/ tree and custom
+ *   fonts in var/storage/fonts, preserving existing self-hosting behaviour.
  * STORAGE_ADAPTER=s3 — uploads go to an S3-compatible bucket (e.g. Hetzner Object Storage)
  *   for Kubernetes / multi-pod deployments.
  *
@@ -16,8 +16,8 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
  * rebuild (cache:clear), same as USE_REDIS_CACHE.
  *
  * The configured filesystem services are exposed via `alias` so they can be referenced
- * as @images.export.storage / @images.roomcat.storage from services.yaml regardless of
- * the underlying adapter.
+ * as @images.export.storage / @images.roomcat.storage / @fonts.storage from services.yaml
+ * regardless of the underlying adapter.
  */
 return static function (ContainerConfigurator $container): void {
     $adapter = $_SERVER['STORAGE_ADAPTER'] ?? 'local';
@@ -47,6 +47,13 @@ return static function (ContainerConfigurator $container): void {
                         'prefix' => $keyPrefix('room-categories'),
                     ],
                 ],
+                'fonts.adapter' => [
+                    'awss3v3' => [
+                        'client' => 'storage.s3_client',
+                        'bucket' => $bucket,
+                        'prefix' => $keyPrefix('fonts'),
+                    ],
+                ],
             ],
             'filesystems' => [
                 'images_export' => [
@@ -56,6 +63,10 @@ return static function (ContainerConfigurator $container): void {
                 'images_roomcat' => [
                     'adapter' => 'images.roomcat.adapter',
                     'alias' => 'images.roomcat.storage',
+                ],
+                'fonts' => [
+                    'adapter' => 'fonts.adapter',
+                    'alias' => 'fonts.storage',
                 ],
             ],
         ]);
@@ -88,6 +99,15 @@ return static function (ContainerConfigurator $container): void {
                     ],
                 ],
             ],
+            'fonts.adapter' => [
+                'local' => [
+                    'location' => '%customFontDirectory%',
+                    'permissions' => [
+                        'file' => ['public' => 0644, 'private' => 0644],
+                        'dir' => ['public' => 0755, 'private' => 0755],
+                    ],
+                ],
+            ],
         ],
         'filesystems' => [
             'images_export' => [
@@ -97,6 +117,10 @@ return static function (ContainerConfigurator $container): void {
             'images_roomcat' => [
                 'adapter' => 'images.roomcat.adapter',
                 'alias' => 'images.roomcat.storage',
+            ],
+            'fonts' => [
+                'adapter' => 'fonts.adapter',
+                'alias' => 'fonts.storage',
             ],
         ],
     ]);

@@ -6,6 +6,7 @@ namespace App\Workflow;
 
 use App\Entity\Workflow;
 use App\Repository\WorkflowRepository;
+use App\Workflow\Trigger\AssistantReservationCreatedTrigger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -63,6 +64,60 @@ class WorkflowSeeder
             actionType: 'send_notification_email',
             defaultEnabled: true,
             isSystem: true,
+        );
+
+        $this->em->flush();
+    }
+
+    /**
+     * Seeds the system workflows of the AI assistant (MCP) feature. Called when an administrator
+     * switches MCP on, not by a migration: installations that never use MCP should not see them.
+     * Idempotent; re-enabling MCP neither duplicates the workflow nor re-enables it.
+     */
+    public function seedAssistantWorkflows(): void
+    {
+        $this->createOrUpdate(
+            systemCode: 'notify_assistant_booking',
+            name: 'workflow.system.notify_assistant_booking.name',
+            description: 'workflow.system.notify_assistant_booking.description',
+            triggerType: AssistantReservationCreatedTrigger::TYPE,
+            actionType: 'create_in_app_notification',
+            defaultEnabled: true,
+            actionConfig: [
+                'severity' => 'info',
+                'requiredRole' => '',
+                'note' => $this->translator->trans('workflow.system.notify_assistant_booking.note'),
+            ],
+            isSystem: true,
+        );
+
+        $this->em->flush();
+    }
+
+    /**
+     * Seeds the invitation example of the online check-in. Called when an administrator switches
+     * the check-in on, so installations that never use it do not see it. Idempotent; switching it
+     * on again neither duplicates the workflow nor re-enables it.
+     *
+     * Submissions waiting for review need no workflow: GuestCheckInReviewProvider lists them in
+     * the notification centre until they are confirmed or discarded.
+     */
+    public function seedGuestCheckInWorkflows(): void
+    {
+        $this->createOrUpdate(
+            systemCode: 'example_guest_checkin_invitation',
+            name: 'workflow.system.example_guest_checkin_invitation.name',
+            description: 'workflow.system.example_guest_checkin_invitation.description',
+            triggerType: 'reservation.days_before_start',
+            actionType: 'send_template_email',
+            defaultEnabled: false,
+            conditions: [
+                ['type' => 'reservation.has_booker_email', 'config' => []],
+                ['type' => 'reservation.guest_checkin', 'config' => ['state' => 'open']],
+            ],
+            triggerConfig: ['days' => 7, 'runOnDays' => 'daily', 'runAtHour' => 10],
+            actionConfig: ['recipientType' => 'booker_email', 'templateId' => 0, 'customRecipient' => ''],
+            isSystem: false,
         );
 
         $this->em->flush();

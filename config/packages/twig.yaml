@@ -10,6 +10,7 @@ twig:
         oidc_enforce: '%oidc_enforce%'
         oidc_button_label: '%oidc_button_label%'
         app_version: '%version%'
+        mcp_available: '%mcp_enabled%'
 
 when@test:
     twig:

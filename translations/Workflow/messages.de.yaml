@@ -118,6 +118,9 @@ workflow:
   trigger:
     online_booking_created: "Neue Online-Buchung eingegangen"
     calendar_import_created: "Neue Buchung via Kalenderimport"
+    assistant_booking_created: "Neue Reservierung durch KI-Assistent"
+    guest_checkin_submitted: "Gast hat online eingecheckt"
+    guest_checkin_confirmed: "Check-in erledigt (online bestätigt oder am Empfang)"
     reservation_created: "Neue Reservierung angelegt (manuell)"
     invoice_created: "Neue Rechnung erstellt"
     invoice_status_changed: "Rechnungsstatus geändert"
@@ -125,9 +128,12 @@ workflow:
     reservation_days_before_start: "X Tage vor dem Anreisedatum"
     reservation_days_after_end: "X Tage nach dem Abreisedatum"
     invoice_days_after_date: "X Tage nach dem Rechnungsdatum"
+    invoice_days_after_due_date: "X Tage nach der Fälligkeit der Rechnung"
     schedule_monthly: "Monatlich an einem bestimmten Tag"
     days_before: "Tage vorher"
     days_after: "Tage danach"
+    days_after_due_date: "Tage nach der Fälligkeit"
+    days_after_due_date_help: "0 = am Fälligkeitstag, 1 = am Tag danach, -3 = drei Tage vorher. Maßgeblich ist das Fälligkeitsdatum der Rechnung."
     day_of_month: "Tag des Monats"
     run_on_days: "An welchen Tagen ausführen?"
     run_on_days_help: "Fällt der Stichtag auf einen ausgeschlossenen Tag, wird die Ausführung am nächsten erlaubten Tag nachgeholt – es geht nichts verloren."
@@ -150,6 +156,12 @@ workflow:
     has_invoice.label: "Welche Rechnung muss es geben?"
     has_invoice.any: "Irgendeine Rechnung (ohne stornierte)"
     has_invoice.open: "Mindestens eine offene Rechnung"
+    reservation_guest_checkin: "Online-Check-in"
+    guest_checkin.label: "Stand des Online-Check-ins"
+    guest_checkin.open: "Noch offen (Gast kann noch online einchecken)"
+    guest_checkin.submitted: "Online eingecheckt, wartet auf Prüfung"
+    guest_checkin.confirmed: "Eingecheckt (online bestätigt oder am Empfang)"
+    guest_checkin.completed: "Nicht mehr offen (wartet auf Prüfung oder eingecheckt)"
 
   # Action labels
   action:
@@ -215,6 +227,13 @@ workflow:
     notify_online_booking_inapp:
       name: "Online-Buchung im Benachrichtigungsfenster anzeigen"
       description: "Legt für jede Online-Buchung einen Eintrag im Benachrichtigungsfenster an."
+    notify_assistant_booking:
+      name: "KI-Reservierungen im Benachrichtigungsfenster anzeigen"
+      description: "Legt für jede Reservierung, die ein KI-Assistent angelegt hat, einen Eintrag im Benachrichtigungsfenster an."
+      note: "Angelegt durch einen KI-Assistenten."
+    example_guest_checkin_invitation:
+      name: "Beispiel: Einladung zum Online-Check-in (7 Tage vorher)"
+      description: "Sendet 7 Tage vor der Anreise den Link zum Online-Check-in an den Gast, sofern er noch nicht eingecheckt hat (E-Mail-Vorlage mit dem Baustein „Link zum Online-Check-in“ erforderlich)."
     notify_calendar_import_inapp:
       name: "Kalender-Import im Benachrichtigungsfenster anzeigen"
       description: "Legt für jede importierte Buchung einen Eintrag im Benachrichtigungsfenster an."

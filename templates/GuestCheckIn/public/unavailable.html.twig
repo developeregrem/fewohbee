@@ -1,0 +1,10 @@
+{% extends 'GuestCheckIn/public/base.html.twig' %}
+
+{# One page for every link that does not work, whatever the reason, so the response tells
+   nothing about which links exist. #}
+{% block body %}
+    <h1 class="fhb-title">{{ 'guest_checkin.public.page_title'|trans }}</h1>
+    <div class="alert {{ tooManyRequests ? 'alert-warning' : 'alert-secondary' }}" role="alert">
+        {{ (tooManyRequests ? 'guest_checkin.public.too_many_requests' : 'guest_checkin.public.unavailable')|trans }}
+    </div>
+{% endblock %}

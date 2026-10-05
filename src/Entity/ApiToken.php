@@ -125,6 +125,16 @@ class ApiToken
         return $this;
     }
 
+    /**
+     * The scopes as enum cases; values this version no longer knows are skipped.
+     *
+     * @return list<ApiScope>
+     */
+    public function getApiScopes(): array
+    {
+        return array_values(array_filter(array_map(ApiScope::tryFrom(...), $this->scopes)));
+    }
+
     public function hasScope(ApiScope $scope): bool
     {
         return \in_array($scope->value, $this->scopes, true);

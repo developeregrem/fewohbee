@@ -1,8 +1,8 @@
 apartment:
   multiple:
     occupancy:
-      hint: Occupancy by different guests possible.
-      text: Multiple occupancy
+      hint: Guests from separate bookings can share the room during the same period. Only the number of people in each booking counts as occupied, remaining beds stay available for further bookings.
+      text: Concurrent bookings allowed
 appartment:
   active: Active
   active.hint: Inactive rooms are hidden from reservations, online booking and calendar synchronization.

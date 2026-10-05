@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Enum\PaymentCollection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -15,6 +16,9 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Table(name: 'reservations')]
 #[ORM\Index(name: 'idx_uuid', columns: ['uuid'])]
 #[ORM\Index(name: 'idx_booking_group_uuid', columns: ['booking_group_uuid'])]
+#[ORM\Index(name: 'idx_reservation_start_date', columns: ['start_date'])]
+#[ORM\Index(name: 'idx_reservation_end_date', columns: ['end_date'])]
+#[ORM\Index(name: 'idx_reservations_ref_uid', columns: ['ref_uid'])]
 class Reservation
 {
     #[ORM\Id]
@@ -106,10 +110,10 @@ class Reservation
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $refUid = null;
 
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isConflict = false;
 
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isConflictIgnored = false;
 
     #[ORM\ManyToOne(targetEntity: CalendarSyncImport::class)]
@@ -132,15 +136,25 @@ class Reservation
     #[ORM\Column(name: 'guest_counts', type: 'json')]
     private array $guestCounts = [];
 
-    #[ORM\Column(name: 'kurtaxe_waived', type: 'boolean')]
+    #[ORM\Column(name: 'kurtaxe_waived', type: 'boolean', options: ['default' => false])]
     private bool $kurtaxeWaived = false;
 
     /**
      * Explicit override that disables the "at least one adult" validation
      * for this booking (e.g. youth groups travelling without supervision).
      */
-    #[ORM\Column(name: 'adult_rule_override', type: 'boolean')]
+    #[ORM\Column(name: 'adult_rule_override', type: 'boolean', options: ['default' => false])]
     private bool $adultRuleOverride = false;
+
+    /**
+     * The price promised to the guest, so later changes to the price list do not reach this
+     * booking. Format and meaning: {@see \App\Dto\Pricing\PricePromise}. Null for bookings that
+     * predate promises and have not been backfilled yet; they are priced from the current rows.
+     *
+     * @var array<string, mixed>|null
+     */
+    #[ORM\Column(name: 'price_promise', type: Types::JSON, nullable: true)]
+    private ?array $pricePromise = null;
 
     public function __construct()
     {
@@ -500,6 +514,18 @@ class Reservation
         $this->invoices->removeElement($invoice);
     }
 
+    /** Whether an invoice that is not canceled states the price of this booking. */
+    public function hasActiveInvoice(): bool
+    {
+        foreach ($this->invoices as $invoice) {
+            if (InvoiceStatus::CANCELED !== InvoiceStatus::fromStatus($invoice->getStatus())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Get invoices.
      *
@@ -676,6 +702,16 @@ class Reservation
         return (int) ($this->guestCounts[$guestCategoryId] ?? 0);
     }
 
+    /**
+     * Everyone staying, including guests not counted in the occupancy such as infants: the
+     * number of people that can be registered as guests of the room. Reservations without
+     * per-category counts fall back to the occupancy.
+     */
+    public function getTotalGuests(): int
+    {
+        return max(array_sum($this->guestCounts), $this->persons);
+    }
+
     public function isKurtaxeWaived(): bool
     {
         return $this->kurtaxeWaived;
@@ -696,6 +732,20 @@ class Reservation
     public function setAdultRuleOverride(bool $adultRuleOverride): self
     {
         $this->adultRuleOverride = $adultRuleOverride;
+
+        return $this;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function getPricePromise(): ?array
+    {
+        return $this->pricePromise;
+    }
+
+    /** @param array<string, mixed>|null $pricePromise */
+    public function setPricePromise(?array $pricePromise): self
+    {
+        $this->pricePromise = $pricePromise;
 
         return $this;
     }

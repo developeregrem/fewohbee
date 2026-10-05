@@ -11,6 +11,6 @@ enum TaxCalculationMode: string
 
     public function isPercentage(): bool
     {
-        return $this === self::PERCENT_PER_ROOM;
+        return self::PERCENT_PER_ROOM === $this;
     }
 }

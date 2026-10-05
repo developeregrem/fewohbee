@@ -7,6 +7,8 @@ parameters:
     returnPath: '%env(RETURN_PATH)%'
     publicUploadDirectory: 'resources/images/export'
     roomCategoryImagePublicDirectory: 'resources/images/room-categories'
+    defaultCustomFontDirectory: '%kernel.project_dir%/var/storage/fonts'
+    customFontDirectory: '%env(default:defaultCustomFontDirectory:CUSTOM_FONT_DIR)%'
     version: '4.12.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     mailEnabled: '%env(bool:default:default_mail_enabled:MAIL_ENABLED)%'
@@ -16,6 +18,8 @@ parameters:
     oidc_enabled: '%env(bool:OIDC_ENABLED)%'
     oidc_enforce: '%env(bool:OIDC_ENFORCE)%'
     oidc_button_label: '%env(OIDC_BUTTON_LABEL)%'
+    # Operator switch for the MCP server; administrators still have to enable it under Settings.
+    mcp_enabled: '%env(bool:MCP_ENABLED)%'
     # Plain HTTP to the identity provider would expose the client secret and
     # every token in transit. Relaxed for dev and test at the bottom of this
     # file so a local provider without a certificate can be used.
@@ -38,7 +42,7 @@ parameters:
     env(REDIS_SYSTEM_IDX): '%env(REDIS_IDX)%'
     env(REDIS_SESSION_IDX): '%env(REDIS_IDX)%'
     env(REDIS_PREFIX): 'fewohbee_'
-    # storage adapter: 'local' (default, uploads in public/) or 's3' (S3-compatible bucket)
+    # storage adapter: 'local' (default, local upload directories) or 's3' (S3-compatible bucket)
     env(STORAGE_ADAPTER): 'local'
     env(STORAGE_S3_ENDPOINT): ''
     env(STORAGE_S3_REGION): ''
@@ -73,12 +77,14 @@ services:
             tags: ['app.bank_import.parser']
         App\Notification\NotificationProviderInterface:
             tags: ['app.notification.provider']
+        App\Service\GuestCheckIn\Section\GuestCheckInSectionProviderInterface:
+            tags: ['app.guest_checkin.section_provider']
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/*'
-        exclude: '../src/{Entity,GeoEntity,Migrations,Tests,Controller/Attribute,Exception,Kernel.php}'
+        exclude: '../src/{Mcp/DependencyInjection,Entity,GeoEntity,Migrations,Tests,Controller/Attribute,Exception,Kernel.php}'
 
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class
@@ -116,7 +122,13 @@ services:
     App\Service\TemplatesService:
         arguments:
             $exportStorage: '@images.export.storage'
-            
+
+    App\Service\CustomFontManager:
+        arguments:
+            $storage: '@fonts.storage'
+            $fontCacheDirectory: '%kernel.cache_dir%/custom-fonts'
+            $analysisCacheDirectory: '%kernel.cache_dir%/font-analysis'
+
     # S3 client (only instantiated when STORAGE_ADAPTER=s3; flysystem.php conditionally
     # wires storages that reference this id). Works with any S3-compatible provider
     # (Hetzner Object Storage, MinIO, R2, Wasabi, AWS) via the configured endpoint.
@@ -197,6 +209,10 @@ services:
     App\Notification\NotificationProviderRegistry:
         arguments:
             $providers: !tagged_iterator app.notification.provider
+
+    App\Service\GuestCheckIn\Section\GuestCheckInSections:
+        arguments:
+            $providers: !tagged_iterator app.guest_checkin.section_provider
 
 when@dev:
     parameters:

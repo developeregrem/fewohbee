@@ -28,13 +28,13 @@ use App\Service\ReservationService;
 use App\Service\TemplatesService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\ExpressionLanguage\Expression;
 
 #[Route(path: '/correspondence')]
 class CorrespondenceController extends AbstractController
@@ -321,7 +321,7 @@ class CorrespondenceController extends AbstractController
         $cId = $request->request->get('id');
         if ('false' != $isInvoice) {
             $invoice = $cId ? $em->getRepository(Invoice::class)->find($cId) : null;
-            if (!($invoice instanceof Invoice)) {
+            if (!$invoice instanceof Invoice) {
                 $this->addFlash('warning', 'templates.attachment.notfound');
                 $error = true;
             } else {

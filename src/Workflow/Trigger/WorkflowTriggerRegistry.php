@@ -49,6 +49,25 @@ class WorkflowTriggerRegistry
         return array_filter($this->triggersByType, fn (WorkflowTriggerInterface $t) => !$t->isEventDriven());
     }
 
+    /**
+     * Triggers offered when creating or editing a workflow. Triggers of switched-off optional
+     * features are left out, unless $keepType names the one the edited workflow already uses.
+     *
+     * @return list<WorkflowTriggerInterface>
+     */
+    public function getOffered(?string $keepType = null): array
+    {
+        $offered = [];
+        foreach ($this->triggersByType as $trigger) {
+            if ($trigger instanceof ConditionalWorkflowTriggerInterface && !$trigger->isAvailable() && $trigger->getType() !== $keepType) {
+                continue;
+            }
+            $offered[] = $trigger;
+        }
+
+        return $offered;
+    }
+
     /** @return array<string, string> label key => type */
     public function getChoices(): array
     {

@@ -162,6 +162,14 @@
                 <source>reservation.preview.customer.inroom</source>
                 <target>Gäste in diesem Zimmer</target>
             </trans-unit>
+            <trans-unit id="reservation.tab.details">
+                <source>reservation.tab.details</source>
+                <target>Details</target>
+            </trans-unit>
+            <trans-unit id="reservation.tab.guests">
+                <source>reservation.tab.guests</source>
+                <target>Gäste</target>
+            </trans-unit>
             <trans-unit id="reservation.details">
                 <source>reservation.details</source>
                 <target>Reservierungsdetails</target>
@@ -745,6 +753,46 @@
             <trans-unit id="roomblock.error.rooms">
                 <source>roomblock.error.rooms</source>
                 <target>Bitte mindestens ein Zimmer auswählen.</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.changed">
+                <source>reservation.price.changed</source>
+                <target>Der Preis dieser Buchung ändert sich von %before% auf %after%.</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.reprice.confirm">
+                <source>reservation.price.reprice.confirm</source>
+                <target>Heutige Preise übernehmen</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.reprice.invoiced">
+                <source>reservation.price.reprice.invoiced</source>
+                <target>Für diese Buchung gibt es schon eine Rechnung, dort steht ihr Preis.</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.list_changed.title">
+                <source>reservation.price.list_changed.title</source>
+                <target>Die Preise haben sich seit der Buchung geändert</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.list_changed.text">
+                <source>reservation.price.list_changed.text</source>
+                <target>Diese Buchung behält ihre Preise vom %date% (%promised%). Mit den heutigen Preisen würde sie %current% kosten.</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.reprice.done">
+                <source>reservation.price.reprice.done</source>
+                <target>Die heutigen Preise wurden übernommen. Die Buchung kostet jetzt %total%.</target>
+            </trans-unit>
+            <trans-unit id="reservation.prices.invoice_note">
+                <source>reservation.prices.invoice_note</source>
+                <target>Diese Preise übernimmt die Rechnung. Dort kannst du sie bei Bedarf noch anpassen.</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.rules_applied">
+                <source>reservation.price.rules_applied</source>
+                <target>Angepasst durch</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.rules_nights">
+                <source>reservation.price.rules_nights</source>
+                <target>{1}1 Nacht|]1,Inf[%count% Nächte</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.day_price">
+                <source>reservation.price.day_price</source>
+                <target>Tagespreis</target>
             </trans-unit>
         </body>
     </file>

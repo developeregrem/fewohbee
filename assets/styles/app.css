@@ -432,6 +432,20 @@ body.reservations-week-focus #flash-message-container {
     font-size: 0.95rem;
 }
 
+/* A flex item does not shrink below its content's minimum width by default. A table
+   has one even at width: 100% — the sum of its columns' widest unbreakable content —
+   so it pushed the editor past the card, and next to the snippet panel the editor slid
+   right instead of narrowing. (Bootstrap has no min-w-0 utility.) */
+.template-editor-main {
+    min-width: 0;
+}
+
+/* A table that still cannot fit — too many columns, or columns sized by dragging, which
+   Tiptap turns into a pixel width — scrolls inside the editor instead of spilling over. */
+.template-editor-content .tableWrapper {
+    overflow-x: auto;
+}
+
 .template-editor-content:focus {
     outline: none;
 }
@@ -460,10 +474,16 @@ body.reservations-week-focus #flash-message-container {
     width: 100%;
 }
 
+/* Stays in view while a long template scrolls past, so a snippet is always next to
+   the spot it goes into. align-self keeps the flex row from stretching the panel to
+   the editor's full height, which would leave sticky nothing to do. */
 .template-editor-snippet-panel {
     width: 260px;
     min-width: 260px;
-    max-height: 70vh;
+    position: sticky;
+    top: 0.5rem;
+    align-self: flex-start;
+    max-height: calc(100vh - 1rem);
     overflow-y: auto;
     padding-right: 0.75rem;
     margin-right: 0.75rem;
@@ -537,6 +557,13 @@ body.reservations-week-focus #flash-message-container {
 
 .template-editor-toolbar-group .template-editor-btn:last-child {
     border-right: 0;
+}
+
+/* Bootstrap turns off pointer events on disabled buttons, which also hides the title
+   that explains why the button is unavailable. */
+.template-editor-toolbar-group .template-editor-btn:disabled {
+    pointer-events: auto;
+    cursor: not-allowed;
 }
 
 .template-editor-btn.is-active {
@@ -1056,6 +1083,33 @@ details.einvoice-readiness > summary::-webkit-details-marker {
     display: none;
 }
 
+/* Person cards of the online check-in review: a whole-row summary with its own chevron */
+details > summary:has(> .fhb-details-chevron) {
+    list-style: none;
+    cursor: pointer;
+}
+details > summary:has(> .fhb-details-chevron)::-webkit-details-marker {
+    display: none;
+}
+details[open] > summary > .fhb-details-chevron {
+    transform: rotate(180deg);
+}
+
+/* Frontdesk check-in state: one width for every state, so the rows line up. The labels of all
+   states share one grid cell; the hidden ones only lend their width. */
+.fd-checkin-state {
+    text-align: start;
+}
+.fd-checkin-labels {
+    display: inline-grid;
+}
+.fd-checkin-labels > * {
+    grid-area: 1 / 1;
+}
+.fd-checkin-labels > [aria-hidden="true"] {
+    visibility: hidden;
+}
+
 /*
  * Rendered release-note markdown. The source is written as a GitHub release
  * body, so it leans on h2/h3 and long bullet lists; without these rules the
@@ -1339,3 +1393,18 @@ details.einvoice-readiness > summary::-webkit-details-marker {
 .brc-swatch.has-gap::after { content: ""; width: 6px; height: 6px; border-radius: 50%; }
 .brc-swatch.is-raised::after { background-color: var(--bs-danger); }
 .brc-swatch.has-gap::after { border: 1.5px solid var(--bs-danger); }
+
+/* Price rules offcanvas: opened from the bottom on phones, tall enough for the whole form. */
+.price-rules-offcanvas.offcanvas-bottom {
+    height: 85vh;
+}
+
+/* Price calendar: the month as a seven-column grid on wider screens. */
+.price-calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: .5rem;
+}
+
+.price-calendar-cell {
+    min-height: 6.5rem;
+}

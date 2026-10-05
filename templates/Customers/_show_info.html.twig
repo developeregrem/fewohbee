@@ -21,6 +21,10 @@
     <dl>
         <dt>{{ 'customer.birthday'|trans }}</dt>
         <dd>{% if customer.birthday %} {{ customer.birthday|date('d.m.Y') }} {% endif %}</dd>
+        {% if customer.nationality %}
+            <dt>{{ 'customer.nationality'|trans }}</dt>
+            <dd>{{ customer.nationality }}</dd>
+        {% endif %}
         {% if customer.iDNumber %}
             <dt>{{ 'customer.id.number'|trans }}</dt>
             <dd>{{ customer.idType.value|trans }}: {{ customer.iDNumber }}</dd>

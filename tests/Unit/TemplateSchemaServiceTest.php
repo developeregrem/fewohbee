@@ -25,6 +25,41 @@ final class TemplateSchemaServiceTest extends TestCase
         self::assertSame('row', $schema['rows']['singularName']);
     }
 
+    public function testBuildSchemaKeepsDateTypeForRootVariables(): void
+    {
+        $service = new TemplateSchemaService();
+
+        $schema = $service->buildSchema([
+            'paymentDueDate' => ['type' => 'date'],
+        ]);
+
+        self::assertSame(['type' => 'date'], $schema['paymentDueDate']);
+    }
+
+    public function testBuildSchemaMarksNullableRootDate(): void
+    {
+        $service = new TemplateSchemaService();
+
+        $schema = $service->buildSchema([
+            'paymentDueDate' => ['type' => 'date', 'nullable' => true],
+        ]);
+
+        self::assertSame(['type' => 'date', 'nullable' => true], $schema['paymentDueDate']);
+    }
+
+    public function testBuildSchemaTakesDateNullabilityFromTheColumn(): void
+    {
+        $service = new TemplateSchemaService();
+
+        $schema = $service->buildSchema([
+            'reservation' => ['class' => Reservation::class],
+        ]);
+
+        $properties = $schema['reservation']['properties'];
+        self::assertSame(['type' => 'date'], $properties['startDate']);
+        self::assertSame(['type' => 'date', 'nullable' => true], $properties['optionDate']);
+    }
+
     public function testBuildSchemaResolvesEntityAndCollectionMetadata(): void
     {
         $service = new TemplateSchemaService();

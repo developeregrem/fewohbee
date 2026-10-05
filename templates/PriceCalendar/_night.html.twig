@@ -1,0 +1,98 @@
+{# Offcanvas body for one night of the price calendar: how its price comes about, and the day price form. #}
+{% import 'PriceRules/_macros.html.twig' as ruleText %}
+{% import 'PriceCalendar/_macros.html.twig' as cal %}
+<p class="text-body-secondary small mb-1">{{ category.name }} · {{ subsidiary.name }} · {{ 'price_calendar.persons_count'|trans({'%count%': persons}) }}</p>
+<div class="mb-3">{{ cal.occupancy(day) }}</div>
+
+{% if day.price is null %}
+    <div class="alert alert-light border small">{{ 'price_calendar.no_price'|trans }}</div>
+{% else %}
+    <dl class="row small mb-3">
+        <dt class="col-7 fw-normal">{{ 'price_calendar.base'|trans }}</dt>
+        <dd class="col-5 text-end mb-1">{{ day.base|number_format(2, ',', '.') }}&nbsp;{{ currency_symbol }}</dd>
+        {% if day.dayPrice %}
+            <dt class="col-7 fw-normal">{{ ('price_calendar.source.' ~ day.dayPrice.source)|trans({'%label%': day.dayPrice.sourceLabel ?? ''}) }}</dt>
+            <dd class="col-5 text-end mb-1">
+                {{ day.dayPrice.amount|number_format(2, ',', '.') }}&nbsp;{{ currency_symbol }}
+                {% if day.dayPrice.persons != persons %}
+                    <span class="d-block text-body-secondary">{{ 'price_calendar.day_price_for'|trans({'%count%': day.dayPrice.persons}) }}</span>
+                {% endif %}
+            </dd>
+        {% else %}
+            {% for rule in day.rules %}
+                <dt class="col-7 fw-normal">{{ rule.name }}</dt>
+                <dd class="col-5 text-end mb-1">{{ ruleText.percent(rule.percent) }}</dd>
+            {% endfor %}
+        {% endif %}
+        {% if day.limited %}
+            <dd class="col-12 text-body-secondary mb-1">{{ 'price_calendar.limited'|trans }}</dd>
+        {% endif %}
+        <dt class="col-7 border-top pt-1">{{ 'price_calendar.price'|trans }}</dt>
+        <dd class="col-5 text-end border-top pt-1 fw-bold mb-0">{{ day.price|number_format(2, ',', '.') }}&nbsp;{{ currency_symbol }}</dd>
+    </dl>
+
+    {% if occupancies|length > 1 %}
+        {# Every occupancy of the night; the last column shows what the day price being typed makes of them. #}
+        <table class="table table-sm small mb-3" data-price-calendar-occupancies data-persons="{{ persons }}" data-currency="{{ currency_symbol }}">
+            <thead>
+                <tr class="text-body-secondary">
+                    <th scope="col" class="fw-normal">{{ 'price_calendar.persons'|trans }}</th>
+                    <th scope="col" class="fw-normal text-end">{{ 'price_calendar.base'|trans }}</th>
+                    <th scope="col" class="fw-normal text-end">{{ 'price_calendar.column_price'|trans }}</th>
+                    <th scope="col" class="fw-normal text-end" data-price-calendar-new hidden>{{ 'price_calendar.column_new'|trans }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in occupancies %}
+                    <tr{% if row.persons == persons %} class="fw-semibold"{% endif %} data-persons="{{ row.persons }}" data-base-unit="{{ row.baseUnit }}" data-heads="{{ row.heads }}">
+                        <td>{{ row.persons }}</td>
+                        <td class="text-end">{% if row.base is null %}—{% else %}{{ row.base|number_format(2, ',', '.') }}&nbsp;{{ currency_symbol }}{% endif %}</td>
+                        <td class="text-end">{% if row.price is null %}—{% else %}{{ row.price|number_format(2, ',', '.') }}&nbsp;{{ currency_symbol }}{% endif %}</td>
+                        <td class="text-end" data-price-calendar-new hidden>—</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    {# The buttons are named "intent", not "action": a field named "action" would hide form.action in the browser. #}
+    <form method="post" action="{{ path('prices.calendar.save') }}" data-action="submit->price-calendar#save" novalidate>
+        <input type="hidden" name="_token" value="{{ csrf_token('price-calendar') }}">
+        <input type="hidden" name="subsidiary" value="{{ subsidiary.id }}">
+        <input type="hidden" name="category" value="{{ category.id }}">
+        <input type="hidden" name="persons" value="{{ persons }}">
+        <input type="hidden" name="night" value="{{ day.night|date('Y-m-d') }}">
+
+        <label class="form-label small fw-semibold" for="day-price-amount">{{ 'price_calendar.amount'|trans({'%count%': persons}) }}</label>
+        <div class="input-group" style="max-width:12rem">
+            <input type="number" class="form-control" id="day-price-amount" name="amount" min="0.01" step="0.01"
+                   data-action="input->price-calendar#preview"
+                   value="{{ (day.dayPrice and day.dayPrice.persons == persons ? day.dayPrice.amount : day.price)|number_format(2, '.', '') }}">
+            <span class="input-group-text">{{ currency_symbol }}</span>
+        </div>
+
+        <details class="mt-3">
+            <summary class="small fw-semibold mb-2">{{ 'price_calendar.more_nights'|trans }}</summary>
+            <label class="form-label small" for="day-price-last">{{ 'price_calendar.last_night'|trans }}</label>
+            <input type="date" class="form-control" id="day-price-last" name="last"
+                   value="{{ day.night|date('Y-m-d') }}" min="{{ day.night|date('Y-m-d') }}" style="max-width:12rem">
+            <p class="text-body-secondary small mb-2">{{ 'price_calendar.last_night_help'|trans }}</p>
+            <label class="form-label small">{{ 'price_rules.weekdays'|trans }}</label>
+            <div class="d-flex flex-wrap gap-1">
+                {% for weekday in 1..7 %}
+                    <input type="checkbox" class="btn-check" id="day-price-weekday-{{ weekday }}" name="weekdays[]" value="{{ weekday }}" checked>
+                    <label class="btn btn-sm btn-outline-primary" for="day-price-weekday-{{ weekday }}">{{ ('booking_rules.night_' ~ weekday)|trans }}</label>
+                {% endfor %}
+            </div>
+        </details>
+
+        <div class="alert alert-danger small py-2 mt-3 mb-0" data-price-calendar-error hidden></div>
+        <div class="d-grid gap-2 mt-3">
+            <button type="submit" name="intent" value="save" class="btn btn-primary"><i class="fas fa-save me-1"></i>{{ 'price_calendar.save'|trans }}</button>
+            {% if day.dayPrice %}
+                <button type="submit" name="intent" value="reset" class="btn btn-outline-secondary">{{ 'price_calendar.reset_button'|trans }}</button>
+            {% endif %}
+        </div>
+        <p class="small text-body-secondary mt-3 mb-0">{{ 'price_calendar.help'|trans }}</p>
+    </form>
+{% endif %}

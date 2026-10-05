@@ -7,8 +7,8 @@ namespace App\Service\Calendar\Sync;
 use App\Dto\CalendarSync\CalendarEntrySyncResult;
 use App\Entity\Calendar;
 use App\Entity\CalendarEntry;
-use App\Repository\CalendarEntryRepository;
 use App\Exception\CalendarSyncException;
+use App\Repository\CalendarEntryRepository;
 use App\Service\Calendar\Sync\Ics\IcsEventSpanResolver;
 use App\Service\Calendar\Sync\Ics\IcsFeedClient;
 use App\Service\Calendar\Sync\Ics\IcsOccurrenceReader;
@@ -255,9 +255,9 @@ class CalendarEntrySyncService
      * @param array<string, string>              $summaries keyed by Y-m-d; a moved occurrence
      *                                                      carries its own title, so this is
      *                                                      per date rather than per event
-     * @param array<string, \DateTimeImmutable>  $dates    keyed by Y-m-d
-     * @param array<string, ?\DateTimeImmutable> $times    keyed by Y-m-d, null where the day has no start time
-     * @param array<string, ?\DateTimeImmutable> $endTimes keyed by Y-m-d, null where the day has no end time
+     * @param array<string, \DateTimeImmutable>  $dates     keyed by Y-m-d
+     * @param array<string, ?\DateTimeImmutable> $times     keyed by Y-m-d, null where the day has no start time
+     * @param array<string, ?\DateTimeImmutable> $endTimes  keyed by Y-m-d, null where the day has no end time
      *
      * @return list<string> one OUTCOME_* per entry touched or left in place
      */
@@ -324,7 +324,7 @@ class CalendarEntrySyncService
                 continue;
             }
 
-            $entry = (new CalendarEntry())
+            $entry = new CalendarEntry()
                 ->setCalendar($calendar)
                 ->setSourceUid($sourceUid)
                 ->setDate($date)

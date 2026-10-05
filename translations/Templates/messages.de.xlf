@@ -14,6 +14,110 @@
                 <source>templates.add</source>
                 <target>Vorlage hinzufügen</target>
             </trans-unit>
+            <trans-unit id="templates.fonts.open">
+                <source>templates.fonts.open</source>
+                <target>Eigene Schriften verwalten</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.title">
+                <source>templates.fonts.title</source>
+                <target>Eigene PDF-Schriften</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.description">
+                <source>templates.fonts.description</source>
+                <target>Lade eigene Schriftdateien hoch. FewohBee erkennt Familie und vorhandene Schnitte automatisch und stellt Familien mit regulärem Schnitt im Editor für PDF-Vorlagen bereit.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.empty">
+                <source>templates.fonts.empty</source>
+                <target>Es sind noch keine eigenen Schriften installiert.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.upload.label">
+                <source>templates.fonts.upload.label</source>
+                <target>Schriftdateien</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.upload.help">
+                <source>templates.fonts.upload.help</source>
+                <target>Wähle eine oder mehrere TTF- oder kompatible OTF-Dateien aus. Lade neben dem regulären Schnitt auch die benötigten fetten und kursiven Schnitte hoch.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.upload.button">
+                <source>templates.fonts.upload.button</source>
+                <target>Schriften hochladen</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.license_hint">
+                <source>templates.fonts.license_hint</source>
+                <target>Mit dem Hochladen einer Schrift bestätigst du, dass sie im Rahmen ihrer Lizenzbedingungen verwendet und in PDF-Dokumente eingebettet werden darf. FewohBee selbst prüft die Lizenzbedingungen nicht.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.style.r">
+                <source>templates.fonts.style.r</source>
+                <target>Regulär</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.style.b">
+                <source>templates.fonts.style.b</source>
+                <target>Fett</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.style.i">
+                <source>templates.fonts.style.i</source>
+                <target>Kursiv</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.style.bi">
+                <source>templates.fonts.style.bi</source>
+                <target>Fett kursiv</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.missing_regular">
+                <source>templates.fonts.missing_regular</source>
+                <target>Regulärer Schnitt fehlt</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.delete.ask">
+                <source>templates.fonts.delete.ask</source>
+                <target>Diese Schriftfamilie löschen?</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.delete.hint">
+                <source>templates.fonts.delete.hint</source>
+                <target>Die Schrift steht für neue PDFs nicht mehr zur Verfügung. Bestehende Vorlagen verwenden dann eine Ersatzschrift.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.flash.no_file">
+                <source>templates.fonts.flash.no_file</source>
+                <target>Wähle mindestens eine Schriftdatei aus.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.flash.uploaded">
+                <source>templates.fonts.flash.uploaded</source>
+                <target>{1} Eine Schriftdatei wurde installiert.|]1,Inf[ %count% Schriftdateien wurden installiert.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.flash.upload_failed">
+                <source>templates.fonts.flash.upload_failed</source>
+                <target>„%filename%“ konnte nicht installiert werden: %reason%</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.flash.deleted">
+                <source>templates.fonts.flash.deleted</source>
+                <target>Die Schriftfamilie wurde gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.flash.not_found">
+                <source>templates.fonts.flash.not_found</source>
+                <target>Die Schriftfamilie ist nicht mehr vorhanden.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.validation.upload">
+                <source>templates.fonts.validation.upload</source>
+                <target>Der Upload wurde nicht vollständig übertragen.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.validation.size">
+                <source>templates.fonts.validation.size</source>
+                <target>Die Schriftdatei ist leer oder größer als 10 MB.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.validation.extension">
+                <source>templates.fonts.validation.extension</source>
+                <target>Es werden nur TTF- und OTF-Dateien unterstützt.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.validation.mime">
+                <source>templates.fonts.validation.mime</source>
+                <target>Die hochgeladene Datei wird nicht als Schrift erkannt.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.validation.invalid">
+                <source>templates.fonts.validation.invalid</source>
+                <target>Die Datei ist keine unterstützte Unicode-TrueType-Schrift.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.validation.storage">
+                <source>templates.fonts.validation.storage</source>
+                <target>Der Schriftenspeicher ist nicht beschreibbar. Prüfe die Berechtigungen der Installation.</target>
+            </trans-unit>
             <trans-unit id="templates.name">
                 <source>templates.name</source>
                 <target>Name</target>
@@ -270,6 +374,14 @@
                 <source>templates.preview.snippet.gdpr.general_birthday</source>
                 <target>Geburtsdatum Kunde</target>
             </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.general_nationality">
+                <source>templates.preview.snippet.gdpr.general_nationality</source>
+                <target>Staatsangehörigkeit Kunde</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.general_id_document">
+                <source>templates.preview.snippet.gdpr.general_id_document</source>
+                <target>Ausweisdokument Kunde</target>
+            </trans-unit>
             <trans-unit id="templates.preview.snippet.gdpr.general_remark">
                 <source>templates.preview.snippet.gdpr.general_remark</source>
                 <target>Bemerkung Kunde</target>
@@ -321,6 +433,10 @@
             <trans-unit id="templates.editor.toolbar.image">
                 <source>templates.editor.toolbar.image</source>
                 <target>Bild einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.image_email_unsupported">
+                <source>templates.editor.toolbar.image_email_unsupported</source>
+                <target>Bilder werden nur in PDF-Vorlagen unterstützt</target>
             </trans-unit>
             <trans-unit id="templates.editor.toolbar.table_row_add">
                 <source>templates.editor.toolbar.table_row_add</source>
@@ -568,7 +684,7 @@
             </trans-unit>
             <trans-unit id="templates.hidden.tooltip">
                 <source>templates.hidden.tooltip</source>
-                <target>Aktiv: Vorlage erscheint nicht in der Vorlagenauswahl.</target>
+                <target>Aktiv: Vorlage ist zum Einbetten in andere Vorlagen gedacht und erscheint deshalb nicht in der Vorlagenauswahl.</target>
             </trans-unit>
             <trans-unit id="templates.recipient">
                 <source>templates.recipient</source>
@@ -824,15 +940,27 @@
             </trans-unit>
             <trans-unit id="templates.editor.origin_name">
                 <source>templates.editor.origin_name</source>
-                <target>Buchungsherkunft (Name)</target>
+                <target>Portal mit Gebühren (Name)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.origin_name.desc">
+                <source>templates.editor.origin_name.desc</source>
+                <target>Fügt den Namen des Portals ein, also der Reservierungsherkunft der Buchung (z. B. Booking.com). Die Angabe erscheint nur, wenn für diese Reservierungsherkunft eine Kommission oder Zahlungsgebühr hinterlegt ist, und entfällt z. B. bei Direktbuchungen.</target>
             </trans-unit>
             <trans-unit id="templates.editor.origin_commission">
                 <source>templates.editor.origin_commission</source>
                 <target>OTA-Kommission</target>
             </trans-unit>
+            <trans-unit id="templates.editor.origin_commission.desc">
+                <source>templates.editor.origin_commission.desc</source>
+                <target>Fügt die Kommission des Buchungsportals als Betrag ein. Die Angabe entfällt, wenn keine Kommission anfällt oder die Reservierungen der Rechnung zu unterschiedlichen Sätzen gebucht wurden.</target>
+            </trans-unit>
             <trans-unit id="templates.editor.origin_payment_fee">
                 <source>templates.editor.origin_payment_fee</source>
                 <target>OTA-Zahlungsgebühr</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.origin_payment_fee.desc">
+                <source>templates.editor.origin_payment_fee.desc</source>
+                <target>Fügt die Zahlungsgebühr des Buchungsportals als Betrag ein. Die Angabe entfällt, wenn keine Zahlungsgebühr anfällt oder sich die Reservierungen der Rechnung in Satz oder Zahlungsweg unterscheiden.</target>
             </trans-unit>
             <trans-unit id="templates.editor.tourist_tax.positions">
                 <source>templates.editor.tourist_tax.positions</source>
@@ -856,7 +984,7 @@
             </trans-unit>
             <trans-unit id="templates.editor.payment_due_date.desc">
                 <source>templates.editor.payment_due_date.desc</source>
-                <target>Fügt den Tag ein, an dem die Zahlung fällig wird. Er stammt aus dem Zahlungsziel in den Rechnungseinstellungen, damit gedrucktes Datum und E-Rechnung nie auseinanderlaufen. Ist dort kein Zahlungsziel hinterlegt, entfällt die Zeile.</target>
+                <target>Fügt das Fälligkeitsdatum der Rechnung ein. Es wird beim Erstellen aus dem Zahlungsziel in den Rechnungseinstellungen vorbelegt und lässt sich pro Rechnung ändern; gedrucktes Datum und E-Rechnung stimmen immer überein. Hat die Rechnung kein Fälligkeitsdatum, entfällt die Zeile.</target>
             </trans-unit>
             <trans-unit id="templates.notfound">
                 <source>templates.notfound</source>
@@ -877,6 +1005,10 @@
             <trans-unit id="templates.include.error.incompatible">
                 <source>templates.include.error.incompatible</source>
                 <target>Vorlage "%name%" (%type%) ist nicht kompatibel mit diesem Vorlagentyp</target>
+            </trans-unit>
+            <trans-unit id="templates.guest_checkin_invitation.name">
+                <source>templates.guest_checkin_invitation.name</source>
+                <target>Einladung zum Online-Check-in</target>
             </trans-unit>
             <trans-unit id="templates.journal.name">
                 <source>templates.journal.name</source>
@@ -917,6 +1049,22 @@
             <trans-unit id="templates.editor.opening_hours.desc">
                 <source>templates.editor.opening_hours.desc</source>
                 <target>Gibt die wöchentlichen Öffnungszeiten der Niederlassung als eine Zeile aus, z. B. „Mo.–Fr. 08:00–12:00, 16:00–19:00". Sind keine Zeiten hinterlegt, entfällt der Absatz.</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.guest_checkin_link">
+                <source>templates.editor.guest_checkin_link</source>
+                <target>Link zum Online-Check-in</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.guest_checkin_link.desc">
+                <source>templates.editor.guest_checkin_link.desc</source>
+                <target>Link, über den der Gast vor der Anreise Anreisezeit und Meldedaten angibt. Jede Reservierung bekommt ihren eigenen Link. Der Absatz entfällt, solange der Online-Check-in ausgeschaltet ist, bei stornierten Reservierungen und nach der Abreise.</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.guest_checkin_qr">
+                <source>templates.editor.guest_checkin_qr</source>
+                <target>QR-Code zum Online-Check-in</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.guest_checkin_qr.desc">
+                <source>templates.editor.guest_checkin_qr.desc</source>
+                <target>QR-Code des Online-Check-in-Links, z. B. für eine ausgedruckte Buchungsbestätigung. Die Zahl ist die Bildauflösung in Pixeln. Der Code entfällt immer dann, wenn auch der Link entfällt.</target>
             </trans-unit>
             <trans-unit id="templates.editor.check_in_times">
                 <source>templates.editor.check_in_times</source>

@@ -8,6 +8,7 @@ use App\Entity\Enum\NotificationSeverity;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Service\NotificationCenterService;
+use App\Workflow\Trigger\GuestCheckInSubmittedTrigger;
 use App\Workflow\WorkflowSkippedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -128,7 +129,7 @@ class CreateInAppNotificationAction implements WorkflowActionInterface
         $trigger = (string) ($context['triggerType'] ?? '');
         $isNewBooking = in_array(
             $trigger,
-            ['online_booking.created', 'calendar_import.created', 'reservation.created'],
+            ['online_booking.created', 'calendar_import.created', 'reservation.created', 'assistant_booking.created'],
             true
         );
 
@@ -151,7 +152,7 @@ class CreateInAppNotificationAction implements WorkflowActionInterface
         }
 
         $booker = $reservation->getBooker();
-        $name = null !== $booker ? trim($booker->getFirstname() . ' ' . $booker->getLastname()) : '';
+        $name = null !== $booker ? trim($booker->getFirstname().' '.$booker->getLastname()) : '';
 
         // No booker means no name to show — a placeholder like "unknown guest"
         // is filler, not information. Separate keys rather than an empty
@@ -162,6 +163,9 @@ class CreateInAppNotificationAction implements WorkflowActionInterface
         }
 
         $titleKey = match (true) {
+            GuestCheckInSubmittedTrigger::TYPE === $trigger => $hasName
+                ? 'notification.stored.guest_checkin_submitted'
+                : 'notification.stored.guest_checkin_submitted_anonymous',
             // One booking can cover several rooms; naming just the first would
             // be wrong, so the count takes over.
             !$isNewBooking => $hasName
@@ -179,7 +183,7 @@ class CreateInAppNotificationAction implements WorkflowActionInterface
             'reservation',
             $titleKey,
             $params,
-            $hasName ? $name : ('#' . $reservation->getId()),
+            $hasName ? $name : ('#'.$reservation->getId()),
             $severity,
             $requiredRole,
             $note,

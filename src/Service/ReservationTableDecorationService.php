@@ -39,8 +39,8 @@ class ReservationTableDecorationService
      * would be that many round trips for a feature that is usually empty.
      *
      * @param \DateTimeImmutable[] $days
-     * @param bool $canManageEntries whether the viewer may create/edit/delete entries
-     *                               (ROLE_RESERVATIONS; read-only staff only ever see them)
+     * @param bool                 $canManageEntries whether the viewer may create/edit/delete entries
+     *                                               (ROLE_RESERVATIONS; read-only staff only ever see them)
      *
      * @return array<string, DayDecoration>
      */

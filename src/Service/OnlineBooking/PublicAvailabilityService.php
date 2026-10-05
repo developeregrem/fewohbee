@@ -32,7 +32,10 @@ class PublicAvailabilityService
      *
      * Each row includes an `occupancyOptions` array with pre-calculated prices
      * for each valid number-of-persons. Only occupancy levels that have a matching
-     * price category are included.
+     * price category are included. The wizard's guest counts only determine whether
+     * to show a price adjustment hint; the rows still carry list prices.
+     *
+     * @param array<int, int> $guestCounts guest category ID => count from the wizard
      *
      * @return array<int, array{
      *   typeKey: string,
@@ -47,10 +50,6 @@ class PublicAvailabilityService
      *   occupancyAvailableCounts: array<int, int>,
      *   priceAdjustment: array{direction: string, labels: array<int, string>}|null
      * }>
-     *
-     * @param array<int, int> $guestCounts category-id => count from the wizard. Not part of
-     *   the pricing — the rows carry list prices — but it decides whether a room type gets
-     *   the "this party's price differs" hint.
      */
     public function getAvailability(
         \DateTimeImmutable $dateFrom,
@@ -122,7 +121,7 @@ class PublicAvailabilityService
                 ];
             }
 
-            $grouped[$typeKey]['availableCount']++;
+            ++$grouped[$typeKey]['availableCount'];
             $grouped[$typeKey]['roomIds'][] = $roomId;
             $grouped[$typeKey]['roomCapacities'][$roomId] = $effectiveCapacity;
             $grouped[$typeKey]['subsidiaryIds'][] = (int) $room->getObject()->getId();
@@ -315,6 +314,7 @@ class PublicAvailabilityService
      *   occupancyOptions: array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>,
      *   priceAdjustment: array{direction: string, labels: array<int, string>}|null
      * }> $grouped
+     *
      * @return array<int, array{
      *   typeKey: string,
      *   typeLabel: string,
@@ -362,8 +362,9 @@ class PublicAvailabilityService
     /**
      * Count how many concrete rooms in a category can satisfy each visible occupancy option.
      *
-     * @param array<int, int> $roomCapacities
+     * @param array<int, int>                         $roomCapacities
      * @param array<int|string, array{persons?: int}> $occupancyOptions
+     *
      * @return array<int, int>
      */
     private function buildOccupancyAvailableCounts(array $roomCapacities, array $occupancyOptions): array
@@ -416,7 +417,7 @@ class PublicAvailabilityService
         foreach ($category->getAmenities() as $amenity) {
             $entry = [
                 'slug' => $amenity->getSlug(),
-                'label' => $this->translator->trans('amenity.' . $amenity->getSlug()),
+                'label' => $this->translator->trans('amenity.'.$amenity->getSlug()),
                 'iconClass' => $amenity->getIconFaClass(),
             ];
             if ($count < 6) {

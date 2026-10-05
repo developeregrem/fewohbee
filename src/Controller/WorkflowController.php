@@ -74,7 +74,7 @@ class WorkflowController extends AbstractController
     #[Route('/{id}/toggle', name: 'settings.workflows.toggle', methods: ['POST'])]
     public function toggle(Request $request, Workflow $workflow): JsonResponse
     {
-        if (!$this->isCsrfTokenValid('workflow-toggle-' . $workflow->getId(), $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('workflow-toggle-'.$workflow->getId(), $request->request->get('_token'))) {
             return new JsonResponse(['error' => 'Invalid CSRF token'], 403);
         }
 
@@ -95,7 +95,7 @@ class WorkflowController extends AbstractController
             return new Response('', Response::HTTP_NO_CONTENT);
         }
 
-        if ($this->isCsrfTokenValid('delete' . $workflow->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$workflow->getId(), $request->request->get('_token'))) {
             $this->em->remove($workflow);
             $this->em->flush();
             $this->addFlash('success', 'workflow.flash.deleted');
@@ -208,6 +208,7 @@ class WorkflowController extends AbstractController
      * Translate label keys in a config schema and resolve template_select fields.
      *
      * @param array<int, array<string, mixed>> $schema
+     *
      * @return array<int, array<string, mixed>>
      */
     private function enrichAndTranslateSchema(array $schema, string $entityClass): array
@@ -216,24 +217,24 @@ class WorkflowController extends AbstractController
         foreach ($schema as $field) {
             $type = $field['type'] ?? '';
 
-            if ($type === 'template_select') {
+            if ('template_select' === $type) {
                 $templateTypes = $field['templateTypes'] ?? [];
                 $field['type'] = 'select';
                 $field['options'] = $this->loadTemplateOptions($templateTypes, $entityClass);
                 unset($field['templateTypes']);
-            } elseif ($type === 'reservation_status_select') {
+            } elseif ('reservation_status_select' === $type) {
                 $field['type'] = 'select';
                 $field['options'] = $this->loadReservationStatusOptions();
-            } elseif ($type === 'reservation_origin_select') {
+            } elseif ('reservation_origin_select' === $type) {
                 $field['type'] = 'select';
                 $field['options'] = $this->loadReservationOriginOptions();
-            } elseif ($type === 'accounting_account_select') {
+            } elseif ('accounting_account_select' === $type) {
                 $field['type'] = 'select';
                 $field['options'] = $this->loadAccountingAccountOptions();
-            } elseif ($type === 'tax_rate_select') {
+            } elseif ('tax_rate_select' === $type) {
                 $field['type'] = 'select';
                 $field['options'] = $this->loadTaxRateOptions();
-            } elseif ($type === 'attachment_list') {
+            } elseif ('attachment_list' === $type) {
                 // Unlike the *_select pseudo types this keeps its own type: the client
                 // renders repeatable rows instead of a plain select.
                 $field['groups'] = $this->loadAttachmentGroups($entityClass, (bool) ($field['includeInvoice'] ?? true));
@@ -338,7 +339,6 @@ class WorkflowController extends AbstractController
         return $options;
     }
 
-
     /**
      * The tax rates a workflow may be configured with: those the active chart of
      * accounts holds and that apply today.
@@ -407,6 +407,7 @@ class WorkflowController extends AbstractController
      * Load templates of the given types, filtered by entity class compatibility.
      *
      * @param string[] $templateTypes
+     *
      * @return array<int, array{value: int, label: string}>
      */
     private function loadTemplateOptions(array $templateTypes, string $entityClass): array
@@ -422,7 +423,7 @@ class WorkflowController extends AbstractController
         // layout, say — is loaded exactly as requested, otherwise it would end up
         // with an empty dropdown.
         $compatibleType = $entityTemplateTypeMap[$entityClass] ?? null;
-        $typesToLoad = ($compatibleType !== null && in_array($compatibleType, $templateTypes, true))
+        $typesToLoad = (null !== $compatibleType && in_array($compatibleType, $templateTypes, true))
             ? [$compatibleType]
             : $templateTypes;
 
@@ -462,7 +463,7 @@ class WorkflowController extends AbstractController
             $items = [];
             foreach ($templates as $template) {
                 $items[] = [
-                    'key' => 'pdf_template:' . $template->getId(),
+                    'key' => 'pdf_template:'.$template->getId(),
                     'label' => (string) $template->getName(),
                     'item' => ['type' => 'pdf_template', 'templateId' => $template->getId()],
                 ];
@@ -533,7 +534,7 @@ class WorkflowController extends AbstractController
         }
 
         $triggerChoices = [];
-        foreach ($this->triggerRegistry->all() as $trigger) {
+        foreach ($this->triggerRegistry->getOffered($isNew ? null : $workflow->getTriggerType()) as $trigger) {
             $triggerChoices[] = [
                 'type' => $trigger->getType(),
                 'label' => $trigger->getLabelKey(),
@@ -565,7 +566,7 @@ class WorkflowController extends AbstractController
         }
         if (method_exists($entity, 'getBooker') && $entity->getBooker()) {
             $booker = $entity->getBooker();
-            $data['booker'] = trim($booker->getFirstname() . ' ' . $booker->getLastname());
+            $data['booker'] = trim($booker->getFirstname().' '.$booker->getLastname());
         }
         if (method_exists($entity, 'getNumber')) {
             $data['number'] = $entity->getNumber();

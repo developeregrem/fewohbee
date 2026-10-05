@@ -4,24 +4,18 @@
             <div id="flash-message-overlay">
             </div>
             <div class="row">
-                <div class="col-md-4">{{ invoice.salutation }}</div>
-                <div class="col-md text-end"><strong>{{ 'invoice.number'|trans }}</strong></div>
-            </div>
-            <div class="row">
-                <div class="col-md-4">{{ invoice.firstname }} {{ invoice.lastname }}
+                <div class="col-md-4">
+                    {{ invoice.salutation }}<br />
+                    {{ invoice.firstname }} {{ invoice.lastname }}
                     {% if invoice.company is not empty %}
                         <br/>{{ invoice.company }}
                     {% endif %}
+                    <br />{{ invoice.address }}
+                    <br />{{ invoice.zip }} {{ invoice.city }}
                 </div>
-                <div class="col-md text-end">{{ invoice.number }}</div>
-            </div>
-            <div class="row">
-                <div class="col-md-4">{{ invoice.address }}</div>
-                <div class="col-md  text-end"><strong>{{ 'invoice.date'|trans }}</strong></div>
-            </div>
-            <div class="row">
-                <div class="col-md-4">{{ invoice.zip }} {{ invoice.city }}</div>
-                <div class="col-md text-end">{{ invoice.date|date('d.m.Y') }}</div>
+                <div class="col-md d-flex justify-content-end align-items-start">
+                    {% include 'Invoices/_invoice_header_dates.html.twig' %}
+                </div>
             </div>
             {# variable that contains the status whether prices are used that includes vat and does not include vats
             this will lead to price sums that are displayed incorrect #}

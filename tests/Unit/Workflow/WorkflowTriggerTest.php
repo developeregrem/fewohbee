@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Workflow;
 
 use App\Workflow\Trigger\InvoiceDaysAfterDateTrigger;
+use App\Workflow\Trigger\InvoiceDaysAfterDueDateTrigger;
 use App\Workflow\Trigger\MonthlyScheduleTrigger;
 use App\Workflow\Trigger\ReservationDaysAfterEndTrigger;
 use App\Workflow\Trigger\ReservationDaysBeforeStartTrigger;
@@ -118,6 +119,7 @@ final class WorkflowTriggerTest extends TestCase
         yield 'days before start' => [new ReservationDaysBeforeStartTrigger()];
         yield 'days after end' => [new ReservationDaysAfterEndTrigger()];
         yield 'invoice days after date' => [new InvoiceDaysAfterDateTrigger()];
+        yield 'invoice days after due date' => [new InvoiceDaysAfterDueDateTrigger()];
         yield 'monthly' => [new MonthlyScheduleTrigger()];
     }
 

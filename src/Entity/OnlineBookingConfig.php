@@ -83,6 +83,14 @@ class OnlineBookingConfig
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $successMessageText = null;
 
+    /**
+     * Hint shown inside the empty comment field, e.g. asking for the planned arrival time.
+     * Plain text: it is rendered as the textarea's placeholder attribute.
+     */
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    #[Assert\Length(max: 255)]
+    private ?string $commentPlaceholder = null;
+
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $customCss = null;
 
@@ -319,6 +327,19 @@ class OnlineBookingConfig
     public function setSuccessMessageText(?string $successMessageText): self
     {
         $this->successMessageText = '' === trim((string) $successMessageText) ? null : $successMessageText;
+
+        return $this;
+    }
+
+    public function getCommentPlaceholder(): ?string
+    {
+        return $this->commentPlaceholder;
+    }
+
+    public function setCommentPlaceholder(?string $commentPlaceholder): self
+    {
+        $commentPlaceholder = trim((string) $commentPlaceholder);
+        $this->commentPlaceholder = '' === $commentPlaceholder ? null : $commentPlaceholder;
 
         return $this;
     }

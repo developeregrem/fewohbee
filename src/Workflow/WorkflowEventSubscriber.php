@@ -5,12 +5,18 @@ declare(strict_types=1);
 namespace App\Workflow;
 
 use App\Entity\Reservation;
+use App\Event\AssistantReservationCreatedEvent;
 use App\Event\CalendarImportBookingCreatedEvent;
+use App\Event\GuestCheckInConfirmedEvent;
+use App\Event\GuestCheckInSubmittedEvent;
 use App\Event\InvoiceCreatedEvent;
 use App\Event\InvoiceStatusChangedEvent;
 use App\Event\OnlineBookingCreatedEvent;
 use App\Event\ReservationCreatedEvent;
 use App\Event\ReservationStatusChangedEvent;
+use App\Workflow\Trigger\AssistantReservationCreatedTrigger;
+use App\Workflow\Trigger\GuestCheckInConfirmedTrigger;
+use App\Workflow\Trigger\GuestCheckInSubmittedTrigger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -28,10 +34,13 @@ class WorkflowEventSubscriber implements EventSubscriberInterface
         return [
             OnlineBookingCreatedEvent::class => 'onOnlineBookingCreated',
             CalendarImportBookingCreatedEvent::class => 'onCalendarImportBookingCreated',
+            AssistantReservationCreatedEvent::class => 'onAssistantReservationCreated',
             ReservationCreatedEvent::class => 'onReservationCreated',
             ReservationStatusChangedEvent::class => 'onReservationStatusChanged',
             InvoiceCreatedEvent::class => 'onInvoiceCreated',
             InvoiceStatusChangedEvent::class => 'onInvoiceStatusChanged',
+            GuestCheckInSubmittedEvent::class => 'onGuestCheckInSubmitted',
+            GuestCheckInConfirmedEvent::class => 'onGuestCheckInConfirmed',
         ];
     }
 
@@ -51,6 +60,13 @@ class WorkflowEventSubscriber implements EventSubscriberInterface
     public function onCalendarImportBookingCreated(CalendarImportBookingCreatedEvent $event): void
     {
         $this->engine->processEvent('calendar_import.created', $event->reservation);
+    }
+
+    public function onAssistantReservationCreated(AssistantReservationCreatedEvent $event): void
+    {
+        $this->engine->processEvent(AssistantReservationCreatedTrigger::TYPE, $event->reservation, [
+            'booker' => $event->booker,
+        ]);
     }
 
     public function onReservationCreated(ReservationCreatedEvent $event): void
@@ -75,6 +91,16 @@ class WorkflowEventSubscriber implements EventSubscriberInterface
     public function onInvoiceCreated(InvoiceCreatedEvent $event): void
     {
         $this->engine->processEvent('invoice.created', $event->invoice);
+    }
+
+    public function onGuestCheckInSubmitted(GuestCheckInSubmittedEvent $event): void
+    {
+        $this->engine->processEvent(GuestCheckInSubmittedTrigger::TYPE, $event->reservation);
+    }
+
+    public function onGuestCheckInConfirmed(GuestCheckInConfirmedEvent $event): void
+    {
+        $this->engine->processEvent(GuestCheckInConfirmedTrigger::TYPE, $event->reservation);
     }
 
     public function onInvoiceStatusChanged(InvoiceStatusChangedEvent $event): void

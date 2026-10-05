@@ -72,11 +72,11 @@
             </trans-unit>
             <trans-unit id="apartment.multiple.occupancy.text">
                 <source>apartment.multiple.occupancy.text</source>
-                <target>Mehrfachbelegung</target>
+                <target>Parallele Buchungen erlauben</target>
             </trans-unit>
             <trans-unit id="apartment.multiple.occupancy.hint">
                 <source>apartment.multiple.occupancy.hint</source>
-                <target>Belegung durch versch. Gäste möglich.</target>
+                <target>Gäste aus unterschiedlichen Buchungen können sich das Zimmer im selben Zeitraum teilen. Pro Buchung gilt nur die gebuchte Personenzahl als belegt, freie Betten bleiben für weitere Buchungen verfügbar.</target>
             </trans-unit>
             <trans-unit id="calendar.sync.title">
                 <source>calendar.sync.title</source>

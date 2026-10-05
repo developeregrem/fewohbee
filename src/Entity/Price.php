@@ -70,9 +70,9 @@ class Price
     private $includesVat;
     #[ORM\Column(type: 'boolean')]
     private $isFlatPrice;
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isPerRoom;
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $isDefaultActiveInReservationCreation;
 
     /**
@@ -88,9 +88,9 @@ class Price
      */
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $brokered = true;
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isBookableOnline;
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isMandatoryOnline;
     #[ORM\OneToMany(targetEntity: 'App\Entity\PriceComponent', mappedBy: 'price', orphanRemoval: true, cascade: ['persist'])]
     #[ORM\OrderBy(['sortOrder' => 'ASC', 'id' => 'ASC'])]
@@ -367,6 +367,46 @@ class Price
     public function getAllPeriods(): ?bool
     {
         return $this->allPeriods;
+    }
+
+    /** Whether the row is valid on the weekday of this date. */
+    public function coversWeekday(\DateTimeInterface $date): bool
+    {
+        if ($this->allDays) {
+            return true;
+        }
+
+        return (bool) match ((int) $date->format('N')) {
+            1 => $this->monday,
+            2 => $this->tuesday,
+            3 => $this->wednesday,
+            4 => $this->thursday,
+            5 => $this->friday,
+            6 => $this->saturday,
+            7 => $this->sunday,
+        };
+    }
+
+    /**
+     * Whether the row prices this night: all year or inside one of its periods (both days
+     * inclusive), and on one of its weekdays. A list of rows in priority order is resolved by
+     * taking the first row that covers the night.
+     */
+    public function coversNight(\DateTimeInterface $night): bool
+    {
+        if (!$this->coversWeekday($night)) {
+            return false;
+        }
+        if ($this->allPeriods) {
+            return true;
+        }
+        foreach ($this->pricePeriods as $period) {
+            if ($night >= $period->getStart() && $night <= $period->getEnd()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function setAllPeriods(bool $allPeriods): self

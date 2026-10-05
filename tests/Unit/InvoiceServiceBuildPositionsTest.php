@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Dto\Pricing\NightRate;
 use App\Entity\Appartment;
 use App\Entity\AppSettings;
 use App\Entity\Price;
@@ -32,8 +33,8 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
         $reservation = $this->createReservation(1, 2, '2026-03-25', '2026-03-27');
 
         $priceService = $this->createStub(PriceService::class);
-        $priceService->method('getPricesForReservationDays')
-            ->willReturn([0 => [$price], 1 => [$price], 2 => [$price]]);
+        $priceService->method('getNightRates')
+            ->willReturn($this->nightRates('2026-03-25', [$price, $price]));
 
         $service = $this->createService($priceService);
         $positions = $service->buildAppartmentPositions($reservation);
@@ -52,8 +53,8 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
         $reservation = $this->createReservation(1, 1, '2026-03-25', '2026-03-26');
 
         $priceService = $this->createStub(PriceService::class);
-        $priceService->method('getPricesForReservationDays')
-            ->willReturn([0 => [$price], 1 => [$price]]);
+        $priceService->method('getNightRates')
+            ->willReturn($this->nightRates('2026-03-25', [$price]));
 
         $service = $this->createService($priceService);
         $positions = $service->buildAppartmentPositions($reservation);
@@ -72,8 +73,8 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
         $reservation = $this->createReservation(1, 2, '2026-03-25', '2026-03-25');
 
         $priceService = $this->createStub(PriceService::class);
-        $priceService->method('getPricesForReservationDays')
-            ->willReturn([0 => [$price]]);
+        $priceService->method('getNightRates')
+            ->willReturn($this->nightRates('2026-03-25', [$price]));
 
         $service = $this->createService($priceService);
         $positions = $service->buildAppartmentPositions($reservation);
@@ -92,8 +93,8 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
         $reservation = $this->createReservation(1, 3, '2026-03-25', '2026-03-25');
 
         $priceService = $this->createStub(PriceService::class);
-        $priceService->method('getPricesForReservationDays')
-            ->willReturn([0 => [$price]]);
+        $priceService->method('getNightRates')
+            ->willReturn($this->nightRates('2026-03-25', [$price]));
 
         $service = $this->createService($priceService);
         $positions = $service->buildAppartmentPositions($reservation);
@@ -110,8 +111,8 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
         $reservation = $this->createReservation(1, 2, '2026-03-25', '2026-03-25');
 
         $priceService = $this->createStub(PriceService::class);
-        $priceService->method('getPricesForReservationDays')
-            ->willReturn([0 => [$price]]);
+        $priceService->method('getNightRates')
+            ->willReturn($this->nightRates('2026-03-25', [$price]));
 
         $service = $this->createService($priceService);
         $positions = $service->buildAppartmentPositions($reservation);
@@ -130,8 +131,8 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
 
         // 3 nights: first 2 at priceA, last at priceB
         $priceService = $this->createStub(PriceService::class);
-        $priceService->method('getPricesForReservationDays')
-            ->willReturn([0 => [$priceA], 1 => [$priceA], 2 => [$priceB], 3 => [$priceB]]);
+        $priceService->method('getNightRates')
+            ->willReturn($this->nightRates('2026-03-25', [$priceA, $priceA, $priceB]));
 
         $service = $this->createService($priceService);
         $positions = $service->buildAppartmentPositions($reservation);
@@ -335,6 +336,22 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
         $requestStack->push($request);
 
         return $requestStack;
+    }
+
+    /**
+     * @param list<Price> $prices one per night, starting at $firstNight
+     *
+     * @return list<NightRate>
+     */
+    private function nightRates(string $firstNight, array $prices): array
+    {
+        $night = new \DateTimeImmutable($firstNight);
+
+        return array_map(
+            static fn (Price $price, int $i): NightRate => NightRate::live($night->modify('+'.$i.' day'), $price),
+            $prices,
+            array_keys($prices),
+        );
     }
 
     private function createApartmentPrice(int $id, float $priceValue, bool $isPerRoom = false, bool $isFlatPrice = false): Price

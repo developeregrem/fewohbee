@@ -214,6 +214,15 @@ final class CreateInAppNotificationActionTest extends TestCase
         self::assertSame('notification.stored.reservation_generic', $this->created()[0]->getTitleKey());
     }
 
+    public function testACompletedOnlineCheckInHasItsOwnTitle(): void
+    {
+        $reservation = $this->bookedReservation();
+
+        $this->action()->execute([], $reservation, ['triggerType' => 'guest_checkin.submitted']);
+
+        self::assertSame('notification.stored.guest_checkin_submitted', $this->created()[0]->getTitleKey());
+    }
+
     public function testAManuallyCreatedReservationCountsAsNew(): void
     {
         $reservation = $this->bookedReservation();

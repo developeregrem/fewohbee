@@ -66,12 +66,7 @@ class BookingJournalService
         $batch = $this->getOrCreateBatch((int) $date->format('Y'), (int) $date->format('n'));
 
         if ($batch->isClosed()) {
-            throw new \RuntimeException(
-                $this->translator->trans('journal.error.journal.closed', [
-                    '%month%' => $batch->getMonth(),
-                    '%year%' => $batch->getYear(),
-                ])
-            );
+            throw new \RuntimeException($this->translator->trans('journal.error.journal.closed', ['%month%' => $batch->getMonth(), '%year%' => $batch->getYear()]));
         }
 
         $entry->setBookingBatch($batch);
@@ -164,12 +159,7 @@ class BookingJournalService
         $batch = $this->getOrCreateBatch($year, $month);
 
         if ($batch->isClosed()) {
-            throw new \RuntimeException(
-                $this->translator->trans('journal.error.journal.closed', [
-                    '%month%' => $month,
-                    '%year%' => $year,
-                ])
-            );
+            throw new \RuntimeException($this->translator->trans('journal.error.journal.closed', ['%month%' => $month, '%year%' => $year]));
         }
 
         $activePreset = $this->settingsService->getActivePreset();
@@ -349,12 +339,7 @@ class BookingJournalService
 
         $oldBatch = $entry->getBookingBatch();
         if ($oldBatch->isClosed()) {
-            throw new \RuntimeException(
-                $this->translator->trans('journal.error.journal.closed', [
-                    '%month%' => $oldBatch->getMonth(),
-                    '%year%' => $oldBatch->getYear(),
-                ])
-            );
+            throw new \RuntimeException($this->translator->trans('journal.error.journal.closed', ['%month%' => $oldBatch->getMonth(), '%year%' => $oldBatch->getYear()]));
         }
 
         $entry->setDate($newDate);

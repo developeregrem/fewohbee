@@ -31,6 +31,32 @@ templates.operations.import.failed: No templates could be imported.
 templates.operations.import.already_present: Operations report templates already exist.
 templates.operations.import.missing_type: Template type for operations reports not found.
 templates.add: Add a template
+templates.fonts.open: Manage custom fonts
+templates.fonts.title: Custom PDF fonts
+templates.fonts.description: Upload your own font files. FewohBee detects the family and available styles automatically and makes families with a regular face available in the PDF template editor.
+templates.fonts.empty: No custom fonts have been installed yet.
+templates.fonts.upload.label: Font files
+templates.fonts.upload.help: Select one or more TTF or compatible OTF files. Upload the regular face as well as any bold and italic faces you need.
+templates.fonts.upload.button: Upload fonts
+templates.fonts.license_hint: By uploading a font, you confirm that its licence permits its intended use and embedding in PDF documents. FewohBee does not verify the licence terms itself.
+templates.fonts.style.r: Regular
+templates.fonts.style.b: Bold
+templates.fonts.style.i: Italic
+templates.fonts.style.bi: Bold italic
+templates.fonts.missing_regular: Regular face missing
+templates.fonts.delete.ask: Delete this font family?
+templates.fonts.delete.hint: The font will no longer be available for new PDFs. Existing templates will use a fallback font.
+templates.fonts.flash.no_file: Select at least one font file.
+templates.fonts.flash.uploaded: "{1} One font file was installed.|]1,Inf[ %count% font files were installed."
+templates.fonts.flash.upload_failed: '"%filename%" could not be installed: %reason%'
+templates.fonts.flash.deleted: The font family was deleted.
+templates.fonts.flash.not_found: The font family no longer exists.
+templates.fonts.validation.upload: The upload was not completed.
+templates.fonts.validation.size: The font file is empty or larger than 10 MB.
+templates.fonts.validation.extension: Only TTF and OTF files are supported.
+templates.fonts.validation.mime: The uploaded file is not recognised as a font.
+templates.fonts.validation.invalid: The file is not a supported Unicode TrueType font.
+templates.fonts.validation.storage: The font storage is not writable. Check the installation permissions.
 templates.attachment: Attachment
 templates.attachment.notfound: The attachment could not be found.
 templates.correspondence.created: Date
@@ -39,7 +65,7 @@ templates.correspondence.name: Name
 templates.correspondence.notfound: The entry could not be found.
 templates.default: Default template
 templates.hidden: Embedded template
-templates.hidden.tooltip: "Active: Template does not appear in the templateselection."
+templates.hidden.tooltip: "Active: Template is meant to be embedded in other templates and therefore does not appear in the template selection."
 templates.delete.ask: Are you sure you want to delete the template?
 templates.description: Templates for emails, invoices, etc.
 templates.edit: Edit template
@@ -68,12 +94,33 @@ templates.editor.apartment_modifier.positions: Surcharge / discount positions
 templates.editor.apartment_modifier.positions.desc: >-
   Inserts a table with all apartment surcharge / discount positions. The table is only rendered when such
   positions exist on the invoice.
-templates.editor.origin_name: Booking origin (name)
+templates.editor.origin_name: Portal with fees (name)
+templates.editor.origin_name.desc: >-
+  Inserts the name of the portal, i.e. the booking's reservation origin (e.g.
+  Booking.com). It only appears when a commission or payment fee is set for that
+  reservation origin, and is left out for direct bookings, for example.
 templates.editor.origin_commission: OTA commission
+templates.editor.origin_commission.desc: >-
+  Inserts the booking portal's commission as an amount. It is left out when no
+  commission applies or the invoice's reservations were booked at different
+  rates.
 templates.editor.origin_payment_fee: OTA payment fee
+templates.editor.origin_payment_fee.desc: >-
+  Inserts the booking portal's payment fee as an amount. It is left out when no
+  payment fee applies or the invoice's reservations differ in rate or in how they
+  were paid.
 templates.editor.tourist_tax.positions: Tourist tax positions
 templates.editor.opening_hours: Opening hours of the branch
 templates.editor.check_in_times: Check-in times of the branch
+templates.editor.guest_checkin_link: Online check-in link
+templates.editor.guest_checkin_link.desc: >-
+  Link with which the guest fills in arrival time and registration data before arriving. Each
+  reservation gets its own link. The paragraph is omitted while the online check-in is switched
+  off, for cancelled reservations and after departure.
+templates.editor.guest_checkin_qr: Online check-in QR code
+templates.editor.guest_checkin_qr.desc: >-
+  QR code of the online check-in link, e.g. for a printed booking confirmation. The number is the
+  image resolution in pixels. The code is omitted whenever the link is.
 templates.editor.check_in_times.desc: >-
   Prints the branch's check-in window and check-out time as a single line, e.g.
   "Check-in 17:00-20:00 - Check-out by 10:00". These are house rules, not the arrival time
@@ -88,9 +135,10 @@ templates.editor.payment_qr.desc: >-
   installation runs in euro.
 templates.editor.payment_due_date: Payment due date
 templates.editor.payment_due_date.desc: >-
-  Inserts the day payment falls due, taken from the payment period in the
-  invoice settings so the printed date and the e-invoice always agree. The line
-  is left out when the settings state no period.
+  Inserts the invoice's due date. It is prefilled from the payment period in
+  the invoice settings when the invoice is created and can be changed per
+  invoice; the printed date and the e-invoice always agree. The line is left
+  out when the invoice has no due date.
 templates.editor.tourist_tax.positions.desc: >-
   Inserts a table with all tourist-tax / accommodation-tax positions. The
   table is only rendered when such positions exist on the invoice.
@@ -183,6 +231,8 @@ templates.preview.snippet.bookingjournal.entries_count: Number of journal entrie
 templates.preview.snippet.bookingjournal.positions: Journal entries table
 templates.preview.snippet.gdpr.general_name: Customer name
 templates.preview.snippet.gdpr.general_birthday: Customer birth date
+templates.preview.snippet.gdpr.general_nationality: Customer nationality
+templates.preview.snippet.gdpr.general_id_document: Customer ID document
 templates.preview.snippet.gdpr.general_remark: Customer remark
 templates.preview.snippet.gdpr.addresses: Address block (repeat)
 templates.preview.snippet.gdpr.reservations: Overnight stays block (repeat)
@@ -196,6 +246,7 @@ templates.editor.toolbar.ordered: Numbered list
 templates.editor.toolbar.link: Insert link
 templates.editor.toolbar.table: Insert table
 templates.editor.toolbar.image: Insert image
+templates.editor.toolbar.image_email_unsupported: Images are only supported in PDF templates
 templates.editor.toolbar.table_row_add: Add row
 templates.editor.toolbar.table_row_delete: Delete row
 templates.editor.toolbar.table_col_add: Add column
@@ -241,6 +292,7 @@ templates.include.error.circular: "Circular template include detected (ID: %id%)
 templates.include.error.notfound: "Included template not found (ID: %id%)"
 templates.include.error.incompatible: "Template \"%name%\" (%type%) is not compatible with this template type"
 templates.type: Template type
+templates.guest_checkin_invitation.name: Online check-in invitation
 templates.journal.name: Booking journal
 
 templates.preview.snippet.pdf_header.desc: Adds a header that appears at the top of every PDF page.

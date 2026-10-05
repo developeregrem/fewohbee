@@ -1,0 +1,100 @@
+{# Standalone layout of the public check-in page: no JavaScript (the CSP forbids it), no
+   third-party resources, nothing that could carry the link token elsewhere. #}
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="no-referrer">
+    <title>{% block title %}{{ 'guest_checkin.public.page_title'|trans }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.8.css?v=2">
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/public-booking-modern.css?v=13">
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/fontawesome.min.css">
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/solid.min.css">
+    <style>
+        /* Mobile first */
+        .fhb-booking-root { --fhb-primary: {{ primaryColor }}; min-height: 100vh; padding: .75rem .5rem; }
+        .fhb-gci-top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+        .fhb-gci-house { color: var(--fhb-text-muted); font-size: .95rem; margin: 0; }
+        .fhb-gci-lang { display: flex; flex-shrink: 0; }
+        .fhb-gci-lang a, .fhb-gci-lang button { color: var(--fhb-text-muted); text-decoration: none; font-size: .9rem; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; padding: 0; }
+        .fhb-gci-lang [aria-current="true"] { color: var(--fhb-text); font-weight: 600; }
+        .fhb-gci-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: .75rem 1.25rem; margin: 0; }
+        .fhb-gci-facts dt { font-weight: 400; color: var(--fhb-text-muted); font-size: .8125rem; }
+        .fhb-gci-facts dd { margin: 0; font-weight: 500; }
+        .fhb-gci-person { border: 1px solid var(--fhb-border); border-radius: var(--fhb-radius-sm); margin-top: .75rem; }
+        .fhb-gci-person > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: .5rem; min-height: 48px; padding: .6rem 1rem; }
+        .fhb-gci-person > summary::-webkit-details-marker { display: none; }
+        .fhb-gci-person-title { flex-grow: 1; font-weight: 600; }
+        .fhb-gci-person-state { display: block; font-weight: 400; font-size: .875rem; color: var(--fhb-text-muted); }
+        .fhb-gci-chevron { color: var(--fhb-text-muted); transition: transform .15s ease; }
+        .fhb-gci-person[open] > summary .fhb-gci-chevron { transform: rotate(180deg); }
+        .fhb-gci-person-body { padding: .25rem 1rem 1rem; }
+        .fhb-gci-address > summary { cursor: pointer; color: var(--fhb-primary); font-size: .9rem; min-height: 44px; display: flex; align-items: center; }
+        .fhb-gci-time { max-width: 9rem; }
+        .fhb-gci-extra-list { display: grid; gap: .625rem; }
+        .fhb-gci-extra-choice.form-check.form-switch { display: flex; align-items: flex-start; gap: .875rem; min-height: 68px; margin: 0; padding: .75rem .875rem; border: 1px solid var(--fhb-border); border-radius: var(--fhb-radius-sm); cursor: pointer; }
+        .fhb-gci-extra-choice .form-check-input { flex: 0 0 auto; float: none; width: 2.25rem; height: .85rem; margin: .2rem 0 0; cursor: pointer; }
+        /* Materia draws the thumb with pseudo-elements; centre both on our wider track. */
+        .fhb-gci-extra-choice .form-check-input::before,
+        .fhb-gci-extra-choice .form-check-input::after { top: -.175rem; left: -.175rem; width: 1.2rem; height: 1.2rem; }
+        .fhb-gci-extra-choice .form-check-input:checked { background-color: var(--bs-primary); }
+        .fhb-gci-extra-choice .form-check-input:checked::before,
+        .fhb-gci-extra-choice .form-check-input:checked::after { left: calc(100% - 1.025rem); }
+        .fhb-gci-extra-choice .form-check-input:checked::before { background-color: white; }
+        .fhb-gci-extra-choice:focus-within { border-color: var(--bs-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--bs-primary) 18%, transparent); }
+        .fhb-gci-extra-choice:has(.form-check-input:checked) { border-color: var(--bs-primary); background: color-mix(in srgb, var(--bs-primary) 5%, var(--fhb-surface)); }
+        .fhb-gci-extra-copy { display: flex; flex-direction: column; min-width: 0; }
+        .fhb-gci-extra-name { font-weight: 600; overflow-wrap: anywhere; }
+        .fhb-gci-extra-price { color: var(--fhb-text-muted); font-size: .875rem; }
+        .fhb-gci-booked-extras { list-style: none; padding: 0; margin: 0 0 1rem; }
+        .fhb-gci-booked-extras li { display: flex; align-items: center; gap: .625rem; padding: .5rem .75rem; border-radius: var(--fhb-radius-sm); background: var(--fhb-surface-muted); overflow-wrap: anywhere; }
+        .fhb-gci-booked-extras li + li { margin-top: .375rem; }
+        .fhb-gci-checklist { list-style: none; padding: 0; margin: 0; display: grid; gap: .875rem; }
+        .fhb-gci-checklist > li { display: flex; align-items: flex-start; gap: .75rem; }
+        .fhb-gci-checklist > li > i { margin-top: .2rem; width: 1rem; text-align: center; }
+        .fhb-gci-checklist-label { display: block; color: var(--fhb-text-muted); font-size: .8125rem; }
+        .fhb-gci-checklist ul { list-style: none; padding: 0; margin: 0; }
+        /* iOS Safari collapses empty date/time inputs and centres their text. */
+        .fhb-booking-root input[type="date"].form-control,
+        .fhb-booking-root input[type="time"].form-control { -webkit-appearance: none; appearance: none; min-height: calc(1.5em + 1.1rem + 2px); }
+        .fhb-booking-root input[type="date"]::-webkit-date-and-time-value,
+        .fhb-booking-root input[type="time"]::-webkit-date-and-time-value { text-align: left; }
+        @media (min-width: 576px) {
+            .fhb-booking-root { padding: 2rem 1rem; }
+            .fhb-gci-extra-choice.form-check.form-switch { align-items: center; }
+            .fhb-gci-extra-choice .form-check-input { margin-top: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="fhb-booking-root">
+    <div class="fhb-shell">
+        <div class="fhb-booking-card">
+            {% block banner %}{% endblock %}
+            <div class="fhb-gci-top">
+                <p class="fhb-gci-house">{% block house %}{% endblock %}</p>
+                {% if token is defined %}
+                    <nav class="fhb-gci-lang" aria-label="{{ 'guest_checkin.public.language'|trans }}">
+                        {# Switching language keeps the guest where they are. On the check-in form it
+                           posts what was typed so far (PublicGuestCheckInController), so nothing is lost. #}
+                        {% set keep = (app.request.query.has('edit') ? {'edit': 1} : {}) + (app.request.query.get('main') == 'other' ? {'main': 'other'} : {}) %}
+                        {% set checkInForm = form is defined and form and form.vars.name == 'guest_check_in' ? form : null %}
+                        {% for lang in ['de', 'en'] %}
+                            {% if checkInForm %}
+                                <button type="submit" form="{{ checkInForm.vars.id }}" formaction="{{ path('public.guest_checkin', {'token': token, 'lang': lang, 'edit': 1} + keep) }}" formnovalidate
+                                        name="switch_language" value="1" lang="{{ lang }}"{% if app.request.locale == lang %} aria-current="true"{% endif %}>{{ lang|upper }}</button>
+                            {% else %}
+                                <a href="{{ path('public.guest_checkin', {'token': token, 'lang': lang} + keep) }}" hreflang="{{ lang }}" lang="{{ lang }}"{% if app.request.locale == lang %} aria-current="true"{% endif %}>{{ lang|upper }}</a>
+                            {% endif %}
+                        {% endfor %}
+                    </nav>
+                {% endif %}
+            </div>
+            {% block body %}{% endblock %}
+        </div>
+    </div>
+</div>
+</body>
+</html>

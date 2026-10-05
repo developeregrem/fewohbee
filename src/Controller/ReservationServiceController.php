@@ -13,7 +13,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Dto\CalendarEntryViolation;
+use App\Dto\Pricing\PricePromise;
 use App\Entity\Appartment;
+use App\Entity\CalendarEntry;
 use App\Entity\Correspondence;
 use App\Entity\Customer;
 use App\Entity\Enum\IDCardType;
@@ -25,40 +28,41 @@ use App\Entity\ReservationStatus;
 use App\Entity\RoomBlock;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
-use App\Event\ReservationCreatedEvent;
-use App\Dto\CalendarEntryViolation;
-use App\Entity\CalendarEntry;
 use App\Entity\User;
-use App\Form\ReservationMetaType;
+use App\Event\ReservationCreatedEvent;
 use App\Form\CalendarEntryType;
+use App\Form\ReservationMetaType;
 use App\Repository\CalendarEntryRepository;
 use App\Repository\CalendarRepository;
+use App\Service\AppSettingsService;
 use App\Service\AvailabilityService;
 use App\Service\Calendar\Entry\CalendarEntryService;
-use App\Service\Calendar\Sync\ImportedReservationSynchronizer;
 use App\Service\Calendar\PublicHolidayService;
+use App\Service\Calendar\Sync\ImportedReservationSynchronizer;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
 use App\Service\EInvoice\EInvoiceReadinessService;
+use App\Service\GuestCheckIn\GuestCheckInReviewService;
 use App\Service\InvoiceService;
 use App\Service\PriceService;
+use App\Service\Pricing\PricePromiseService;
 use App\Service\ReservationObject;
 use App\Service\ReservationPeriodService;
 use App\Service\ReservationService;
+use App\Service\ReservationTableDecorationService;
 use App\Service\ReservationTableService;
 use App\Service\TemplatesService;
 use App\Service\TouristTaxService;
-use App\Service\ReservationTableDecorationService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Intl\Countries;
@@ -74,6 +78,11 @@ class ReservationServiceController extends AbstractController
     private const EMAIL_DRAFT_SESSION_KEY = 'reservationEmailDraft';
 
     private $perPage = 15;
+
+    public function __construct(
+        private readonly AppSettingsService $appSettings,
+    ) {
+    }
 
     /**
      * Index Action start page.
@@ -159,9 +168,9 @@ class ReservationServiceController extends AbstractController
         $year = $request->query->get('year', null);
         if (null === $year) {
             return $this->_handleTableRequest($doctrine, $requestStack, $request, $tableService, $decorationService);
-        } else {
-            return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request);
         }
+
+        return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request);
     }
 
     /**
@@ -831,6 +840,7 @@ class ReservationServiceController extends AbstractController
                 ? $touristTaxService->hasActiveTaxForSubsidiary($reservations[0]->getAppartment()?->getObject())
                 : false,
             'guestCategoriesById' => $guestCategoriesById ?? [],
+            'nightRates' => array_merge(...array_map(static fn (Reservation $reservation): array => $ps->getNightRates($reservation), $reservations)),
         ]);
     }
 
@@ -839,7 +849,7 @@ class ReservationServiceController extends AbstractController
      */
     #[Route('/reservation/create', name: 'reservations.create.reservations', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
-    public function createNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, EventDispatcherInterface $eventDispatcher, Request $request)
+    public function createNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, EventDispatcherInterface $eventDispatcher, PricePromiseService $pricePromises, Request $request)
     {
         $em = $doctrine->getManager();
         $error = false;
@@ -887,6 +897,7 @@ class ReservationServiceController extends AbstractController
                 if (!$rs->isApartmentAvailable($reservation->getStartDate(), $reservation->getEndDate(), $reservation->getAppartment(), $reservation->getPersons())) {
                     $this->addFlash('warning', 'reservation.flash.update.conflict.persons');
                 }
+                $pricePromises->reconcile($reservation);
                 $em->persist($reservation);
             }
             $em->flush();
@@ -905,7 +916,7 @@ class ReservationServiceController extends AbstractController
      * Gets an already existing reservation and shows it.
      */
     #[Route('/get/{id}', name: 'reservations.get.reservation', methods: ['GET'])]
-    public function getReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, PriceService $ps, TouristTaxService $touristTaxService, Request $request, Reservation $reservation): Response
+    public function getReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, PriceService $ps, TouristTaxService $touristTaxService, GuestCheckInReviewService $guestCheckInReview, PricePromiseService $pricePromises, Request $request, Reservation $reservation): Response
     {
         $tab = $request->query->get('tab', 'booker');
         $em = $doctrine->getManager();
@@ -961,7 +972,58 @@ class ReservationServiceController extends AbstractController
             'miscTotal' => $miscTotal,
             'hasActiveTouristTax' => $touristTaxService->hasActiveTaxForSubsidiary($reservation->getAppartment()?->getObject()),
             'guestCategoriesById' => $guestCategoriesById,
+            'guestCheckIn' => $guestCheckInReview->buildTab($reservation, $this->isGranted('ROLE_CUSTOMERS')),
+            'priceListChange' => $this->priceListChange($pricePromises, $reservation),
+            'nightRates' => $ps->getNightRates($reservation),
         ]);
+    }
+
+    /**
+     * What the price tab has to tell when the price list changed since the booking: the date and
+     * total the booking keeps, and the total at today's prices. Null when there is nothing to
+     * decide - no promise, an invoice that is not canceled exists, or both totals agree. Extras added later
+     * are promised at today's price, so they never cause a difference.
+     *
+     * @return array{promisedOn: string, promised: float, current: float}|null
+     */
+    private function priceListChange(PricePromiseService $pricePromises, Reservation $reservation): ?array
+    {
+        $promise = PricePromise::fromArray($reservation->getPricePromise());
+        if (null === $promise || ([] === $promise->nights && [] === $promise->extras) || $reservation->hasActiveInvoice()) {
+            return null;
+        }
+        $totals = $pricePromises->compareWithCurrentPrices($reservation);
+        if (abs($totals['current'] - $totals['promised']) < 0.005) {
+            return null;
+        }
+
+        return ['promisedOn' => $promise->promisedOn] + $totals;
+    }
+
+    /**
+     * Gives up the promised price of a booking and prices it entirely from today's price list.
+     * Bookings with an invoice are left alone: the invoice already states their price. A canceled
+     * invoice does not count, the booking is billed anew.
+     */
+    #[Route('/{id}/price/reprice', name: 'reservations.price.reprice', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
+    public function repriceAction(ManagerRegistry $doctrine, PricePromiseService $pricePromises, TranslatorInterface $translator, Request $request, Reservation $reservation): Response
+    {
+        if (!$this->isCsrfTokenValid('reservation-reprice-'.$reservation->getId(), $request->request->getString('_token'))) {
+            $this->addFlash('warning', 'flash.invalidtoken');
+        } elseif ($reservation->hasActiveInvoice()) {
+            $this->addFlash('warning', 'reservation.price.reprice.invoiced');
+        } else {
+            $pricePromises->reconcile($reservation, repriceAll: true);
+            $doctrine->getManager()->flush();
+            $this->addFlash('success', $translator->trans('reservation.price.reprice.done', [
+                '%total%' => $this->formatAmount($pricePromises->total($reservation)),
+            ]));
+        }
+
+        return $this->forward('App\Controller\ReservationServiceController::getReservationAction', [
+            'id' => $reservation->getId(),
+        ], ['tab' => 'prices']);
     }
 
     /**
@@ -997,27 +1059,31 @@ class ReservationServiceController extends AbstractController
 
     #[Route(path: '/{id}/edit/remark', name: 'reservations.edit.remark', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
-    public function editReservationRemark(ManagerRegistry $doctrine, Request $request, Reservation $reservation): Response
+    public function editReservationRemark(ManagerRegistry $doctrine, PricePromiseService $pricePromises, TranslatorInterface $translator, Request $request, Reservation $reservation): Response
     {
+        $priceBefore = $request->isMethod('POST') ? $pricePromises->total($reservation) : 0.0;
         $form = $this->createForm(ReservationMetaType::class, $reservation);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
+            // Another origin may have other price rows; the stay is then priced anew.
+            $pricePromises->reconcile($reservation);
             $doctrine->getManager()->flush();
 
             // add succes message
             $this->addFlash('success', 'reservation.flash.update.success');
+            $this->addPriceChangeFlash($translator, $priceBefore, $pricePromises->total($reservation));
 
             // on success edit
             return $this->forward('App\Controller\ReservationServiceController::getReservationAction', [
                 'id' => $reservation->getId(),
                 'error' => true,
             ]);
-        } else {
-            return $this->render('Reservations/reservation_form_edit_remark.html.twig', [
-                'reservation' => $reservation,
-                'form' => $form->createView(),
-            ]);
         }
+
+        return $this->render('Reservations/reservation_form_edit_remark.html.twig', [
+            'reservation' => $reservation,
+            'form' => $form->createView(),
+        ]);
     }
 
     /**
@@ -1029,9 +1095,12 @@ class ReservationServiceController extends AbstractController
         ManagerRegistry $doctrine,
         AvailabilityService $availabilityService,
         ReservationService $rs,
+        PricePromiseService $pricePromises,
+        TranslatorInterface $translator,
         Request $request,
         Reservation $reservation,
     ): Response {
+        $priceBefore = $pricePromises->total($reservation);
         $apartment = $doctrine->getManager()->getRepository(Appartment::class)
             ->find($request->request->getInt('aid'));
         $guestCountsRaw = $request->request->get('guestCounts', '{}');
@@ -1048,6 +1117,7 @@ class ReservationServiceController extends AbstractController
             $this->addFlash('warning', 'reservation.flash.update.conflict');
         } else {
             $this->addFlash('success', 'reservation.flash.update.success');
+            $this->addPriceChangeFlash($translator, $priceBefore, $pricePromises->total($reservation));
         }
 
         return $this->forward('App\Controller\ReservationServiceController::editReservationAction', [
@@ -1063,6 +1133,7 @@ class ReservationServiceController extends AbstractController
         ManagerRegistry $doctrine,
         AvailabilityService $availabilityService,
         ReservationService $reservationService,
+        PricePromiseService $pricePromises,
         TranslatorInterface $translator,
         Request $request,
         Reservation $reservation,
@@ -1098,6 +1169,7 @@ class ReservationServiceController extends AbstractController
         $duration = (int) $reservation->getStartDate()->diff($reservation->getEndDate())->days;
         $endDate = (clone $startDate)->modify('+'.$duration.' days');
 
+        $priceBefore = $pricePromises->total($reservation);
         // The central availability check includes room blocks and overlapping
         // reservations; the moved reservation itself is ignored there.
         if (!$reservationService->moveReservation($reservation, $apartment, $startDate, $endDate)) {
@@ -1107,9 +1179,12 @@ class ReservationServiceController extends AbstractController
             ], Response::HTTP_CONFLICT);
         }
 
+        $message = $translator->trans('reservation.move.success');
+        $priceChange = $this->describePriceChange($translator, $priceBefore, $pricePromises->total($reservation));
+
         return new JsonResponse([
             'success' => true,
-            'message' => $translator->trans('reservation.move.success'),
+            'message' => null === $priceChange ? $message : $message.' '.$priceChange,
         ]);
     }
 
@@ -1223,34 +1298,33 @@ class ReservationServiceController extends AbstractController
             $query = ['tab' => $tab];
 
             return $this->forward($forwardController, $params, $query);
-        } else {
-            $customersInReservation = $requestStack->getSession()->get('customersInReservation');
-            $customerIsAlreadyInReservation = false;
+        }
+        $customersInReservation = $requestStack->getSession()->get('customersInReservation');
+        $customerIsAlreadyInReservation = false;
 
-            if (null == $customersInReservation) {
-                $customersInReservation = [];
-            } else {
-                foreach ($customersInReservation as $customer) {
-                    if ($customer['id'] == $customerId && $customer['appartmentId'] == $appartmentId) {
-                        $customerIsAlreadyInReservation = true;
-                        break;
-                    }
+        if (null == $customersInReservation) {
+            $customersInReservation = [];
+        } else {
+            foreach ($customersInReservation as $customer) {
+                if ($customer['id'] == $customerId && $customer['appartmentId'] == $appartmentId) {
+                    $customerIsAlreadyInReservation = true;
+                    break;
                 }
             }
-
-            if (!$customerIsAlreadyInReservation) {
-                $customersInReservation[] = ['id' => $customerId, 'appartmentId' => $appartmentId];
-                $requestStack->getSession()->set('customersInReservation', $customersInReservation);
-            }
-
-            $request2 = $request->duplicate([], []);
-            $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
-            $request2->request->add([
-                'tab' => $tab,
-            ]);
-
-            return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
         }
+
+        if (!$customerIsAlreadyInReservation) {
+            $customersInReservation[] = ['id' => $customerId, 'appartmentId' => $appartmentId];
+            $requestStack->getSession()->set('customersInReservation', $customersInReservation);
+        }
+
+        $request2 = $request->duplicate([], []);
+        $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
+        $request2->request->add([
+            'tab' => $tab,
+        ]);
+
+        return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
     }
 
     /**
@@ -1304,26 +1378,25 @@ class ReservationServiceController extends AbstractController
             $query = ['tab' => $tab];
 
             return $this->forward($forwardController, $params, $query);
-        } else {
-            $guestsInReservation = $requestStack->getSession()->get('customersInReservation');
-            $appartmentId = $request->request->get('appartmentId', 0);
-
-            foreach ($guestsInReservation as $key => $guest) {
-                if ($guest['id'] == $customerId && $guest['appartmentId'] == $appartmentId) {
-                    unset($guestsInReservation[$key]);
-                    $requestStack->getSession()->set('customersInReservation', $guestsInReservation);
-                    break;
-                }
-            }
-
-            $request2 = $request->duplicate([], []);
-            $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
-            $request2->request->add([
-                'tab' => $tab,
-            ]);
-
-            return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
         }
+        $guestsInReservation = $requestStack->getSession()->get('customersInReservation');
+        $appartmentId = $request->request->get('appartmentId', 0);
+
+        foreach ($guestsInReservation as $key => $guest) {
+            if ($guest['id'] == $customerId && $guest['appartmentId'] == $appartmentId) {
+                unset($guestsInReservation[$key]);
+                $requestStack->getSession()->set('customersInReservation', $guestsInReservation);
+                break;
+            }
+        }
+
+        $request2 = $request->duplicate([], []);
+        $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
+        $request2->request->add([
+            'tab' => $tab,
+        ]);
+
+        return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
     }
 
     #[Route('/edit/customer/edit', name: 'reservations.edit.customer.edit', methods: ['POST'])]
@@ -1519,7 +1592,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route(path: '/{reservationId}/edit/prices/{id}/update', name: 'reservations.update.misc.price', methods: ['POST'])]
-    public function updateMiscPriceForReservation($reservationId, Price $price, ManagerRegistry $doctrine, ReservationService $rs, RequestStack $requestStack, Request $request): Response
+    public function updateMiscPriceForReservation($reservationId, Price $price, ManagerRegistry $doctrine, ReservationService $rs, PricePromiseService $pricePromises, RequestStack $requestStack, Request $request): Response
     {
         if ($this->isCsrfTokenValid('reservation-update-misc-price', $request->request->get('_token'))) {
             // during reservation create process
@@ -1536,6 +1609,7 @@ class ReservationServiceController extends AbstractController
                 } else {
                     $reservation->addPrice($price);
                 }
+                $pricePromises->reconcile($reservation);
 
                 $em->persist($reservation);
                 $em->flush();
@@ -1850,5 +1924,35 @@ class ReservationServiceController extends AbstractController
         $time = \DateTime::createFromFormat('H:i', $value);
 
         return false === $time ? null : $time;
+    }
+
+    /**
+     * Tells the user when a change to a booking changed its price. Nights that remain keep their
+     * promised price, so this only shows when new nights, guests or another room category were
+     * priced from the current price list.
+     */
+    private function addPriceChangeFlash(TranslatorInterface $translator, float $before, float $after): void
+    {
+        $message = $this->describePriceChange($translator, $before, $after);
+        if (null !== $message) {
+            $this->addFlash('info', $message);
+        }
+    }
+
+    private function describePriceChange(TranslatorInterface $translator, float $before, float $after): ?string
+    {
+        if (abs($after - $before) < 0.005) {
+            return null;
+        }
+
+        return $translator->trans('reservation.price.changed', [
+            '%before%' => $this->formatAmount($before),
+            '%after%' => $this->formatAmount($after),
+        ]);
+    }
+
+    private function formatAmount(float $amount): string
+    {
+        return number_format($amount, 2, ',', '.').' '.$this->appSettings->getSettings()->getCurrencySymbol();
     }
 }

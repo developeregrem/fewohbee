@@ -112,7 +112,7 @@ class ZugferdInvoiceGenerator
 
         // payment terms and due date - the same date the invoice template prints,
         // so the XML and the paper never state different deadlines
-        $documentBuilder->addDocumentPaymentTerm($settings->getPaymentTerms(), $settings->dueDateFor($invoice->getDate()), $mandateReference); // Payment term
+        $documentBuilder->addDocumentPaymentTerm($settings->getPaymentTerms(), $invoice->getPaymentDueDate(), $mandateReference); // Payment term
         // Buyer reference (BT-10, Leitweg-ID): mandatory for XRechnung via validator, omitted otherwise.
         $buyerReference = $invoice->getBuyerReference();
         if (null !== $buyerReference && '' !== trim($buyerReference)) {
@@ -201,7 +201,7 @@ class ZugferdInvoiceGenerator
     }
 
     /**
-     * @return array<string, string> Constant name => ISO code.
+     * @return array<string, string> constant name => ISO code
      */
     private function getCurrencyCodeMap(): array
     {
@@ -211,7 +211,7 @@ class ZugferdInvoiceGenerator
         }
 
         /** @var array<string, mixed> $constants */
-        $constants = (new \ReflectionClass(ZugferdCurrencyCodes::class))->getConstants();
+        $constants = new \ReflectionClass(ZugferdCurrencyCodes::class)->getConstants();
 
         $map = array_filter($constants, static fn ($value): bool => is_string($value));
 

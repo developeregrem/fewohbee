@@ -81,6 +81,33 @@ final class StatisticsControllerTest extends WebTestCase
         self::assertSame([1], $payload['datasets'][0]['data']);
     }
 
+    public function testOriginChartsReturnConfiguredColorsAndLeaveOtherColorsOptional(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createUserWithRoles(['ROLE_STATISTICS']));
+
+        $year = $this->getScenarioYear(4);
+        $this->createStatisticsScenario(sprintf('%d-04-01', $year), sprintf('%d-04-03', $year), 'Web', '#123abc');
+        $this->createStatisticsScenario(sprintf('%d-05-01', $year), sprintf('%d-05-03', $year), 'Direct');
+
+        foreach (['/statistics/origin/monthtly' => ['monthStart' => 4, 'monthEnd' => 5], '/statistics/origin/yearly' => []] as $path => $period) {
+            $client->request('GET', $path, [
+                'objectId' => 'all',
+                'yearStart' => $year,
+                'yearEnd' => $year,
+                ...$period,
+            ]);
+
+            self::assertResponseIsSuccessful();
+            $payload = json_decode((string) $client->getResponse()->getContent(), true);
+            self::assertIsArray($payload);
+            $colorsByOrigin = array_combine($payload['labels'], $payload['colors']);
+            ksort($colorsByOrigin);
+            self::assertSame(['Direct' => null, 'Web' => '#123abc'], $colorsByOrigin);
+            self::assertSame([1, 1], $payload['datasets'][0]['data']);
+        }
+    }
+
     public function testTurnoverMonthlyUsesLiveData(): void
     {
         $client = static::createClient();
@@ -104,7 +131,41 @@ final class StatisticsControllerTest extends WebTestCase
         self::assertSame(200.0, (float) $data[4]);
     }
 
-    private function createStatisticsScenario(string $start, string $end): void
+    public function testTurnoverOffersTheForecastAsItsOwnSeries(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createUserWithRoles(['ROLE_STATISTICS']));
+        $year = (int) date('Y') + 1;
+
+        $client->request('GET', '/statistics/turnover/monthly', ['yearStart' => $year, 'yearEnd' => $year, 'invoice-status' => [2]]);
+        $withoutForecast = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertCount(1, $withoutForecast['datasets']);
+
+        // The forecast is its own series next to the invoices and explains itself in the tooltip.
+        $client->request('GET', '/statistics/turnover/monthly', ['yearStart' => $year, 'yearEnd' => $year, 'invoice-status' => [2], 'forecast' => 1]);
+        self::assertResponseIsSuccessful();
+        $open = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertCount(2, $open['datasets']);
+        self::assertTrue($open['datasets'][1]['forecast']);
+        self::assertCount(12, $open['datasets'][1]['data']);
+        self::assertCount(12, $open['datasets'][1]['details']);
+        self::assertArrayNotHasKey('stack', $open['datasets'][0]);
+        self::assertStringContainsString((string) $year, $open['datasets'][0]['label']);
+
+        // Including invoiced reservations can only add to it.
+        $client->request('GET', '/statistics/turnover/monthly', ['yearStart' => $year, 'yearEnd' => $year, 'invoice-status' => [2], 'forecast' => 1, 'forecast-invoiced' => 1]);
+        $all = json_decode((string) $client->getResponse()->getContent(), true);
+        foreach ($all['datasets'][1]['data'] as $month => $amount) {
+            self::assertGreaterThanOrEqual($open['datasets'][1]['data'][$month], $amount);
+        }
+
+        $client->request('GET', '/statistics/turnover/yearly', ['yearStart' => $year, 'yearEnd' => $year, 'invoice-status' => [2], 'forecast' => 1]);
+        $yearly = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertEqualsWithDelta(array_sum($open['datasets'][1]['data']), $yearly['datasets'][1]['data'][0], 0.01);
+        self::assertCount(1, $yearly['datasets'][1]['details']);
+    }
+
+    private function createStatisticsScenario(string $start, string $end, string $originName = 'Web', ?string $originColor = null): void
     {
         $container = static::getContainer();
         $em = $container->get(ManagerRegistry::class)->getManager();
@@ -122,7 +183,8 @@ final class StatisticsControllerTest extends WebTestCase
         $em->persist($appartment);
 
         $origin = new ReservationOrigin();
-        $origin->setName('Web');
+        $origin->setName($originName);
+        $origin->setColor($originColor);
         $em->persist($origin);
 
         $status = new ReservationStatus();

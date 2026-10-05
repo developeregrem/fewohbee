@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\PriceRounding;
 use App\Repository\AppSettingsRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -82,6 +83,43 @@ class AppSettings
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $smtpPasswordEncrypted = null;
+
+    /** Administrator switch for AI assistants (MCP); only effective when MCP_ENABLED=true. */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $mcpEnabled = false;
+
+    /** Whether AI assistants may create reservations (additionally needs the reservations:write scope). */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $mcpWriteEnabled = false;
+
+    /** Price rules lower a room price by at most this many percent in total (a negative number). */
+    #[ORM\Column(type: Types::SMALLINT, options: ['default' => -30])]
+    private int $priceChangeMinPercent = -30;
+
+    /** Price rules raise a room price by at most this many percent in total. */
+    #[ORM\Column(type: Types::SMALLINT, options: ['default' => 50])]
+    private int $priceChangeMaxPercent = 50;
+
+    #[ORM\Column(type: Types::STRING, length: 10, enumType: PriceRounding::class, options: ['default' => 'euro'])]
+    private PriceRounding $priceChangeRounding = PriceRounding::EURO;
+
+    /**
+     * Host names the MCP endpoint answers for (DNS rebinding protection), normalized by McpSettings.
+     * Loopback names are always allowed on top.
+     *
+     * @var list<string>|null
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $mcpAllowedHosts = null;
+
+    /**
+     * Address under which this installation is reachable from the internet, e.g.
+     * "https://fewohbee.example.com", without trailing slash. Links handed to guests are built
+     * from it, also when rendered by a cron job without a request. PUBLIC_BASE_URI overrides
+     * it; PublicUrlService resolves the effective value.
+     */
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $publicBaseUrl = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
@@ -218,6 +256,44 @@ class AppSettings
         return $this;
     }
 
+    public function isMcpEnabled(): bool
+    {
+        return $this->mcpEnabled;
+    }
+
+    public function setMcpEnabled(bool $mcpEnabled): self
+    {
+        $this->mcpEnabled = $mcpEnabled;
+
+        return $this;
+    }
+
+    public function isMcpWriteEnabled(): bool
+    {
+        return $this->mcpWriteEnabled;
+    }
+
+    public function setMcpWriteEnabled(bool $mcpWriteEnabled): self
+    {
+        $this->mcpWriteEnabled = $mcpWriteEnabled;
+
+        return $this;
+    }
+
+    /** @return list<string> */
+    public function getMcpAllowedHosts(): array
+    {
+        return $this->mcpAllowedHosts ?? [];
+    }
+
+    /** @param list<string> $mcpAllowedHosts */
+    public function setMcpAllowedHosts(array $mcpAllowedHosts): self
+    {
+        $this->mcpAllowedHosts = [] === $mcpAllowedHosts ? null : array_values($mcpAllowedHosts);
+
+        return $this;
+    }
+
     public function getMailCopy(): ?bool
     {
         return $this->mailCopy;
@@ -286,6 +362,53 @@ class AppSettings
     public function setSmtpPasswordEncrypted(?string $smtpPasswordEncrypted): self
     {
         $this->smtpPasswordEncrypted = $this->normalizeNullableString($smtpPasswordEncrypted);
+
+        return $this;
+    }
+
+    public function getPublicBaseUrl(): ?string
+    {
+        return $this->publicBaseUrl;
+    }
+
+    public function setPublicBaseUrl(?string $publicBaseUrl): self
+    {
+        $publicBaseUrl = $this->normalizeNullableString($publicBaseUrl);
+        $this->publicBaseUrl = null === $publicBaseUrl ? null : rtrim($publicBaseUrl, '/');
+
+        return $this;
+    }
+
+    public function getPriceChangeMinPercent(): int
+    {
+        return $this->priceChangeMinPercent;
+    }
+
+    public function getPriceChangeMaxPercent(): int
+    {
+        return $this->priceChangeMaxPercent;
+    }
+
+    /** The lower limit is at most zero, the upper at least zero. */
+    public function setPriceChangeLimits(int $minPercent, int $maxPercent): self
+    {
+        if ($minPercent > 0 || $minPercent <= -100 || $maxPercent < 0 || $maxPercent > 500) {
+            throw new \InvalidArgumentException('Price change limits must lie between -99 and 0, and 0 and 500 percent.');
+        }
+        $this->priceChangeMinPercent = $minPercent;
+        $this->priceChangeMaxPercent = $maxPercent;
+
+        return $this;
+    }
+
+    public function getPriceChangeRounding(): PriceRounding
+    {
+        return $this->priceChangeRounding;
+    }
+
+    public function setPriceChangeRounding(PriceRounding $rounding): self
+    {
+        $this->priceChangeRounding = $rounding;
 
         return $this;
     }

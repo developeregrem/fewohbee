@@ -1,0 +1,73 @@
+{# Online check-in of one reservation, laid out by its state with one main action each: share the
+   link while the guest has not checked in, review and confirm what arrived, then the outcome. #}
+{% set checkIn = guestCheckIn.checkIn %}
+{% set status = guestCheckIn.status.value %}
+{% set canEdit = is_granted('ROLE_RESERVATIONS') %}
+<div data-controller="guest-checkin"
+     data-guest-checkin-link-url-value="{{ path('reservations.guest_checkin.link', {'id': reservation.id}) }}"
+     data-guest-checkin-regenerate-url-value="{{ path('reservations.guest_checkin.regenerate', {'id': reservation.id}) }}"
+     data-guest-checkin-token-value="{{ canEdit ? csrf_token('guest-checkin-' ~ reservation.id) : '' }}">
+
+    {# ── State ── #}
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <span class="badge {{ {'open': 'text-bg-secondary', 'submitted': 'text-bg-primary', 'applied': 'text-bg-success'}[status] }}">{{ guestCheckIn.status.labelKey|trans }}</span>
+        <span class="small text-body-secondary">
+            {% if status == 'applied' %}
+                {{ (checkIn.checkedInAtDesk ? 'guest_checkin.tab.state_desk' : 'guest_checkin.tab.state_applied')|trans({'%date%': checkIn.appliedAt ? checkIn.appliedAt|date('d.m.Y H:i') : '–'}) }}
+            {% elseif status == 'submitted' and guestCheckIn.review %}
+                {{ 'guest_checkin.tab.state_submitted'|trans({'%date%': checkIn.lastSubmittedAt ? checkIn.lastSubmittedAt|date('d.m.Y H:i') : '–'}) }}
+            {% elseif status == 'submitted' %}
+                {{ 'guest_checkin.tab.state_purged'|trans }}
+            {% else %}
+                {{ 'guest_checkin.tab.state_open'|trans }}
+            {% endif %}
+        </span>
+    </div>
+
+    {% if status == 'open' %}
+        {% if guestCheckIn.unavailableReason %}
+            <div class="alert alert-secondary small">{{ guestCheckIn.unavailableReason|trans }}</div>
+        {% else %}
+            {% if guestCheckIn.invitation %}
+                {% set invitation = guestCheckIn.invitation %}
+                <p class="small mb-3">
+                    <i class="fas fa-envelope text-body-secondary me-1"></i>
+                    {% if invitation.sentAt %}
+                        {{ 'guest_checkin.tab.invitation_sent'|trans({'%date%': invitation.sentAt|date('d.m.Y')}) }}
+                    {% elseif invitation.workflows is not empty %}
+                        {{ 'guest_checkin.tab.invitation_planned'|trans({'%names%': invitation.workflows|map(workflow => workflow.system ? workflow.name|trans : workflow.name)|join(', ')}) }}
+                    {% else %}
+                        {{ 'guest_checkin.tab.invitation_none'|trans }}
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <a href="{{ path('settings.workflows.index') }}">{{ 'guest_checkin.tab.invitation_setup'|trans }}</a>
+                        {% endif %}
+                    {% endif %}
+                </p>
+            {% endif %}
+            {% if canEdit %}
+                {% include 'Reservations/GuestCheckIn/_link.html.twig' %}
+                {# Not every guest checks in online; the desk check-in closes the gap. #}
+                <form class="d-flex flex-wrap align-items-center gap-2 border-top pt-3 mt-3" method="post"
+                      action="{{ path('reservations.guest_checkin.desk', {'id': reservation.id}) }}" data-action="submit->guest-checkin#post">
+                    <input type="hidden" name="_token" value="{{ csrf_token('guest-checkin-' ~ reservation.id) }}">
+                    <span class="small text-body-secondary me-auto">{{ 'guest_checkin.tab.desk_hint'|trans }}</span>
+                    <button type="submit" class="btn btn-sm btn-outline-success"><i class="fas fa-check me-1"></i>{{ 'guest_checkin.tab.desk_mark'|trans }}</button>
+                </form>
+            {% endif %}
+        {% endif %}
+    {% elseif status == 'submitted' and guestCheckIn.review %}
+        {% include 'Reservations/GuestCheckIn/_review.html.twig' with {'review': guestCheckIn.review} %}
+    {% elseif status == 'applied' %}
+        {% include 'Reservations/GuestCheckIn/_confirmed.html.twig' %}
+    {% endif %}
+
+    {# Once the guest acted, the link is a side matter: guests reopen it for their stay page. #}
+    {% if status != 'open' and canEdit and not guestCheckIn.unavailableReason %}
+        <details class="mt-4">
+            <summary class="small text-body-secondary">{{ 'guest_checkin.tab.link_heading'|trans }}</summary>
+            <div class="mt-2">
+                {% include 'Reservations/GuestCheckIn/_link.html.twig' %}
+            </div>
+        </details>
+    {% endif %}
+</div>

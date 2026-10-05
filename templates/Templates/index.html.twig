@@ -12,7 +12,7 @@
 {% block content %}
 <div class="container" data-controller="settings templates">
     <div class="row">
-        <div class="col">
+        <div class="col d-flex align-items-center gap-2">
             {% if operationsTemplatesMissing %}
                 <div class="alert alert-info alert-dismissible fade show d-flex flex-wrap align-items-center gap-2"
                      role="alert"
@@ -38,6 +38,18 @@
             <a class="btn btn-secondary" href="{{ path('settings.templates.new.page') }}">
                 <i class="fas fa-plus" aria-hidden="true"></i> {{ 'templates.add'|trans }}
             </a>
+            <button type="button"
+                    class="btn btn-outline-secondary ms-auto"
+                    data-action="click->settings#openModalAction"
+                    data-url="{{ path('settings.templates.fonts.manage') }}"
+                    data-title="{{ 'templates.fonts.title'|trans }}"
+                    data-modal-size="lg"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalCenter"
+                    title="{{ 'templates.fonts.open'|trans }}"
+                    aria-label="{{ 'templates.fonts.open'|trans }}">
+                <i class="fas fa-cog" aria-hidden="true"></i>
+            </button>
         </div>
     </div>
     <div class="row mt-3">
@@ -101,6 +113,7 @@
             {% endif %}
         </div>
     </div>
+
 </div>
 {% endblock %}
 

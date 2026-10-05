@@ -19,7 +19,7 @@ class OnlineBookingRoomCategoryLimit
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: RoomCategory::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?RoomCategory $roomCategory = null;
 
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]

@@ -23,6 +23,7 @@ use App\Entity\Template;
 use App\Event\ReservationStatusChangedEvent;
 use App\Exception\InvalidReservationPeriodException;
 use App\Repository\GuestCategoryRepository;
+use App\Service\Pricing\PricePromiseService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -42,6 +43,7 @@ class ReservationService
         private readonly GuestCategoryRepository $guestCategoryRepository,
         private readonly AvailabilityService $availabilityService,
         private readonly ReservationPeriodService $reservationPeriodService,
+        private readonly PricePromiseService $pricePromises,
     ) {
     }
 
@@ -396,9 +398,9 @@ class ReservationService
             $this->em->flush();
 
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -525,6 +527,9 @@ class ReservationService
         $reservation->setStartDate($startDate);
         $reservation->setEndDate($endDate);
         $reservation->setAppartment($apartment);
+        // Remaining nights keep their promised price, new ones are priced today. Guest counts
+        // changed by updateReservation() are already applied at this point.
+        $this->pricePromises->reconcile($reservation);
 
         if ($flush) {
             $this->em->persist($reservation);
@@ -559,7 +564,7 @@ class ReservationService
             $this->em->persist($reservation);
             $this->em->flush();
             $this->requestStack->getSession()->getFlashBag()->add('success', 'reservation.flash.update.success');
-        } elseif ('guest' === $tab && count($reservation->getCustomers()) < $reservation->getPersons()) {
+        } elseif ('guest' === $tab && count($reservation->getCustomers()) < $reservation->getTotalGuests()) {
             // check if customer is already in list
             $isAlreadyInList = false;
             $customers = $reservation->getCustomers();
@@ -627,21 +632,22 @@ class ReservationService
             $is->prefillMiscPositionsWithReservations($reservations, $requestStack, true);
 
             return $requestStack->getSession()->get('invoicePositionsMiscellaneous');
-        } else { // initial load of preview new reservation, prices will be filled based on price categories
-            $prices = $ps->getUniquePricesForReservations($reservations, 1);
-            // prefill reservatioInCreationPrices session
-            foreach ($prices as $price) {
-                if ($price->getIsDefaultActiveInReservationCreation()) {
-                    $this->toggleInCreationPrice($price, $requestStack);
-                }
-            }
-            $selectedPrices = $requestStack->getSession()->get('reservatioInCreationPrices', new ArrayCollection());
-            $requestStack->getSession()->set('invoicePositionsMiscellaneous', []);
-            $reservations = $this->setPricesToReservations($selectedPrices, $reservations);
-            $is->prefillMiscPositionsWithReservations($reservations, $requestStack, true);
-
-            return $requestStack->getSession()->get('invoicePositionsMiscellaneous');
         }
+
+        // On the first preview, fill prices from the price categories.
+        $prices = $ps->getUniquePricesForReservations($reservations, 1);
+        // prefill reservatioInCreationPrices session
+        foreach ($prices as $price) {
+            if ($price->getIsDefaultActiveInReservationCreation()) {
+                $this->toggleInCreationPrice($price, $requestStack);
+            }
+        }
+        $selectedPrices = $requestStack->getSession()->get('reservatioInCreationPrices', new ArrayCollection());
+        $requestStack->getSession()->set('invoicePositionsMiscellaneous', []);
+        $reservations = $this->setPricesToReservations($selectedPrices, $reservations);
+        $is->prefillMiscPositionsWithReservations($reservations, $requestStack, true);
+
+        return $requestStack->getSession()->get('invoicePositionsMiscellaneous');
     }
 
     /**

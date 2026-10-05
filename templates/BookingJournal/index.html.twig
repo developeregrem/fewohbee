@@ -59,6 +59,14 @@
                 <i class="fas fa-file-export"></i> {{ 'accounting.journal.export.year'|trans }}
             </button>
             <div class="vr"></div>
+            {% if showReceiptProposals %}
+                <a href="{{ path('journal.receipts.index') }}" class="btn btn-outline-secondary btn-sm position-relative" title="{{ 'accounting.receipt_proposal.title'|trans }}">
+                    <i class="fas fa-receipt"></i>
+                    {% if openReceiptProposals > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-primary">{{ openReceiptProposals }}</span>
+                    {% endif %}
+                </a>
+            {% endif %}
             <a href="{{ path('bank_import.index') }}" class="btn btn-outline-secondary btn-sm" title="{{ 'accounting.bank_import.title'|trans }}">
                 <i class="fas fa-file-import"></i>
             </a>
