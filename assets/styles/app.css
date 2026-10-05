@@ -323,6 +323,13 @@ body.reservations-week-focus #reservation-table thead tr:not(.table-days-compact
     position: relative;
 }
 
+/* The sticky header draws its top line on the first row only (the month row),
+   which is hidden here; the scroll container supplies it instead, since the
+   day cells may carry inline accent shadows that a cell rule would override */
+body.reservations-week-focus .table-responsive.js-fit-vh {
+    border-top: 1px solid var(--bs-border-color);
+}
+
 body.reservations-week-focus > nav.navbar,
 body.reservations-week-focus #table-filter,
 body.reservations-week-focus #flash-message-container {
