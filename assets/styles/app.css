@@ -266,43 +266,31 @@ body {
     width: calc(var(--reservation-name-col, 8ch) + 1.5rem);
 }
 
-/* Week view on touch devices (initWeekMode in reservations_controller.js):
-   seven days always fit the screen, so a horizontal swipe never competes
-   with scrolling the table sideways. */
-body.reservations-week-mode #reservation-table {
+/* Swipe view on touch devices (initSwipeView in reservations_controller.js):
+   the table is squeezed to the screen width, so a horizontal swipe never
+   competes with scrolling the table sideways. */
+body.reservations-week-focus #reservation-table {
     width: 100%;
 }
 
 /* Rooms are stretched to fill the screen (stretchRoomRows), keep the bars
    level with the room names */
-body.reservations-week-mode #reservation-table tbody td {
+body.reservations-week-focus #reservation-table tbody td {
     vertical-align: middle;
 }
 
 /* --week-bar-height is set per row by stretchRoomRows; the line height centres
    the text (padding 3px and border 1px on each side) */
-body.reservations-week-mode #reservation-table tr[style*="--week-bar-height"] .reservation-inner {
+body.reservations-week-focus #reservation-table tr[style*="--week-bar-height"] .reservation-inner {
     height: var(--week-bar-height);
     line-height: calc(var(--week-bar-height) - 8px);
 }
 
-.reservations-week-close {
-    display: none;
-}
-
-/* After the first swipe only the table remains, plus a small close button
-   floating in the top corner */
-body.reservations-week-focus .reservations-week-close {
-    display: block;
-    position: fixed;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 1030;
-    padding: 0.75rem;
-    background-color: var(--bs-body-bg);
-    border-radius: 50%;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-    opacity: 0.9;
+/* The setting only matters where the swipe view exists */
+@media not (any-pointer: coarse) {
+    .reservations-swipe-setting {
+        display: none;
+    }
 }
 
 /* Single-row header (compactWeekHeader) replaces the regular header rows
@@ -321,6 +309,11 @@ body.reservations-week-focus #reservation-table thead tr:not(.table-days-compact
 
 .table-reservation .table-days-compact > th {
     position: relative;
+    /* Day columns are about 40px wide on a phone: the date only fits with
+       less padding and a smaller font, and must never widen the table */
+    padding: .25rem 2px;
+    font-size: .75rem;
+    overflow: hidden;
 }
 
 /* The sticky header draws its top line on the first row only (the month row),

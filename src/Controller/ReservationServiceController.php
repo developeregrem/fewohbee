@@ -198,7 +198,7 @@ class ReservationServiceController extends AbstractController
         if (null == $interval) {
             $interval = 30;
         } elseif ($interval < 6) {
-            // 6 is the week view on touch devices: buildDays() is inclusive, so Monday to Sunday
+            // 6 is the fixed week of the swipe view: buildDays() is inclusive, so Monday to Sunday
             $interval = 6;
         } elseif ($interval > 180) {
             $interval = 180;

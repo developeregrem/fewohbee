@@ -61,7 +61,7 @@ export default class extends Controller {
         this.setupTableFilterListeners();
         this.setupCalendarEntryDeleteListener();
         this.applyStoredTableSettings();
-        this.initWeekMode();
+        this.initSwipeView();
         this.observeModalContent();
         this.boundResize = this.handleResize.bind(this);
         window.addEventListener('load', this.boundResize);
@@ -72,6 +72,7 @@ export default class extends Controller {
 
     // ----- bootstrap helpers -----
     disconnect() {
+        this.swipeAbort?.abort();
         if (this.boundResize) {
             window.removeEventListener('load', this.boundResize);
             window.removeEventListener('resize', this.boundResize);
@@ -230,6 +231,7 @@ export default class extends Controller {
         if (!this.tableFilter || !this.tableSettingsUrl) {
             return;
         }
+        this.restoreIntervalAfterSwipeWeek();
         this.getLocalTableSetting('interval', 'reservations-intervall', 'int');
         this.getLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
         // Use stored apartment filter only if no explicit apartment was requested
@@ -1043,10 +1045,6 @@ export default class extends Controller {
             return false;
         }
 
-        if (this.weekMode) {
-            this.snapToWeek();
-        }
-
         this.setLocalTableSetting('interval', 'reservations-intervall', 'int');
         this.setLocalTableSetting('apartment', 'reservations-apartment', 'int');
         this.setLocalTableSetting('showCalendarEntries', 'reservation-settings-show-calendar-entries', 'checkbox');
@@ -1155,8 +1153,8 @@ export default class extends Controller {
             return;
         }
         const intervalValue = parseInt(intervalInput.value, 10);
-        // In week mode the input holds 6 (the server counts days inclusively), but a step is 7 days
-        const interval = this.weekMode ? 7 : (!isNaN(intervalValue) && intervalValue > 0 ? intervalValue : 1);
+        // With the fixed week the input holds 6 (the server counts days inclusively), but a step is 7 days
+        const interval = this.weekLocked ? 7 : (!isNaN(intervalValue) && intervalValue > 0 ? intervalValue : 1);
         const currentDate = startInput.value ? new Date(startInput.value) : new Date();
         if (Number.isNaN(currentDate.getTime())) {
             return;
@@ -1167,52 +1165,127 @@ export default class extends Controller {
         startInput.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    // ----- week mode (touch devices only) -----
+    // ----- swipe view (touch devices only) -----
 
     /**
-     * On phones and tablets the table view shows exactly one week, Monday to
-     * Sunday, and is paged by swiping. The first swipe also hides the navbar
-     * and the filter row, leaving only the table; a close button in the
-     * top corner brings them back.
+     * On devices with a touch screen swiping up on the navbar or filter row
+     * opens the swipe view: navbar and filter row disappear, the header shrinks to
+     * one row and the rooms share the screen height. It shows the same span
+     * as the normal view and left/right swipes page by that span; with the
+     * "always one week" display setting it shows Monday to Sunday and pages
+     * by week instead. Swiping up again returns to the normal view, which is
+     * left exactly as it was configured.
      */
-    initWeekMode() {
+    initSwipeView() {
         const startInput = document.getElementById('start');
         const intervalInput = this.tableFilter?.querySelector('input[name="interval"]');
-        if (!startInput || !intervalInput || !this.tableContainer || !window.matchMedia('(pointer: coarse)').matches) {
+        // any-pointer: touch laptops and tablets with a keyboard report the
+        // mouse as their primary pointer but can still be swiped
+        if (!startInput || !intervalInput || !this.tableContainer || !window.matchMedia('(any-pointer: coarse)').matches) {
             return;
         }
-        this.weekMode = true;
-        document.body.classList.add('reservations-week-mode');
-        // A fixed span makes the day count field meaningless
-        intervalInput.closest('.col-md-auto')?.classList.add('d-none');
-        this.snapToWeek();
+        this.swipeEnabled = true;
+        setLocalStorageItemIfNotExists('reservation-settings-swipe-week', 'false');
 
-        document.querySelector('[data-reservations-week-close]')?.addEventListener('click', () => this.setWeekFocus(false));
+        this.swipeAbort = new AbortController();
+        const signal = this.swipeAbort.signal;
+        // Swiping up on the navbar or the filter row opens the swipe view.
+        // The table itself is left alone, so its rooms scroll vertically and
+        // a wide table scrolls sideways as before.
+        [document.querySelector('body > nav.navbar'), this.tableFilter].forEach((area) => {
+            this.onSwipe(area, signal, (dx, dy) => {
+                if (-dy >= 50 && Math.abs(dy) >= 1.5 * Math.abs(dx) && !this.isSwipeViewOpen()) {
+                    this.openSwipeView();
+                }
+            });
+        });
+        // Inside the swipe view, left and right page through the periods and
+        // swiping up ends it. Listening on the persistent container keeps the
+        // gestures working across table reloads, which replace its content.
+        this.onSwipe(this.tableContainer, signal, (dx, dy, target) => {
+            if (!this.isSwipeViewOpen()) {
+                return;
+            }
+            if (Math.abs(dx) >= 60 && Math.abs(dx) >= 1.5 * Math.abs(dy)) {
+                this.shiftStartDate(dx < 0 ? 'forward' : 'backward');
+            } else if (-dy >= 50 && Math.abs(dy) >= 1.5 * Math.abs(dx)) {
+                // On the header always; elsewhere only while the rooms do not
+                // scroll vertically, so a long room list can still be scrolled
+                const scroller = this.tableContainer.querySelector('.js-fit-vh');
+                const scrolls = scroller && scroller.scrollHeight > scroller.clientHeight + 1;
+                if (target.closest('thead') || !scrolls) {
+                    this.closeSwipeView();
+                }
+            }
+        });
+    }
 
-        // Listening on the persistent container keeps the gesture working
-        // across table reloads, which replace its content.
+    /**
+     * Calls handler(dx, dy, target) for each one-finger swipe on the element that is
+     * reasonably quick, so slow drags are not taken for a gesture.
+     */
+    onSwipe(element, signal, handler) {
+        if (!element) {
+            return;
+        }
         let touchStart = null;
-        this.tableContainer.addEventListener('touchstart', (event) => {
+        element.addEventListener('touchstart', (event) => {
             touchStart = event.touches.length === 1
-                ? { x: event.touches[0].clientX, y: event.touches[0].clientY, time: Date.now() }
+                ? { x: event.touches[0].clientX, y: event.touches[0].clientY, time: Date.now(), target: event.target }
                 : null;
-        }, { passive: true });
-        this.tableContainer.addEventListener('touchend', (event) => {
+        }, { passive: true, signal });
+        element.addEventListener('touchend', (event) => {
             if (!touchStart || event.changedTouches.length !== 1) {
                 return;
             }
             const dx = event.changedTouches[0].clientX - touchStart.x;
             const dy = event.changedTouches[0].clientY - touchStart.y;
-            const duration = Date.now() - touchStart.time;
+            const quick = Date.now() - touchStart.time <= 800;
+            const target = touchStart.target;
             touchStart = null;
-            // Clearly horizontal and reasonably quick, so vertical scrolling
-            // and slow drags are not taken for a page turn
-            if (Math.abs(dx) < 60 || Math.abs(dx) < 1.5 * Math.abs(dy) || duration > 800) {
-                return;
+            if (quick) {
+                handler(dx, dy, target);
             }
-            this.setWeekFocus(true);
-            this.shiftStartDate(dx < 0 ? 'forward' : 'backward');
-        }, { passive: true });
+        }, { passive: true, signal });
+    }
+
+    /** Brings back the normal view's day count if the page was left from the fixed week. */
+    restoreIntervalAfterSwipeWeek() {
+        const before = getLocalStorageItem('reservations-interval-before-week');
+        const intervalInput = this.tableFilter?.querySelector('input[name="interval"]');
+        if (before && intervalInput) {
+            intervalInput.value = before;
+            localStorage.removeItem('reservations-interval-before-week');
+        }
+    }
+
+    isSwipeViewOpen() {
+        return document.body.classList.contains('reservations-week-focus');
+    }
+
+    openSwipeView() {
+        this.weekLocked = getLocalStorageItem('reservation-settings-swipe-week') === 'true';
+        this.setWeekFocus(true);
+        if (this.weekLocked) {
+            const intervalInput = this.tableFilter.querySelector('input[name="interval"]');
+            this.intervalBeforeWeek = intervalInput.value;
+            // The server keeps the last day count in the session, so leaving the
+            // page from the fixed week would bring the normal view back with 7 days
+            setLocalStorageItemIfNotExists('reservations-interval-before-week', this.intervalBeforeWeek, true);
+            this.snapToWeek();
+            document.getElementById('start').dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+
+    /** Back to the normal view at the period last swiped to, with its own day count. */
+    closeSwipeView() {
+        this.setWeekFocus(false);
+        if (this.weekLocked) {
+            this.weekLocked = false;
+            localStorage.removeItem('reservations-interval-before-week');
+            this.tableFilter.querySelector('input[name="interval"]').value = this.intervalBeforeWeek;
+            document.getElementById('start').dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 
     /** Moves the start date back to Monday and fixes the span to one week. */
@@ -1229,11 +1302,12 @@ export default class extends Controller {
         }
         date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
         startInput.value = this.formatDateInputValue(date);
+        // buildDays() counts inclusively: 6 is Monday to Sunday
         intervalInput.value = 6;
     }
 
     setWeekFocus(enabled) {
-        if (document.body.classList.contains('reservations-week-focus') === enabled) {
+        if (this.isSwipeViewOpen() === enabled) {
             return;
         }
         document.body.classList.toggle('reservations-week-focus', enabled);
@@ -1252,6 +1326,7 @@ export default class extends Controller {
         this.updateDisplaySettings('show-week');
         this.updateDisplaySettings('show-month');
         this.updateDisplaySettings('show-weekday');
+        this.updateDisplaySettings('swipe-week');
     }
 
     updateDisplaySettings(name) {
@@ -1283,14 +1358,14 @@ export default class extends Controller {
         if (table) {
             table.classList.toggle('weekday-row-visible', showWeekday === 'true');
         }
-        if (this.weekMode) {
+        if (this.swipeEnabled) {
             this.compactWeekHeader();
         }
     }
 
     /**
-     * Week mode: adds a single-row header - the calendar week above the room
-     * names, then weekday and date per day (Mo / 05.10.). It is a copy of the
+     * Swipe view: adds a single-row header - year and calendar week (or their
+     * ranges) above the room names, then weekday and date per day (Mo / 05.10.). It is a copy of the
      * date row, so popovers and calendar accents come along; CSS shows it in
      * place of the regular header rows only after the first swipe.
      */
@@ -1320,8 +1395,19 @@ export default class extends Controller {
             target.append(weekday, `${day}.${month}.`);
         });
         if (dayCells.length > 0) {
-            const [year, month, day] = dayCells[0].dataset.day.split('-').map(Number);
-            compactRow.firstElementChild.textContent = `${table.dataset.calendarWeekLabel} ${this.isoWeek(new Date(year, month - 1, day))}`;
+            const week = (cell) => {
+                const [year, month, day] = cell.dataset.day.split('-').map(Number);
+                return this.isoWeek(new Date(year, month - 1, day));
+            };
+            const first = week(dayCells[0]);
+            const last = week(dayCells[dayCells.length - 1]);
+            // The year above the calendar week, like the weekday above each date
+            const firstYear = dayCells[0].dataset.day.slice(0, 4);
+            const lastYear = dayCells[dayCells.length - 1].dataset.day.slice(0, 4);
+            const year = document.createElement('span');
+            year.className = 'd-block';
+            year.textContent = firstYear === lastYear ? firstYear : `${firstYear}–${lastYear}`;
+            compactRow.firstElementChild.replaceChildren(year, `${table.dataset.calendarWeekLabel} ${first === last ? first : `${first}–${last}`}`);
         }
         dayRow.after(compactRow);
         this.initStickyTables();
@@ -1375,13 +1461,13 @@ export default class extends Controller {
 
     initFit() {
         document.querySelectorAll('.js-fit-vh').forEach((el) => this.fitTableToViewport(el));
-        if (this.weekMode) {
+        if (this.swipeEnabled) {
             this.stretchRoomRows();
         }
     }
 
     /**
-     * Week mode: spreads the free space below the table over the rooms, so a
+     * Swipe view: spreads the free space below the table over the rooms, so a
      * short room list fills the screen instead of leaving it half empty. Each
      * room gets the same share; a room split into several lines divides its
      * share among them. The reservation bars grow along with their row.
@@ -1397,6 +1483,9 @@ export default class extends Controller {
             row.style.height = '';
             row.style.removeProperty('--week-bar-height');
         });
+        if (!this.isSwipeViewOpen()) {
+            return;
+        }
         // Unstretched bar height, measured before the rows grow
         const barHeight = table.querySelector('.reservation-inner')?.getBoundingClientRect().height;
         const free = parseFloat(container.style.maxHeight) - table.offsetHeight
