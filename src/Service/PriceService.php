@@ -642,14 +642,15 @@ class PriceService implements ResetInterface
      * night whose price row no longer exists is priced from the current rows as well.
      *
      * Price rules change the current rows for what is priced now: a stay not saved yet (quote,
-     * new booking) and, with $ignorePromise, the promise being built for a booking. A saved
-     * booking without a promise keeps the plain price list. Flat prices are never changed.
+     * new booking) and, with $ignorePromise, the promise being built for a booking - unless
+     * $applyPriceRules is false. A saved booking without a promise keeps the plain price list.
+     * Flat prices are never changed.
      *
      * @return array<int, NightRate|null> null for a night without any applicable price
      *
      * @throws \App\Exception\InvalidReservationPeriodException when the reservation period is unsafe to process
      */
-    public function getNightRates(Reservation $reservation, bool $ignorePromise = false): array
+    public function getNightRates(Reservation $reservation, bool $ignorePromise = false, bool $applyPriceRules = true): array
     {
         $nights = $this->reservationPeriodService->validate(
             $reservation->getStartDate(),
@@ -678,7 +679,7 @@ class PriceService implements ResetInterface
                 continue;
             }
             $rate = NightRate::live($night, $price);
-            $adjustments ??= null === $reservation->getId() || $ignorePromise
+            $adjustments ??= $applyPriceRules && (null === $reservation->getId() || $ignorePromise)
                 ? $this->ruleAdjustments($reservation, $start, $start->modify('+'.$count.' day'))
                 : [];
             $adjustment = $adjustments[$night->format('Y-m-d')] ?? null;
@@ -749,9 +750,9 @@ class PriceService implements ResetInterface
      *
      * @return PriceBreakdown[] keyed by day index (0..nights-1)
      */
-    public function getPriceBreakdownForReservation(Reservation $reservation, bool $ignorePromise = false): array
+    public function getPriceBreakdownForReservation(Reservation $reservation, bool $ignorePromise = false, bool $applyPriceRules = true): array
     {
-        $rates = $this->getNightRates($reservation, $ignorePromise);
+        $rates = $this->getNightRates($reservation, $ignorePromise, $applyPriceRules);
         $days = $this->reservationPeriodService->validate(
             $reservation->getStartDate(),
             $reservation->getEndDate(),
