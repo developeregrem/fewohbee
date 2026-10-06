@@ -81,9 +81,9 @@ reservation.table.settings.holidays: Display settings for holidays
 reservation.table.settings.showCanceledOnly: Show only canceled/no-show reservations
 reservation.table.settings.showCalendarEntries: Show calendar entries
 reservation.table.settings.subdivision: Subdivision
-reservation.table.settings.swipeWeek: Always show one week when swiping (Mon–Sun)
 reservation.table.settings.title: Table settings
 reservation.table.view.table: Table View
+reservation.table.view.week: Week View
 reservation.table.view.yearly: Annual View
 reservation.table.view.yearly.multiple.hint: >-
   This view is not optimized for rooms with multiple occupancy. Please use the

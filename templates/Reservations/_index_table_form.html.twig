@@ -9,6 +9,13 @@
         </span>
     </div>
 </div>
+<div class="col-md-auto">
+    {# Week view: full screen on touch screens, fitted whole weeks with a mouse
+       (see initWeekView in reservations_controller.js) #}
+    <button type="button" class="btn btn-outline-primary mb-2 me-sm-2" data-reservations-week-toggle aria-pressed="false" title="{{ 'reservation.table.view.week'|trans }}" aria-label="{{ 'reservation.table.view.week'|trans }}">
+        <i class="fas fa-calendar-week"></i>
+    </button>
+</div>
 <div class="col-md-auto d-flex align-items-center">
     <input type="number" class="form-control mb-2 me-sm-2" name="interval" value="{{ interval }}" min="8" max="180" />
     <span class="form-text mb-0">{{ 'reservation.days'|trans }}</span>

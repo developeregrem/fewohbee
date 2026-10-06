@@ -310,10 +310,6 @@
                 <source>reservation.table.settings.displayWeekday</source>
                 <target>Wochentage anzeigen</target>
             </trans-unit>
-            <trans-unit id="reservation.table.settings.swipeWeek">
-                <source>reservation.table.settings.swipeWeek</source>
-                <target>Beim Wischen immer eine Woche zeigen (Mo–So)</target>
-            </trans-unit>
             <trans-unit id="reservation.table.settings.showCanceledOnly">
                 <source>reservation.table.settings.showCanceledOnly</source>
                 <target>Nur stornierte/No-Show anzeigen</target>
@@ -321,6 +317,10 @@
             <trans-unit id="reservation.table.settings.showCalendarEntries">
                 <source>reservation.table.settings.showCalendarEntries</source>
                 <target>Kalendereinträge anzeigen</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.view.week">
+                <source>reservation.table.view.week</source>
+                <target>Wochenansicht</target>
             </trans-unit>
             <trans-unit id="reservation.table.view.yearly">
                 <source>reservation.table.view.yearly</source>
