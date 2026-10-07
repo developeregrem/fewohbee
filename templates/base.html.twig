@@ -159,8 +159,11 @@
     {% endblock %}
     {% block modal %}
         <!-- Modal -->
-        <div class="modal fade" id="modalCenter" tabindex="-1" role="dialog" aria-labelledby="modalCenterTitle" aria-hidden="true">
-          <div class="modal-dialog modal-lg" role="document">
+        <div class="modal fade" id="modalCenter" tabindex="-1" role="dialog" aria-labelledby="modalCenterTitle" aria-hidden="true"
+             data-controller="modal-history">
+          {# Pages opt in to the phone layout with modal-fullscreen-lg-down (see "Dialogs on phones"
+             in app.css); once every module's dialog content is ready for it, it becomes the default. #}
+          <div class="modal-dialog {% block modal_dialog_class %}modal-lg{% endblock %}" role="document">
             <div class="modal-content">
               <div class="modal-header">
                 <h5 class="modal-title" id="modalCenterTitle"></h5>

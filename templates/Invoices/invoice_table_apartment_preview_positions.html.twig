@@ -1,10 +1,11 @@
+{% import 'Invoices/_preview_position_macros.html.twig' as positionMacros %}
 <table class="table table-hover">
     <thead>
         <tr>
             <th>{{ 'invoice.position.appartment'|trans }}</th>
-            <th class="text-end">{{ 'invoice.position.amount'|trans }}</th>
-            <th class="text-end">{{ 'invoice.price.single'|trans }}</th>
-            <th class="text-end">{{ 'invoice.vat'|trans }}</th>
+            <th class="text-end d-none d-lg-table-cell">{{ 'invoice.position.amount'|trans }}</th>
+            <th class="text-end d-none d-lg-table-cell">{{ 'invoice.price.single'|trans }}</th>
+            <th class="text-end d-none d-lg-table-cell">{{ 'invoice.vat'|trans }}</th>
             <th class="text-end">{{ 'invoice.price.total'|trans }}</th>
         </tr>
     </thead>
@@ -13,10 +14,10 @@
             <tr>
                 <td>{{ appartment.number }} - {{ appartment.description }} ({{ 'invoice.appartment.persons'|trans({'%count%': appartment.persons }) }})
                     <br/>{{ appartment.startDate|date('d.m.Y') }}
-                    - {{ appartment.endDate|date('d.m.Y') }}</td>
-                <td class="text-end">{{ appartment.amount }}</td>
-                <td class="text-end">{{ appartment.price|number_format(2, ',', '.') }}</td>
-                <td class="text-end">
+                    - {{ appartment.endDate|date('d.m.Y') }}{{ positionMacros.folded_numbers(appartment) }}</td>
+                <td class="text-end d-none d-lg-table-cell">{{ appartment.amount }}</td>
+                <td class="text-end d-none d-lg-table-cell">{{ appartment.price|number_format(2, ',', '.') }}</td>
+                <td class="text-end d-none d-lg-table-cell">
                     {% if is_decimal_place_0(appartment.vat) %}
                         {{ appartment.vat|number_format(0, ',', '.') }}
                     {% else %}

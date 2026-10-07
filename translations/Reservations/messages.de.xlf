@@ -794,6 +794,66 @@
                 <source>reservation.price.day_price</source>
                 <target>Tagespreis</target>
             </trans-unit>
+            <trans-unit id="reservation.summary.nights">
+                <source>reservation.summary.nights</source>
+                <target>{1}1 Nacht|]1,Inf[%count% Nächte</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.persons">
+                <source>reservation.summary.persons</source>
+                <target>{1}1 Person|]1,Inf[%count% Personen</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.call">
+                <source>reservation.summary.call</source>
+                <target>Anrufen</target>
+            </trans-unit>
+            <trans-unit id="reservation.guests.room">
+                <source>reservation.guests.room</source>
+                <target>Gäste · Zimmer %number%</target>
+            </trans-unit>
+            <trans-unit id="reservation.guests.empty">
+                <source>reservation.guests.empty</source>
+                <target>Noch keine Gäste eingetragen.</target>
+            </trans-unit>
+            <trans-unit id="reservation.edit.change_room">
+                <source>reservation.edit.change_room</source>
+                <target>Zimmer wechseln</target>
+            </trans-unit>
+            <trans-unit id="reservation.guests.remove">
+                <source>reservation.guests.remove</source>
+                <target>Entfernen</target>
+            </trans-unit>
+            <trans-unit id="reservation.guests.remove_ask">
+                <source>reservation.guests.remove_ask</source>
+                <target>Gast aus der Reservierung entfernen?</target>
+            </trans-unit>
+            <trans-unit id="reservation.new.create">
+                <source>reservation.new.create</source>
+                <target>Reservierung anlegen</target>
+            </trans-unit>
+            <trans-unit id="reservation.details.stay">
+                <source>reservation.details.stay</source>
+                <target>Aufenthalt</target>
+            </trans-unit>
+            <trans-unit id="reservation.details.guest">
+                <source>reservation.details.guest</source>
+                <target>Gastdaten</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.guest_menu">
+                <source>reservation.summary.guest_menu</source>
+                <target>Gast</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.guest_edit">
+                <source>reservation.summary.guest_edit</source>
+                <target>Gastdaten bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.guest_change">
+                <source>reservation.summary.guest_change</source>
+                <target>Anderen Gast zuweisen</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.change_booking">
+                <source>reservation.summary.change_booking</source>
+                <target>Buchung ändern</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

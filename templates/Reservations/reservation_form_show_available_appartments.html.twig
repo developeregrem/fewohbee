@@ -1,34 +1,28 @@
-<table class="table table-hover" data-controller="reservations">
-<thead>
-    <tr>
-        <th class="border-top-0">{{ 'appartment.number'|trans }}</th>
-        <th class="border-top-0">{{ 'appartment.bedsmax'|trans }}</th>
-        <th class="border-top-0">{{ 'appartment.description'|trans }}</th>
-    </tr>
-</thead>
-<tbody>
+{# Free rooms for the chosen period; tapping one opens its guests and status to add it to the booking. #}
+<div class="list-group" data-controller="reservations">
     {% for appartment in appartments %}
-        <tr data-action="click->reservations#toggleAppartmentOptionsAction" data-appartment-id="{{ appartment.id }}">
-            <td>{{ appartment.number }}</td>
-            <td>{{ appartment.bedsmax }}</td>
-            <td>{{ appartment.description }}</td>
-        </tr>
-        <tr>
-            <td colspan="4" id="appartment-{{ appartment.id }}" class="d-none appartment-options">
+        <div class="list-group-item">
+            <a href="#" class="d-flex align-items-center gap-2 text-reset text-decoration-none"
+               data-action="click->reservations#toggleAppartmentOptionsAction" data-appartment-id="{{ appartment.id }}">
+                <span class="me-auto">
+                    <span class="fw-semibold">{{ appartment.number }} · {{ appartment.description }}</span>
+                    <span class="d-block small text-body-secondary">{{ 'appartment.bedsmax'|trans }}: {{ appartment.bedsmax }}</span>
+                </span>
+                <i class="fas fa-chevron-down text-body-secondary"></i>
+            </a>
+            <div id="appartment-{{ appartment.id }}" class="d-none appartment-options mt-3">
                 <form id="appartment-options-{{ appartment.id }}">
-                    <div class="row">
-                    {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' %}
+                    <div class="row g-3">
+                        {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' %}
                     </div>
-                    <div class="row justify-content-end">
-                        <div class="col-sm-3 text-end">
-                            <button class="btn btn-secondary" type="button"
-                                    data-action="click->reservations#addAppartmentToSelectionAction"
-                                    data-appartment-id="{{ appartment.id }}">{{ 'button.continue'|trans }}</button>
-                        </div>
+                    <div class="text-end mt-3">
+                        <button class="btn btn-primary" type="button"
+                                data-action="click->reservations#addAppartmentToSelectionAction"
+                                data-appartment-id="{{ appartment.id }}">
+                            <i class="fas fa-plus me-1"></i> {{ 'button.add'|trans }}</button>
                     </div>
                 </form>
-            </td>
-        </tr>
+            </div>
+        </div>
     {% endfor %}
-</tbody>
-</table>
+</div>

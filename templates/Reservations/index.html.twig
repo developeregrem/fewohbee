@@ -8,6 +8,8 @@
     {{ parent() }} -  Reservierungsverwaltung
 {% endblock %}
 
+{% block modal_dialog_class %}modal-lg modal-fullscreen-lg-down{% endblock %}
+
 {% block flashMessage %}
     <div class="container-fluid mt-3">
         <div class="row" id="flash-message-container">

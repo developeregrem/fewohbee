@@ -204,3 +204,18 @@ reservation.prices.invoice_note: 'The invoice takes over these prices. You can s
 reservation.price.rules_applied: 'Adjusted by'
 reservation.price.rules_nights: '{1}1 night|]1,Inf[%count% nights'
 reservation.price.day_price: 'Day price'
+reservation.summary.nights: '{1}1 night|]1,Inf[%count% nights'
+reservation.summary.persons: '{1}1 person|]1,Inf[%count% persons'
+reservation.summary.call: Call
+reservation.details.stay: Stay
+reservation.details.guest: 'Guest details'
+reservation.summary.guest_menu: Guest
+reservation.summary.guest_edit: 'Edit guest details'
+reservation.summary.guest_change: 'Assign another guest'
+reservation.summary.change_booking: 'Change booking'
+reservation.guests.room: 'Guests · Room %number%'
+reservation.guests.empty: 'No guests entered yet.'
+reservation.edit.change_room: 'Change room'
+reservation.guests.remove: Remove
+reservation.guests.remove_ask: 'Remove the guest from this reservation?'
+reservation.new.create: 'Create reservation'

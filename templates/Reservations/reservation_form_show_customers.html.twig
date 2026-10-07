@@ -1,23 +1,17 @@
-<table class="table table-hover">
-<thead>
-    <tr>
-        <th>{{ 'customer.firstname'|trans }}</th>
-        <th>{{ 'customer.lastname'|trans }}</th>
-        <th>{{ 'customer.birthday'|trans }}</th>
-    </tr>
-</thead>
-<tbody>
+{# Search hits; tapping one takes that guest to the preview #}
+<div class="list-group">
     {% for customer in customers %}
         {% if customer.id != 0 %}
-            <tr data-action="click->reservations#reservationPreviewAction" data-customer-id="{{ customer.id }}">
-                <td>{{ customer.firstname }}</td>
-                <td>{{ customer.lastname }}</td>
-                <td>{% if customer.birthday %} {{ customer.birthday|date('d.m.Y') }} {% endif %}</td>
-            </tr>
+            <a href="#" class="list-group-item list-group-item-action"
+               data-action="click->reservations#reservationPreviewAction" data-customer-id="{{ customer.id }}">
+                <div class="fw-semibold">{{ customer.firstname }} {{ customer.lastname }}</div>
+                {% if customer.birthday %}
+                    <div class="small text-body-secondary">{{ 'customer.birthday'|trans }}: {{ customer.birthday|date('d.m.Y') }}</div>
+                {% endif %}
+            </a>
         {% endif %}
     {% endfor %}
-</tbody>
-</table>
+</div>
 
 <div data-reservations-pagination="customers"
      data-reservations-pagination-mode="show">

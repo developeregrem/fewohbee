@@ -1,0 +1,110 @@
+{# The reservation at a glance above the tabs: who, which room and when, and everything to do
+   with the guest and the booking as labelled buttons - one row of equal tiles on phones. #}
+{% import 'Reservations/_macros.html.twig' as reservationMacros %}
+{% set booker = reservation.booker %}
+{% set status = reservation.reservationStatus %}
+{% set canEdit = is_granted('ROLE_RESERVATIONS') %}
+{% set company = null %}
+{% set phone = null %}
+{% set email = null %}
+{% if booker %}
+    {# Business addresses first: the company shown on top is the one to call or mail #}
+    {% for business in [true, false] %}
+        {% for address in booker.customerAddresses|filter(a => (a.type == 'CUSTOMER_ADDRESS_TYPE_BUSINESS') == business) %}
+            {# Same rule as Customers/_show_info.html.twig #}
+            {% if company is null and business and address.company is not empty %}
+                {% set company = address.company %}
+            {% endif %}
+            {% set phone = phone ?: address.mobilephone ?: address.phone %}
+            {% set email = email ?: address.email %}
+        {% endfor %}
+    {% endfor %}
+{% endif %}
+<div class="reservation-card mb-3">
+    <div class="d-flex align-items-start gap-2">
+        <div class="me-auto text-break">
+            {% if booker %}
+                <div class="fs-5 fw-bold lh-sm">{{ company ?: booker.firstname ~ ' ' ~ booker.lastname }}</div>
+                {% if company %}
+                    <div>{{ booker.firstname }} {{ booker.lastname }}</div>
+                {% endif %}
+            {% else %}
+                <div class="text-body-secondary">{{ 'reservation.import.booker.missing'|trans }}</div>
+            {% endif %}
+        </div>
+        <span class="badge rounded-pill" style="background-color: {{ status.color }}; color: {{ status.contrastColor }}">{{ status|display_name }}</span>
+    </div>
+    <div class="mt-2">{{ reservation.appartment.number }} · {{ reservation.appartment.description }}</div>
+    <div class="text-body-secondary">
+        {{ reservation.startdate|date('d.m.Y') }} – {{ reservation.enddate|date('d.m.Y') }}
+        · {{ 'reservation.summary.nights'|trans({'%count%': reservation.startdate.diff(reservation.enddate).days}) }}
+        · {{ 'reservation.summary.persons'|trans({'%count%': reservation.persons}) }}
+        {{ reservationMacros.guest_counts(reservation, guestCategoriesById|default({})) }}
+    </div>
+
+    {% if phone or email or canEdit %}
+        <div class="reservation-card-actions mt-3">
+            {% if phone %}
+                <a class="btn btn-outline-primary" href="tel:{{ phone|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) }}">
+                    <i class="fas fa-phone me-1"></i> {{ 'reservation.summary.call'|trans }}
+                </a>
+            {% endif %}
+            {% if email %}
+                <a class="btn btn-outline-primary" href="mailto:{{ email }}">
+                    <i class="fas fa-envelope me-1"></i> {{ 'customer.email'|trans }}
+                </a>
+            {% endif %}
+            {% if canEdit %}
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle w-100 h-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user me-1"></i> {{ 'reservation.summary.guest_menu'|trans }}
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% if booker %}
+                            <li>
+                                {# Read by editReservationCustomerEditAction #}
+                                <form id="actions-booker-{{ booker.id }}" class="d-none">
+                                    <input id="reservation-id" type="hidden" value="{{ reservation.id }}" name="reservation-id"/>
+                                    <input id="customer-id" type="hidden" value="{{ booker.id }}" name="customer-id"/>
+                                    <input id="tab" type="hidden" value="booker" name="tab"/>
+                                    <input name="_csrf_token" value="{{ token }}" type="hidden">
+                                </form>
+                                <a class="dropdown-item" href="#"
+                                   data-action="click->reservations#editReservationCustomerEditAction"
+                                   data-customer-id="{{ booker.id }}"
+                                   data-form-selector="#actions-booker-{{ booker.id }}"
+                                   data-url="{{ path('reservations.edit.customer.edit') }}">
+                                    <i class="fas fa-edit fa-fw me-2"></i>{{ 'reservation.summary.guest_edit'|trans }}
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li>
+                            <a class="dropdown-item" href="#"
+                               data-action="click->reservations#changeReservationCustomerAction"
+                               data-url="{{ path('reservations.edit.reservation.customer', {'id': reservation.id}) }}"
+                               data-reservation-id="{{ reservation.id }}"
+                               data-tab="booker"
+                               data-appartment-id="0">
+                                <i class="fas fa-exchange-alt fa-fw me-2"></i>{{ (booker ? 'reservation.summary.guest_change' : 'reservation.button.change.customer')|trans }}
+                            </a>
+                        </li>
+                        {% if booker %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ path('correspondence.registration.download', {id: reservation.id}) }}" target="_blank" rel="noopener">
+                                    <i class="fas fa-print fa-fw me-2"></i>{{ 'operations.frontdesk.registration.print'|trans }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <a href="#" class="btn btn-outline-primary"
+                   data-action="click->reservations#editReservationAction"
+                   data-url="{{ path('reservations.edit.reservation', {'id': reservation.id}) }}"
+                   data-reservation-id="{{ reservation.id }}">
+                    <i class="fas fa-calendar-alt me-1"></i> {{ 'reservation.summary.change_booking'|trans }}
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>

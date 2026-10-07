@@ -1,6 +1,5 @@
 <div data-controller="reservations"
-     data-reservations-select-invoice-url="{{ path('invoices.select.reservation') }}"
-     data-delete-reservation-url="{{ path('reservations.dodelete.reservation') }}">
+     data-reservations-select-invoice-url="{{ path('invoices.select.reservation') }}">
     <div class="modal-body">
         <div class="container-fluid">
             <div id="flash-message-overlay">
@@ -12,55 +11,52 @@
         </div>
     </div>
     {% if is_granted('ROLE_RESERVATIONS') %}
-    {% set hasBooker = attribute(reservations, 0).booker is not null %}
-    <form id="reservationShowForm" data-url="{{ path('reservations.dodelete.reservation') }}">
-        <div class="modal-footer">
-            <div class="col p-0" id="boxDefault">
-                {% if is_granted('ROLE_INVOICES') %}
-                <div class="btn-group dropup float-start">
-                    <button class="btn btn-secondary dropdown-toggle"
-                            type="button"
-                            id="dropdownInvoice"
-                            {% if hasBooker %}data-bs-toggle="dropdown"{% else %}disabled{% endif %}
-                            aria-haspopup="true"
-                            aria-expanded="false">
-                      {{ 'reservation.invoices'|trans }} <span class="caret"></span>
-                    </button>
-                    <div class="dropdown-menu">
-                        {% for invoice in attribute(reservations, 0).invoices %}
-                            <a class="dropdown-item" href="#"
-                               data-action="click->reservations#openModalContentAction"
-                               data-url="{{ path('invoices.get.invoice', {'id':  invoice.id}) }}"
-                               data-title="{{ 'reservation.invoice'|trans }} {{ invoice.number }}">{{ 'reservation.invoice'|trans }} {{ invoice.number }}</a>
-                        {% endfor %}
-                        {% if attribute(reservations, 0).invoices|length > 0 %}
-                        <div class="dropdown-divider"></div>
-                        {% endif %}
-                        <a class="dropdown-item{% if not hasBooker %} disabled{% endif %}" href="#"
-                           {% if hasBooker %}
-                           data-action="click->reservations#selectReservationForInvoiceAction"
-                           data-url="{{ path('invoices.select.reservation') }}"
-                           data-reservation-id="{{ attribute(reservations, 0).id }}"
-                           {% else %}
-                           aria-disabled="true"
-                           {% endif %}>{{ 'reservation.button.create.invoice'|trans }}</a>
-                    </div>                
-                </div>
+    {% import 'Reservations/_macros.html.twig' as reservationMacros %}
+    {% set reservation = attribute(reservations, 0) %}
+    {% set hasBooker = reservation.booker is not null %}
+    <div class="modal-footer">
+        {% if is_granted('ROLE_INVOICES') %}
+        <div class="btn-group dropup me-auto">
+            <button class="btn btn-secondary dropdown-toggle"
+                    type="button"
+                    id="dropdownInvoice"
+                    {% if hasBooker %}data-bs-toggle="dropdown"{% else %}disabled{% endif %}
+                    aria-haspopup="true"
+                    aria-expanded="false">
+              {{ 'reservation.invoices'|trans }}
+            </button>
+            <div class="dropdown-menu">
+                {% for invoice in reservation.invoices %}
+                    <a class="dropdown-item" href="#"
+                       data-action="click->reservations#openModalContentAction"
+                       data-url="{{ path('invoices.get.invoice', {'id':  invoice.id}) }}"
+                       data-title="{{ 'reservation.invoice'|trans }} {{ invoice.number }}">{{ 'reservation.invoice'|trans }} {{ invoice.number }}</a>
+                {% endfor %}
+                {% if reservation.invoices|length > 0 %}
+                <div class="dropdown-divider"></div>
                 {% endif %}
-                
-                <button type="button" class="btn btn-danger float-end"
-                        data-action="click->reservations#toggleDeleteAction">{{ 'button.delete'|trans }}</button>
-                <button type="button" class="btn btn-secondary float-end me-2" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
-            </div>
-            <div id="boxDelete" class="d-none">
-                {{ 'reservation.delete.ask'|trans }}
-                <button class="btn btn-danger" data-action="click->reservations#deleteReservationAction">{{ 'button.delete'|trans }}</button>
-                <button class="btn btn-secondary"
-                        data-action="click->reservations#toggleDeleteAction">{{ 'button.cancel'|trans }}</button>
-                <input type="hidden" name="id" value="{{ attribute(reservations, 0).id }}"/>
-                <input name="_csrf_token" value="{{ token }}" type="hidden">
+                <a class="dropdown-item{% if not hasBooker %} disabled{% endif %}" href="#"
+                   {% if hasBooker %}
+                   data-action="click->reservations#selectReservationForInvoiceAction"
+                   data-url="{{ path('invoices.select.reservation') }}"
+                   data-reservation-id="{{ reservation.id }}"
+                   {% else %}
+                   aria-disabled="true"
+                   {% endif %}>{{ 'reservation.button.create.invoice'|trans }}</a>
             </div>
         </div>
-    </form>
+        {% endif %}
+        {# Confirmed in a popover; reservations_controller closes the dialog and reloads the table #}
+        <button type="button" class="btn btn-outline-danger ms-auto"
+                data-reservation-delete
+                data-popover="delete"
+                data-bs-placement="top"
+                data-title="{{ 'reservation.delete.ask'|trans }}"
+                data-bs-content="{{ reservationMacros.delete_popover_form(path('reservations.dodelete.reservation'), {'id': reservation.id, '_csrf_token': token}, 'button.delete'|trans)|e('html_attr') }}">
+            <i class="fas fa-trash-alt me-1"></i> {{ 'button.delete'|trans }}
+        </button>
+        {# Phones close the full screen dialog with the X in its header #}
+        <button type="button" class="btn btn-secondary d-none d-lg-inline-block" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+    </div>
     {% endif %}
 </div>
