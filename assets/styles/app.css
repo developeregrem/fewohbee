@@ -271,6 +271,14 @@ body {
     border-right: 1px solid var(--feb-border-muted) !important;
 }
 
+/* Long press starts a selection on touch screens (initCellSelection):
+   no text selection or iOS callout menu on the free cells */
+.table-reservation .td-empty, .table-reservation-year .reservation-yearly-parent {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
 .table-reservation .ui-selecting, .table-reservation-year .ui-selecting {
     background: var(--feb-ui-selecting-bg) !important;
 }
