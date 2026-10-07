@@ -1180,6 +1180,7 @@ export default class extends Controller {
      * icons and hide navbar and filter row. With a mouse the edge arrows and
      * the arrow keys page by the weeks shown, the close button and Escape end
      * it; on touch screens a sideways swipe pages and swiping up ends it.
+     * A sideways swipe also pages the normal view on touch screens.
      *
      * Either way the normal view keeps its own start date and day count.
      */
@@ -1251,28 +1252,38 @@ export default class extends Controller {
             this.initWeekControls(signal);
             return;
         }
-        // Touch: left and right page through the weeks and swiping up ends
-        // the view. Listening on the persistent container keeps the gestures
-        // working across table reloads, which replace its content.
-        this.onSwipe(this.tableContainer, signal, (dx, dy, target, startedAtEnd) => {
-            if (!this.isSwipeViewOpen()) {
-                return;
-            }
+        // Touch: left and right page through the days shown - in the normal
+        // view by its day count, in the week view by a week - and swiping up
+        // ends the week view. Listening on the persistent container keeps the
+        // gestures working across table reloads, which replace its content.
+        this.onSwipe(this.tableContainer, signal, (dx, dy, target, edges) => {
             if (Math.abs(dx) >= 60 && Math.abs(dx) >= 1.5 * Math.abs(dy)) {
-                this.shiftStartDate(dx < 0 ? 'forward' : 'backward');
-            } else if (-dy >= 50 && Math.abs(dy) >= 1.5 * Math.abs(dx)) {
+                const direction = dx < 0 ? 'forward' : 'backward';
+                // A table wider than the screen scrolls sideways first; only a
+                // swipe on past its edge pages
+                if (direction === 'forward' ? edges.right : edges.left) {
+                    this.shiftStartDate(direction);
+                }
+            } else if (this.isSwipeViewOpen() && -dy >= 50 && Math.abs(dy) >= 1.5 * Math.abs(dx)) {
                 // On the header always; elsewhere only once the rooms cannot
                 // scroll any further, so a long room list can still be
                 // scrolled and swiping on past its end closes the view
-                if (target.closest('thead') || startedAtEnd) {
+                if (target.closest('thead') || edges.bottom) {
                     this.closeSwipeView();
                 }
             }
         }, () => {
-            // Taken when the finger goes down: a swipe that scrolls to the
-            // end of the list must not close the view as well
+            // Taken when the finger goes down: a swipe that scrolls to an
+            // edge must not page or close as well
             const scroller = this.tableContainer.querySelector('.js-fit-vh');
-            return !scroller || scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+            if (!scroller) {
+                return { left: true, right: true, bottom: true };
+            }
+            return {
+                left: scroller.scrollLeft <= 1,
+                right: scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 1,
+                bottom: scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1,
+            };
         });
     }
 
