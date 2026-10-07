@@ -686,6 +686,18 @@ export default class extends Controller {
             this.suppressReservationClick = false;
             return;
         }
+        // Touch week view: the first tap shows the bar's popover, as hovering
+        // does with a mouse; a second tap on the same bar opens the reservation
+        const bar = event.currentTarget;
+        if (this.isSwipeViewOpen() && bar.classList.contains('reservation-inner') && window.jQuery) {
+            if (this.weekPopoverBar !== bar) {
+                this.hideWeekPopover();
+                $(bar).popover('show');
+                this.weekPopoverBar = bar;
+                return;
+            }
+            this.hideWeekPopover();
+        }
         const tab = event.currentTarget.dataset.tab || null;
         const url = event.currentTarget.dataset.url;
         const reservationId = event.currentTarget.dataset.reservationId || null;
@@ -693,6 +705,14 @@ export default class extends Controller {
         if (url) {
             this.getReservation(reservationId === 'new' ? reservationId : url, tab);
         }
+    }
+
+    /** Touch week view: closes the popover a first tap on a bar opened. */
+    hideWeekPopover() {
+        if (this.weekPopoverBar && window.jQuery) {
+            $(this.weekPopoverBar).popover('hide');
+        }
+        this.weekPopoverBar = null;
     }
 
     selectCustomerAction(event) {
@@ -1090,6 +1110,7 @@ export default class extends Controller {
      * lose their trigger and remain as permanent orphan elements in the page.
      */
     disposeTablePopovers() {
+        this.weekPopoverBar = null;
         if (!this.tableContainer) {
             return;
         }
@@ -1252,6 +1273,13 @@ export default class extends Controller {
             this.initWeekControls(signal);
             return;
         }
+        // Touch week view: a tap anywhere but on the bar closes its popover
+        document.addEventListener('click', (event) => {
+            if (this.weekPopoverBar && !this.weekPopoverBar.contains(event.target)) {
+                this.hideWeekPopover();
+            }
+        }, { signal });
+
         // Touch: left and right page through the days shown - in the normal
         // view by its day count, in the week view by a week - and swiping up
         // ends the week view. Listening on the persistent container keeps the
@@ -1405,6 +1433,7 @@ export default class extends Controller {
         if (!this.isSwipeViewOpen()) {
             return;
         }
+        this.hideWeekPopover();
         this.setWeekFocus(false);
         localStorage.removeItem('reservations-interval-before-week');
         this.tableFilter.querySelector('input[name="interval"]').value = this.intervalBeforeWeek;
