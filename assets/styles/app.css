@@ -287,7 +287,7 @@ body.reservations-week-layout #reservation-table tr[style*="--week-bar-height"] 
 }
 
 /* Single-row header (compactWeekHeader) replaces the regular header rows
-   after the first swipe; before that the header stays as configured */
+   in the week view; the normal view keeps its header as configured */
 #reservation-table thead tr.table-days-compact {
     display: none;
 }
@@ -319,8 +319,8 @@ body.reservations-week-fit .table-reservation .table-days-compact > th {
     font-size: .875rem;
 }
 
-/* Weekday above the date where the columns are too narrow (fitCompactHeader) */
-.table-days-compact.two-lines .reservations-weekday {
+/* Weekday above the date (fitCompactHeader shortens it on narrow columns) */
+.table-days-compact .reservations-weekday {
     display: block;
 }
 
@@ -333,8 +333,57 @@ body.reservations-week-layout .table-responsive.js-fit-vh {
 
 body.reservations-week-focus > nav.navbar,
 body.reservations-week-focus #table-filter,
-body.reservations-week-focus #flash-message-container {
+body.reservations-week-focus #flash-message-container,
+body.reservations-week-fit > nav.navbar,
+body.reservations-week-fit #table-filter,
+body.reservations-week-fit #flash-message-container {
     display: none !important;
+}
+
+/* Desktop week view: paging arrows at the screen edges and a close button,
+   shown only while the mouse moves (reservations-week-pointer) */
+.reservations-week-controls {
+    display: none;
+}
+
+body.reservations-week-fit .reservations-week-controls {
+    display: block;
+}
+
+.reservations-week-controls > .btn {
+    position: fixed;
+    z-index: 1030;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+}
+
+body.reservations-week-pointer .reservations-week-controls > .btn {
+    opacity: .85;
+    pointer-events: auto;
+}
+
+.reservations-week-controls > .btn:hover {
+    opacity: 1;
+}
+
+.reservations-week-prev,
+.reservations-week-next {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.reservations-week-prev {
+    left: .5rem;
+}
+
+.reservations-week-next {
+    right: .5rem;
+}
+
+.reservations-week-close {
+    top: .5rem;
+    right: .5rem;
 }
 
 /* Right border on the last cell of each row */

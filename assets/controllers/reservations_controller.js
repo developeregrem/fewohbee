@@ -1172,14 +1172,14 @@ export default class extends Controller {
      * Week view of the table, Monday based, with a single header row and the
      * rooms sharing the screen height. It comes in two forms:
      *
-     * - On touch screens (no fine pointer) it is a full-screen view of one
-     *   week: navbar and filter row disappear. It opens from the week button
-     *   in the filter row or by swiping sideways on the navbar, pages by
-     *   swiping left and right and closes by swiping up.
-     * - With a mouse the filter row stays and the week button switches the
-     *   table to as many whole weeks as fit the width without breaking the
-     *   date labels. The choice is remembered; the date arrows and the arrow
-     *   keys page by the weeks shown.
+     * - On touch screens (no fine pointer) it shows one week.
+     * - With a mouse it shows as many whole weeks as fit the width, and the
+     *   choice is remembered.
+     *
+     * Both open only from the week icon next to the table and annual view
+     * icons and hide navbar and filter row. With a mouse the edge arrows and
+     * the arrow keys page by the weeks shown, the close button and Escape end
+     * it; on touch screens a sideways swipe pages and swiping up ends it.
      *
      * Either way the normal view keeps its own start date and day count.
      */
@@ -1202,7 +1202,32 @@ export default class extends Controller {
                 this.openSwipeView();
             }
         }, { signal });
+        // The table icon means the normal table: it switches the week view off
+        this.tableFilter.querySelector('[data-reservations-table-view-link]')?.addEventListener('click', (event) => {
+            if (this.isWeekFitOn()) {
+                event.preventDefault();
+                this.setWeekFit(false);
+            }
+        }, { signal });
         this.updateWeekToggle();
+
+        // Opened from the annual view (openWeekViewFromYearlyAction)
+        let openWeek = false;
+        try {
+            openWeek = sessionStorage.getItem('reservations-open-week') === 'true';
+            sessionStorage.removeItem('reservations-open-week');
+        } catch (e) {
+            // No storage, nothing was handed over
+        }
+        if (openWeek) {
+            if (this.isDesktopWeekMode()) {
+                if (!this.isWeekFitOn()) {
+                    this.setWeekFit(true);
+                }
+            } else {
+                this.openSwipeView();
+            }
+        }
 
         // Keyboard: arrows page, Escape closes the full-screen view - not
         // while typing or in a dialog
@@ -1215,54 +1240,77 @@ export default class extends Controller {
                 event.preventDefault();
                 this.shiftStartDate(event.key === 'ArrowRight' ? 'forward' : 'backward');
             } else if (event.key === 'Escape') {
+                if (this.isWeekFitOn()) {
+                    this.setWeekFit(false);
+                }
                 this.closeSwipeView();
             }
         }, { signal });
 
         if (this.isDesktopWeekMode()) {
+            this.initWeekControls(signal);
             return;
         }
-        // Swiping sideways on the navbar opens the swipe view. The navbar
-        // never scrolls, so the gesture is free there; the table itself is
-        // left alone, so its rooms and a wide table scroll as before.
-        this.onSwipe(document.querySelector('body > nav.navbar'), signal, (dx, dy) => {
-            if (Math.abs(dx) >= 60 && Math.abs(dx) >= 1.5 * Math.abs(dy) && !this.isSwipeViewOpen()) {
-                this.openSwipeView();
-            }
-        });
-        // Inside the swipe view, left and right page through the weeks and
-        // swiping up ends it. Listening on the persistent container keeps the
-        // gestures working across table reloads, which replace its content.
-        this.onSwipe(this.tableContainer, signal, (dx, dy, target) => {
+        // Touch: left and right page through the weeks and swiping up ends
+        // the view. Listening on the persistent container keeps the gestures
+        // working across table reloads, which replace its content.
+        this.onSwipe(this.tableContainer, signal, (dx, dy, target, startedAtEnd) => {
             if (!this.isSwipeViewOpen()) {
                 return;
             }
             if (Math.abs(dx) >= 60 && Math.abs(dx) >= 1.5 * Math.abs(dy)) {
                 this.shiftStartDate(dx < 0 ? 'forward' : 'backward');
             } else if (-dy >= 50 && Math.abs(dy) >= 1.5 * Math.abs(dx)) {
-                // On the header always; elsewhere only while the rooms do not
-                // scroll vertically, so a long room list can still be scrolled
-                const scroller = this.tableContainer.querySelector('.js-fit-vh');
-                const scrolls = scroller && scroller.scrollHeight > scroller.clientHeight + 1;
-                if (target.closest('thead') || !scrolls) {
+                // On the header always; elsewhere only once the rooms cannot
+                // scroll any further, so a long room list can still be
+                // scrolled and swiping on past its end closes the view
+                if (target.closest('thead') || startedAtEnd) {
                     this.closeSwipeView();
                 }
             }
+        }, () => {
+            // Taken when the finger goes down: a swipe that scrolls to the
+            // end of the list must not close the view as well
+            const scroller = this.tableContainer.querySelector('.js-fit-vh');
+            return !scroller || scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
         });
     }
 
+    /** Desktop: edge arrows and close button that show while the mouse moves. */
+    initWeekControls(signal) {
+        const controls = document.querySelector('[data-reservations-week-controls]');
+        controls?.querySelectorAll('[data-reservations-week-page]').forEach((button) => {
+            button.addEventListener('click', () => this.shiftStartDate(button.dataset.reservationsWeekPage), { signal });
+        });
+        controls?.querySelector('[data-reservations-week-close]')?.addEventListener('click', () => this.setWeekFit(false), { signal });
+
+        let hideTimer = null;
+        document.addEventListener('mousemove', (event) => {
+            if (!this.isWeekFitOn()) {
+                return;
+            }
+            document.body.classList.add('reservations-week-pointer');
+            clearTimeout(hideTimer);
+            // Stay visible while the pointer rests on one of the buttons
+            if (!event.target.closest?.('[data-reservations-week-controls]')) {
+                hideTimer = setTimeout(() => document.body.classList.remove('reservations-week-pointer'), 2000);
+            }
+        }, { signal });
+    }
+
     /**
-     * Calls handler(dx, dy, target) for each one-finger swipe on the element that is
-     * reasonably quick, so slow drags are not taken for a gesture.
+     * Calls handler(dx, dy, target, startState) for each one-finger swipe on the
+     * element that is reasonably quick, so slow drags are not taken for a
+     * gesture. startState is what onStart returned when the finger went down.
      */
-    onSwipe(element, signal, handler) {
+    onSwipe(element, signal, handler, onStart = null) {
         if (!element) {
             return;
         }
         let touchStart = null;
         element.addEventListener('touchstart', (event) => {
             touchStart = event.touches.length === 1
-                ? { x: event.touches[0].clientX, y: event.touches[0].clientY, time: Date.now(), target: event.target }
+                ? { x: event.touches[0].clientX, y: event.touches[0].clientY, time: Date.now(), target: event.target, state: onStart?.() }
                 : null;
         }, { passive: true, signal });
         element.addEventListener('touchend', (event) => {
@@ -1272,15 +1320,15 @@ export default class extends Controller {
             const dx = event.changedTouches[0].clientX - touchStart.x;
             const dy = event.changedTouches[0].clientY - touchStart.y;
             const quick = Date.now() - touchStart.time <= 800;
-            const target = touchStart.target;
+            const { target, state } = touchStart;
             touchStart = null;
             if (quick) {
-                handler(dx, dy, target);
+                handler(dx, dy, target, state);
             }
         }, { passive: true, signal });
     }
 
-    /** A mouse: the week view keeps the filter row and fits several weeks. */
+    /** A mouse: the week view fits several weeks and is remembered. */
     isDesktopWeekMode() {
         return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     }
@@ -1300,7 +1348,7 @@ export default class extends Controller {
 
     /**
      * Runs before the first table load. Brings back the normal view's day
-     * count if the page was left from the swipe view, and switches the
+     * count if the page was left from the touch week view, and switches the
      * remembered desktop week view on again.
      */
     restoreWeekViewState() {
@@ -1312,6 +1360,12 @@ export default class extends Controller {
         if (before) {
             intervalInput.value = before;
             localStorage.removeItem('reservations-interval-before-week');
+        }
+        const beforeFit = getLocalStorageItem('reservations-interval-before-fit');
+        if (beforeFit && getLocalStorageItem('reservations-week-fit') !== 'true') {
+            // Week view left from the annual view (leaveWeekViewFromYearlyAction)
+            intervalInput.value = beforeFit;
+            localStorage.removeItem('reservations-interval-before-fit');
         }
         if (this.isDesktopWeekMode() && getLocalStorageItem('reservations-week-fit') === 'true') {
             this.applyWeekFitClasses(true);
@@ -1328,14 +1382,14 @@ export default class extends Controller {
         const intervalInput = this.tableFilter.querySelector('input[name="interval"]');
         this.intervalBeforeWeek = intervalInput.value;
         // The server keeps the last day count in the session, so leaving the
-        // page from the swipe view would bring the normal view back with 7 days
+        // page from the touch week view would bring the normal view back with 7 days
         setLocalStorageItemIfNotExists('reservations-interval-before-week', this.intervalBeforeWeek, true);
         this.setWeekFocus(true);
         this.snapToWeek(1);
         document.getElementById('start').dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    /** Back to the normal view at the week last swiped to, with its own day count. */
+    /** Back to the normal view at the week last shown, with its own day count. */
     closeSwipeView() {
         if (!this.isSwipeViewOpen()) {
             return;
@@ -1357,6 +1411,7 @@ export default class extends Controller {
         } else {
             localStorage.removeItem('reservations-week-fit');
             this.applyWeekFitClasses(false);
+            document.body.classList.remove('reservations-week-pointer');
             intervalInput.value = getLocalStorageItem('reservations-interval-before-fit') || intervalInput.value;
             localStorage.removeItem('reservations-interval-before-fit');
         }
@@ -1373,17 +1428,41 @@ export default class extends Controller {
         this.updateWeekToggle();
     }
 
+    /** Highlights either the week or the table icon in the view switcher. */
     updateWeekToggle() {
         const toggle = this.tableFilter?.querySelector('[data-reservations-week-toggle]');
         if (toggle) {
-            toggle.classList.toggle('active', this.isWeekFitOn());
-            toggle.setAttribute('aria-pressed', this.isWeekFitOn() ? 'true' : 'false');
+            const on = this.isWeekFitOn();
+            toggle.classList.toggle('text-primary', on);
+            toggle.classList.toggle('text-secondary', !on);
+            toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+            const tableLink = this.tableFilter.querySelector('[data-reservations-table-view-link]');
+            tableLink?.classList.toggle('text-primary', !on);
+            tableLink?.classList.toggle('text-secondary', on);
+        }
+    }
+
+    /** Annual view: the table icon leads to the normal table, not a remembered week view. */
+    leaveWeekViewFromYearlyAction() {
+        try {
+            localStorage.removeItem('reservations-week-fit');
+        } catch (e) {
+            // Without storage there is no remembered week view either
+        }
+    }
+
+    /** Annual view: switches to the table view and opens the week view there. */
+    openWeekViewFromYearlyAction() {
+        try {
+            sessionStorage.setItem('reservations-open-week', 'true');
+        } catch (e) {
+            // Without storage the link still opens the table view
         }
     }
 
     /**
-     * Desktop: how many whole weeks fit the table width with every date
-     * label ("Mo 05.10.") on one line, measured in the header's own font.
+     * Desktop: how many whole weeks fit the table width with every weekday
+     * written out in full above its date, measured in the header's own font.
      */
     fittingWeeks() {
         const table = document.getElementById('reservation-table');
@@ -1397,8 +1476,8 @@ export default class extends Controller {
         const style = getComputedStyle(probe);
         const context = document.createElement('canvas').getContext('2d');
         context.font = `bold ${style.fontSize} ${style.fontFamily}`;
-        const weekdays = Array.from(table.querySelectorAll('#reservation-table-header-weekday th[data-day]'), (cell) => cell.textContent.trim());
-        const widest = Math.max(...(weekdays.length ? weekdays : ['Mo']).map((label) => context.measureText(`${label} 30.09.`).width));
+        const labels = Array.from(table.querySelectorAll('thead tr.table-days-compact .reservations-weekday'), (span) => span.dataset.long);
+        const widest = Math.max(...[...labels, '30.09.'].map((label) => context.measureText(label).width));
         // Text plus the cell's padding and a little air on both sides
         const dayWidth = widest + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 8;
         const weeks = Math.floor((scroller.clientWidth - nameColumn) / (7 * dayWidth));
@@ -1496,11 +1575,11 @@ export default class extends Controller {
     }
 
     /**
-     * Swipe view: adds a single-row header - year and calendar week above the
-     * room names, then weekday and date per day ("Mo 05.10.", stacked where
-     * the columns are too narrow, see fitCompactHeader). It is a copy of the
+     * Week view: adds a single-row header - year and calendar week above the
+     * room names, then per day the weekday written out above the date
+     * (abbreviated where the columns are too narrow, see fitCompactHeader). It is a copy of the
      * date row, so popovers and calendar accents come along; CSS shows it in
-     * place of the regular header rows only in the swipe view.
+     * place of the regular header rows only in the week view.
      */
     compactWeekHeader() {
         const table = document.getElementById('reservation-table');
@@ -1517,15 +1596,18 @@ export default class extends Controller {
             table.querySelectorAll('#reservation-table-header-weekday th[data-day]'),
             (cell) => [cell.dataset.day, cell.textContent.trim()],
         ));
+        const longWeekday = new Intl.DateTimeFormat(document.documentElement.lang || undefined, { weekday: 'long' });
         const dayCells = compactRow.querySelectorAll('th[data-day]');
         dayCells.forEach((cell) => {
-            const [, month, day] = cell.dataset.day.split('-');
+            const [year, month, day] = cell.dataset.day.split('-');
             const target = cell.querySelector('a') || cell;
             target.textContent = '';
             const weekday = document.createElement('span');
-            weekday.className = 'fw-normal reservations-weekday';
-            weekday.textContent = weekdays.get(cell.dataset.day) || '';
-            target.append(weekday, ` ${day}.${month}.`);
+            weekday.className = 'reservations-weekday';
+            weekday.dataset.long = longWeekday.format(new Date(Number(year), Number(month) - 1, Number(day)));
+            weekday.dataset.short = weekdays.get(cell.dataset.day) || '';
+            weekday.textContent = weekday.dataset.long;
+            target.append(weekday, `${day}.${month}.`);
         });
         if (dayCells.length > 0) {
             const weekOf = (cell) => {
@@ -1549,17 +1631,20 @@ export default class extends Controller {
     }
 
     /**
-     * Puts weekday and date on one line where the columns allow it (a tablet)
-     * and stacks them where they do not (a phone).
+     * Writes the weekdays out in full where the columns allow it and falls
+     * back to the abbreviations for the whole row where they do not (a phone).
      */
     fitCompactHeader() {
         const row = document.querySelector('#reservation-table thead tr.table-days-compact');
         if (!row || !this.isWeekLayout()) {
             return;
         }
-        row.classList.remove('two-lines');
+        const labels = row.querySelectorAll('.reservations-weekday');
+        labels.forEach((span) => { span.textContent = span.dataset.long; });
         const tooNarrow = Array.from(row.querySelectorAll('th[data-day]')).some((cell) => cell.scrollWidth > cell.clientWidth);
-        row.classList.toggle('two-lines', tooNarrow);
+        if (tooNarrow) {
+            labels.forEach((span) => { span.textContent = span.dataset.short; });
+        }
     }
 
     isoWeek(date) {

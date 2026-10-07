@@ -105,8 +105,16 @@
                    title="{{ 'roomblock.list.title'|trans }}">
                     <i class="fas fa-lock"></i></a>
                 <span class="vr mx-3 align-middle"></span>
-                <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 {% if show == 'table' %}text-primary{% else %}text-secondary{% endif %}" title="{{ 'reservation.table.view.table'|trans }}">
+                <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 {% if show == 'table' %}text-primary{% else %}text-secondary{% endif %}" title="{{ 'reservation.table.view.table'|trans }}" data-reservations-table-view-link
+                   {% if show != 'table' %}data-action="click->reservations#leaveWeekViewFromYearlyAction"{% endif %}>
                     <i class="fas fa-list"></i></a>
+                {# Week view: full screen on touch screens, fitted whole weeks with a mouse
+                   (see initWeekView in reservations_controller.js); from the annual
+                   view it opens the table view first #}
+                <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 ms-2 text-secondary" role="button" aria-pressed="false"
+                   {% if show == 'table' %}data-reservations-week-toggle{% else %}data-action="click->reservations#openWeekViewFromYearlyAction"{% endif %}
+                   title="{{ 'reservation.table.view.week'|trans }}" aria-label="{{ 'reservation.table.view.week'|trans }}">
+                    <i class="fas fa-calendar-week"></i></a>
                 <a href="{{ path('start.toggle.view', {show: 'yearly'}) }}" class="fs-5 me-4 ms-2 {% if show == 'yearly' %}text-primary{% else %}text-secondary{% endif %}" title="{{ 'reservation.table.view.yearly'|trans }}">
                     <i class="far fa-calendar-alt"></i></a>
 
@@ -118,5 +126,20 @@
         <div class="col" id="table-ajax" data-reservations-add-appartment-selectable-url="{{ path('reservations.add.appartment.to.reservation.selectable') }}">
         </div>
     </div>
+    {% if show == 'table' %}
+    {# Desktop week view: navbar and filter row are hidden, these controls
+       appear while the mouse moves (see initWeekView) #}
+    <div class="reservations-week-controls" data-reservations-week-controls>
+        <button type="button" class="btn btn-light shadow-sm reservations-week-prev" data-reservations-week-page="backward"
+                title="{{ 'reservation.table.week.previous'|trans }}" aria-label="{{ 'reservation.table.week.previous'|trans }}">
+            <i class="fas fa-chevron-left"></i></button>
+        <button type="button" class="btn btn-light shadow-sm reservations-week-next" data-reservations-week-page="forward"
+                title="{{ 'reservation.table.week.next'|trans }}" aria-label="{{ 'reservation.table.week.next'|trans }}">
+            <i class="fas fa-chevron-right"></i></button>
+        <button type="button" class="btn btn-light shadow-sm reservations-week-close" data-reservations-week-close
+                title="{{ 'button.close'|trans }}" aria-label="{{ 'button.close'|trans }}">
+            <i class="fas fa-xmark"></i></button>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

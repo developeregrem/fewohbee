@@ -318,6 +318,14 @@
                 <source>reservation.table.settings.showCalendarEntries</source>
                 <target>Kalendereinträge anzeigen</target>
             </trans-unit>
+            <trans-unit id="reservation.table.week.next">
+                <source>reservation.table.week.next</source>
+                <target>Weiterblättern</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.week.previous">
+                <source>reservation.table.week.previous</source>
+                <target>Zurückblättern</target>
+            </trans-unit>
             <trans-unit id="reservation.table.view.week">
                 <source>reservation.table.view.week</source>
                 <target>Wochenansicht</target>
