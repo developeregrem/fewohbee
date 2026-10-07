@@ -123,7 +123,8 @@
         </div>
     </form>
     <div class="row mt-2" >
-        <div class="col" id="table-ajax" data-reservations-add-appartment-selectable-url="{{ path('reservations.add.appartment.to.reservation.selectable') }}">
+        <div class="col" id="table-ajax" data-reservations-add-appartment-selectable-url="{{ path('reservations.add.appartment.to.reservation.selectable') }}"
+             style="--week-watermark: url('{{ app.request.basepath }}/img/logo-fewohbee.png');">
         </div>
     </div>
     {% if show == 'table' %}

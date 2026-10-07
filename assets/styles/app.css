@@ -331,6 +331,33 @@ body.reservations-week-layout .table-responsive.js-fit-vh {
     border-top: 1px solid var(--bs-border-color);
 }
 
+/* Week view: the FewohBee logo as a faint grey watermark behind the rooms.
+   A pseudo-element, since a filter cannot reach a background image; it sits
+   on the container around the scrolling table so it stays put. The free day
+   cells turn transparent so it shows between the bars. */
+body.reservations-week-layout #table-ajax {
+    position: relative;
+}
+
+body.reservations-week-layout #table-ajax::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--week-watermark) center / auto 50% no-repeat;
+    filter: grayscale(1);
+    opacity: .04;
+    pointer-events: none;
+}
+
+body.reservations-week-layout #table-ajax > * {
+    position: relative;
+    z-index: 1;
+}
+
+body.reservations-week-layout #reservation-table tbody {
+    --bs-table-bg: transparent;
+}
+
 body.reservations-week-focus > nav.navbar,
 body.reservations-week-focus #table-filter,
 body.reservations-week-focus #flash-message-container,
