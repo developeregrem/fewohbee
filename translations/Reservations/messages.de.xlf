@@ -796,11 +796,11 @@
             </trans-unit>
             <trans-unit id="reservation.summary.nights">
                 <source>reservation.summary.nights</source>
-                <target>{1}1 Nacht|]1,Inf[%count% Nächte</target>
+                <target>{0}0 Nächte|{1}1 Nacht|]1,Inf[%count% Nächte</target>
             </trans-unit>
             <trans-unit id="reservation.summary.persons">
                 <source>reservation.summary.persons</source>
-                <target>{1}1 Person|]1,Inf[%count% Personen</target>
+                <target>{0}0 Personen|{1}1 Person|]1,Inf[%count% Personen</target>
             </trans-unit>
             <trans-unit id="reservation.summary.call">
                 <source>reservation.summary.call</source>
