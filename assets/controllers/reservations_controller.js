@@ -1177,7 +1177,10 @@ export default class extends Controller {
         // In the week view the input holds whole weeks minus one (the server
         // counts days inclusively), and a step is the whole weeks shown
         const interval = this.isWeekLayout() ? intervalValue + 1 : (!isNaN(intervalValue) && intervalValue > 0 ? intervalValue : 1);
-        const currentDate = startInput.value ? new Date(startInput.value) : new Date();
+        // Built locally from year, month and day like snapToWeek(): new Date('YYYY-MM-DD')
+        // is UTC midnight, which west of UTC falls on the previous local day
+        const [year, month, day] = (startInput.value || this.formatDateInputValue(new Date())).split('-').map(Number);
+        const currentDate = new Date(year, month - 1, day);
         if (Number.isNaN(currentDate.getTime())) {
             return;
         }
