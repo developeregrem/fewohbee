@@ -1362,10 +1362,20 @@ export default class extends Controller {
         controls?.querySelector('[data-reservations-week-close]')?.addEventListener('click', () => this.setWeekFit(false), { signal });
 
         let hideTimer = null;
+        let lastX = null;
+        let lastY = null;
         document.addEventListener('mousemove', (event) => {
             if (!this.isWeekFitOn()) {
                 return;
             }
+            // Chromium also sends mousemove without any movement whenever the
+            // page changes under a resting pointer - a table reload, a popover,
+            // the buttons fading in - which kept the buttons from ever hiding
+            if (event.screenX === lastX && event.screenY === lastY) {
+                return;
+            }
+            lastX = event.screenX;
+            lastY = event.screenY;
             document.body.classList.add('reservations-week-pointer');
             clearTimeout(hideTimer);
             // Stay visible while the pointer rests on one of the buttons
