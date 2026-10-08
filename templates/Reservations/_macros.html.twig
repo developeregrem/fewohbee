@@ -31,3 +31,8 @@
         {% endfor %}
     </form>
 {%- endmacro %}
+
+{# A phone number as a tel: URL, without the separators people type into it. #}
+{% macro tel_href(number) -%}
+    tel:{{ number|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) }}
+{%- endmacro %}

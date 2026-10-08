@@ -5,7 +5,7 @@
 {% set status = reservation.reservationStatus %}
 {% set canEdit = is_granted('ROLE_RESERVATIONS') %}
 {% set company = null %}
-{% set phone = null %}
+{% set phones = [] %}
 {% set email = null %}
 {% if booker %}
     {# Business addresses first: the company shown on top is the one to call or mail #}
@@ -15,7 +15,12 @@
             {% if company is null and business and address.company is not empty %}
                 {% set company = address.company %}
             {% endif %}
-            {% set phone = phone ?: address.mobilephone ?: address.phone %}
+            {# Every number once, mobile before landline, for the call button #}
+            {% for number in [{kind: 'customer.mobilephone', icon: 'fa-mobile-alt', value: address.mobilephone}, {kind: 'customer.phone', icon: 'fa-phone', value: address.phone}] %}
+                {% if number.value is not empty and number.value|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) not in phones|map(p => p.value|replace({' ': '', '-': '', '/': '', '(': '', ')': ''})) %}
+                    {% set phones = phones|merge([number|merge({type: address.type})]) %}
+                {% endif %}
+            {% endfor %}
             {% set email = email ?: address.email %}
         {% endfor %}
     {% endfor %}
@@ -42,12 +47,29 @@
         {{ reservationMacros.guest_counts(reservation, guestCategoriesById|default({})) }}
     </div>
 
-    {% if phone or email or canEdit %}
+    {% if phones is not empty or email or canEdit %}
         <div class="reservation-card-actions mt-3">
-            {% if phone %}
-                <a class="btn btn-outline-primary" href="tel:{{ phone|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) }}">
+            {% if phones|length == 1 %}
+                <a class="btn btn-outline-primary" href="{{ reservationMacros.tel_href((phones|first).value) }}">
                     <i class="fas fa-phone me-1"></i> {{ 'reservation.summary.call'|trans }}
                 </a>
+            {% elseif phones is not empty %}
+                {# Several numbers: ask which one to call #}
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle w-100 h-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-phone me-1"></i> {{ 'reservation.summary.call'|trans }}
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for number in phones %}
+                            <li>
+                                <a class="dropdown-item" href="{{ reservationMacros.tel_href(number.value) }}">
+                                    <i class="fas {{ number.icon }} fa-fw me-2"></i>{{ number.value }}
+                                    <span class="small text-body-secondary ms-1">{{ number.kind|trans }} · {{ number.type|trans }}</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
             {% endif %}
             {% if email %}
                 <a class="btn btn-outline-primary" href="mailto:{{ email }}">
