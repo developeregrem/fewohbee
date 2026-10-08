@@ -1,26 +1,17 @@
-<table class="table table-hover">
-    <thead>
-    <tr>
-        <th class="border-top-0">{{ 'reservation.appartment.name'|trans }}</th>
-        <th class="border-top-0">{{ 'reservation.startdate'|trans }}</th>
-        <th class="border-top-0">{{ 'reservation.enddate'|trans }}</th>
-        <th class="border-top-0">{{ 'customer.lastname'|trans }}</th>
-    </tr>
-    </thead>
-    <tbody>
+{# Search hits; tapping one adds it to the selection #}
+<div class="list-group">
     {% for reservation in reservations %}
-    <tr data-action="click->reservations#selectReservationAction" data-reservation-id="{{ reservation.id }}">
-        <td>{{ reservation.appartment.number }}</td>
-        <td>{{ reservation.startdate|date('d.m.Y') }}</td>
-        <td>{{ reservation.enddate|date('d.m.Y') }}</td>
-        <td>
-            {% if reservation.booker %}
-                {{ reservation.booker.lastname }}
-            {% else %}
-                <span class="text-muted">{{ 'reservation.booker.missing.short'|trans }}</span>
-            {% endif %}
-        </td>
-    </tr>
+        <a href="#" class="list-group-item list-group-item-action"
+           data-action="click->reservations#selectReservationAction" data-reservation-id="{{ reservation.id }}">
+            <div class="fw-semibold">
+                {{ reservation.appartment.number }} ·
+                {% if reservation.booker %}
+                    {{ reservation.booker.firstname }} {{ reservation.booker.lastname }}
+                {% else %}
+                    <span class="text-body-secondary">{{ 'reservation.booker.missing.short'|trans }}</span>
+                {% endif %}
+            </div>
+            <div class="small text-body-secondary">{{ reservation.startdate|date('d.m.Y') }} – {{ reservation.enddate|date('d.m.Y') }}</div>
+        </a>
     {% endfor %}
-    </tbody>
-</table>
+</div>

@@ -31,7 +31,7 @@
             </ul>
         </div>
     {% endif %}
-    <form data-action="submit->reservations#submitBlockFormAction" action="{{ path('reservations.blocks.create') }}" method="POST">
+    <form id="roomblock-form" data-action="submit->reservations#submitBlockFormAction" action="{{ path('reservations.blocks.create') }}" method="POST">
         <input type="hidden" name="_token" value="{{ csrf_token('room_block') }}">
         <div class="mb-3" data-block-room-picker>
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
@@ -101,9 +101,10 @@
             <label class="form-label" for="block-note">{{ 'roomblock.note'|trans }}</label>
             <textarea class="form-control" id="block-note" name="note" rows="2">{{ note }}</textarea>
         </div>
-        <div class="text-end">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
-            <button type="submit" class="btn btn-primary">{{ 'roomblock.submit'|trans }}</button>
-        </div>
     </form>
+</div>
+{# Outside the form, so the buttons stay in reach below the long room list #}
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary d-none d-lg-inline-block" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+    <button type="submit" form="roomblock-form" class="btn btn-primary">{{ 'roomblock.submit'|trans }}</button>
 </div>

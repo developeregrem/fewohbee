@@ -28,6 +28,7 @@ export default class extends Controller {
         // Every form loaded into the modal connects anew, while the bootstrapping
         // below runs once per page - so tooltips are set up before that guard.
         this.initTooltips();
+        this.enableInvoiceDeletePopover();
 
         this.modalContent = document.getElementById('modal-content-ajax');
         const invoicesBootstrapped = this.modalContent.hasAttribute('data-invoices-bootstrapped');
@@ -44,6 +45,25 @@ export default class extends Controller {
         if (templateId) {
             updatePDFExportLinks(templateId);
         }
+    }
+
+    /** The invoice's delete button: once confirmed, close the dialog and reload the page for its message. */
+    enableInvoiceDeletePopover() {
+        const trigger = this.element.querySelector('[data-invoice-delete]');
+        if (trigger) {
+            enableDeletePopover({ root: trigger, onSuccess: () => this.reloadAfterDialogClosed() });
+        }
+    }
+
+    reloadAfterDialogClosed() {
+        const modal = document.getElementById('modalCenter');
+        if (!modal) {
+            window.location.reload();
+            return;
+        }
+        // Closing first lets the dialog take its back-button history entry off before the reload
+        modal.addEventListener('hidden.bs.modal', () => window.setTimeout(() => window.location.reload(), 100), { once: true });
+        window.bootstrap.Modal.getOrCreateInstance(modal).hide();
     }
 
     async initTooltips() {
@@ -117,21 +137,6 @@ export default class extends Controller {
 
     searchInputAction() {
         this.debouncedSearch();
-    }
-
-    deleteInvoiceAction(event) {
-        event.preventDefault();
-        const form = event.target.closest('form');
-        const url = event.currentTarget.dataset.url;
-        if (!form) return;
-        httpRequest({
-            url,
-            method: 'DELETE',
-            data: httpSerializeForm(form),
-            onSuccess: () => {
-                location.reload();
-            },
-        }); 
     }
 
     submitFormAction(event) {
@@ -406,20 +411,6 @@ export default class extends Controller {
     toggleInvoiceEditFieldsAction(event) {
         event.preventDefault();
         this.toggleInvoiceEditFields();
-    }
-
-    toggleInvoiceDeleteAction(event) {
-        event.preventDefault();
-        const boxDelete = document.getElementById('boxDelete');
-        const boxDefault = document.getElementById('boxDefault');
-        if (!boxDelete || !boxDefault) return;
-        if (boxDelete.classList.contains('d-none')) {
-            boxDelete.classList.remove('d-none');
-            boxDefault.classList.add('d-none');
-        } else {
-            boxDelete.classList.add('d-none');
-            boxDefault.classList.remove('d-none');
-        }
     }
 
     removeApartmentPositionEditAction(event) {

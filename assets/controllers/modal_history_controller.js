@@ -1,11 +1,10 @@
 import { Controller } from '@hotwired/stimulus';
-import { isCompactViewport } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 
 /**
- * While a dialog covers the screen like a page (compact viewport, .modal-fullscreen-lg-down),
- * the back button or back swipe closes it instead of leaving the page underneath.
+ * While a dialog covers the screen like a page (a .modal-fullscreen-*-down class below its
+ * breakpoint), the back button or back swipe closes it instead of leaving the page underneath.
  *
  * Opening pushes a history entry for the same URL; closing the dialog any other way takes that
  * entry off again. Turbo must not take the step back onto the page's own entry for a restore
@@ -37,7 +36,9 @@ export default class extends Controller {
     }
 
     pushEntry() {
-        const coversScreen = this.element.querySelector('.modal-dialog.modal-fullscreen-lg-down') && isCompactViewport();
+        // Measured rather than tied to one class and breakpoint, so any fullscreen variant works
+        const dialog = this.element.querySelector('.modal-dialog');
+        const coversScreen = dialog !== null && dialog.getBoundingClientRect().width >= window.innerWidth - 1;
         if (this.entryPushed || !coversScreen) {
             return;
         }

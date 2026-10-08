@@ -27,7 +27,7 @@
 {{ form_row(form.description) }}                    
 {{ form_row(form.vat) }}
 {{ form_row(form.price) }}
-<div class="row mt-4 ps-5">
+<div class="row mt-4 ps-lg-5">
     <div class="col-sm">
         {{ form_widget(form.includesVat) }}
         {{ form_widget(form.isFlatPrice, {'attr': {'data-action': 'change->invoices#flatPriceTogglePerRoomAction', 'data-per-room-selector': '#' ~ form.isPerRoom.vars.id, 'data-amount-selector': '#' ~ form.amount.vars.id}}) }}
@@ -35,7 +35,7 @@
     </div>
 </div>
 {% if form.brokered is defined %}
-    <div class="row mt-2 ps-5">
+    <div class="row mt-2 ps-lg-5">
         <div class="col-sm">
             {{ form_widget(form.brokered) }}
             <span class="ms-1 text-muted" data-bs-toggle="tooltip" title="{{ 'price.brokered.hint'|trans }}">

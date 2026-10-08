@@ -1,10 +1,10 @@
 {{ form_start(form, {'attr': {'data-controller': 'invoices', 'id': 'create-new-invoice' }}) }}
     <div class="modal-body">
-        <div class="ps-4 pe-4">
+        <div class="px-lg-4">
             <div id="flash-message-overlay">
             </div>
-            <div class="row">
-                <div class="col-md-4">
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
                     {{ invoice.salutation }}<br />
                     {{ invoice.firstname }} {{ invoice.lastname }}
                     {% if invoice.company is not empty %}
@@ -13,7 +13,7 @@
                     <br />{{ invoice.address }}
                     <br />{{ invoice.zip }} {{ invoice.city }}
                 </div>
-                <div class="col-md d-flex justify-content-end align-items-start">
+                <div class="col-12 col-md d-flex justify-content-md-end align-items-start">
                     {% include 'Invoices/_invoice_header_dates.html.twig' %}
                 </div>
             </div>
@@ -33,8 +33,8 @@
             <div class="row mt-4">
                 {% include 'Invoices/invoice_table_misc_preview_positions.html.twig' with {'mode': 'edit'} %}
             </div>
-            <div class="row">
-                <div class="col-md-4">
+            <div class="row g-2">
+                <div class="col-12 col-md-4">
                     {{ 'invoice.containing.vat'|trans }}<br/>
                     <table>
                         {% for key, value in vats %}
@@ -52,9 +52,9 @@
                         {% endfor %}
                     </table>
                 </div>
-                <div class="col-md-6 text-end">{{ 'invoice.netto'|trans }}
+                <div class="col col-md-6 text-end">{{ 'invoice.netto'|trans }}
                     <br/><strong>{{ 'invoice.brutto'|trans }}</strong></div>
-                <div class="col-md text-end">{{ (brutto-netto)|number_format(2, ',', '.') }} {{ currency_symbol }}<br/>
+                <div class="col-auto col-md text-end">{{ (brutto-netto)|number_format(2, ',', '.') }} {{ currency_symbol }}<br/>
                     <strong>{{ brutto|number_format(2, ',', '.') }} {{ currency_symbol }}</strong>
                 </div>
             </div>
@@ -71,11 +71,10 @@
         </div>
     </div>
     <div class="modal-footer" id="newInvoicePreview">
-        <ul class="pagination me-auto">
-            <li class="page-item " data-action="click->invoices#showCreateInvoicePositionsAction" data-url="{{ path('invoices.create.invoice.positions') }}" data-create-positions="false">
-                <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
-        </ul>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <a href="#" class="btn btn-link px-0 me-auto text-decoration-none"
+           data-action="click->invoices#showCreateInvoicePositionsAction"
+           data-url="{{ path('invoices.create.invoice.positions') }}" data-create-positions="false">&larr; {{ 'button.back'|trans }}</a>
+        <button type="button" class="btn btn-secondary d-none d-lg-inline-block" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"
                data-action="click->invoices#createInvoiceAction" data-url="{{ path('invoices.create.invoice') }}"
                data-success-url="{{ path('invoices.overview') }}" />

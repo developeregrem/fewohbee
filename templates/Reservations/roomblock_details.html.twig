@@ -34,18 +34,18 @@
         </div>
     {% endif %}
     <dl class="row mb-2">
-        <dt class="col-sm-4">{{ 'roomblock.room'|trans }}</dt>
-        <dd class="col-sm-8">{{ roomBlock.appartment.number }} <span class="text-muted small">{{ roomBlock.appartment.description }}</span></dd>
-        <dt class="col-sm-4">{{ 'roomblock.nights'|trans }}</dt>
-        <dd class="col-sm-8">{{ roomBlock.nights }}</dd>
-        <dt class="col-sm-4">{{ 'roomblock.createdby'|trans }}</dt>
-        <dd class="col-sm-8">
+        <dt class="col-4 fw-normal text-body-secondary">{{ 'roomblock.room'|trans }}</dt>
+        <dd class="col-8 mb-1 text-break">{{ roomBlock.appartment.number }} <span class="text-muted small">{{ roomBlock.appartment.description }}</span></dd>
+        <dt class="col-4 fw-normal text-body-secondary">{{ 'roomblock.nights'|trans }}</dt>
+        <dd class="col-8 mb-1 text-break">{{ roomBlock.nights }}</dd>
+        <dt class="col-4 fw-normal text-body-secondary">{{ 'roomblock.createdby'|trans }}</dt>
+        <dd class="col-8 mb-1 text-break">
             {{ roomBlock.createdBy ? roomBlock.createdBy.username : ('roomblock.source.' ~ roomBlock.source.value)|trans }},
             {{ roomBlock.createdAt|date('d.m.Y H:i') }}
         </dd>
     </dl>
     {% if is_granted('ROLE_RESERVATIONS') %}
-        <form data-action="submit->reservations#submitFormAction" action="{{ path('reservations.blocks.edit', {'id': roomBlock.id}|merge(filterQuery|default({}))) }}" method="POST">
+        <form id="roomblock-edit-form" data-action="submit->reservations#submitFormAction" action="{{ path('reservations.blocks.edit', {'id': roomBlock.id}|merge(filterQuery|default({}))) }}" method="POST">
             <input type="hidden" name="_token" value="{{ csrf_token('room_block') }}">
             <div class="row">
                 <div class="col-md-6 mb-3">
@@ -69,29 +69,30 @@
             {% set id = roomBlock.id %}
             {% set targetUrl = path('reservations.blocks.delete', {'id': roomBlock.id}|merge(filterQuery|default({}))) %}
             {% set deletePopoverHint = 'roomblock.delete.ask'|trans %}
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-danger"
-                        data-popover="delete"
-                        data-bs-content='{{ block('deletePopoverContent') }}'
-                        data-delete-target="#modal-content-ajax">
-                    <i class="fas fa-trash-alt"></i> {{ 'button.delete'|trans }}
-                </button>
-                <div>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
-                    <button type="submit" class="btn btn-primary">{{ 'button.save'|trans }}</button>
-                </div>
-            </div>
         </form>
     {% else %}
         <dl class="row">
-            <dt class="col-sm-4">{{ 'roomblock.period'|trans }}</dt>
-            <dd class="col-sm-8">{{ roomBlock.startDate|date('d.m.Y') }} &ndash; {{ roomBlock.endDate|date('d.m.Y') }}</dd>
-            <dt class="col-sm-4">{{ 'roomblock.reason'|trans }}</dt>
-            <dd class="col-sm-8">{{ roomBlock.reason }}</dd>
+            <dt class="col-4 fw-normal text-body-secondary">{{ 'roomblock.period'|trans }}</dt>
+            <dd class="col-8 mb-1 text-break">{{ roomBlock.startDate|date('d.m.Y') }} &ndash; {{ roomBlock.endDate|date('d.m.Y') }}</dd>
+            <dt class="col-4 fw-normal text-body-secondary">{{ 'roomblock.reason'|trans }}</dt>
+            <dd class="col-8 mb-1 text-break">{{ roomBlock.reason }}</dd>
             {% if roomBlock.note %}
-                <dt class="col-sm-4">{{ 'roomblock.note'|trans }}</dt>
-                <dd class="col-sm-8">{{ roomBlock.note }}</dd>
+                <dt class="col-4 fw-normal text-body-secondary">{{ 'roomblock.note'|trans }}</dt>
+                <dd class="col-8 mb-1 text-break">{{ roomBlock.note }}</dd>
             {% endif %}
         </dl>
     {% endif %}
 </div>
+{% if is_granted('ROLE_RESERVATIONS') %}
+    {# Outside the form, so the buttons stay in reach in the footer #}
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-danger me-auto"
+                data-popover="delete"
+                data-bs-content='{{ block('deletePopoverContent') }}'
+                data-delete-target="#modal-content-ajax">
+            <i class="fas fa-trash-alt"></i> {{ 'button.delete'|trans }}
+        </button>
+        <button type="button" class="btn btn-secondary d-none d-lg-inline-block" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <button type="submit" form="roomblock-edit-form" class="btn btn-primary">{{ 'button.save'|trans }}</button>
+    </div>
+{% endif %}

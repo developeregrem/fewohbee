@@ -964,146 +964,60 @@ div .reservation-yearly-day {
 }
 
 /*
- * Dialogs on phones
- * Below the lg breakpoint a dialog with .modal-fullscreen-lg-down covers the screen like a page
+ * Dialogs on phones and tablets
+ * Below the xl breakpoint a dialog with .modal-fullscreen-xl-down covers the screen like a page
  * (Bootstrap): header and footer stay put, the body scrolls between them. Ajax content wraps
  * .modal-body and .modal-footer in Stimulus roots and forms, which would keep the body from
  * scrolling on its own; display: contents takes those wrappers out of the layout.
- * The breakpoint matches COMPACT_VIEWPORT_QUERY in assets/js/utils.js.
+ * Class and breakpoint belong together: another fullscreen class needs its own breakpoint here.
  */
-@media (max-width: 991.98px) {
-    .modal-fullscreen-lg-down .modal-content :has(.modal-body, .modal-footer):not(.modal-body *, .modal-footer *) {
+@media (max-width: 1199.98px) {
+    .modal-fullscreen-xl-down .modal-content :has(.modal-body, .modal-footer):not(.modal-body *, .modal-footer *) {
         display: contents;
     }
 
-    .modal-fullscreen-lg-down .modal-body {
-        padding: .75rem;
+    /* Safety net for content nested in other ways: then the dialog itself scrolls, with header
+       and footer sticking to its edges, instead of the content spilling past the screen. */
+    .modal-fullscreen-xl-down .modal-content {
+        overflow-y: auto;
     }
 
-    .modal-fullscreen-lg-down .modal-body > .container-fluid {
-        padding-inline: 0;
-    }
-
-    /* Tabs stay on one line, swipe sideways and stay in reach while the body scrolls */
-    .modal-fullscreen-lg-down .modal-tabs {
+    .modal-fullscreen-xl-down .modal-header,
+    .modal-fullscreen-xl-down .modal-footer {
         position: sticky;
-        top: 0;
-        z-index: 2;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        scrollbar-width: none;
+        z-index: 3;
         background-color: var(--bs-modal-bg);
     }
 
-    .modal-fullscreen-lg-down .modal-tabs::-webkit-scrollbar {
+    .modal-fullscreen-xl-down .modal-header {
+        top: 0;
+    }
+
+    .modal-fullscreen-xl-down .modal-footer {
+        bottom: 0;
+    }
+
+    /* Tabs stay in reach while the body scrolls, flush below the header and across its width */
+    .modal-fullscreen-xl-down .modal-tabs {
+        position: sticky;
+        top: calc(-1 * var(--bs-modal-padding));
+        z-index: 2;
+        margin-inline: calc(-1 * var(--bs-modal-padding));
+        padding-inline: var(--bs-modal-padding);
+        background-color: var(--bs-modal-bg);
+        /* Swiped sideways; a scrollbar would only cover the underline */
+        scrollbar-width: none;
+    }
+
+    .modal-fullscreen-xl-down .modal-tabs::-webkit-scrollbar {
         display: none;
     }
-
-    .modal-fullscreen-lg-down .modal-tabs .nav-link {
-        white-space: nowrap;
-    }
-
 }
 
-/* Icon actions get a finger-sized tap target on touch screens, whatever the width */
-@media (pointer: coarse) {
-    .modal-fullscreen-lg-down .modal-body a.float-end,
-    .modal-fullscreen-lg-down .modal-body td:last-child > a {
-        display: inline-block;
-        padding: .375rem .5rem;
-    }
-}
-
-/*
- * Reservation details: business card above underlined tabs (_reservation_summary.html.twig).
- * The wrapper around card and tabs takes no part in the layout, so the tabs, sticky in a full
- * screen dialog, stay in reach while the body scrolls.
- */
+/* Reservation details: the wrapper around business card and tabs takes no part in the layout, so
+   the tabs can stick within the whole body (reservation_form_show_fields.html.twig) */
 .reservation-head {
     display: contents;
-}
-
-.modal-tabs.nav-underline {
-    --bs-nav-underline-link-active-color: var(--bs-primary);
-    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
-}
-
-.reservation-card-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .5rem;
-}
-
-/* Phones: one row of equal tiles, the icon above a short label, so no button outgrows the others */
-@media (max-width: 991.98px) {
-    .reservation-card-actions {
-        display: grid;
-        grid-auto-columns: 1fr;
-        grid-auto-flow: column;
-    }
-
-    .reservation-card-actions .btn {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: .25rem;
-        padding: .5rem .25rem;
-        font-size: .75rem;
-        line-height: 1.2;
-    }
-
-    .reservation-card-actions .btn > i {
-        margin: 0 !important;
-        font-size: 1rem;
-    }
-
-    .reservation-card-actions .dropdown-toggle::after {
-        display: none;
-    }
-}
-
-/* Sections of the details tab (_reservation_details.html.twig): a quiet title and label/value pairs */
-.reservation-section-head {
-    display: flex;
-    align-items: center;
-    min-height: 2rem;
-    margin-bottom: .5rem;
-}
-
-.reservation-section-title {
-    margin: 0;
-    font-size: .8rem;
-    font-weight: 600;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    color: var(--bs-secondary-color);
-}
-
-/* Addresses side by side once each gets enough room, e.g. in the full-width preview of a new booking */
-.reservation-addresses {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
-    gap: 1rem 1.5rem;
-    margin-top: 1rem;
-}
-
-.reservation-facts {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: .375rem 1rem;
-    margin: 0;
-}
-
-.reservation-facts dt {
-    font-weight: normal;
-    color: var(--bs-secondary-color);
-}
-
-.reservation-facts dd {
-    min-width: 0;
-    margin: 0;
-    overflow-wrap: anywhere;
 }
 
 /* add hint to required fields */
