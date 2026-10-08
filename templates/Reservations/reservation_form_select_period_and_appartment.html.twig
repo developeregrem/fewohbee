@@ -1,7 +1,7 @@
-
+{% import 'Reservations/_macros.html.twig' as reservationMacros %}
 <div data-controller="reservations">
 <div class="modal-body">
-    <div class="ps-5 pe-5">
+    <div class="px-lg-5">
         <div id="flash-message-overlay">
             <div class="col">
                 {% include 'feedback.html.twig' with {'app': app } %}
@@ -9,79 +9,51 @@
         </div>
     {% set lastStartDate, lastEndDate = "", "" %}
     {% if reservations|length > 0 %}
-        <div class="row">
-            <h4>{{ 'reservation.new.reservation.appartments.selected.heading'|trans }}</h4>
+        {# Rooms picked so far (keyed by their position in the session); ids are used by the
+           reservations controller to edit or drop them #}
+        <h2 class="reservation-section-title mb-2">{{ 'reservation.new.reservation.appartments.selected.heading'|trans }}</h2>
+        <div id="selectedAppartments" class="list-group mb-4">
+            {% for key, reservation in reservations %}
+                <div class="list-group-item" data-selected-room>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="#" class="me-auto text-reset text-decoration-none"
+                           data-action="click->reservations#toggleAppartmentOptionsAction" data-appartment-id="{{ key }}">
+                            <span class="d-block fw-semibold">{{ reservation.appartment.number }} · {{ reservation.appartment.description }}</span>
+                            <span class="d-block small text-body-secondary">
+                                {{ reservation.startdate|date('d.m.Y') }} – {{ reservation.enddate|date('d.m.Y') }}
+                                · {{ 'reservation.summary.nights'|trans({'%count%': reservation.startdate.diff(reservation.enddate).days}) }}
+                                · {{ 'reservation.summary.persons'|trans({'%count%': reservation.persons}) }}
+                                {{ reservationMacros.guest_counts(reservation, guestCategoriesById|default({})) }}
+                                · {{ reservation.reservationStatus|display_name }}
+                            </span>
+                        </a>
+                        <a href="#" class="btn btn-sm btn-link text-body-secondary"
+                           data-action="click->reservations#toggleAppartmentOptionsAction" data-appartment-id="{{ key }}"
+                           title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}">
+                            <i class="fas fa-edit"></i></a>
+                        <a href="#" class="btn btn-sm btn-link text-danger"
+                           data-action="click->reservations#deleteAppartmentAction" data-appartment-id="{{ key }}"
+                           title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}">
+                            <i class="fas fa-trash-alt"></i></a>
+                    </div>
+                    <div id="appartment-{{ key }}" class="d-none mt-3">
+                        <form id="appartment-options-{{ key }}">
+                            <div class="row g-3">
+                                {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' with {'appartment': reservation.appartment} %}
+                            </div>
+                            <div class="text-end mt-3">
+                                <button class="btn btn-primary" type="button"
+                                        data-action="click->reservations#saveAppartmentOptionsAction"
+                                        data-appartment-id="{{ key }}">{{ 'button.save'|trans }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% set lastStartDate = reservation.startdate|date('Y-m-d') %}
+                {% set lastEndDate = reservation.enddate|date('Y-m-d') %}
+            {% endfor %}
         </div>
-        <div class="row">
-            <div class="col">
-                <table class="table" id="selectedAppartments">
-                    <thead>
-                    <tr>
-                        <th>{{ 'appartment.number.short'|trans }}</th>
-                        <th>{{ 'appartment.description'|trans }}</th>
-                        <th>{{ 'reservation.persons'|trans }}</th>
-                        <th>{{ 'reservation.status'|trans }}</th>
-                        <th>{{ 'reservation.startdate'|trans }}</th>
-                        <th>{{ 'reservation.enddate'|trans }}</th>
-                        <th>{{ 'base.action'|trans }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for key, reservation in reservations %}
-                        <tr data-action="click->reservations#toggleAppartmentOptionsAction" data-appartment-id="{{ key }}">
-                            <td>{{ reservation.appartment.number }}</td>
-                            <td>{{ reservation.appartment.description }}</td>
-                            <td>
-                                {{ reservation.persons }}
-                                {% set counts = reservation.guestCounts %}
-                                {% if counts is not empty and guestCategoriesById|default({}) is not empty %}
-                                    {% set parts = [] %}
-                                    {% for catId, cat in guestCategoriesById %}
-                                        {% set count = counts[catId]|default(0) %}
-                                        {% if count > 0 %}
-                                            {% set parts = parts|merge([count ~ '×' ~ cat.acronym]) %}
-                                        {% endif %}
-                                    {% endfor %}
-                                    {% if parts is not empty %}
-                                        <span class="text-muted small">({{ parts|join(', ') }})</span>
-                                    {% endif %}
-                                {% endif %}
-                            </td>
-                            <td>{{ reservation.reservationStatus|display_name }}</td>
-                            <td>{{ reservation.startdate|date('d.m.Y') }}</td>
-                            <td>{{ reservation.enddate|date('d.m.Y') }}</td>
-                            <td>
-                                <a href="#" title="{{ 'button.edit'|trans }}">
-                                    <i class="fas fa-edit"></i></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}" data-action="click->reservations#deleteAppartmentAction" data-appartment-id="{{ key }}">
-                                    <i class="fas fa-trash-alt"></i></a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="7" id="appartment-{{ key }}" class="d-none">
-                                <form id="appartment-options-{{ key }}">
-                                    <div class="row">
-                                        {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' with {'appartment': reservation.appartment} %}
-                                    </div>
-                                    <div class="row justify-content-end">
-                                        <div class="col-sm-3 text-end">                                        
-                                            <button class="btn btn-secondary" type="button"
-                                                data-action="click->reservations#saveAppartmentOptionsAction"
-                                                data-appartment-id="{{ key }}">{{ 'button.save'|trans }}</button>
-                                        </div>
-                                    </div>                                    
-                                </form>
-                            </td>
-                        </tr>
-                        {% set lastStartDate = reservation.startdate|date('Y-m-d')  %}
-                        {% set lastEndDate = reservation.enddate|date('Y-m-d')  %}
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    <hr>
-{% endif %}
+    {% endif %}
 
         <form id="reservation-period" role="form"
               data-available-url="{{ path('reservations.get.available.appartments') }}"
@@ -91,31 +63,22 @@
               data-select-customer-url="{{ path('reservations.select.customer') }}"
               data-preview-url="{{ path('reservations.create.preview') }}"
               data-action="submit->reservations#selectCustomerAction">
-            <div class="row">
-                <div class="col" id="flash-message-overlay">
-                </div>
-            </div>
-
-            <div class="row">
-                <h4>{{ 'reservation.new.reservation.appartments.addmore'|trans }}</h4>
-            </div>
-            <div class="row">
-                <div class="col">
+            <h2 class="reservation-section-title mb-2">{{ 'reservation.new.reservation.appartments.addmore'|trans }}</h2>
+            <div class="row g-3 align-items-end">
+                <div class="col-6 col-md">
+                    <label for="from" class="form-label">{{ 'reservation.startdate'|trans }}</label>
                     <input type="date" class="form-control" id="from" name="from"
-                           placeholder="{{ 'reservation.startdate'|trans }}"
                            data-action="change->reservations#getAvailableAppartmentsAction"
-                           value="{{ lastStartDate }}"
-                    >
-                </div>            
-                <div class="col">
-                    <input type="date" class="form-control" id="end" name="end"
-                           placeholder="{{ 'reservation.enddate'|trans }}"
-                           data-action="change->reservations#getAvailableAppartmentsAction"
-                           value="{{ lastEndDate }}"
-                    >
+                           value="{{ lastStartDate }}">
                 </div>
-                <div class="col text-end">
-                    <select id="objects" name="object" class="form-select"
+                <div class="col-6 col-md">
+                    <label for="end" class="form-label">{{ 'reservation.enddate'|trans }}</label>
+                    <input type="date" class="form-control" id="end" name="end"
+                           data-action="change->reservations#getAvailableAppartmentsAction"
+                           value="{{ lastEndDate }}">
+                </div>
+                <div class="col">
+                    <select id="objects" name="object" class="form-select" aria-label="{{ 'reservation.objects.all'|trans }}"
                             data-action="change->reservations#getAvailableAppartmentsAction">
                         <option value="all"
                                 {% if objectSelected == "all" %}selected{% endif %}>{{ 'reservation.objects.all'|trans }}</option>
@@ -125,35 +88,31 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-sm-1 align-self-center">
-                    <a href="#" title="{{ 'button.accept'|trans }}"
-                       data-action="click->reservations#getAvailableAppartmentsAction">
-                        <i class="fa-solid fa-check fa-lg"></i>
-                    </a>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary"
+                            data-action="click->reservations#getAvailableAppartmentsAction"
+                            title="{{ 'nav.customer.search'|trans }}" aria-label="{{ 'nav.customer.search'|trans }}">
+                        <i class="fas fa-search"></i></button>
                 </div>
             </div>
-            <div class="col mt-4" id="available-appartments"></div>
+            <div class="mt-3" id="available-appartments"></div>
         </form>
     </div>
 </div>
 
-
 {% if reservations|length > 0 %}
-<div class="modal-footer justify-content-between">
-    <button type="button" class="btn btn-sm btn-outline-secondary"
+<div class="modal-footer">
+    <button type="button" class="btn btn-link text-body-secondary text-decoration-none px-0 me-auto"
             data-action="click->reservations#openBlockFormAction"
             data-url="{{ path('reservations.blocks.form', {fromSelection: 1}) }}"
             title="{{ 'roomblock.instead'|trans }}">
         <i class="fas fa-ban"></i> {{ 'roomblock.instead'|trans }}
     </button>
     {% if objectHasAppartments %}
-    <ul class="pagination mb-0">
-        <li class="page-item">
-            <a class="page-link" href="#"
-               data-action="click->reservations#selectCustomerAction"
-               data-url="{{ path('reservations.select.customer') }}">{{ 'button.continue'|trans }} &rarr;</a></li>
-    </ul>
+        <button type="button" class="btn btn-primary"
+                data-action="click->reservations#selectCustomerAction"
+                data-url="{{ path('reservations.select.customer') }}">{{ 'button.continue'|trans }} &rarr;</button>
     {% endif %}
 </div>
 {% endif %}
-</div>  
+</div>

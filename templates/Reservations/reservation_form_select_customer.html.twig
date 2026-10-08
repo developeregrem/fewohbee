@@ -1,59 +1,55 @@
 <div data-controller="reservations" data-preview-url="{{ path('reservations.create.preview') }}">
 <div class="modal-body">
-    <div class="ps-5 pe-5">
-        <div class="row">
-                <div class="col" id="flash-message-overlay">
-                </div>
+    <div class="px-lg-5">
+        <div id="flash-message-overlay">
+            <div class="col"></div>
         </div>
-        <div class="row">
-            <h4>{{ 'reservation.customer'|trans }}</h4>
-        </div>
-        <div class="row">
+        <h2 class="reservation-section-title mb-2">{{ 'reservation.customer'|trans }}</h2>
+        {# Field and search side by side; adding a guest below on phones, in the same row on wider screens #}
+        <div class="row g-2 align-items-end">
             <div class="col">
                 <input type="text" class="form-control" id="lastname" name="lastname"
                        placeholder="{{ 'reservation.select.customer.search.input.placeholder'|trans }}"
                        data-reservations-customer-search="true">
             </div>
-            <div class="col text-end">
-                <button class="btn btn-secondary" type="button" data-action="click->reservations#getCustomersAction" data-page="1">
-                    <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
+            <div class="col-auto">
+                <button class="btn btn-primary" type="button" data-action="click->reservations#getCustomersAction" data-page="1"
+                        title="{{ 'nav.customer.search'|trans }}">
+                    <i class="fas fa-search"></i><span class="d-none d-lg-inline"> {{ 'nav.customer.search'|trans }}</span>
                 </button>
-                <button class="btn btn-secondary" type="button" data-action="click->reservations#getFormForNewCustomerAction">
+            </div>
+            <div class="col-12 col-sm-auto">
+                <button class="btn btn-outline-primary w-100" type="button" data-action="click->reservations#getFormForNewCustomerAction">
                     <i class="fas fa-plus"></i> {{ 'nav.customer.add'|trans }}
                 </button>
             </div>
         </div>
-        <div class="row mt-4">   
-            <div class="col">
+        <div class="mt-4">
             <form id="customer-selection"
                   data-action="submit->reservations#createNewCustomerAction"
                   data-url="{{ path('reservations.get.customer.create') }}">
                 <div id="customers"
                      data-customers-url="{{ path('reservations.get.customers') }}"
                      data-customer-new-form-url="{{ path('reservations.get.customer.new.form') }}">
-                    <p>
-                        {% if customer %}
-                            {{ 'reservation.custumer.selected'|trans }} {{ customer.firstname }} {{ customer.lastname }}
-                        {% endif %}
-                    </p>
+                    {% if customer %}
+                        <p class="text-body-secondary">{{ 'reservation.custumer.selected'|trans }} {{ customer.firstname }} {{ customer.lastname }}</p>
+                    {% endif %}
                 </div>
                 <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary float-end mt-3 d-none"/>
             </form>
-            </div>
         </div>
     </div>
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pagination me-auto">
-        <li class="page-item" data-action="click->reservations#selectAppartmentAction" data-reservations-create-new="false" data-url="{{ path('reservations.select.appartment') }}">
-            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
-    </ul>
+    <a class="btn btn-link me-auto px-0 text-decoration-none" href="#"
+       data-action="click->reservations#selectAppartmentAction"
+       data-reservations-create-new="false"
+       data-url="{{ path('reservations.select.appartment') }}">&larr; {{ 'button.back'|trans }}</a>
     {% if customer %}
-    <ul class="pagination">
-        <li class="page-item" data-action="click->reservations#reservationPreviewAction" data-customer-id="{{ customer.id }}">
-            <a class="page-link" href="#">{{ 'button.continue.with'|trans }} {{ customer.firstname }} {{ customer.lastname }}&rarr;</a>
-        </li>
-    </ul>
+        <button type="button" class="btn btn-primary text-truncate mw-100"
+                data-action="click->reservations#reservationPreviewAction" data-customer-id="{{ customer.id }}">
+            {{ 'button.continue.with'|trans }} {{ customer.firstname }} {{ customer.lastname }} &rarr;
+        </button>
     {% endif %}
 </div>
-</div>  
+</div>
