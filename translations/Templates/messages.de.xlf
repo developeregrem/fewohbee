@@ -1074,6 +1074,18 @@
                 <source>templates.editor.check_in_times.desc</source>
                 <target>Gibt Check-in-Fenster und Check-out-Zeit des Betriebs als eine Zeile aus, z. B. „Check-in 17:00–20:00 Uhr · Check-out bis 10:00 Uhr“. Das sind Hausregeln, nicht die Anreisezeit dieser Reservierung. Der Absatz entfällt, wenn keine Zeiten hinterlegt sind.</target>
             </trans-unit>
+            <trans-unit id="templates.send">
+                <source>templates.send</source>
+                <target>Senden</target>
+            </trans-unit>
+            <trans-unit id="templates.file.label">
+                <source>templates.file.label</source>
+                <target>Bezeichnung</target>
+            </trans-unit>
+            <trans-unit id="templates.correspondence.delete.ask">
+                <source>templates.correspondence.delete.ask</source>
+                <target>Dieses Dokument wirklich löschen?</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

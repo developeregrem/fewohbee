@@ -1,6 +1,6 @@
 <div data-controller="invoices reservations">
 <div class="modal-body">
-    <div class="ps-5 pe-5">
+    <div class="px-lg-5">
         <div id="flash-message-overlay">{% include 'feedback.html.twig' %}</div>
         {# Number left, invoice date right, due date between them: space-between keeps both gaps equal. #}
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3" data-invoices-meta-url="{{ path('invoices.create.invoice.meta') }}" id="invoice-meta" data-payment-due-scope="">
@@ -49,80 +49,71 @@
                 {% include 'Invoices/_einvoice_readiness.html.twig' %}
             </div>
         </div>
-        <div class="row">
-            <div class="col">
-                <h4 class="mt-4">{{ 'invoice.guest'|trans }}&nbsp;
-                    <small>
-                    <a href="#" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.show.change.customer') }}"
-                       title="{{ 'button.edit'|trans }}" class="text-secondary">
-                        <i class="fas fa-edit"></i></a>
-                    </small>
-                </h4>
-                {{ invoice.salutation }} <br />
-                {{ invoice.firstname }} {{ invoice.lastname }}<br />
-                {% if invoice.company is not empty %}
-                    {{ invoice.company }}<br/>
-                {% endif %}
-                {{ invoice.address }}<br />
-                {% if invoice.country is not empty %}{{ invoice.country }}-{% endif %}{{ invoice.zip }} {{ invoice.city }}
-                {% if invoice.phone is not empty %}
-                <br /><i class="fa-solid fa-phone"></i> {{ invoice.phone }}
-                {% endif %}
-                {% if invoice.email is not empty %}
-                <br /><i class="fa-solid fa-envelope"></i> {{ invoice.email }}
-                {% endif %}
+        <section class="mt-4">
+            <div class="d-flex align-items-center mb-2">
+                <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0 me-auto">{{ 'invoice.guest'|trans }}</h2>
+                <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
+                        data-action="click->invoices#openModalAction" data-url="{{ path('invoices.show.change.customer') }}">
+                    <i class="fas fa-edit me-1"></i> {{ 'button.edit'|trans }}</button>
             </div>
-        </div>
-        <div class="row mt-4">
-            <div class="col">
-                <h4>{{ 'invoice.appartment'|trans }}</h4>
-                {% include 'Invoices/invoice_table_apartment_positions.html.twig' with {'mode': 'edit'} %}
-                <button type="button" class="btn btn-secondary" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.apartment.position', {'invoiceId': 'new'}) }}">
-                    <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button>
+            <div class="fw-semibold">{{ invoice.salutation }} {{ invoice.firstname }} {{ invoice.lastname }}</div>
+            {% if invoice.company is not empty %}<div>{{ invoice.company }}</div>{% endif %}
+            <div>{{ invoice.address }}, {% if invoice.country is not empty %}{{ invoice.country }}-{% endif %}{{ invoice.zip }} {{ invoice.city }}</div>
+            {% if invoice.phone is not empty or invoice.email is not empty %}
+                <div class="d-flex flex-wrap column-gap-3 text-body-secondary">
+                    {% if invoice.phone is not empty %}<span><i class="fa-solid fa-phone fa-sm me-1"></i>{{ invoice.phone }}</span>{% endif %}
+                    {% if invoice.email is not empty %}<span class="text-break"><i class="fa-solid fa-envelope fa-sm me-1"></i>{{ invoice.email }}</span>{% endif %}
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="mt-4">
+            <div class="d-flex align-items-center mb-2">
+                <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0 me-auto">{{ 'invoice.appartment'|trans }}</h2>
+                <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
+                        data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.apartment.position', {'invoiceId': 'new'}) }}">
+                    <i class="fas fa-plus me-1"></i> {{ 'button.add'|trans }}</button>
             </div>
-        </div>
+            {% include 'Invoices/invoice_table_apartment_positions.html.twig' with {'mode': 'edit'} %}
+        </section>
 
         {% if positionsMiscellaneous|filter(p => p.positionGroup == 'apartment_modifier')|length > 0 %}
-        <div class="row mt-4">
-            <div class="col">
-                <h4>{{ 'invoice.apartment_modifier.heading'|trans }}</h4>
-                {% include 'Invoices/invoice_table_apartment_modifier_positions.html.twig' with {'mode': 'edit'} %}
+        <section class="mt-4">
+            <div class="d-flex align-items-center mb-2">
+                <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0 me-auto">{{ 'invoice.apartment_modifier.heading'|trans }}</h2>
             </div>
-        </div>
+            {% include 'Invoices/invoice_table_apartment_modifier_positions.html.twig' with {'mode': 'edit'} %}
+        </section>
         {% endif %}
 
         {% if positionsMiscellaneous|filter(p => p.positionGroup == 'tourist_tax')|length > 0 %}
-        <div class="row mt-4">
-            <div class="col">
-                <h4>{{ 'invoice.tourist_tax.heading'|trans }}</h4>
-                {% include 'Invoices/invoice_table_tourist_tax_positions.html.twig' with {'mode': 'edit'} %}
+        <section class="mt-4">
+            <div class="d-flex align-items-center mb-2">
+                <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0 me-auto">{{ 'invoice.tourist_tax.heading'|trans }}</h2>
             </div>
-        </div>
+            {% include 'Invoices/invoice_table_tourist_tax_positions.html.twig' with {'mode': 'edit'} %}
+        </section>
         {% endif %}
 
-        <div class="row mt-4">
-            <div class="col">
-                <p>
-                <h4>{{ 'invoice.miscellaneous'|trans }}</h4>
-                {% include 'Invoices/invoice_table_misc_positions.html.twig' with {'mode': 'edit'} %}
-                <button type="button" class="btn btn-secondary" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.miscellaneous.position', {'invoiceId': 'new'}) }}">
-                    <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button>
-                </p>
+        <section class="mt-4">
+            <div class="d-flex align-items-center mb-2">
+                <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0 me-auto">{{ 'invoice.miscellaneous'|trans }}</h2>
+                <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
+                        data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.miscellaneous.position', {'invoiceId': 'new'}) }}">
+                    <i class="fas fa-plus me-1"></i> {{ 'button.add'|trans }}</button>
             </div>
-        </div>
+            {% include 'Invoices/invoice_table_misc_positions.html.twig' with {'mode': 'edit'} %}
+        </section>
     </div>
 </div>
 <div class="modal-footer">
-    <ul class="pagination me-auto">
-        <li class="page-item " data-action="click->reservations#selectReservationAction" data-url="{{ path('invoices.select.reservation') }}">
-            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
-    </ul>
+    <a href="#" class="btn btn-link px-0 me-auto text-decoration-none"
+       data-action="click->reservations#selectReservationAction"
+       data-url="{{ path('invoices.select.reservation') }}">&larr; {{ 'button.back'|trans }}</a>
     {% if canContinue %}
-    <ul class="pagination">
-        <li class="page-item" data-action="click->invoices#showNewInvoicePreviewAction" data-url="{{ path('invoices.show.new.invoice.preview') }}">
-            <a class="page-link" href="#">{{ 'button.continue'|trans }}&rarr;</a>
-        </li>
-    </ul>
+        <button type="button" class="btn btn-primary"
+                data-action="click->invoices#showNewInvoicePreviewAction"
+                data-url="{{ path('invoices.show.new.invoice.preview') }}">{{ 'button.continue'|trans }} &rarr;</button>
     {% endif %}
 </div>
 </div>

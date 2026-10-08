@@ -1,5 +1,5 @@
 {# The reservation at a glance above the tabs: who, which room and when, and everything to do
-   with the guest and the booking as labelled buttons - one row of equal tiles on phones. #}
+   with the guest and the booking as labelled buttons. #}
 {% import 'Reservations/_macros.html.twig' as reservationMacros %}
 {% set booker = reservation.booker %}
 {% set status = reservation.reservationStatus %}
@@ -43,21 +43,26 @@
     </div>
 
     {% if phone or email or canEdit %}
-        <div class="reservation-card-actions mt-3">
+        {# Phones: one row of equal tiles, the icon above a short label; wider screens: a row of buttons #}
+        <div class="row g-2 mt-1">
             {% if phone %}
-                <a class="btn btn-outline-primary" href="tel:{{ phone|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) }}">
-                    <i class="fas fa-phone me-1"></i> {{ 'reservation.summary.call'|trans }}
-                </a>
+                <div class="col col-lg-auto">
+                    <a class="btn btn-outline-primary w-100 h-100 d-flex flex-column flex-lg-row align-items-center justify-content-center gap-1 px-1 px-lg-3 small" href="tel:{{ phone|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) }}">
+                        <i class="fas fa-phone"></i> {{ 'reservation.summary.call'|trans }}
+                    </a>
+                </div>
             {% endif %}
             {% if email %}
-                <a class="btn btn-outline-primary" href="mailto:{{ email }}">
-                    <i class="fas fa-envelope me-1"></i> {{ 'customer.email'|trans }}
-                </a>
+                <div class="col col-lg-auto">
+                    <a class="btn btn-outline-primary w-100 h-100 d-flex flex-column flex-lg-row align-items-center justify-content-center gap-1 px-1 px-lg-3 small" href="mailto:{{ email }}">
+                        <i class="fas fa-envelope"></i> {{ 'customer.email'|trans }}
+                    </a>
+                </div>
             {% endif %}
             {% if canEdit %}
-                <div class="dropdown">
-                    <button class="btn btn-outline-primary dropdown-toggle w-100 h-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-user me-1"></i> {{ 'reservation.summary.guest_menu'|trans }}
+                <div class="col col-lg-auto dropdown">
+                    <button class="btn btn-outline-primary w-100 h-100 d-flex flex-column flex-lg-row align-items-center justify-content-center gap-1 px-1 px-lg-3 small dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user"></i> {{ 'reservation.summary.guest_menu'|trans }}
                     </button>
                     <ul class="dropdown-menu">
                         {% if booker %}
@@ -98,12 +103,14 @@
                         {% endif %}
                     </ul>
                 </div>
-                <a href="#" class="btn btn-outline-primary"
-                   data-action="click->reservations#editReservationAction"
-                   data-url="{{ path('reservations.edit.reservation', {'id': reservation.id}) }}"
-                   data-reservation-id="{{ reservation.id }}">
-                    <i class="fas fa-calendar-alt me-1"></i> {{ 'reservation.summary.change_booking'|trans }}
-                </a>
+                <div class="col col-lg-auto">
+                    <a href="#" class="btn btn-outline-primary w-100 h-100 d-flex flex-column flex-lg-row align-items-center justify-content-center gap-1 px-1 px-lg-3 small"
+                       data-action="click->reservations#editReservationAction"
+                       data-url="{{ path('reservations.edit.reservation', {'id': reservation.id}) }}"
+                       data-reservation-id="{{ reservation.id }}">
+                        <i class="fas fa-calendar-alt"></i> {{ 'reservation.summary.change_booking'|trans }}
+                    </a>
+                </div>
             {% endif %}
         </div>
     {% endif %}

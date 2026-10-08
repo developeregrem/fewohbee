@@ -301,3 +301,6 @@ templates.preview.snippet.gdpr.addresses.desc: Inserts one block per stored cust
 templates.preview.snippet.gdpr.reservations.desc: Inserts one block per reservation with stay, booking source, guest count, and invoices.
 templates.editor.reservation.appartment_positions.desc: Inserts a table with all booked rooms, stay dates, guest counts, and prices.
 templates.editor.reservation.misc_positions.desc: Inserts all additional reservation positions line by line with description and total price.
+templates.send: Send
+templates.file.label: Label
+templates.correspondence.delete.ask: 'Delete this document?'

@@ -6,7 +6,7 @@
         {% include 'Reservations/_reservation_summary.html.twig' with {'reservation': attribute(reservations, 0)} %}
     {% endif %}
     <!-- Nav tabs -->
-    <ul class="nav nav-underline modal-tabs">
+    <ul class="nav nav-underline flex-nowrap overflow-x-auto text-nowrap border-bottom modal-tabs">
         <li class="nav-item">
             <a class="nav-link{% if tab is defined and tab == 'booker' %} active{% endif %}" href="#reservation" data-bs-toggle="tab">{{ 'reservation.tab.details'|trans }}</a>
         </li>
@@ -60,20 +60,20 @@
             {% endif %}
             {# One column at every width: sections read top to bottom, wide screens use the width inside them #}
             <section>
-                <div class="reservation-section-head">
-                    <h2 class="reservation-section-title me-auto">{{ 'reservation.preview.booker'|trans }}</h2>
+                <div class="d-flex align-items-center mb-2">
+                    <h2 class="small text-uppercase fw-semibold text-body-secondary me-auto mb-0">{{ 'reservation.preview.booker'|trans }}</h2>
                 </div>
                 {% if booker %}
                     <div class="fs-5 fw-bold lh-sm text-break">{{ company ?: booker.firstname ~ ' ' ~ booker.lastname }}</div>
                     {% if company %}<div>{{ booker.firstname }} {{ booker.lastname }}</div>{% endif %}
-                    <div class="mt-2">{% include 'Reservations/_reservation_guest_data.html.twig' %}</div>
+                    <div class="mt-2">{% include 'Reservations/_reservation_guest_data.html.twig' with {'addressColumns': 'row-cols-1 row-cols-lg-2'} %}</div>
                 {% else %}
                     {% include 'Reservations/_reservation_guest_data.html.twig' %}
                 {% endif %}
             </section>
             <section class="mt-4">
-                <div class="reservation-section-head">
-                    <h2 class="reservation-section-title me-auto">{{ 'reservation.preview.appartments.selected'|trans }}</h2>
+                <div class="d-flex align-items-center mb-2">
+                    <h2 class="small text-uppercase fw-semibold text-body-secondary me-auto mb-0">{{ 'reservation.preview.appartments.selected'|trans }}</h2>
                 </div>
                 <ul class="list-group">
                     {% for reservation in reservations %}
@@ -92,8 +92,8 @@
             </section>
 
             <section class="mt-4">
-                <div class="reservation-section-head">
-                    <h2 class="reservation-section-title me-auto">{{ 'reservation.details.stay'|trans }}</h2>
+                <div class="d-flex align-items-center mb-2">
+                    <h2 class="small text-uppercase fw-semibold text-body-secondary me-auto mb-0">{{ 'reservation.details.stay'|trans }}</h2>
                 </div>
                 <div class="row g-3">
                     <div class="col-6 col-lg-4">
@@ -141,8 +141,8 @@
                     {% set roomGuests = roomGuests|merge([customer]) %}
                 {% endif %}
             {% endfor %}
-            <div class="reservation-section-head{{ loop.first ? '' : ' mt-4' }}">
-                <h2 class="reservation-section-title me-auto">{{ 'reservation.guests.room'|trans({'%number%': reservation.appartment.number}) }}</h2>
+            <div class="d-flex align-items-center mb-2{{ loop.first ? '' : ' mt-4' }}">
+                <h2 class="small text-uppercase fw-semibold text-body-secondary me-auto mb-0">{{ 'reservation.guests.room'|trans({'%number%': reservation.appartment.number}) }}</h2>
                 {% if is_granted('ROLE_RESERVATIONS') %}
                     <a href="#" class="btn btn-sm btn-outline-primary"
                        data-action="click->reservations#changeReservationCustomerAction"
@@ -205,70 +205,60 @@
     </div>
     
     <div class="tab-pane{% if tab is defined and tab == 'correspondence' %} active{% endif %}" id="correspondence" role="tabpanel" aria-labelledby="correspondence-tab">
-        <div class="row">
-            <div class="col">
-                <h4 class="pb-2">{{ 'reservation.correspondences.reservation'|trans }}
-                    {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
-                        <small>
-                            <a href="#" data-action="click->reservations#selectReservationForTemplateAction" 
-                                data-url="{{ path('correspondence.select.reservation') }}" 
-                                data-reservation-id="{{ reservationId }}" 
-                                data-create-new="true"
-                                title="{{ 'button.add'|trans }}" class="float-end text-secondary">
-                                <i class="fas fa-plus"></i></a>
-                        </small>
-                    {% endif %}
-                </h4>
-            </div>
+        <div class="d-flex align-items-center mb-2">
+            <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0 me-auto">{{ 'reservation.correspondences.reservation'|trans }}</h2>
+            {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
+                <a href="#" class="btn btn-sm btn-outline-primary text-nowrap"
+                   data-action="click->reservations#selectReservationForTemplateAction"
+                   data-url="{{ path('correspondence.select.reservation') }}"
+                   data-reservation-id="{{ reservationId }}"
+                   data-create-new="true">
+                    <i class="fas fa-plus me-1"></i> {{ 'button.add'|trans }}
+                </a>
+            {% endif %}
         </div>
-        <table class="table">
-            <thead>
-            <tr>
-                <th></th>
-                <th class="d-none d-lg-table-cell">{{ 'templates.correspondence.created'|trans }}</th>
-                <th>{{ 'templates.correspondence.name'|trans }}</th>
-                <th></th>
-                <th>{{ 'base.action'|trans }}</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for correspondence in correspondences %}
-            <tr>
-                <td style="width:10.0pt"><i class="fas {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i></td>
-                <td class="d-none d-lg-table-cell">{{ correspondence.created|date('d.m.Y H:i') }}</td>
-                <td>
-                    {{ correspondence.name }}
-                    <div class="small text-body-secondary d-lg-none">{{ correspondence.created|date('d.m.Y H:i') }}</div>
-                </td>
-                <td style="width:10.0pt">{% if correspondence.children|length > 0 %}<i class="fas fa-paperclip"></i>{% endif %}</td>
-                <td>
-                    {% if 'PDF' in correspondence.template.templateType.name %}
-                    <a href="#"
-                       data-action="click->reservations#exportPDFCorrespondenceAction"
-                       data-url="{{ path('correspondence.export.pdf', {'id': correspondence.id}) }}"
-                       data-attachment-id="{{ correspondence.id }}"
-                       title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
-                    {% elseif 'EMAIL' in correspondence.template.templateType.name %}
-                    <a href="#"
-                       data-action="click->reservations#showMailCorrespondenceAction"
-                       data-url="{{ path('correspondence.show', {'id': correspondence.id}) }}"
-                       data-reservation-id="{{ reservationId }}"
-                       data-correspondence-id="{{ correspondence.id }}"
-                       title="{{ 'button.details'|trans }}"><i class="fas fa-eye"></i></a>
-                    {% endif %}
-                    {% if is_granted('ROLE_RESERVATIONS') %}
-                    <a href="#"
-                       data-action="click->reservations#deleteCorrespondenceAction"
-                       data-url="{{ path('correspondence.remove') }}"
-                       data-correspondence-id="{{ correspondence.id }}"
-                       data-reservation-id="{{ reservationId }}"
-                       title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>  
-                    {% endif %}                                  
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>                    
+        {% if correspondences is empty %}
+            <p class="text-body-secondary mb-0">{{ 'reservation.correspondences.empty'|trans }}</p>
+        {% else %}
+            <ul class="list-group">
+                {% for correspondence in correspondences %}
+                    <li class="list-group-item d-flex align-items-center gap-2">
+                        <i class="fas {{ correspondence.template.templateType.icon }} fa-fw text-body-secondary" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i>
+                        <div class="me-auto text-break">
+                            <div>
+                                {{ correspondence.name }}
+                                {% if correspondence.children|length > 0 %}<i class="fas fa-paperclip small text-body-secondary ms-1" title="{{ 'templates.attachment'|trans }}"></i>{% endif %}
+                            </div>
+                            <div class="small text-body-secondary">{{ correspondence.created|date('d.m.Y H:i') }}</div>
+                        </div>
+                        {% if 'PDF' in correspondence.template.templateType.name %}
+                            <a href="#" class="btn btn-sm btn-link text-body-secondary"
+                               data-action="click->reservations#exportPDFCorrespondenceAction"
+                               data-url="{{ path('correspondence.export.pdf', {'id': correspondence.id}) }}"
+                               data-attachment-id="{{ correspondence.id }}"
+                               title="{{ 'button.download'|trans }}" aria-label="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
+                        {% elseif 'EMAIL' in correspondence.template.templateType.name %}
+                            <a href="#" class="btn btn-sm btn-link text-body-secondary"
+                               data-action="click->reservations#showMailCorrespondenceAction"
+                               data-url="{{ path('correspondence.show', {'id': correspondence.id}) }}"
+                               data-reservation-id="{{ reservationId }}"
+                               data-correspondence-id="{{ correspondence.id }}"
+                               title="{{ 'button.details'|trans }}" aria-label="{{ 'button.details'|trans }}"><i class="fas fa-eye"></i></a>
+                        {% endif %}
+                        {% if is_granted('ROLE_RESERVATIONS') %}
+                            {# Confirmed in a popover; the reservations controller reloads this tab afterwards #}
+                            <a href="#" class="btn btn-sm btn-link text-danger"
+                               data-correspondence-delete
+                               data-popover="delete"
+                               data-bs-placement="left"
+                               data-title="{{ 'templates.correspondence.delete.ask'|trans }}"
+                               data-bs-content="{{ reservationMacros.delete_popover_form(path('correspondence.remove'), {'id': correspondence.id, '_csrf_token': token}, 'button.delete'|trans)|e('html_attr') }}"
+                               aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
         <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">
     </div>
     

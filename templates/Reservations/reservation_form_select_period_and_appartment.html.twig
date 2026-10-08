@@ -11,7 +11,7 @@
     {% if reservations|length > 0 %}
         {# Rooms picked so far (keyed by their position in the session); ids are used by the
            reservations controller to edit or drop them #}
-        <h2 class="reservation-section-title mb-2">{{ 'reservation.new.reservation.appartments.selected.heading'|trans }}</h2>
+        <h2 class="small text-uppercase fw-semibold text-body-secondary mb-2">{{ 'reservation.new.reservation.appartments.selected.heading'|trans }}</h2>
         <div id="selectedAppartments" class="list-group mb-4">
             {% for key, reservation in reservations %}
                 <div class="list-group-item" data-selected-room>
@@ -63,7 +63,7 @@
               data-select-customer-url="{{ path('reservations.select.customer') }}"
               data-preview-url="{{ path('reservations.create.preview') }}"
               data-action="submit->reservations#selectCustomerAction">
-            <h2 class="reservation-section-title mb-2">{{ 'reservation.new.reservation.appartments.addmore'|trans }}</h2>
+            <h2 class="small text-uppercase fw-semibold text-body-secondary mb-2">{{ 'reservation.new.reservation.appartments.addmore'|trans }}</h2>
             <div class="row g-3 align-items-end">
                 <div class="col-6 col-md">
                     <label for="from" class="form-label">{{ 'reservation.startdate'|trans }}</label>

@@ -222,3 +222,7 @@ reservation.edit.change_room: 'Change room'
 reservation.guests.remove: Remove
 reservation.guests.remove_ask: 'Remove the guest from this reservation?'
 reservation.new.create: 'Create reservation'
+reservation.selected.reservations: 'Selected reservations'
+reservation.filter.by_period: 'By period'
+reservation.filter.by_guest: 'By guest'
+reservation.correspondences.empty: 'No conversations yet.'

@@ -1,29 +1,29 @@
 {# The booker's personal data and addresses, as shown in the details tab and in the preview of a
-   new booking. Expects `booker` (may be null). #}
+   new booking. Expects `booker` (may be null); `addressColumns` sets the address grid's row-cols. #}
 {% if booker %}
     {% if booker.birthday or booker.nationality or booker.iDNumber or booker.remark %}
-        <dl class="reservation-facts">
+        <dl class="row mb-0">
             {% if booker.birthday %}
-                <dt>{{ 'customer.birthday'|trans }}</dt>
-                <dd>{{ booker.birthday|date('d.m.Y') }}</dd>
+                <dt class="col-5 col-sm-4 fw-normal text-body-secondary">{{ 'customer.birthday'|trans }}</dt>
+                <dd class="col-7 col-sm-8 mb-1 text-break">{{ booker.birthday|date('d.m.Y') }}</dd>
             {% endif %}
             {% if booker.nationality %}
-                <dt>{{ 'customer.nationality'|trans }}</dt>
-                <dd>{{ booker.nationality }}</dd>
+                <dt class="col-5 col-sm-4 fw-normal text-body-secondary">{{ 'customer.nationality'|trans }}</dt>
+                <dd class="col-7 col-sm-8 mb-1 text-break">{{ booker.nationality }}</dd>
             {% endif %}
             {% if booker.iDNumber %}
-                <dt>{{ 'customer.id.number'|trans }}</dt>
-                <dd>{{ booker.idType.value|trans }}: {{ booker.iDNumber }}</dd>
+                <dt class="col-5 col-sm-4 fw-normal text-body-secondary">{{ 'customer.id.number'|trans }}</dt>
+                <dd class="col-7 col-sm-8 mb-1 text-break">{{ booker.idType.value|trans }}: {{ booker.iDNumber }}</dd>
             {% endif %}
             {% if booker.remark %}
-                <dt>{{ 'customer.remark'|trans }}</dt>
-                <dd>{{ booker.remark|nl2br }}</dd>
+                <dt class="col-5 col-sm-4 fw-normal text-body-secondary">{{ 'customer.remark'|trans }}</dt>
+                <dd class="col-7 col-sm-8 mb-1 text-break">{{ booker.remark|nl2br }}</dd>
             {% endif %}
         </dl>
     {% endif %}
-    <div class="reservation-addresses">
+    <div class="row {{ addressColumns|default('row-cols-1') }} g-3 mt-0">
     {% for address in booker.customerAddresses %}
-        <div>
+        <div class="col">
             <div class="small text-body-secondary">
                 {{ address.type|trans|capitalize }}{% if address.company %} · {{ address.company }}{% endif %}
             </div>

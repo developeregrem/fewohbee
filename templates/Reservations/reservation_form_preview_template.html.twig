@@ -1,6 +1,6 @@
 <div data-controller="reservations" data-preview-template-url="{{ path('reservations.select.template.preview', {'id': '0'}) }}">
 <div class="modal-body">
-    <div class="ps-5 pe-5">
+    <div class="px-lg-5">
         <div class="row">
             <div class="col" id="flash-message-overlay">
             </div>
@@ -18,12 +18,14 @@
         </div>
     </div>
 </div>
-<div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pagination me-auto">
-        <li class="page-item ">
-            <a class="page-link" href="#"
-               data-action="click->reservations#selectTemplateForReservationsAction"
-               data-url="{{ path('reservations.select.template') }}">&larr; {{ 'button.back'|trans }}</a></li>
-    </ul>  
+{# The form's own buttons sit here, outside it, so they stay in reach in the footer #}
+<div class="modal-footer">
+    <a href="#" class="btn btn-link px-0 me-auto text-decoration-none"
+       data-action="click->reservations#selectTemplateForReservationsAction"
+       data-url="{{ path('reservations.select.template') }}">&larr; {{ 'button.back'|trans }}</a>
+    <button type="button" class="btn btn-secondary d-none d-lg-inline-block" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+    <button type="submit" form="template-form" class="btn btn-primary">
+        {{ (template.templateType.name == 'TEMPLATE_RESERVATION_EMAIL' ? 'templates.send' : 'button.save')|trans }}
+    </button>
 </div>
 </div>

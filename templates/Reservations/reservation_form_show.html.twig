@@ -1,7 +1,7 @@
 <div data-controller="reservations"
      data-reservations-select-invoice-url="{{ path('invoices.select.reservation') }}">
     <div class="modal-body">
-        <div class="container-fluid">
+        <div class="container-fluid px-0">
             <div id="flash-message-overlay">
                 <div class="col">
                     {% include 'feedback.html.twig' with {'error': error, 'app': app } %}

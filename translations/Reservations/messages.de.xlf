@@ -866,6 +866,22 @@
                 <source>reservation.summary.change_booking</source>
                 <target>Buchung ändern</target>
             </trans-unit>
+            <trans-unit id="reservation.selected.reservations">
+                <source>reservation.selected.reservations</source>
+                <target>Ausgewählte Reservierungen</target>
+            </trans-unit>
+            <trans-unit id="reservation.filter.by_period">
+                <source>reservation.filter.by_period</source>
+                <target>Nach Zeitraum</target>
+            </trans-unit>
+            <trans-unit id="reservation.filter.by_guest">
+                <source>reservation.filter.by_guest</source>
+                <target>Nach Gast</target>
+            </trans-unit>
+            <trans-unit id="reservation.correspondences.empty">
+                <source>reservation.correspondences.empty</source>
+                <target>Noch keine Konversationen.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

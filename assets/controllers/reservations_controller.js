@@ -191,6 +191,20 @@ export default class extends Controller {
         }
     }
 
+    /** Deleting a document of the conversations tab: once confirmed, reload the tab. */
+    enableCorrespondenceDeletePopovers() {
+        this.modalContent?.querySelectorAll('[data-correspondence-delete]').forEach((trigger) => {
+            enableDeletePopover({
+                root: trigger,
+                onSuccess: (_trigger, data) => {
+                    if (!this.showFeedback(data)) {
+                        this.getReservation(window.lastClickedReservationUrl, 'correspondence');
+                    }
+                },
+            });
+        });
+    }
+
     afterReservationDeleted(data) {
         let result = {};
         try { result = JSON.parse(data); } catch (_) { /* no message to show */ }
@@ -296,6 +310,7 @@ export default class extends Controller {
         this.initBlockRoomPicker();
         enableDeletePopover();
         this.enableReservationDeletePopover();
+        this.enableCorrespondenceDeletePopovers();
         this.enableCalendarEntryDeleteInModal();
         window.setTimeout(() => {
             this.isHandlingModalChange = false;
@@ -1036,16 +1051,6 @@ export default class extends Controller {
         const reservationId = event.currentTarget.dataset.reservationId;
         const correspondenceId = event.currentTarget.dataset.correspondenceId || reservationId;
         this.showMailCorrespondence(correspondenceId, reservationId, url);
-    }
-
-    deleteCorrespondenceAction(event) {
-        event.preventDefault();
-        const id = event.currentTarget.dataset.correspondenceId;
-        const url = event.currentTarget.dataset.url;
-        if (url && this.modalContent) {
-            this.modalContent.dataset.deleteCorrespondenceUrl = url;
-        }
-        this.deleteCorrespondence(id);
     }
 
     createNewCustomerAction(event) {
@@ -3221,42 +3226,6 @@ export default class extends Controller {
                 if (modalBody) {
                     modalBody.innerHTML = data;
                 }
-            }
-        });
-        return false;
-    }
-
-    doDeleteInvoice() {
-        const form = '#invoiceDeleteForm';
-        const formEl = document.querySelector(form);
-        const url = formEl?.dataset.url || formEl?.action || this.getContextValue('deleteInvoiceUrl');
-        if (!url) {
-            return false;
-        }
-        httpRequest({
-            url,
-            method: 'POST',
-            data: httpSerializeForm(formEl),
-            onSuccess: () => location.reload()
-        });
-        return false;
-    }
-
-    deleteCorrespondence(id) {
-        const url = this.getContextValue('deleteCorrespondenceUrl');
-        if (!url) {
-            return false;
-        }
-        httpRequest({
-            url,
-            method: 'POST',
-            data: { id, _csrf_token: $('#_csrf_token').val() },
-            target: this.modalContent,
-            onSuccess: (data) => {
-                if (this.showFeedback(data)) {
-                    return;
-                }
-                this.getReservation(window.lastClickedReservationUrl, 'correspondence');
             }
         });
         return false;

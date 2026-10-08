@@ -1,46 +1,27 @@
-<table class="table">
-    <thead>
-        <tr>
-            <th>{{ 'invoice.appartment.position.number'|trans }}</th>
-            <th>{{ 'invoice.appartment.position.description'|trans }}</th>
-            <th>{{ 'invoice.appartment.position.beds'|trans }}</th>
-            <th>{{ 'invoice.appartment.position.persons'|trans }}</th>
-            <th>{{ 'invoice.appartment.position.startdate'|trans }}</th>
-            <th>{{ 'invoice.appartment.position.enddate'|trans }}</th>
-            <th class="text-end">{{ 'invoice.vat'|trans }}</th>
-            <th class="text-end">{{ 'invoice.appartment.position.price'|trans }}</th>
+{% import 'Invoices/_position_macros.html.twig' as positionMacros %}
+<ul class="list-group">
+    {% for key, position in positionsAppartment %}
+        <li class="list-group-item d-flex align-items-center gap-2">
+            <div class="me-auto text-break">
+                <div class="fw-semibold">{{ position.number }} · {{ position.description }}</div>
+                <div class="small text-body-secondary">
+                    {{ position.startdate|date('d.m.Y') }} – {{ position.enddate|date('d.m.Y') }}
+                    · {{ 'reservation.summary.persons'|trans({'%count%': position.persons}) }}
+                    · {{ position.beds }} {{ 'invoice.appartment.position.beds'|trans }}
+                    · {{ 'invoice.vat'|trans }} {{ positionMacros.vat(position.vat) }} %
+                </div>
+            </div>
+            <div class="text-end text-nowrap">{{ position.price|number_format(2, ',', '.') }}</div>
             {% if mode is defined and mode == 'edit' %}
-            <th>{{ 'invoice.action'|trans }}</th>
+                <button type="button" class="btn btn-sm btn-link text-body-secondary"
+                        data-action="click->invoices#openModalAction"
+                        data-url="{{ path('invoices.edit.apartment.position', {'invoiceId': 'new', 'id': key}) }}"
+                        title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}"><i class="fas fa-edit"></i></button>
+                <button type="button" class="btn btn-sm btn-link text-danger"
+                        data-action="click->invoices#removeApartmentPositionAction"
+                        data-url="{{ path('invoices.delete.appartment.invoice.position') }}" data-index="{{ key }}"
+                        title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></button>
             {% endif %}
-        </tr>
-    </thead>
-    <tbody>
-        {% for key,position in positionsAppartment %}
-            <tr>
-                <td>{{ position.number }}</td>
-                <td>{{ position.description }}</td>
-                <td>{{ position.beds }}</td>
-                <td>{{ position.persons }}</td>
-                <td>{{ position.startdate|date("d.m.Y") }}</td>
-                <td>{{ position.enddate|date("d.m.Y") }}</td>
-                <td class="text-end">
-                    {% if is_decimal_place_0(position.vat) %}
-                        {{ position.vat|number_format(0, ',', '.') }}
-                    {% else %}
-                        {{ position.vat|number_format(2, ',', '.') }}
-                    {% endif %}
-                </td>
-                <td class="text-end">{{ position.price|number_format(2, ',', '.') }}</td>
-                {% if mode is defined and mode == 'edit' %}
-                <td>
-                    <a href="#" title="{{ 'button.edit'|trans }}">
-                        <i data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.apartment.position', {'invoiceId': 'new', 'id': key}) }}" class="fas fa-edit"></i></a>
-                    <a href="#" title="{{ 'button.delete'|trans }}">
-                        <i data-action="click->invoices#removeApartmentPositionAction" data-url="{{ path('invoices.delete.appartment.invoice.position') }}" data-index="{{ key }}" class="fas fa-trash-alt"></i></a>
-                </td>
-                {% endif %}
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
-    
+        </li>
+    {% endfor %}
+</ul>

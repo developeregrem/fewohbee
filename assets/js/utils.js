@@ -245,9 +245,8 @@ function _enableDeletePopoverNow({ onSuccess, root }) {
 }
 
 /**
- * Phones and small tablets: below Bootstrap's lg breakpoint, where dialogs with
- * .modal-fullscreen-lg-down cover the screen. Must match the media queries in app.css.
- * The layout follows the width; gestures follow the pointer (see isCompactTouchViewport).
+ * Phones and small tablets: below Bootstrap's lg breakpoint, where content switches to its narrow
+ * layout. The layout follows the width; gestures follow the pointer (see isCompactTouchViewport).
  */
 export const COMPACT_VIEWPORT_QUERY = '(max-width: 991.98px)';
 
