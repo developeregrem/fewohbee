@@ -1119,6 +1119,8 @@ export default class extends Controller {
      */
     disposeTablePopovers() {
         this.weekPopoverBar = null;
+        clearTimeout(this.hoverPopoverTimer);
+        this.hoverPopoverBar = null;
         this.tablePopoverTriggers().forEach((trigger) => {
             const tipId = trigger.getAttribute('aria-describedby');
             const tip = tipId ? document.getElementById(tipId) : null;
@@ -1308,9 +1310,10 @@ export default class extends Controller {
             this.initWeekControls(signal);
             return;
         }
-        // Touch week view: a tap anywhere but on the bar closes its popover
+        // Touch week view: a tap anywhere but on the bar or its popover closes it
         document.addEventListener('click', (event) => {
-            if (this.weekPopoverBar && !this.weekPopoverBar.contains(event.target)) {
+            // Inside the popover itself a tap may be on a phone link
+            if (this.weekPopoverBar && !this.weekPopoverBar.contains(event.target) && !event.target.closest('.popover')) {
                 this.hideWeekPopover();
             }
         }, { signal });
@@ -2043,7 +2046,14 @@ export default class extends Controller {
         if (!window.jQuery) {
             return;
         }
-        $('.reservation-inner').popover({ placement: 'top', html: true, trigger: 'hover' });
+        if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+            // With a mouse the popover stays while the pointer moves onto it,
+            // so its phone and e-mail links can be clicked
+            $('.reservation-inner').popover({ placement: 'top', html: true, trigger: 'manual' });
+            this.initHoverPopovers(this.tableContainer?.querySelectorAll('.reservation-inner') ?? []);
+        } else {
+            $('.reservation-inner').popover({ placement: 'top', html: true, trigger: 'hover' });
+        }
         $('.room-info').popover({ html: true });
         $('.holiday-info').popover();
         $('.calendar-info').popover();
@@ -2051,6 +2061,52 @@ export default class extends Controller {
 
         this.initClickPopoverDismissal();
         this.initCalendarEntryModal();
+    }
+
+    /**
+     * Mouse: shows a bar's popover on hover and keeps it open while the
+     * pointer is on the bar or on the popover itself; it closes shortly after
+     * the pointer has left both.
+     */
+    initHoverPopovers(bars) {
+        const scheduleHide = () => {
+            clearTimeout(this.hoverPopoverTimer);
+            this.hoverPopoverTimer = setTimeout(() => {
+                if (this.hoverPopoverBar) {
+                    window.bootstrap?.Popover?.getInstance(this.hoverPopoverBar)?.hide();
+                }
+                this.hoverPopoverBar = null;
+            }, 200);
+        };
+        bars.forEach((bar) => {
+            bar.addEventListener('mouseenter', () => {
+                clearTimeout(this.hoverPopoverTimer);
+                if (this.hoverPopoverBar === bar) {
+                    return;
+                }
+                if (this.hoverPopoverBar) {
+                    window.bootstrap?.Popover?.getInstance(this.hoverPopoverBar)?.hide();
+                }
+                this.hoverPopoverBar = bar;
+                window.bootstrap?.Popover?.getInstance(bar)?.show();
+            });
+            bar.addEventListener('mouseleave', scheduleHide);
+            // Hidden from elsewhere too (dialog opens, drag starts): the next
+            // hover over this bar must show it again
+            bar.addEventListener('hidden.bs.popover', () => {
+                if (this.hoverPopoverBar === bar) {
+                    this.hoverPopoverBar = null;
+                }
+            });
+            bar.addEventListener('shown.bs.popover', () => {
+                const tip = document.getElementById(bar.getAttribute('aria-describedby') || '');
+                if (tip && !tip.dataset.hoverBound) {
+                    tip.dataset.hoverBound = 'true';
+                    tip.addEventListener('mouseenter', () => clearTimeout(this.hoverPopoverTimer));
+                    tip.addEventListener('mouseleave', scheduleHide);
+                }
+            });
+        });
     }
 
     // Calendar-entry edit/create links live inside a Bootstrap popover's

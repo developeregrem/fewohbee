@@ -31,3 +31,14 @@
         {% endfor %}
     </form>
 {%- endmacro %}
+
+{# Phone numbers and e-mail addresses as tel: and mailto: links, escaped for concatenation
+   into popBody. Single quotes, because the month table puts popBody into a double-quoted
+   attribute unescaped. #}
+{% macro tel_link(number) -%}
+    <a href='tel:{{ number|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) }}'>{{ number }}</a>
+{%- endmacro %}
+
+{% macro mail_link(address) -%}
+    <a href='mailto:{{ address }}'>{{ address }}</a>
+{%- endmacro %}

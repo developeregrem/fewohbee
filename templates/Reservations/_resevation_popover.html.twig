@@ -13,6 +13,7 @@
     {% endif %}
 {% endblock %}
 {% block popBody %}
+    {% import 'Reservations/_macros.html.twig' as popoverMacros %}
     {% if reservation is defined and reservation is not null %}
         {# Escape user-controlled values before concatenation. The completed
            block is escaped again for the data attribute; the browser decodes
@@ -26,15 +27,15 @@
                     {% set businessCompany = address.company|e %}
                 {% endif %}
                 {% if address.phone|length > 0 %}
-                    {% set phones = phones ~ address.phone|e %}
+                    {% set phones = phones ~ popoverMacros.tel_link(address.phone) %}
                     {% if not loop.last %}{% set phones = phones ~ ", " %}{% endif %}
                 {% endif %}
                 {% if address.mobilePhone|length > 0 %}
-                    {% set mobiles = mobiles ~ address.mobilePhone|e %}
+                    {% set mobiles = mobiles ~ popoverMacros.tel_link(address.mobilePhone) %}
                     {% if not loop.last %}{% set mobiles = mobiles ~ ", " %}{% endif %}
                 {% endif %}
                 {% if address.email|length > 0 %}
-                    {% set mails = mails ~ address.email|e %}
+                    {% set mails = mails ~ popoverMacros.mail_link(address.email) %}
                     {% if not loop.last %}{% set mails = mails ~ ", " %}{% endif %}
                 {% endif %}                           
             {% endfor %}
