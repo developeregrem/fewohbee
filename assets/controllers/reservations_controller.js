@@ -1231,8 +1231,10 @@ export default class extends Controller {
      * rooms sharing the screen height. It comes in two forms:
      *
      * - On touch screens (no fine pointer) it shows one week.
-     * - With a mouse it shows as many whole weeks as fit the width, and the
-     *   choice is remembered.
+     * - With a mouse it shows as many whole weeks as fit the width.
+     *
+     * Each device remembers whether the week view was open and opens it
+     * again on the next visit.
      *
      * Both open only from the week icon next to the table and annual view
      * icons and hide navbar and filter row. With a mouse the edge arrows and
@@ -1277,6 +1279,10 @@ export default class extends Controller {
             sessionStorage.removeItem('reservations-open-week');
         } catch (e) {
             // No storage, nothing was handed over
+        }
+        // Touch: the week view was still open when the page was last left
+        if (!openWeek && !this.isDesktopWeekMode()) {
+            openWeek = getLocalStorageItem('reservations-swipe-view') === 'true';
         }
         if (openWeek) {
             if (this.isDesktopWeekMode()) {
@@ -1471,6 +1477,7 @@ export default class extends Controller {
         // The server keeps the last day count in the session, so leaving the
         // page from the touch week view would bring the normal view back with 7 days
         setLocalStorageItemIfNotExists('reservations-interval-before-week', this.intervalBeforeWeek, true);
+        setLocalStorageItemIfNotExists('reservations-swipe-view', 'true', true);
         this.setWeekFocus(true);
         this.snapToWeek(1);
         document.getElementById('start').dispatchEvent(new Event('change', { bubbles: true }));
@@ -1484,6 +1491,7 @@ export default class extends Controller {
         this.hideWeekPopover();
         this.setWeekFocus(false);
         localStorage.removeItem('reservations-interval-before-week');
+        localStorage.removeItem('reservations-swipe-view');
         this.tableFilter.querySelector('input[name="interval"]').value = this.intervalBeforeWeek;
         document.getElementById('start').dispatchEvent(new Event('change', { bubbles: true }));
     }
@@ -1534,6 +1542,7 @@ export default class extends Controller {
     leaveWeekViewFromYearlyAction() {
         try {
             localStorage.removeItem('reservations-week-fit');
+            localStorage.removeItem('reservations-swipe-view');
         } catch (e) {
             // Without storage there is no remembered week view either
         }
