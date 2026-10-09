@@ -2416,9 +2416,70 @@ export default class extends Controller {
             }
         };
 
-        // --- Touch: two-tap mode (tap start, tap end) – single row only ---
+        // --- Touch: two-tap mode (tap start, tap end) – single row only,
+        // or long press and drag across rows ---
         if (!isFinePointer) {
+            // Long press and drag, the touch counterpart of click-and-drag. A
+            // finger that moves before the press is long enough scrolls as usual.
+            let pressTimer = null;
+            let pressStart = null;
+            let suppressClickUntil = 0;
+            const cancelPress = () => {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            };
+            container.addEventListener('touchstart', (e) => {
+                cancelPress();
+                if (e.touches.length !== 1) return;
+                const touch = e.touches[0];
+                const cell = getCellFromPoint(touch.clientX, touch.clientY);
+                if (!cell || isBlocked(cell)) return;
+                pressStart = { x: touch.clientX, y: touch.clientY };
+                pressTimer = setTimeout(() => {
+                    pressTimer = null;
+                    resetSelection();
+                    buildCellList(cell);
+                    dragging = true;
+                    startCell = cell;
+                    endCell = cell;
+                    cell.classList.add('ui-selecting');
+                    if (table) {
+                        table.classList.remove('table-hover');
+                    }
+                    navigator.vibrate?.(15);
+                }, 450);
+            }, { passive: true });
+            container.addEventListener('touchmove', (e) => {
+                const touch = e.touches[0];
+                if (pressTimer && pressStart && touch
+                    && Math.hypot(touch.clientX - pressStart.x, touch.clientY - pressStart.y) > 10) {
+                    cancelPress();
+                }
+                if (!dragging || !touch) return;
+                // Selecting, not scrolling
+                e.preventDefault();
+                const cell = getCellFromPoint(touch.clientX, touch.clientY);
+                if (!cell || !cell.matches(cellSelector)) return;
+                endCell = cell;
+                highlightRange(startCell, endCell);
+            }, { passive: false });
+            container.addEventListener('touchend', () => {
+                cancelPress();
+                if (!dragging) return;
+                // Some browsers still send a click after the long press; it
+                // must not start a two-tap selection
+                suppressClickUntil = Date.now() + 600;
+                finishSelection();
+            });
+            container.addEventListener('touchcancel', () => {
+                cancelPress();
+                if (dragging) {
+                    resetSelection();
+                }
+            });
+
             container.addEventListener('click', (e) => {
+                if (Date.now() < suppressClickUntil) return;
                 const cell = getCellFromPoint(e.clientX, e.clientY);
                 if (!cell || isBlocked(cell)) return;
 
