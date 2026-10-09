@@ -60,6 +60,57 @@
     --bs-navbar-toggler-border-color: rgba(var(--bs-body-color-rgb), 0.2);
 }
 
+/*
+ * Main navigation below xl: the links slide in from the side (offcanvas, base.html.twig)
+ * on the page's own colours instead of the blue bar; notifications and the user menu stay
+ * in the bar (.navbar-quick), so their dropdowns float instead of opening inline.
+ */
+.main-nav-offcanvas {
+    --bs-offcanvas-width: min(20rem, 85vw);
+}
+
+@media (max-width: 1199.98px) {
+    .navbar .main-nav-offcanvas {
+        --bs-navbar-color: var(--bs-body-color);
+        --bs-navbar-hover-color: var(--bs-primary);
+        --bs-navbar-active-color: var(--bs-primary);
+        color: var(--bs-body-color);
+    }
+
+    .navbar .main-nav-offcanvas .nav-item.active > .nav-link {
+        color: var(--bs-primary);
+        font-weight: 500;
+    }
+
+    .navbar .main-nav-offcanvas .dropdown-menu {
+        border: 0;
+        box-shadow: none;
+        padding-top: 0;
+        padding-left: 1.75rem;
+    }
+
+    /* Brand, quick bar and menu button share one line; a long page title gives way */
+    .navbar:has(.main-nav-offcanvas) > .container-fluid {
+        flex-wrap: nowrap;
+    }
+
+    .navbar:has(.main-nav-offcanvas) .navbar-brand {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .navbar-quick .nav-item {
+        position: relative;
+    }
+
+    .navbar-quick .dropdown-menu {
+        position: absolute;
+        right: 0;
+        left: auto;
+    }
+}
+
 [data-bs-theme="dark"] .btn-secondary {
     --bs-btn-color: #fff;
     --bs-btn-bg: var(--bs-secondary-bg);
