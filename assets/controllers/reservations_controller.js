@@ -1388,16 +1388,19 @@ export default class extends Controller {
 
     /**
      * Touch, normal view: swiping up hides the navbar, a second swipe the
-     * filter row, so the rooms get the whole screen; swiping down brings them
-     * back in reverse order.
+     * filter row, so the rooms get the whole screen, and a third opens the
+     * week view; swiping down brings navbar and filter row back in reverse order.
      */
     stepNormalViewChrome(hide) {
         const body = document.body.classList;
         if (hide) {
             if (!body.contains('reservations-hide-nav')) {
                 body.add('reservations-hide-nav');
-            } else {
+            } else if (!body.contains('reservations-hide-filter')) {
                 body.add('reservations-hide-filter');
+            } else {
+                this.openSwipeView();
+                return;
             }
         } else if (body.contains('reservations-hide-filter')) {
             body.remove('reservations-hide-filter');
@@ -1538,6 +1541,8 @@ export default class extends Controller {
             return;
         }
         this.hideTapPopover();
+        // Back to the normal view as a whole, with navbar and filter row
+        document.body.classList.remove('reservations-hide-nav', 'reservations-hide-filter');
         this.setWeekFocus(false);
         localStorage.removeItem('reservations-interval-before-week');
         localStorage.removeItem('reservations-swipe-view');
