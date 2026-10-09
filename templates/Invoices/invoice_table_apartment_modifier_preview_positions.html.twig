@@ -1,12 +1,13 @@
+{% import 'Invoices/_preview_position_macros.html.twig' as positionMacros %}
 {% set modifierPositions = positionsMiscellaneous|filter(p => p.positionGroup == 'apartment_modifier') %}
 {% if modifierPositions|length > 0 %}
     <table class="table table-hover">
         <thead>
             <tr>
                 <th>{{ 'invoice.apartment_modifier.heading'|trans }}</th>
-                <th class="text-end">{{ 'invoice.position.amount'|trans }}</th>
-                <th class="text-end">{{ 'invoice.price.single'|trans }}</th>
-                <th class="text-end">{{ 'invoice.vat'|trans }}</th>
+                <th class="text-end d-none d-lg-table-cell">{{ 'invoice.position.amount'|trans }}</th>
+                <th class="text-end d-none d-lg-table-cell">{{ 'invoice.price.single'|trans }}</th>
+                <th class="text-end d-none d-lg-table-cell">{{ 'invoice.vat'|trans }}</th>
                 <th class="text-end">{{ 'invoice.price.total'|trans }}</th>
             </tr>
         </thead>
@@ -14,10 +15,10 @@
             {% set modifierTotal = 0 %}
             {% for position in modifierPositions %}
                 <tr>
-                    <td>{{ position.description }}</td>
-                    <td class="text-end">{{ position.amount }}</td>
-                    <td class="text-end">{{ position.price|number_format(2, ',', '.') }}</td>
-                    <td class="text-end">
+                    <td>{{ position.description }}{{ positionMacros.folded_numbers(position) }}</td>
+                    <td class="text-end d-none d-lg-table-cell">{{ position.amount }}</td>
+                    <td class="text-end d-none d-lg-table-cell">{{ position.price|number_format(2, ',', '.') }}</td>
+                    <td class="text-end d-none d-lg-table-cell">
                         {% if is_decimal_place_0(position.vat) %}{{ position.vat|number_format(0, ',', '.') }}{% else %}{{ position.vat|number_format(2, ',', '.') }}{% endif %}
                     </td>
                     <td class="text-end">{{ position.totalPrice }}</td>

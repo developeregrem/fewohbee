@@ -15,7 +15,7 @@
 		<div class="tab-content p-4" id="nav-tabContent">
 			<div class="tab-pane fade{{ einvoiceTabActive ? '' : ' show active' }}" id="nav-template" role="tabpanel" aria-labelledby="nav-template-tab" tabindex="0">
 				<div class="row">
-					<label for="object" class="col-sm-4 col-form-label text-end">{{ 'invoice.template'|trans }}</label>
+					<label for="object" class="col-sm-4 col-form-label text-sm-end">{{ 'invoice.template'|trans }}</label>
 					<div class="col-sm">
 						<select id="template" name="template" class="form-select" data-action="change->invoices#persistTemplateSelectionAction">
 							{# Templates bound to a payment means are picked automatically, not here; embedded ones never. #}

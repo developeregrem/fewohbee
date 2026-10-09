@@ -1,0 +1,208 @@
+{% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
+
+{% block title %}
+    {{ parent() }} - {{ 'accounting.receipt_proposal.title'|trans }}
+{% endblock %}
+
+{% block flashMessage %}
+    {% include 'BookingJournal/_flash_messages.html.twig' %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-2">
+        <div class="col">
+            <ul class="pagination me-auto">
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('journal.receipts.index') }}">&larr; {{ 'button.back'|trans }}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <h4 class="mb-3">{{ 'accounting.receipt_proposal.review_title'|trans({'%supplier%': proposal.supplier}) }}</h4>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error|trans }}</div>
+    {% endif %}
+
+    {# ── What the assistant read ── #}
+    <div class="card mb-3">
+        <div class="card-header">
+            <h6 class="mb-0">{{ 'accounting.receipt_proposal.as_read'|trans }}</h6>
+        </div>
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">{{ 'accounting.receipt_proposal.supplier'|trans }}</dt>
+                <dd class="col-sm-9">{{ proposal.supplier }}</dd>
+                <dt class="col-sm-3">{{ 'accounting.journal.entry.date'|trans }}</dt>
+                <dd class="col-sm-9">{{ proposal.receiptDate|date('d.m.Y') }}</dd>
+                <dt class="col-sm-3">{{ 'accounting.receipt_proposal.receipt_number'|trans }}</dt>
+                <dd class="col-sm-9">{{ proposal.receiptNumber ?: '—' }}</dd>
+                <dt class="col-sm-3">{{ 'accounting.receipt_proposal.total'|trans }}</dt>
+                <dd class="col-sm-9">{{ proposal.total|number_format(2, ',', '.') }}</dd>
+                <dt class="col-sm-3">{{ 'accounting.receipt_proposal.payment'|trans }}</dt>
+                <dd class="col-sm-9">{{ ('accounting.receipt_proposal.payment_' ~ proposal.payment)|trans }}</dd>
+            </dl>
+            {% if proposal.note %}
+                <div class="alert alert-info small mt-3 mb-0">
+                    <strong>{{ 'accounting.receipt_proposal.note'|trans }}:</strong>
+                    <span style="white-space: pre-line">{{ proposal.note }}</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if bookedAlready is not empty %}
+        <div class="alert alert-warning">
+            <h6 class="alert-heading"><i class="fas fa-triangle-exclamation"></i> {{ 'accounting.receipt_proposal.booked_already.title'|trans }}</h6>
+            <p class="small mb-2">{{ 'accounting.receipt_proposal.booked_already.text'|trans }}</p>
+            <table class="table table-sm small mb-2">
+                <thead>
+                    <tr>
+                        <th>{{ 'accounting.journal.entry.date'|trans }}</th>
+                        <th class="text-end">{{ 'accounting.journal.entry.amount'|trans }}</th>
+                        <th>{{ 'accounting.journal.entry.debit'|trans }}</th>
+                        <th>{{ 'accounting.journal.entry.credit'|trans }}</th>
+                        <th>{{ 'accounting.journal.entry.tax_rate'|trans }}</th>
+                        <th>{{ 'accounting.journal.entry.remark'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for entry in bookedAlready %}
+                    <tr>
+                        <td>{{ entry.date|date('d.m.Y') }}</td>
+                        <td class="text-end">{{ entry.amount|number_format(2, ',', '.') }}</td>
+                        <td>{{ entry.debitAccount ? entry.debitAccount.label }}</td>
+                        <td>{{ entry.creditAccount ? entry.creditAccount.label }}</td>
+                        <td>{{ entry.taxRate ? entry.taxRate.label }}</td>
+                        <td>{{ entry.remark }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p class="small mb-0">{{ 'accounting.receipt_proposal.booked_already.hint'|trans }}</p>
+        </div>
+    {% endif %}
+
+    <form method="post" action="{{ path('journal.receipts.book', {'id': proposal.id}) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token(tokenId) }}">
+
+        {# ── Which payment it belongs to ── #}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">{{ 'accounting.receipt_proposal.payment_choice'|trans }}</h6>
+                <p class="text-muted small mb-0">{{ 'accounting.receipt_proposal.payment_choice_help'|trans }}</p>
+            </div>
+            <div class="card-body">
+                {% for entry in candidates %}
+                    {% set value = 'entry:' ~ entry.id %}
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="payment" id="payment-{{ entry.id }}" value="{{ value }}" {{ values.payment == value ? 'checked' }}>
+                        <label class="form-check-label" for="payment-{{ entry.id }}">
+                            {{ 'accounting.receipt_proposal.split_entry'|trans({
+                                '%date%': entry.date|date('d.m.Y'),
+                                '%amount%': entry.amount|number_format(2, ',', '.'),
+                                '%debit%': entry.debitAccount ? entry.debitAccount.label : '—',
+                                '%credit%': entry.creditAccount ? entry.creditAccount.label : '—',
+                            }) }}
+                            {% if entry.remark %}<span class="text-muted small">– {{ entry.remark }}</span>{% endif %}
+                        </label>
+                    </div>
+                {% else %}
+                    <p class="small text-muted">{{ 'accounting.receipt_proposal.no_candidates'|trans }}</p>
+                {% endfor %}
+                {% for account in paymentAccounts %}
+                    {% set value = 'new:' ~ account.accountNumber %}
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="payment" id="payment-new-{{ account.id }}" value="{{ value }}" {{ values.payment == value ? 'checked' }}>
+                        <label class="form-check-label" for="payment-new-{{ account.id }}">
+                            {{ 'accounting.receipt_proposal.book_new'|trans({'%account%': account.label, '%date%': proposal.receiptDate|date('d.m.Y')}) }}
+                        </label>
+                    </div>
+                {% endfor %}
+                {% if candidates is not empty %}
+                    <p class="small text-muted mb-0">{{ 'accounting.receipt_proposal.book_new_hint'|trans }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ── The parts ── #}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">{{ 'accounting.receipt_proposal.parts'|trans }}</h6>
+                <p class="text-muted small mb-0">{{ 'accounting.receipt_proposal.parts_help'|trans({'%total%': proposal.total|number_format(2, ',', '.')}) }}</p>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{{ 'accounting.receipt_proposal.part_text'|trans }}</th>
+                            <th>{{ 'accounting.receipt_proposal.account'|trans }}</th>
+                            <th style="width:9rem">{{ 'accounting.journal.entry.amount'|trans }}</th>
+                            <th style="width:11rem">{{ 'accounting.journal.entry.tax_rate'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% set rows = values.lines|length + extraLines %}
+                    {% for i in 0..(rows - 1) %}
+                        {% set line = values.lines[i] ?? {'accountNumber': '', 'amount': '', 'taxRate': ''} %}
+                        {% set read = proposal.lines[i] ?? null %}
+                        <tr>
+                            <td class="small">{{ read and read.text ? read.text : '' }}</td>
+                            <td>
+                                <select class="form-select form-select-sm" name="lines[{{ i }}][accountNumber]" aria-label="{{ 'accounting.receipt_proposal.account'|trans }}">
+                                    <option value="">–</option>
+                                    {% for account in partAccounts %}
+                                        <option value="{{ account.accountNumber }}" {{ line.accountNumber == account.accountNumber ? 'selected' }}>{{ account.label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" inputmode="decimal" class="form-control form-control-sm text-end" name="lines[{{ i }}][amount]" value="{{ line.amount }}" aria-label="{{ 'accounting.journal.entry.amount'|trans }}">
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm" name="lines[{{ i }}][taxRate]" aria-label="{{ 'accounting.journal.entry.tax_rate'|trans }}">
+                                    <option value="">{{ 'accounting.receipt_proposal.no_tax_rate'|trans }}</option>
+                                    {% for rate in taxRates %}
+                                        <option value="{{ rate.rate }}" {{ line.taxRate == rate.rate ? 'selected' }}>{{ rate.label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {# ── Text and reference ── #}
+        <div class="card mb-3">
+            <div class="card-body row g-3">
+                <div class="col-md-8">
+                    <label class="form-label" for="remark">{{ 'accounting.journal.entry.remark'|trans }}</label>
+                    <input type="text" class="form-control" id="remark" name="remark" maxlength="255" value="{{ values.remark }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="invoiceNumber">{{ 'accounting.journal.entry.invoice'|trans }}</label>
+                    <input type="text" class="form-control" id="invoiceNumber" name="invoiceNumber" maxlength="50" value="{{ values.invoiceNumber }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mb-4">
+            {% set id = proposal.id %}
+            {% set targetUrl = path('journal.receipts.discard', {'id': proposal.id}) %}
+            <button type="button" class="btn btn-outline-danger"
+                    data-popover="delete"
+                    data-bs-content='{{ block('deletePopoverContent') }}'>
+                <i class="fas fa-trash"></i> {{ 'accounting.receipt_proposal.discard'|trans }}
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-check"></i> {{ 'accounting.receipt_proposal.book'|trans }}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

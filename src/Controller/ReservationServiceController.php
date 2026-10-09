@@ -1329,21 +1329,23 @@ class ReservationServiceController extends AbstractController
     /**
      * @return string
      */
-    #[Route('/reservation/delete', name: 'reservations.dodelete.reservation', methods: ['POST'])]
+    /**
+     * Deletes a reservation from the details dialog's delete popover. The outcome is returned as a
+     * message for the overview to show above the reloaded table, instead of a flash for a page reload.
+     */
+    #[Route('/reservation/delete', name: 'reservations.dodelete.reservation', methods: ['DELETE'])]
     #[IsGranted('ROLE_RESERVATIONS')]
-    public function deleteReservationAction(CSRFProtectionService $csrf, ReservationService $rs, Request $request)
+    public function deleteReservationAction(CSRFProtectionService $csrf, ReservationService $rs, TranslatorInterface $translator, Request $request): JsonResponse
     {
-        if ($csrf->validateCSRFToken($request, true)) {
-            $delete = $rs->deleteReservation($request->request->get('id'));
-
-            if ($delete) {
-                $this->addFlash('success', 'reservation.flash.delete.success');
-            } else {
-                $this->addFlash('warning', 'reservation.flash.delete.not.possible');
-            }
+        if (!$csrf->validateCSRFToken($request, true)) {
+            return new JsonResponse(['type' => 'danger', 'message' => $translator->trans('flash.invalidtoken')]);
         }
 
-        return new Response('ok');
+        if ($rs->deleteReservation($request->request->get('id'))) {
+            return new JsonResponse(['type' => 'success', 'message' => $translator->trans('reservation.flash.delete.success')]);
+        }
+
+        return new JsonResponse(['type' => 'warning', 'message' => $translator->trans('reservation.flash.delete.not.possible')]);
     }
 
     /**
@@ -1351,7 +1353,7 @@ class ReservationServiceController extends AbstractController
      *
      * @return Response
      */
-    #[Route('/edit/delete/customer', name: 'reservations.edit.delete.customer', methods: ['POST'])]
+    #[Route('/edit/delete/customer', name: 'reservations.edit.delete.customer', methods: ['DELETE'])]
     #[IsGranted('ROLE_RESERVATIONS')]
     public function deleteReservationCustomerAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {

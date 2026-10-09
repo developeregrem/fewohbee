@@ -62,6 +62,11 @@ export default class extends Controller {
         this.setupCalendarEntryDeleteListener();
         this.applyStoredTableSettings();
         this.observeModalContent();
+        this.modalElement = document.getElementById('modalCenter');
+        this.boundPauseTablePopovers = () => this.setTablePopoversEnabled(false);
+        this.boundResumeTablePopovers = () => this.setTablePopoversEnabled(true);
+        this.modalElement?.addEventListener('show.bs.modal', this.boundPauseTablePopovers);
+        this.modalElement?.addEventListener('hidden.bs.modal', this.boundResumeTablePopovers);
         this.boundResize = this.handleResize.bind(this);
         window.addEventListener('load', this.boundResize);
         window.addEventListener('resize', this.boundResize);
@@ -75,6 +80,11 @@ export default class extends Controller {
             window.removeEventListener('load', this.boundResize);
             window.removeEventListener('resize', this.boundResize);
             window.removeEventListener('orientationchange', this.boundResize);
+        }
+
+        if (this.boundPauseTablePopovers) {
+            this.modalElement?.removeEventListener('show.bs.modal', this.boundPauseTablePopovers);
+            this.modalElement?.removeEventListener('hidden.bs.modal', this.boundResumeTablePopovers);
         }
 
         if (this.simpleEditor) {
@@ -171,6 +181,38 @@ export default class extends Controller {
         });
     }
 
+    /** The details dialog's delete button: once confirmed, close the dialog and refresh the table in place. */
+    enableReservationDeletePopover() {
+        const trigger = this.modalContent?.querySelector('[data-reservation-delete]');
+        if (trigger) {
+            enableDeletePopover({ root: trigger, onSuccess: (_trigger, data) => this.afterReservationDeleted(data) });
+        }
+    }
+
+    /** Deleting a document of the conversations tab: once confirmed, reload the tab. */
+    enableCorrespondenceDeletePopovers() {
+        this.modalContent?.querySelectorAll('[data-correspondence-delete]').forEach((trigger) => {
+            enableDeletePopover({
+                root: trigger,
+                onSuccess: (_trigger, data) => {
+                    if (!this.showFeedback(data)) {
+                        this.getReservation(window.lastClickedReservationUrl, 'correspondence');
+                    }
+                },
+            });
+        });
+    }
+
+    afterReservationDeleted(data) {
+        let result = {};
+        try { result = JSON.parse(data); } catch (_) { /* no message to show */ }
+        $('#modalCenter').modal('hide');
+        if (result.message) {
+            this.showTableAlert(result.message, result.type || 'info');
+        }
+        this.getNewTable();
+    }
+
     /**
      * Re-arms the calendar-entry delete popover inside the modal with a
      * handler that closes the modal and reloads just the table - the plain
@@ -264,6 +306,8 @@ export default class extends Controller {
         this.refreshTableAfterBlockChange();
         this.initBlockRoomPicker();
         enableDeletePopover();
+        this.enableReservationDeletePopover();
+        this.enableCorrespondenceDeletePopovers();
         this.enableCalendarEntryDeleteInModal();
         window.setTimeout(() => {
             this.isHandlingModalChange = false;
@@ -710,11 +754,6 @@ export default class extends Controller {
         this.createNewReservations();
     }
 
-    toggleDeleteAction(event) {
-        event.preventDefault();
-        this.toggleReservationDelete();
-    }
-
     showAddReservationToSelectionAction(event) {
         event.preventDefault();
         const url = event.currentTarget.dataset.url;
@@ -832,11 +871,6 @@ export default class extends Controller {
             method: 'GET',
             target: this.modalContent
         });
-    }
-
-    deleteReservationAction(event) {
-        event.preventDefault();
-        this.doDeleteReservation();
     }
 
     selectReservationForInvoiceAction(event) {
@@ -981,17 +1015,6 @@ export default class extends Controller {
         this.editReservationCustomerEdit(customerId, form);
     }
 
-    deleteReservationCustomerAction(event) {
-        event.preventDefault();
-        const customerId = event.currentTarget.dataset.customerId;
-        const url = event.currentTarget.dataset.url;
-        const form = document.getElementById('actions-customer-' + customerId);
-        if (form && url) {
-            form.dataset.deleteUrl = url;
-        }
-        this.deleteReservationCustomer(null, customerId);
-    }
-
     editReservationAction(event) {
         event.preventDefault();
         const reservationId = event.currentTarget.dataset.reservationId;
@@ -1005,16 +1028,6 @@ export default class extends Controller {
         const reservationId = event.currentTarget.dataset.reservationId;
         const correspondenceId = event.currentTarget.dataset.correspondenceId || reservationId;
         this.showMailCorrespondence(correspondenceId, reservationId, url);
-    }
-
-    deleteCorrespondenceAction(event) {
-        event.preventDefault();
-        const id = event.currentTarget.dataset.correspondenceId;
-        const url = event.currentTarget.dataset.url;
-        if (url && this.modalContent) {
-            this.modalContent.dataset.deleteCorrespondenceUrl = url;
-        }
-        this.deleteCorrespondence(id);
     }
 
     createNewCustomerAction(event) {
@@ -1087,20 +1100,7 @@ export default class extends Controller {
      * lose their trigger and remain as permanent orphan elements in the page.
      */
     disposeTablePopovers() {
-        if (!this.tableContainer) {
-            return;
-        }
-
-        const selector = [
-            '[data-bs-toggle="popover"]',
-            '.reservation-inner',
-            '.reservation-popover',
-            '.room-info',
-            '.holiday-info',
-            '.calendar-info',
-        ].join(',');
-
-        this.tableContainer.querySelectorAll(selector).forEach((trigger) => {
+        this.tablePopoverTriggers().forEach((trigger) => {
             const tipId = trigger.getAttribute('aria-describedby');
             const tip = tipId ? document.getElementById(tipId) : null;
             const instance = window.bootstrap?.Popover?.getInstance(trigger);
@@ -1114,6 +1114,43 @@ export default class extends Controller {
             // dispose() normally removes the tip. Keep this fallback for tips
             // created by an older table/controller instance.
             tip?.remove();
+        });
+    }
+
+    tablePopoverTriggers() {
+        if (!this.tableContainer) {
+            return [];
+        }
+
+        return this.tableContainer.querySelectorAll([
+            '[data-bs-toggle="popover"]',
+            '.reservation-inner',
+            '.reservation-popover',
+            '.room-info',
+            '.holiday-info',
+            '.calendar-info',
+        ].join(','));
+    }
+
+    /**
+     * Keeps the table's popovers out of the way while the dialog is open. On a
+     * touch screen a tap shows the hover popover (emulated mouseenter) but never
+     * sends the mouseleave, so the popover stayed on top of the dialog the tap
+     * opened. Bootstrap shows it from a timeout that runs after the click, too
+     * late for a plain hide() - disabling stops that pending show as well.
+     */
+    setTablePopoversEnabled(enabled) {
+        this.tablePopoverTriggers().forEach((trigger) => {
+            const instance = window.bootstrap?.Popover?.getInstance(trigger);
+            if (!instance) {
+                return;
+            }
+            if (enabled) {
+                instance.enable();
+            } else {
+                instance.disable();
+                instance.hide();
+            }
         });
     }
 
@@ -2168,7 +2205,9 @@ export default class extends Controller {
             '</div>' +
             '</div>';
 
-        if ($('#selectedAppartments tr').length === 1) {
+        // Only the room step can lack rooms; the preview's back button comes here as well
+        const onRoomStep = document.getElementById('reservation-period') !== null;
+        if (onRoomStep && !document.querySelector('#selectedAppartments [data-selected-room]')) {
             this.showFeedback(message);
         } else {
             $('#breadcrumb-appartments').wrap('<a href="#" />');
@@ -2411,37 +2450,6 @@ export default class extends Controller {
         return false;
     }
 
-    doDeleteReservation() {
-        const form = '#reservationShowForm';
-        const formEl = document.querySelector(form);
-        const url = formEl?.dataset.url || formEl?.action || this.getContextValue('deleteReservationUrl');
-        if (!url) {
-            return false;
-        }
-        httpRequest({
-            url,
-            method: 'POST',
-            data: httpSerializeForm(form),
-            onSuccess: () => location.reload()
-        });
-        return false;
-    }
-
-    deleteReservationCustomer(elm, customerId) {
-        const form = document.getElementById('actions-customer-' + customerId);
-        const url = form?.dataset.deleteUrl || form?.action || this.getContextValue('deleteReservationCustomerUrl');
-        if (!form || !url) {
-            return false;
-        }
-        httpRequest({
-            url,
-            method: 'POST',
-            data: httpSerializeForm(form),
-            target: this.modalContent
-        });
-        return false;
-    }
-
     editReservationCustomerEdit(customerId, form) {
         const formEl = typeof form === 'string' ? document.querySelector(form) : form;
         const url = formEl?.dataset.editUrl || formEl?.action || this.getContextValue('editReservationCustomerEditUrl');
@@ -2616,55 +2624,6 @@ export default class extends Controller {
         return false;
     }
 
-    doDeleteInvoice() {
-        const form = '#invoiceDeleteForm';
-        const formEl = document.querySelector(form);
-        const url = formEl?.dataset.url || formEl?.action || this.getContextValue('deleteInvoiceUrl');
-        if (!url) {
-            return false;
-        }
-        httpRequest({
-            url,
-            method: 'POST',
-            data: httpSerializeForm(formEl),
-            onSuccess: () => location.reload()
-        });
-        return false;
-    }
-
-    toggleReservationDelete() {
-        const boxDelete = $('#boxDelete');
-        const boxDefault = $('#boxDefault');
-        if (boxDelete.is(':hidden')) {
-            boxDelete.fadeIn().removeClass('d-none');
-            boxDefault.hide();
-        } else {
-            boxDelete.addClass('d-none');
-            boxDefault.fadeIn();
-        }
-        return false;
-    }
-
-    deleteCorrespondence(id) {
-        const url = this.getContextValue('deleteCorrespondenceUrl');
-        if (!url) {
-            return false;
-        }
-        httpRequest({
-            url,
-            method: 'POST',
-            data: { id, _csrf_token: $('#_csrf_token').val() },
-            target: this.modalContent,
-            onSuccess: (data) => {
-                if (this.showFeedback(data)) {
-                    return;
-                }
-                this.getReservation(window.lastClickedReservationUrl, 'correspondence');
-            }
-        });
-        return false;
-    }
-
     toggleReservationEditAppartments(id) {
         const box = $('#box-available-appartments');
         if (box.is(':hidden')) {
@@ -2677,7 +2636,8 @@ export default class extends Controller {
             box.addClass('d-none');
             $('#reservation-edit-save').show();
             $('#selectedAppartments').removeClass('text-secondary');
-            $('#appartment-' + id).fadeIn();
+            // d-none is !important, fadeIn() alone cannot show the options again
+            $('#appartment-' + id).hide().removeClass('d-none').fadeIn();
         }
         return false;
     }

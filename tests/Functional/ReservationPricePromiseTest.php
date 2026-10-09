@@ -177,6 +177,37 @@ final class ReservationPricePromiseTest extends WebTestCase
         }
     }
 
+    public function testASavedBookingWithoutPromiseKeepsItsPlainPriceWhenPromised(): void
+    {
+        $this->createRoomPrice('80.00');
+        // Saved before promises existed, or invoiced back then: priced from the plain price list.
+        $reservation = $this->createReservation('+870 days', withPromise: false);
+        $arrival = \DateTimeImmutable::createFromInterface($reservation->getStartDate())->setTime(0, 0);
+        $rule = new PriceRule();
+        $rule->setName('Kurzfristig');
+        $rule->setPercent(-10.0);
+        $rule->setPeriod($arrival, $arrival->modify('+2 days'));
+        $this->em()->persist($rule);
+        $this->em()->flush();
+        $promises = self::getContainer()->get(PricePromiseService::class);
+
+        try {
+            $before = $promises->total($reservation);
+            // E.g. saving the remarks: nothing about the stay changed, so neither may its price.
+            $promises->reconcile($reservation);
+
+            self::assertSame('80.00', $reservation->getPricePromise()['n'][0]['u'] ?? null);
+            self::assertEqualsWithDelta($before, $promises->total($reservation), 0.001);
+
+            // Today's prices, including the rule, only on request.
+            $promises->reconcile($reservation, repriceAll: true);
+            self::assertSame('72.00', $reservation->getPricePromise()['n'][0]['u'] ?? null);
+        } finally {
+            $this->em()->remove($this->em()->find(PriceRule::class, $rule->getId()));
+            $this->em()->flush();
+        }
+    }
+
     public function testANewBookingIsPromisedTheDayPriceOfItsNight(): void
     {
         $this->createRoomPrice('80.00');

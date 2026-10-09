@@ -278,7 +278,7 @@ class CorrespondenceController extends AbstractController
     }
 
     #[IsGranted('ROLE_RESERVATIONS')]
-    #[Route('/remove', name: 'correspondence.remove', methods: ['POST'])]
+    #[Route('/remove', name: 'correspondence.remove', methods: ['DELETE'])]
     public function deleteCorrespondenceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
         $em = $doctrine->getManager();

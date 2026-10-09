@@ -111,7 +111,7 @@ final class RoleAccessTest extends WebTestCase
     }
 
     /**
-     * @return iterable<string, array{roles: string[], expectedRoute: string}>
+     * @return iterable<string, array{string[], string}>
      */
     private function dashboardCases(): iterable
     {
@@ -128,7 +128,7 @@ final class RoleAccessTest extends WebTestCase
     }
 
     /**
-     * @return iterable<string, array{role: string, path: string}>
+     * @return iterable<string, array{string, string}>
      */
     private function authorizedRoutes(): iterable
     {
@@ -145,7 +145,7 @@ final class RoleAccessTest extends WebTestCase
     }
 
     /**
-     * @return iterable<string, array{role: string, path: string}>
+     * @return iterable<string, array{string, string}>
      */
     private function unauthorizedRoutes(): iterable
     {

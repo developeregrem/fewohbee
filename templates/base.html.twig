@@ -26,7 +26,7 @@
         {% set activeRouteName = getActiveRouteName() %}
         {% set showReservations = is_granted('ROLE_RESERVATIONS') %}
         {% set showReservationsRO = is_granted('ROLE_RESERVATIONS_RO') %}
-        <nav class="navbar navbar-expand-md bg-primary">
+        <nav class="navbar navbar-expand-xl bg-primary">
             <div class="container-fluid">
                 {% if showReservations or showReservationsRO %}
                 <a class="navbar-brand" href="{{ path('start') }}">{{ 'nav.reservation.overview'|trans }}</a>
@@ -86,6 +86,7 @@
                         </li>
                         {% endif %}
                     </ul>
+                    <hr class="d-xl-none my-2">
                     {% endif %}
                     <ul class="navbar-nav d-flex ms-auto">
                         {% if is_granted('ROLE_ADMIN') %}
@@ -119,11 +120,12 @@
                         {% set notifications = notification_summary() %}
                         <li class="nav-item dropdown" data-controller="notifications"
                             data-notifications-url-value="{{ path('notifications.panel') }}">
-                            <a class="nav-link position-relative" href="#" id="navbarNotifications" role="button"
+                            <a class="nav-link position-relative d-inline-block d-xl-block" href="#" id="navbarNotifications" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false"
                                data-action="show.bs.dropdown->notifications#loadPanelAction"
                                aria-label="{{ 'notification.title'|trans }}">
                                 <i class="fas fa-bell"></i>
+                                <span class="d-xl-none">{{ 'notification.title'|trans }}</span>
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill {{ notifications.badgeClassOnPrimary }}{{ notifications.isEmpty ? ' d-none' : '' }}"
                                       data-notifications-badge>
                                     <span data-notifications-count>{{ notifications.total }}</span>
@@ -159,8 +161,11 @@
     {% endblock %}
     {% block modal %}
         <!-- Modal -->
-        <div class="modal fade" id="modalCenter" tabindex="-1" role="dialog" aria-labelledby="modalCenterTitle" aria-hidden="true">
-          <div class="modal-dialog modal-lg" role="document">
+        <div class="modal fade" id="modalCenter" tabindex="-1" role="dialog" aria-labelledby="modalCenterTitle" aria-hidden="true"
+             data-controller="modal-history">
+          {# Covers the screen like a page on phones and tablets (see "Dialogs on phones and tablets"
+             in app.css); a page may override the classes with the block. #}
+          <div class="modal-dialog {% block modal_dialog_class %}modal-lg modal-fullscreen-xl-down{% endblock %}" role="document">
             <div class="modal-content">
               <div class="modal-header">
                 <h5 class="modal-title" id="modalCenterTitle"></h5>

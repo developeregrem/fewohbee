@@ -293,3 +293,64 @@ preset.workflow.booking_card.desc: "Erstellt automatisch eine Buchung (Soll: Kre
 
 # Allgemein
 journal.action: Aktion
+
+# Belegvorschläge (von KI-Assistenten eingereicht)
+accounting.receipt_proposal.title: Belegvorschläge
+accounting.receipt_proposal.subtitle: "Belege, die ein KI-Assistent gelesen und eingereicht hat. Gebucht wird erst, wenn du sie hier prüfst und bestätigst."
+accounting.receipt_proposal.open: Offen
+accounting.receipt_proposal.none_open: Keine offenen Belegvorschläge.
+accounting.receipt_proposal.supplier: Lieferant
+accounting.receipt_proposal.receipt_number: Beleg-Nr.
+accounting.receipt_proposal.total: Summe
+accounting.receipt_proposal.payment: Bezahlt per
+accounting.receipt_proposal.payment_bank: Bank / Karte
+accounting.receipt_proposal.payment_cash: Bar
+accounting.receipt_proposal.payment_unknown: unbekannt
+accounting.receipt_proposal.submitted: Eingereicht
+accounting.receipt_proposal.review: Prüfen
+accounting.receipt_proposal.recently_decided: Zuletzt erledigt
+accounting.receipt_proposal.details: Details
+accounting.receipt_proposal.status.open: Offen
+accounting.receipt_proposal.status.booked: Gebucht
+accounting.receipt_proposal.status.discarded: Verworfen
+accounting.receipt_proposal.review_title: "Beleg von %supplier% prüfen"
+accounting.receipt_proposal.as_read: So hat der KI-Assistent den Beleg gelesen
+accounting.receipt_proposal.note: Hinweis des KI-Assistenten
+accounting.receipt_proposal.payment_choice: Zu welcher Zahlung gehört der Beleg?
+accounting.receipt_proposal.payment_choice_help: "FewohBee hat im Journal nach Buchungen mit gleichem Betrag rund um das Belegdatum gesucht. Wähle die passende aus, sie wird dann aufgeteilt. Gibt es keine, buchst du den Beleg neu."
+accounting.receipt_proposal.split_entry: "Buchung vom %date% über %amount% (%debit% an %credit%) aufteilen"
+accounting.receipt_proposal.booked_already.title: Möglicherweise schon gebucht
+accounting.receipt_proposal.booked_already.text: "Rund um das Belegdatum stehen Buchungen, die zu diesem Beleg passen: Sie tragen den Lieferanten im Text oder ergeben zusammen den Belegbetrag."
+accounting.receipt_proposal.booked_already.hint: "Gehören sie zu diesem Beleg, verwirf den Vorschlag. Neu gebucht stünde der Einkauf sonst doppelt im Journal."
+accounting.receipt_proposal.no_candidates: "Im Journal steht keine passende Zahlung. Kommt sie noch per Kontoauszug, buch den Beleg erst nach dem Import, sonst steht die Zahlung doppelt im Journal."
+accounting.receipt_proposal.book_new: "Neu buchen gegen %account% am %date%"
+accounting.receipt_proposal.book_new_hint: "Neu buchen nur, wenn keine der Buchungen oben die Zahlung ist, sonst steht sie doppelt im Journal."
+accounting.receipt_proposal.parts: Aufteilung
+accounting.receipt_proposal.parts_help: "Ein Teil je Konto und Steuersatz, jeweils brutto. Beim Aufteilen einer Buchung müssen die Teile zusammen genau deren Betrag ergeben (laut Beleg %total%)."
+accounting.receipt_proposal.part_text: Gelesen
+accounting.receipt_proposal.account: Konto
+accounting.receipt_proposal.no_tax_rate: ohne
+accounting.receipt_proposal.discard: Verwerfen
+accounting.receipt_proposal.book: Buchen
+accounting.receipt_proposal.flash.booked: Beleg gebucht.
+accounting.receipt_proposal.flash.discarded: Belegvorschlag verworfen.
+accounting.receipt_proposal.error.not_open: Dieser Belegvorschlag ist schon erledigt.
+accounting.receipt_proposal.error.account_missing: "Zeile %line%: Bitte wähle ein Konto."
+accounting.receipt_proposal.error.payment_missing: Bitte wähle aus, zu welcher Zahlung der Beleg gehört.
+accounting.receipt_booking.error.lines_count: "Ein Beleg braucht 1 bis %max% Teile."
+accounting.receipt_booking.error.amount_invalid: "Zeile %line%: Bitte gib einen Betrag größer als 0 mit höchstens zwei Nachkommastellen ein."
+accounting.receipt_booking.error.sum_mismatch: "Die Teile ergeben zusammen %sum%, die Buchung lautet aber auf %booked%. Beim Aufteilen muss die Summe genau stimmen."
+accounting.receipt_booking.error.unknown_entry: Die gewählte Buchung gibt es nicht mehr.
+accounting.receipt_booking.error.entry_opening_balance: Eröffnungsbuchungen können nicht aufgeteilt werden.
+accounting.receipt_booking.error.entry_from_invoice: Diese Buchung stammt aus einer Rechnung in FewohBee und kann nicht aufgeteilt werden.
+accounting.receipt_booking.error.entry_already_split: Diese Buchung ist bereits aufgeteilt.
+accounting.receipt_booking.error.entry_not_a_payment: Nur Buchungen gegen Kasse oder Bank können aufgeteilt werden.
+accounting.receipt_booking.error.payment_account_missing: Bitte wähle ein Zahlungskonto.
+accounting.receipt_booking.error.payment_account_invalid: Das Zahlungskonto muss Kasse oder Bank sein.
+accounting.receipt_booking.error.unknown_account: "Zeile %line%: Das Konto %account% gibt es nicht."
+accounting.receipt_booking.error.payment_account_as_part: "Zeile %line%: %account% ist ein Kassen- oder Bankkonto. Wähle das Konto dessen, was gekauft wurde."
+accounting.receipt_booking.error.tax_rate_invalid: "Zeile %line%: Ungültiger Steuersatz."
+accounting.receipt_booking.error.tax_rate_missing: "Zeile %line%: Am %date% gilt kein Steuersatz von %rate% %."
+accounting.receipt_booking.error.month_closed: "Der Buchungsmonat %month%/%year% ist abgeschlossen."
+accounting.receipt_booking.warning.invoice_number_used: "Die Rechnungsnummer %number% ist schon bei einer Buchung vom %date% eingetragen."
+accounting.receipt_booking.warning.possible_duplicate: "Am %date% steht schon eine Buchung über %amount% auf Konto %account%. Ist das diese Zahlung, teil sie besser auf."

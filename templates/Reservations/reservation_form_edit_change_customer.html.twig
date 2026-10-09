@@ -3,12 +3,13 @@
      data-reservation-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
      data-preview-url="{{ path('reservations.create.preview') }}">
 <div class="modal-body">
-    <div class="ps-5 pe-5">
+    <div class="px-lg-5">
         <div id="flash-message-overlay">
             <div class="col">
             </div>
         </div>
-        <div class="row">
+        {# Field and search side by side; adding a guest below on phones, in the same row on wider screens #}
+        <div class="row g-2 align-items-end">
             <div class="col">
                 <input type="text" class="form-control" id="lastname" name="lastname"
                        placeholder="{{ 'reservation.select.customer.search.input.placeholder'|trans }}"
@@ -17,17 +18,18 @@
                        data-search-tab="{{ tab }}"
                        data-search-appartment="{{ appartmentId }}">
             </div>
-            <div class="col text-end">
-                <span class="input-group-btn">
-                    <button class="btn btn-secondary" type="button"
-                            data-action="click->reservations#getCustomersAction"
-                            data-page="1" data-mode="edit" data-tab="{{ tab }}" data-appartment-id="{{ appartmentId }}">
-                        <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
-                    </button>
-                    <button class="btn btn-secondary" type="button" data-action="click->reservations#getFormForNewCustomerAction">
-                        <i class="fas fa-plus"></i> {{ 'nav.customer.add'|trans }}
-                    </button>
-                </span>
+            <div class="col-auto">
+                <button class="btn btn-primary" type="button"
+                        data-action="click->reservations#getCustomersAction"
+                        data-page="1" data-mode="edit" data-tab="{{ tab }}" data-appartment-id="{{ appartmentId }}"
+                        title="{{ 'nav.customer.search'|trans }}">
+                    <i class="fas fa-search"></i><span class="d-none d-lg-inline"> {{ 'nav.customer.search'|trans }}</span>
+                </button>
+            </div>
+            <div class="col-12 col-sm-auto">
+                <button class="btn btn-outline-primary w-100" type="button" data-action="click->reservations#getFormForNewCustomerAction">
+                    <i class="fas fa-plus"></i> {{ 'nav.customer.add'|trans }}
+                </button>
             </div>
         </div>
         <div class="row mt-4">   
@@ -49,13 +51,10 @@
     </div>
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pagination me-auto">
-        <li class="page-item ">
-            <a class="page-link" href="#"
-               data-action="click->reservations#openReservationAction"
-               data-url="{{ path('reservations.get.reservation', {'id': reservation.id, 'tab': tab}) }}"
-               data-reservation-id="{{ reservation.id }}"
-               data-tab="{{ tab }}">&larr; {{ 'button.back'|trans }}</a></li>
-    </ul>
+    <a class="btn btn-link me-auto px-0 text-decoration-none" href="#"
+       data-action="click->reservations#openReservationAction"
+       data-url="{{ path('reservations.get.reservation', {'id': reservation.id, 'tab': tab}) }}"
+       data-reservation-id="{{ reservation.id }}"
+       data-tab="{{ tab }}">&larr; {{ 'button.back'|trans }}</a>
 </div>
 </div>

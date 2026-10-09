@@ -57,6 +57,7 @@ class ApiTokenType extends AbstractType
         ApiScope::RESERVATIONS_WRITE,
         ApiScope::PRICES_WRITE,
         ApiScope::BANK_IMPORT_WRITE,
+        ApiScope::RECEIPTS_SUBMIT,
     ];
 
     public function buildForm(FormBuilderInterface $builder, array $options): void

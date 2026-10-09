@@ -58,6 +58,7 @@ profile:
       reservations_write: Create reservations
       prices_write: Adjust prices
       bank_import_write: Prepare bank statements
+      receipts_submit: Hand in receipts
     groups:
       see:
         rest: What may this access read?
@@ -72,6 +73,7 @@ profile:
       reservations_write: Only after a preview and your consent.
       prices_write: Existing bookings keep their price. An AI only changes prices after a preview and your consent.
       bank_import_write: Shares names, purposes and shortened IBANs of the transactions with the AI. You commit them yourself.
+      receipts_submit: The AI sees only accounts and VAT rates. You book proposals after reviewing them.
     unavailable:
       role: Needs the role "%role%".
     tools: 'Unlocks these tools: %tools%'
@@ -91,10 +93,11 @@ profile:
         reservations_write: create reservations
         prices_write: adjust prices
         bank_import_write: prepare bank statements
+        receipts_submit: hand in receipts
       see:
         rest: This access may read %list%.
         mcp: This AI may read %list%.
-        mcp_none: This AI may not read anything.
+        mcp_none: This AI has no additional read permissions.
       personal:
         none: It receives no guest data.
         guests: It receives guest data.

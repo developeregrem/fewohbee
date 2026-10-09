@@ -3,7 +3,7 @@
     data-customer-form-address-lookup-url-value="{{ path('customers.search.address', {'address': 'placeholder'}) }}"
     data-preview-url="{{ path('reservations.create.preview') }}">
 <div class="modal-body">
-    <div class="ps-5 pe-5">
+    <div class="px-lg-5">
         <div id="flash-message-overlay">
             <div class="col"></div>
         </div>
@@ -15,7 +15,6 @@
                     <fieldset id="customer-form-fieldset-{{ customer.id }}">
                         {% include 'Customers/customer_form_create_input_fields.html.twig' %}
                     </fieldset>
-                    <input type="submit" class="btn btn-primary float-end mt-3" value="{{ 'button.save'|trans }}">
                     <input type="hidden" name="customer-id" value="{{ customer.id }}"/>
                     <input type="hidden" name="reservation-id" value="{{ reservation.id }}"/>
                     <input type="hidden" name="tab" value="{{ tab }}"/>
@@ -25,13 +24,12 @@
     </div>
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pagination me-auto">
-        <li class="page-item ">
-            <a class="page-link" href="#"
-               data-action="click->reservations#openReservationAction"
-               data-url="{{ path('reservations.get.reservation', {'id': reservation.id, 'tab': tab}) }}"
-               data-reservation-id="{{ reservation.id }}"
-               data-tab="{{ tab }}">&larr; {{ 'button.back'|trans }}</a></li>
-    </ul>
+    <a class="btn btn-link me-auto px-0 text-decoration-none" href="#"
+       data-action="click->reservations#openReservationAction"
+       data-url="{{ path('reservations.get.reservation', {'id': reservation.id, 'tab': tab}) }}"
+       data-reservation-id="{{ reservation.id }}"
+       data-tab="{{ tab }}">&larr; {{ 'button.back'|trans }}</a>
+    {# Outside the form, so it stays in reach in the footer #}
+    <button type="submit" form="customer-form2-{{ customer.id }}" class="btn btn-primary">{{ 'button.save'|trans }}</button>
 </div>
 </div>

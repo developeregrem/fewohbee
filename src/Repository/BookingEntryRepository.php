@@ -286,6 +286,42 @@ class BookingEntryRepository extends ServiceEntityRepository
     }
 
     /**
+     * Entries dated within a range, optionally narrowed to an exact amount and to entries that
+     * touch one account on either side. Ordered by date, capped at $limit.
+     *
+     * @return BookingEntry[]
+     */
+    public function findInPeriod(
+        \DateTimeInterface $from,
+        \DateTimeInterface $to,
+        ?string $amount = null,
+        ?AccountingAccount $account = null,
+        int $limit = 100,
+    ): array {
+        $qb = $this->createQueryBuilder('e')
+            ->addSelect('b', 'd', 'c', 't')
+            ->join('e.bookingBatch', 'b')
+            ->leftJoin('e.debitAccount', 'd')
+            ->leftJoin('e.creditAccount', 'c')
+            ->leftJoin('e.taxRate', 't')
+            ->where('e.date BETWEEN :from AND :to')
+            ->setParameter('from', $from->format('Y-m-d'))
+            ->setParameter('to', $to->format('Y-m-d'))
+            ->orderBy('e.date', 'ASC')
+            ->addOrderBy('e.documentNumber', 'ASC')
+            ->setMaxResults($limit);
+
+        if (null !== $amount) {
+            $qb->andWhere('e.amount = :amount')->setParameter('amount', $amount);
+        }
+        if (null !== $account) {
+            $qb->andWhere('e.debitAccount = :account OR e.creditAccount = :account')->setParameter('account', $account);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * Returns the highest document number used in the given batch's year, or 0 if no entries exist.
      */
     public function getLastDocumentNumber(BookingBatch $batch): int

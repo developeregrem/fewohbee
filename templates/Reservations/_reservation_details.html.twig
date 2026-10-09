@@ -1,0 +1,51 @@
+{# Details tab of an existing reservation. Name, room, dates and status and the actions on guest
+   and booking are in the business card above the tabs (_reservation_summary.html.twig), so this
+   shows only what the card leaves out: the stay's details and the booker's data. #}
+{% set canEdit = is_granted('ROLE_RESERVATIONS') %}
+<div class="row g-4">
+    <section class="col-lg-6">
+        <div class="d-flex align-items-center mb-2">
+            <h2 class="small text-uppercase fw-semibold text-body-secondary me-auto mb-0">{{ 'reservation.details.stay'|trans }}</h2>
+            {% if canEdit %}
+                <a href="#" class="btn btn-sm btn-outline-primary"
+                   data-action="click->reservations#openModalContentAction"
+                   data-url="{{ path('reservations.edit.remark', {'id': reservation.id}) }}"
+                   data-title="{{ 'nav.reservation.edit'|trans }}"
+                   title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}">
+                    <i class="fas fa-edit"></i>
+                </a>
+            {% endif %}
+        </div>
+        <dl class="row mb-0">
+            <dt class="col-5 col-sm-4 fw-normal text-body-secondary">{{ 'reservation.arrivalTime'|trans }}</dt>
+            <dd class="col-7 col-sm-8 mb-1 text-break">
+                {% if reservation.arrivalTime %}
+                    {{ reservation.arrivalTime|date('H:i') }}
+                    {% if guestCheckIn is defined and guestCheckIn and guestCheckIn.checkIn and guestCheckIn.checkIn.lastSubmittedAt %}
+                        <small class="text-body-secondary ms-1">{{ 'guest_checkin.tab.arrival_time_source'|trans({'%date%': guestCheckIn.checkIn.lastSubmittedAt|date('d.m.Y')}) }}</small>
+                    {% endif %}
+                {% else %}
+                    &ndash;
+                {% endif %}
+            </dd>
+            <dt class="col-5 col-sm-4 fw-normal text-body-secondary">{{ 'reservation.departureTime'|trans }}</dt>
+            <dd class="col-7 col-sm-8 mb-1 text-break">{{ reservation.departureTime ? reservation.departureTime|date('H:i') : '–' }}</dd>
+            <dt class="col-5 col-sm-4 fw-normal text-body-secondary">{{ 'reservation.origin'|trans }}</dt>
+            <dd class="col-7 col-sm-8 mb-1 text-break">
+                {{ reservation.reservationOrigin.name }}
+                {% if reservation.calendarSyncImport is not null %}
+                    <span class="text-body-secondary ms-1"><i class="fas fa-cloud-download-alt"></i> {{ reservation.calendarSyncImport.name }}</span>
+                {% endif %}
+            </dd>
+            <dt class="col-5 col-sm-4 fw-normal text-body-secondary">{{ 'customer.remark'|trans }}</dt>
+            <dd class="col-7 col-sm-8 mb-1 text-break">{{ reservation.remark ? reservation.remark|nl2br : '–' }}</dd>
+        </dl>
+    </section>
+
+    <section class="col-lg-6">
+        <div class="d-flex align-items-center mb-2">
+            <h2 class="small text-uppercase fw-semibold text-body-secondary me-auto mb-0">{{ 'reservation.details.guest'|trans }}</h2>
+        </div>
+        {% include 'Reservations/_reservation_guest_data.html.twig' %}
+    </section>
+</div>

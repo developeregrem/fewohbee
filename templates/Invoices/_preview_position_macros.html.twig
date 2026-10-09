@@ -1,0 +1,9 @@
+{# Amount, single price and VAT of a preview position as one line below its description. It
+   stands in for the three number columns on phones, which hide them so the table fits the
+   screen without sideways scrolling. #}
+{% macro folded_numbers(position) %}
+    <div class="small text-body-secondary d-lg-none">
+        {{ position.amount }} × {{ position.price|number_format(2, ',', '.') }}
+        · {{ 'invoice.vat'|trans }} {{ position.vat|number_format(is_decimal_place_0(position.vat) ? 0 : 2, ',', '.') }} %
+    </div>
+{% endmacro %}

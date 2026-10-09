@@ -1,262 +1,128 @@
-<!-- Nav tabs -->
-<ul class="nav nav-tabs">
-    <li class="nav-item">
-        <a class="nav-link{% if tab is defined and tab == 'booker' %} active{% endif %}" href="#reservation" data-bs-toggle="tab">{{ 'reservation.tab.details'|trans }}</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link{% if tab is defined and tab == 'guest' %} active{% endif %}" href="#guests" data-bs-toggle="tab" title="{{ 'reservation.preview.customer.inroom'|trans }}">{{ 'reservation.tab.guests'|trans }}</a>
-    </li>
-    <li class="nav-item">
-        {% if booker is defined and booker is not null %}
-            <a class="nav-link{% if tab is defined and tab == 'correspondence' %} active{% endif %}" href="#correspondence" data-bs-toggle="tab">{{ 'reservation.correspondences'|trans }}</a>
-        {% else %}
-            <span class="nav-link disabled text-muted" aria-disabled="true">{{ 'reservation.correspondences'|trans }}</span>
-        {% endif %}
-    </li>
-    <li class="nav-item">
-        <a class="nav-link{% if tab is defined and tab == 'prices' %} active{% endif %}" href="#prices" data-bs-toggle="tab">
-            {{ 'reservation.prices.title'|trans }}
-            {# Invoices are usually created without opening this tab, so a changed price list must show from outside. #}
-            {% if priceListChange is defined and priceListChange is not null %}<span class="badge rounded-pill text-bg-info ms-1" title="{{ 'reservation.price.list_changed.title'|trans }}">!</span>{% endif %}
-        </a>
-    </li>
-    {% if guestCheckIn is defined and guestCheckIn %}
-    <li class="nav-item">
-        <a class="nav-link{% if tab is defined and tab == 'checkin' %} active{% endif %}" href="#guest-checkin" data-bs-toggle="tab">
-            {{ 'guest_checkin.tab.label'|trans }}
-            {# A submission waiting for review is easy to miss behind the tab. #}
-            {% if guestCheckIn.status.value == 'submitted' %}<span class="badge rounded-pill text-bg-primary ms-1" title="{{ 'guest_checkin.status.submitted'|trans }}">1</span>{% endif %}
-        </a>
-    </li>
+{% import 'Reservations/_macros.html.twig' as reservationMacros %}
+{# Business card and tabs; the wrapper takes no part in the layout (app.css), so the tabs can
+   stick to the top of a full screen dialog while the body scrolls. #}
+<div class="reservation-head">
+    {% if mode is defined and mode == 'edit' %}
+        {% include 'Reservations/_reservation_summary.html.twig' with {'reservation': attribute(reservations, 0)} %}
     {% endif %}
-</ul>
+    <!-- Nav tabs -->
+    <ul class="nav nav-underline flex-nowrap overflow-x-auto text-nowrap border-bottom modal-tabs">
+        <li class="nav-item">
+            <a class="nav-link{% if tab is defined and tab == 'booker' %} active{% endif %}" href="#reservation" data-bs-toggle="tab">{{ 'reservation.tab.details'|trans }}</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link{% if tab is defined and tab == 'guest' %} active{% endif %}" href="#guests" data-bs-toggle="tab" title="{{ 'reservation.preview.customer.inroom'|trans }}">{{ 'reservation.tab.guests'|trans }}</a>
+        </li>
+        <li class="nav-item">
+            {% if booker is defined and booker is not null %}
+                <a class="nav-link{% if tab is defined and tab == 'correspondence' %} active{% endif %}" href="#correspondence" data-bs-toggle="tab">{{ 'reservation.correspondences'|trans }}</a>
+            {% else %}
+                <span class="nav-link disabled text-muted" aria-disabled="true">{{ 'reservation.correspondences'|trans }}</span>
+            {% endif %}
+        </li>
+        <li class="nav-item">
+            <a class="nav-link{% if tab is defined and tab == 'prices' %} active{% endif %}" href="#prices" data-bs-toggle="tab">
+                {{ 'reservation.prices.title'|trans }}
+                {# Invoices are usually created without opening this tab, so a changed price list must show from outside. #}
+                {% if priceListChange is defined and priceListChange is not null %}<span class="badge rounded-pill text-bg-info ms-1" title="{{ 'reservation.price.list_changed.title'|trans }}">!</span>{% endif %}
+            </a>
+        </li>
+        {% if guestCheckIn is defined and guestCheckIn %}
+        <li class="nav-item">
+            <a class="nav-link{% if tab is defined and tab == 'checkin' %} active{% endif %}" href="#guest-checkin" data-bs-toggle="tab">
+                {{ 'guest_checkin.tab.label'|trans }}
+                {# A submission waiting for review is easy to miss behind the tab. #}
+                {% if guestCheckIn.status.value == 'submitted' %}<span class="badge rounded-pill text-bg-primary ms-1" title="{{ 'guest_checkin.status.submitted'|trans }}">1</span>{% endif %}
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</div>
 
 <!-- Tab panes -->
-<div class="tab-content p-4">
+<div class="tab-content px-0 py-3 py-lg-4">
     <div class="tab-pane{% if tab is defined and tab == 'booker' %} active{% endif %}" id="reservation" role="tabpanel" aria-labelledby="booker-tab">
-        <div class="row">
-            <div class="col">                    
-                <h4 class="border-bottom pb-2">{{ 'reservation.preview.booker'|trans }}
-                    {% if mode is defined and mode == 'edit' %}
-                        {% if booker is defined and booker is not null %}
-                            <form id="actions-booker-{{ booker.id }}" class="d-none">
-                                <input id="reservation-id" type="hidden" value="{{ reservationId }}"
-                                       name="reservation-id"/>
-                                <input id="customer-id" type="hidden" value="{{ booker.id }}"
-                                       name="customer-id"/>
-                                <input id="tab" type="hidden" value="booker" name="tab"/>
-                                <input name="_csrf_token" value="{{ token }}" type="hidden">
-                            </form>
-                        {% endif %}
-                        {% if is_granted('ROLE_RESERVATIONS') %}
-                        <small>
-                            {% if booker is defined and booker is not null %}
-                                <a href="{{ path('correspondence.registration.download', { id: reservationId }) }}"
-                                   title="{{ 'operations.frontdesk.registration.print'|trans }}" class="float-end text-secondary me-1"
-                                   target="_blank" rel="noopener">
-                                    <i class="fas fa-print"></i>
-                                </a>
-                                <a href="#"
-                                   data-action="click->reservations#editReservationCustomerEditAction"
-                                   data-customer-id="{{ booker.id }}"
-                                   data-form-selector="#actions-booker-{{ booker.id }}"
-                                   data-url="{{ path('reservations.edit.customer.edit') }}"
-                                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                            {% endif %}
-                            <a href="#"
-                               data-action="click->reservations#changeReservationCustomerAction"
-                               data-url="{{ path('reservations.edit.reservation.customer', {'id': reservationId}) }}"
-                               data-reservation-id="{{ reservationId }}"
-                               data-tab="booker"
-                               data-appartment-id="0"
-                               title="{{ 'reservation.button.changeBooker'|trans }}" class="float-end text-secondary">
-                                <i class="fas fa-exchange-alt" style="margin-right: 5px;"></i>
-                            </a>
-                        </small>
-                        {% endif %}
+        {% if mode is defined and mode == 'edit' %}
+            {% include 'Reservations/_reservation_details.html.twig' with {'reservation': attribute(reservations, 0)} %}
+        {% else %}
+            {# Preview of a new booking: who books, the rooms, and the stay's details as inputs
+               (read by the reservations controller when the booking is created) #}
+            {% set first = attribute(reservations, 0) %}
+            {% set company = null %}
+            {% if booker is defined and booker %}
+                {% for address in booker.customerAddresses %}
+                    {% if company is null and address.type == 'CUSTOMER_ADDRESS_TYPE_BUSINESS' and address.company is not empty %}
+                        {% set company = address.company %}
                     {% endif %}
-                </h4>
-            </div>          
-        </div>
-        <div class="row p-2">
-            {% if booker is defined and booker is not null %}
-                {% include 'Customers/_show_info.html.twig' with {'customer' : booker} %}
+                {% endfor %}
             {% else %}
-                <div class="col-12 text-muted">
-                    {{ 'reservation.import.booker.missing'|trans }}
+                {% set booker = null %}
+            {% endif %}
+            {# One column at every width: sections read top to bottom, wide screens use the width inside them #}
+            <section>
+                <div class="d-flex align-items-center mb-2">
+                    <h2 class="small text-uppercase fw-semibold text-body-secondary me-auto mb-0">{{ 'reservation.preview.booker'|trans }}</h2>
                 </div>
-            {% endif %}
-        </div>                        
-            {% if booker is defined and booker is not null %}
-                {% include 'Customers/customer_show_address_fields_short.html.twig' with {'customer' : booker} %}
-            {% endif %}
-
-        <h4 class="mt-4 pb-2">{{ 'reservation.preview.appartments.selected'|trans }}
-            {% if mode is defined and mode == 'edit' %}
-            {% if is_granted('ROLE_RESERVATIONS') %}
-            <small>
-                <a href="#"
-                   data-action="click->reservations#editReservationAction"
-                   data-url="{{ path('reservations.edit.reservation', {'id': reservationId}) }}"
-                   data-reservation-id="{{ reservationId }}"
-                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
-                    <i class="fas fa-edit"></i>
-                </a>
-            </small>
-            {% endif %}
-            {% endif %}
-        </h4>
-
-        <table class="table">
-            <tr>
-                <th>{{ 'appartment.number.short'|trans }}</th>
-                <th>{{ 'appartment.description'|trans }}</th>
-                <th>{{ 'reservation.persons'|trans }}</th>
-                <th>{{ 'reservation.status'|trans }}</th>
-                <th>{{ 'reservation.startdate'|trans }}</th>
-                <th>{{ 'reservation.enddate'|trans }}</th>
-            </tr>
-            {% for reservation in reservations %}
-                <tr>
-                    <td>{{ reservation.appartment.number }}</td>
-                    <td>{{ reservation.appartment.description }}</td>
-                    <td>
-                        {{ reservation.persons }}
-                        {% set counts = reservation.guestCounts %}
-                        {% if counts is not empty and guestCategoriesById|default({}) is not empty %}
-                            {# Iterate categories (already in sortOrder) so the breakdown
-                               renders in the same order regardless of the JSON key order
-                               in guestCounts. #}
-                            {% set parts = [] %}
-                            {% for catId, cat in guestCategoriesById %}
-                                {% set count = counts[catId]|default(0) %}
-                                {% if count > 0 %}
-                                    {% set parts = parts|merge([count ~ '×' ~ cat.acronym]) %}
-                                {% endif %}
-                            {% endfor %}
-                            {% if parts is not empty %}
-                                <span class="text-muted small">({{ parts|join(', ') }})</span>
-                            {% endif %}
-                        {% endif %}
-                    </td>
-                    <td>{{ reservation.reservationStatus|display_name }}</td>
-                    <td>{{ reservation.startdate|date('d.m.Y') }}</td>
-                    <td>{{ reservation.enddate|date('d.m.Y') }}</td>
-                </tr>
-            {% endfor %}
-        </table>
-        <div class="row mt-4">
-            <div class="col-sm-6">
-                <label for="reservation-arrivalTime">{{ 'reservation.arrivalTime'|trans }}</label>
-                {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
-                <a href="#"
-                   data-action="click->reservations#openModalContentAction"
-                   data-url="{{ path('reservations.edit.remark', {'id': reservationId}) }}"
-                   data-title="{{ 'nav.reservation.edit'|trans }}"
-                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
-                    <i class="fas fa-edit"></i>
-                </a>
-                {% endif %}
-                <div class="mt-2">
-                {% if mode is defined and mode == 'edit' %}
-                    <span>
-                        {% if attribute(reservations, 0).arrivalTime %}
-                            {{ attribute(reservations, 0).arrivalTime|date('H:i') }}
-                            {% if guestCheckIn is defined and guestCheckIn and guestCheckIn.checkIn and guestCheckIn.checkIn.lastSubmittedAt %}
-                                <small class="text-body-secondary ms-1">{{ 'guest_checkin.tab.arrival_time_source'|trans({'%date%': guestCheckIn.checkIn.lastSubmittedAt|date('d.m.Y')}) }}</small>
-                            {% endif %}
-                        {% else %}
-                            &ndash;
-                        {% endif %}
-                    </span>
+                {% if booker %}
+                    <div class="fs-5 fw-bold lh-sm text-break">{{ company ?: booker.firstname ~ ' ' ~ booker.lastname }}</div>
+                    {% if company %}<div>{{ booker.firstname }} {{ booker.lastname }}</div>{% endif %}
+                    <div class="mt-2">{% include 'Reservations/_reservation_guest_data.html.twig' with {'addressColumns': 'row-cols-1 row-cols-lg-2'} %}</div>
                 {% else %}
-                    <input type="time" id="reservation-arrivalTime" name="arrivalTime" class="form-control"
-                           value="{% if attribute(reservations, 0).arrivalTime %}{{ attribute(reservations, 0).arrivalTime|date('H:i') }}{% endif %}">
+                    {% include 'Reservations/_reservation_guest_data.html.twig' %}
                 {% endif %}
+            </section>
+            <section class="mt-4">
+                <div class="d-flex align-items-center mb-2">
+                    <h2 class="small text-uppercase fw-semibold text-body-secondary me-auto mb-0">{{ 'reservation.preview.appartments.selected'|trans }}</h2>
                 </div>
-            </div>
-            <div class="col-sm-6">
-                <label for="reservation-departureTime">{{ 'reservation.departureTime'|trans }}</label>
-                {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
-                <a href="#"
-                   data-action="click->reservations#openModalContentAction"
-                   data-url="{{ path('reservations.edit.remark', {'id': reservationId}) }}"
-                   data-title="{{ 'nav.reservation.edit'|trans }}"
-                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
-                    <i class="fas fa-edit"></i>
-                </a>
-                {% endif %}
-                <div class="mt-2">
-                {% if mode is defined and mode == 'edit' %}
-                    <span>
-                        {% if attribute(reservations, 0).departureTime %}
-                            {{ attribute(reservations, 0).departureTime|date('H:i') }}
-                        {% else %}
-                            &ndash;
-                        {% endif %}
-                    </span>
-                {% else %}
-                    <input type="time" id="reservation-departureTime" name="departureTime" class="form-control"
-                           value="{% if attribute(reservations, 0).departureTime %}{{ attribute(reservations, 0).departureTime|date('H:i') }}{% endif %}">
-                {% endif %}
-                </div>
-            </div>
-        </div>
-        <div class="row mt-4">
-            <div class="col-sm-3">
-                <label for="reservation-remark">{{ 'customer.remark'|trans }}</label>
-                {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
-                <a href="#"
-                   data-action="click->reservations#openModalContentAction"
-                   data-url="{{ path('reservations.edit.remark', {'id': reservationId}) }}"
-                   data-title="{{ 'nav.reservation.edit'|trans }}"
-                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
-                    <i class="fas fa-edit"></i>
-                </a>
-                {% endif %}
-            </div>
-            <div class="col-sm-9">
-                {% if mode is defined and mode == 'edit' %}
-                    <span>{{ attribute(reservations, 0).remark|nl2br }}</span>
-                {% else %}
-                 <textarea id="reservation-remark" class="form-control"name="remark">{{ attribute(reservations, 0).remark }}</textarea>
-                {% endif %}                   
-            </div>
-        </div>
-            
-        <div class="row mt-4">
-            <div class="col-sm-3">
-                <label for="reservation-origin">{{ 'reservation.origin'|trans }}</label>
-                {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
-                <a href="#"
-                   data-action="click->reservations#openModalContentAction"
-                   data-url="{{ path('reservations.edit.remark', {'id': reservationId}) }}"
-                   data-title="{{ 'nav.reservation.edit'|trans }}"
-                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
-                    <i class="fas fa-edit"></i>
-                </a>
-                {% endif %}
-            </div>
-            <div class="col-sm-9">
-                {% if mode is defined and mode == 'edit' %}
-                    <span>{{ attribute(reservations, 0).reservationOrigin.name }}</span>
-                    {% if attribute(reservations, 0).calendarSyncImport is defined and attribute(reservations, 0).calendarSyncImport is not null %}
-                        <span class="ms-1">(<i class="fas fa-cloud-download-alt"></i> {{ attribute(reservations, 0).calendarSyncImport.name }})</span>
-                    {% endif %}
-                {% else %}
-                <select id="reservation-origin" name="reservation-origin" class="form-select">
-                    {% for origin in origins %}
-                        <option value="{{ origin.id }}" {% if attribute(reservations, 0).reservationOrigin and origin.id == attribute(reservations, 0).reservationOrigin.id  %} selected {% endif %}>
-                            {{ origin.name }}
-                        </option>
+                <ul class="list-group">
+                    {% for reservation in reservations %}
+                        <li class="list-group-item">
+                            <div class="fw-semibold">{{ reservation.appartment.number }} · {{ reservation.appartment.description }}</div>
+                            <div class="small text-body-secondary">
+                                {{ reservation.startdate|date('d.m.Y') }} – {{ reservation.enddate|date('d.m.Y') }}
+                                · {{ 'reservation.summary.nights'|trans({'%count%': reservation.startdate.diff(reservation.enddate).days}) }}
+                                · {{ 'reservation.summary.persons'|trans({'%count%': reservation.persons}) }}
+                                {{ reservationMacros.guest_counts(reservation, guestCategoriesById|default({})) }}
+                                · {{ reservation.reservationStatus|display_name }}
+                            </div>
+                        </li>
                     {% endfor %}
-                </select>
-                {% endif %}
-                
-            </div>
-        </div>
+                </ul>
+            </section>
+
+            <section class="mt-4">
+                <div class="d-flex align-items-center mb-2">
+                    <h2 class="small text-uppercase fw-semibold text-body-secondary me-auto mb-0">{{ 'reservation.details.stay'|trans }}</h2>
+                </div>
+                <div class="row g-3">
+                    <div class="col-6 col-lg-4">
+                        <label for="reservation-arrivalTime" class="form-label">{{ 'reservation.arrivalTime'|trans }}</label>
+                        <input type="time" id="reservation-arrivalTime" name="arrivalTime" class="form-control"
+                               value="{{ first.arrivalTime ? first.arrivalTime|date('H:i') }}">
+                    </div>
+                    <div class="col-6 col-lg-4">
+                        <label for="reservation-departureTime" class="form-label">{{ 'reservation.departureTime'|trans }}</label>
+                        <input type="time" id="reservation-departureTime" name="departureTime" class="form-control"
+                               value="{{ first.departureTime ? first.departureTime|date('H:i') }}">
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <label for="reservation-origin" class="form-label">{{ 'reservation.origin'|trans }}</label>
+                        <select id="reservation-origin" name="reservation-origin" class="form-select">
+                            {% for origin in origins %}
+                                <option value="{{ origin.id }}" {% if first.reservationOrigin and origin.id == first.reservationOrigin.id %} selected {% endif %}>
+                                    {{ origin.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label for="reservation-remark" class="form-label">{{ 'customer.remark'|trans }}</label>
+                        <textarea id="reservation-remark" class="form-control" name="remark" rows="2">{{ first.remark }}</textarea>
+                    </div>
+                </div>
+            </section>
+        {% endif %}
         <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">
 
         
@@ -264,139 +130,135 @@
     </div>
     <div class="tab-pane{% if tab is defined and tab == 'guest' %} active{% endif %}" id="guests" role="tabpanel" aria-labelledby="guests-tab">
         {% for reservation in reservations %}
-        <div class="row">
-            <div class="col">            
-                <h4 class="pb-2">{{ 'reservation.preview.customer'|trans }} {{ 'reservation.appartment.name'|trans }}: {{ reservation.appartment.number }}
-                    {% if is_granted('ROLE_RESERVATIONS') %}
-                    <small>
-                    <a href="#"
+            {# In the preview of a new booking, customers are {c, appartmentId} pairs of all rooms #}
+            {% set roomGuests = [] %}
+            {% for customer in customers %}
+                {% if mode is defined and mode == 'new' %}
+                    {% if customer.appartmentId == reservation.appartment.id %}
+                        {% set roomGuests = roomGuests|merge([customer.c]) %}
+                    {% endif %}
+                {% else %}
+                    {% set roomGuests = roomGuests|merge([customer]) %}
+                {% endif %}
+            {% endfor %}
+            <div class="d-flex align-items-center mb-2{{ loop.first ? '' : ' mt-4' }}">
+                <h2 class="small text-uppercase fw-semibold text-body-secondary me-auto mb-0">{{ 'reservation.guests.room'|trans({'%number%': reservation.appartment.number}) }}</h2>
+                {% if is_granted('ROLE_RESERVATIONS') %}
+                    <a href="#" class="btn btn-sm btn-outline-primary"
                        data-action="click->reservations#changeReservationCustomerAction"
                        data-url="{{ path('reservations.edit.reservation.customer', {'id': reservationId}) }}"
                        data-reservation-id="{{ reservationId }}"
                        data-tab="guest"
-                       data-appartment-id="{{ reservation.appartment.id }}"
-                       title="{{ 'button.add'|trans }}" class="float-end text-secondary">
-                        <i class="fas fa-plus"></i></a>
-                    </small>
-                    {% endif %}
-                </h4>
-            </div> 
-        </div>                           
-        <table class="table table-hover">
-            <thead>
-            <tr>
-                <th>{{ 'reservation.preview.customer.name'|trans }}</th>                            
-                <th>{{ 'customer.birthday'|trans }}</th>
-                <th>{{ 'customer.action'|trans }}</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for customer in customers %}
-                {% if mode is defined and mode == 'new' %}                                
-                    {% if customer.appartmentId == reservation.appartment.id %}
-                        {% set customer = customer.c %}
-                    {% endif %}
+                       data-appartment-id="{{ reservation.appartment.id }}">
+                        <i class="fas fa-plus me-1"></i> {{ 'button.add'|trans }}
+                    </a>
                 {% endif %}
-                {% if customer.salutation is defined %}
-                <tr>
-                    <td>{{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}</td>                            
-                    <td>{% if customer.birthday %}{{ customer.birthday|date('d.m.Y') }}{% endif %}</td>
-                    <td>
-                        <form id="actions-customer-{{ customer.id }}">
-                            <input id="reservation-id" type="hidden" value="{{ reservationId }}"
-                                   name="reservation-id"/>
-                            <input id="customer-id" type="hidden" value="{{ customer.id }}"
-                                   name="customer-id"/>
-                            <input id="tab" type="hidden" value="guest" name="tab"/>
-                            <input id="appartmentId" type="hidden" value="{{ reservation.appartment.id }}" name="appartmentId"/>
-                            <input name="_csrf_token" value="{{ token }}" type="hidden">
-                        </form>
-                        {% if is_granted('ROLE_RESERVATIONS') %}
-                        <a href="#"
-                           data-action="click->reservations#editReservationCustomerEditAction"
-                           data-customer-id="{{ customer.id }}"
-                           data-form-selector="#actions-customer-{{ customer.id }}"
-                           data-url="{{ path('reservations.edit.customer.edit') }}"
-                           title="{{ 'button.edit'|trans }}">
-                            <i class="fas fa-edit"></i></a>
-                        <a href="#"
-                           data-action="click->reservations#deleteReservationCustomerAction"
-                           data-customer-id="{{ customer.id }}"
-                           data-url="{{ path('reservations.edit.delete.customer') }}"
-                           title="{{ 'button.delete'|trans }}">
-                            <i class="fas fa-trash-alt"></i></a>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endif %}
-            {% endfor %}
-            </tbody>
-        </table>
-        {% endfor %}        
+            </div>
+            {% if roomGuests is empty %}
+                <p class="text-body-secondary mb-0">{{ 'reservation.guests.empty'|trans }}</p>
+            {% else %}
+                <ul class="list-group">
+                    {% for customer in roomGuests %}
+                        <li class="list-group-item d-flex align-items-center gap-2">
+                            <div class="me-auto text-break">
+                                <div>{{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}</div>
+                                {% if customer.birthday %}
+                                    <div class="small text-body-secondary">{{ 'customer.birthday'|trans }}: {{ customer.birthday|date('d.m.Y') }}</div>
+                                {% endif %}
+                            </div>
+                            <form id="actions-customer-{{ customer.id }}" class="d-none">
+                                <input id="reservation-id" type="hidden" value="{{ reservationId }}" name="reservation-id"/>
+                                <input id="customer-id" type="hidden" value="{{ customer.id }}" name="customer-id"/>
+                                <input id="tab" type="hidden" value="guest" name="tab"/>
+                                <input id="appartmentId" type="hidden" value="{{ reservation.appartment.id }}" name="appartmentId"/>
+                                <input name="_csrf_token" value="{{ token }}" type="hidden">
+                            </form>
+                            {% if is_granted('ROLE_RESERVATIONS') %}
+                                <a href="#" class="btn btn-sm btn-link text-body-secondary"
+                                   data-action="click->reservations#editReservationCustomerEditAction"
+                                   data-customer-id="{{ customer.id }}"
+                                   data-form-selector="#actions-customer-{{ customer.id }}"
+                                   data-url="{{ path('reservations.edit.customer.edit') }}"
+                                   title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}">
+                                    <i class="fas fa-edit"></i></a>
+                                {# Confirmed in a popover; the answer is the dialog again, with the guests tab #}
+                                <a href="#" class="btn btn-sm btn-link text-danger"
+                                   data-popover="delete"
+                                   data-bs-placement="left"
+                                   data-delete-target="#modal-content-ajax"
+                                   data-title="{{ 'reservation.guests.remove_ask'|trans }}"
+                                   data-bs-content="{{ reservationMacros.delete_popover_form(path('reservations.edit.delete.customer'), {
+                                       'customer-id': customer.id,
+                                       'reservation-id': reservationId,
+                                       'tab': 'guest',
+                                       'appartmentId': reservation.appartment.id,
+                                       '_csrf_token': token,
+                                   }, 'reservation.guests.remove'|trans)|e('html_attr') }}"
+                                   aria-label="{{ 'reservation.guests.remove'|trans }}">
+                                    <i class="fas fa-trash-alt"></i></a>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endfor %}
     </div>
     
     <div class="tab-pane{% if tab is defined and tab == 'correspondence' %} active{% endif %}" id="correspondence" role="tabpanel" aria-labelledby="correspondence-tab">
-        <div class="row">
-            <div class="col">
-                <h4 class="pb-2">{{ 'reservation.correspondences.reservation'|trans }}
-                    {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
-                        <small>
-                            <a href="#" data-action="click->reservations#selectReservationForTemplateAction" 
-                                data-url="{{ path('correspondence.select.reservation') }}" 
-                                data-reservation-id="{{ reservationId }}" 
-                                data-create-new="true"
-                                title="{{ 'button.add'|trans }}" class="float-end text-secondary">
-                                <i class="fas fa-plus"></i></a>
-                        </small>
-                    {% endif %}
-                </h4>
-            </div>
+        <div class="d-flex align-items-center mb-2">
+            <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0 me-auto">{{ 'reservation.correspondences.reservation'|trans }}</h2>
+            {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
+                <a href="#" class="btn btn-sm btn-outline-primary text-nowrap"
+                   data-action="click->reservations#selectReservationForTemplateAction"
+                   data-url="{{ path('correspondence.select.reservation') }}"
+                   data-reservation-id="{{ reservationId }}"
+                   data-create-new="true">
+                    <i class="fas fa-plus me-1"></i> {{ 'button.add'|trans }}
+                </a>
+            {% endif %}
         </div>
-        <table class="table">
-            <thead>
-            <tr>
-                <th></th>
-                <th>{{ 'templates.correspondence.created'|trans }}</th>
-                <th>{{ 'templates.correspondence.name'|trans }}</th>
-                <th></th>
-                <th>{{ 'base.action'|trans }}</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for correspondence in correspondences %}
-            <tr>
-                <td style="width:10.0pt"><i class="fas {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i></td>
-                <td>{{ correspondence.created|date('d.m.Y H:i') }}</td>
-                <td>{{ correspondence.name }}</td>
-                <td style="width:10.0pt">{% if correspondence.children|length > 0 %}<i class="fas fa-paperclip"></i>{% endif %}</td>
-                <td>
-                    {% if 'PDF' in correspondence.template.templateType.name %}
-                    <a href="#"
-                       data-action="click->reservations#exportPDFCorrespondenceAction"
-                       data-url="{{ path('correspondence.export.pdf', {'id': correspondence.id}) }}"
-                       data-attachment-id="{{ correspondence.id }}"
-                       title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
-                    {% elseif 'EMAIL' in correspondence.template.templateType.name %}
-                    <a href="#"
-                       data-action="click->reservations#showMailCorrespondenceAction"
-                       data-url="{{ path('correspondence.show', {'id': correspondence.id}) }}"
-                       data-reservation-id="{{ reservationId }}"
-                       data-correspondence-id="{{ correspondence.id }}"
-                       title="{{ 'button.details'|trans }}"><i class="fas fa-eye"></i></a>
-                    {% endif %}
-                    {% if is_granted('ROLE_RESERVATIONS') %}
-                    <a href="#"
-                       data-action="click->reservations#deleteCorrespondenceAction"
-                       data-url="{{ path('correspondence.remove') }}"
-                       data-correspondence-id="{{ correspondence.id }}"
-                       data-reservation-id="{{ reservationId }}"
-                       title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>  
-                    {% endif %}                                  
-                </td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>                    
+        {% if correspondences is empty %}
+            <p class="text-body-secondary mb-0">{{ 'reservation.correspondences.empty'|trans }}</p>
+        {% else %}
+            <ul class="list-group">
+                {% for correspondence in correspondences %}
+                    <li class="list-group-item d-flex align-items-center gap-2">
+                        <i class="fas {{ correspondence.template.templateType.icon }} fa-fw text-body-secondary" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i>
+                        <div class="me-auto text-break">
+                            <div>
+                                {{ correspondence.name }}
+                                {% if correspondence.children|length > 0 %}<i class="fas fa-paperclip small text-body-secondary ms-1" title="{{ 'templates.attachment'|trans }}"></i>{% endif %}
+                            </div>
+                            <div class="small text-body-secondary">{{ correspondence.created|date('d.m.Y H:i') }}</div>
+                        </div>
+                        {% if 'PDF' in correspondence.template.templateType.name %}
+                            <a href="#" class="btn btn-sm btn-link text-body-secondary"
+                               data-action="click->reservations#exportPDFCorrespondenceAction"
+                               data-url="{{ path('correspondence.export.pdf', {'id': correspondence.id}) }}"
+                               data-attachment-id="{{ correspondence.id }}"
+                               title="{{ 'button.download'|trans }}" aria-label="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
+                        {% elseif 'EMAIL' in correspondence.template.templateType.name %}
+                            <a href="#" class="btn btn-sm btn-link text-body-secondary"
+                               data-action="click->reservations#showMailCorrespondenceAction"
+                               data-url="{{ path('correspondence.show', {'id': correspondence.id}) }}"
+                               data-reservation-id="{{ reservationId }}"
+                               data-correspondence-id="{{ correspondence.id }}"
+                               title="{{ 'button.details'|trans }}" aria-label="{{ 'button.details'|trans }}"><i class="fas fa-eye"></i></a>
+                        {% endif %}
+                        {% if is_granted('ROLE_RESERVATIONS') %}
+                            {# Confirmed in a popover; the reservations controller reloads this tab afterwards #}
+                            <a href="#" class="btn btn-sm btn-link text-danger"
+                               data-correspondence-delete
+                               data-popover="delete"
+                               data-bs-placement="left"
+                               data-title="{{ 'templates.correspondence.delete.ask'|trans }}"
+                               data-bs-content="{{ reservationMacros.delete_popover_form(path('correspondence.remove'), {'id': correspondence.id, '_csrf_token': token}, 'button.delete'|trans)|e('html_attr') }}"
+                               aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
         <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">
     </div>
     

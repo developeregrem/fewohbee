@@ -10,6 +10,7 @@ use App\Entity\Enum\LogAction;
 use App\Entity\GuestCheckIn;
 use App\Entity\Log;
 use App\Entity\MonthlyStatsSnapshot;
+use App\Entity\ReceiptProposal;
 use App\Entity\User;
 use App\Entity\WorkflowLog;
 use App\EventSubscriber\McpAccessSubscriber;
@@ -49,12 +50,13 @@ final class EntityChangeLogListener
     ];
 
     /**
-     * Fields redacted for one entity only, where the name gives no hint: the check-in payload
-     * holds a guest's personal data including ID numbers, the selector is half of a link token.
-     * The change itself (and who applied a check-in) stays in the audit trail.
+     * Fields redacted for an entity where the name gives no hint: the check-in payload contains
+     * personal data, and receipt proposals can contain personal and financial details. Their
+     * status changes and reviewers remain in the audit trail.
      */
     private const SENSITIVE_FIELDS_BY_ENTITY = [
         GuestCheckIn::class => ['payload', 'selector'],
+        ReceiptProposal::class => ['supplier', 'receiptDate', 'receiptNumber', 'total', 'payment', 'lines', 'note'],
     ];
 
     /** LastActionSubscriber writes this on every request; filter defensively. */

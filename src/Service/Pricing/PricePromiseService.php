@@ -52,6 +52,10 @@ class PricePromiseService
      * their promised unit price, newly booked ones get today's. With $repriceAll everything is
      * priced from the current price list.
      *
+     * A saved booking without any promise - made before promises existed, or invoiced back then -
+     * has been priced from the plain price list. Its first promise keeps that price: price rules
+     * and day prices are for new bookings, and for "today's prices" only on request ($repriceAll).
+     *
      * Idempotent: calling it again without a change to the reservation changes nothing.
      */
     public function reconcile(Reservation $reservation, bool $repriceAll = false): void
@@ -69,8 +73,9 @@ class PricePromiseService
         $keepNights = null !== $old && $old->context === $context;
         $existing = null !== $old ? $this->priceService->findPricesById($old->priceIds()) : [];
 
-        $rates = $this->priceService->getNightRates($reservation, ignorePromise: true);
-        $breakdowns = $this->priceService->getPriceBreakdownForReservation($reservation, ignorePromise: true);
+        $applyPriceRules = $repriceAll || null === $reservation->getId() || null !== $reservation->getPricePromise();
+        $rates = $this->priceService->getNightRates($reservation, ignorePromise: true, applyPriceRules: $applyPriceRules);
+        $breakdowns = $this->priceService->getPriceBreakdownForReservation($reservation, ignorePromise: true, applyPriceRules: $applyPriceRules);
 
         $nights = [];
         $keptAny = false;

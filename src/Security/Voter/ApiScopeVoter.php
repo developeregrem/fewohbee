@@ -32,6 +32,7 @@ class ApiScopeVoter extends Voter
     public const RESERVATIONS_WRITE = 'API_SCOPE_RESERVATIONS_WRITE';
     public const PRICES_WRITE = 'API_SCOPE_PRICES_WRITE';
     public const BANK_IMPORT_WRITE = 'API_SCOPE_BANK_IMPORT_WRITE';
+    public const RECEIPTS_SUBMIT = 'API_SCOPE_RECEIPTS_SUBMIT';
 
     private const ATTRIBUTE_SCOPES = [
         self::RESERVATIONS_READ => ApiScope::RESERVATIONS_READ,
@@ -48,6 +49,7 @@ class ApiScopeVoter extends Voter
         self::RESERVATIONS_WRITE => ApiScope::RESERVATIONS_WRITE,
         self::PRICES_WRITE => ApiScope::PRICES_WRITE,
         self::BANK_IMPORT_WRITE => ApiScope::BANK_IMPORT_WRITE,
+        self::RECEIPTS_SUBMIT => ApiScope::RECEIPTS_SUBMIT,
     ];
 
     public function __construct(

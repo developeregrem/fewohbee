@@ -1,6 +1,6 @@
 <div data-controller="reservations">
 <div class="modal-body">
-    <div class="ps-5 pe-5">
+    <div class="px-lg-5">
         <div id="flash-message-overlay">
             <div class="col">
                 {% include 'feedback.html.twig' with {'error': error, 'app': app } %}
@@ -12,92 +12,68 @@
               data-modify-appartment-options-url="{{ path('reservations.modify.appartment.options') }}"
               data-remove-appartment-url="{{ path('reservations.remove.appartment.from.reservation') }}">
             <input id="reservation-id" type="hidden" value="{{ reservation.id }}" name="reservation-id"/>
-            <div class="row">
+            <div class="row g-3">
                 <div class="col">
+                    <label for="from" class="form-label">{{ 'reservation.startdate'|trans }}</label>
                     <input type="date" class="form-control" id="from" name="from"
                            value="{{ reservation.startdate|date('Y-m-d') }}"
-                           placeholder="{{ 'reservation.startdate'|trans }}"
                            data-action="change->reservations#getAvailableAppartmentsAction"
                            data-mode="edit">
                 </div>
-                    
                 <div class="col">
+                    <label for="end" class="form-label">{{ 'reservation.enddate'|trans }}</label>
                     <input type="date" class="form-control" id="end" name="end"
                            value="{{ reservation.enddate|date('Y-m-d') }}"
-                           placeholder="{{ 'reservation.enddate'|trans }}"
                            data-action="change->reservations#getAvailableAppartmentsAction"
                            data-mode="edit">
-                </div>
-            </div>
-            <div class="row mt-4">
-                <div class="col">
-                    <table class="table table-hover" id="selectedAppartments">
-                        <thead>
-                        <tr>
-                            <th class="border-top-0">{{ 'appartment.number'|trans }}</th>
-                            <th class="border-top-0">{{ 'appartment.bedsmax'|trans }}</th>
-                            <th class="border-top-0">{{ 'appartment.description'|trans }}</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr data-action="click->reservations#toggleAppartmentOptionsAction" data-appartment-id="{{ reservation.appartment.id }}">
-                            <td>{{ reservation.appartment.number }}</td>
-                            <td>{{ reservation.appartment.bedsmax }}</td>
-                            <td>{{ reservation.appartment.description }}</td>
-                        </tr>
-                        <tr>
-                            <td class="ps-4 pe-4" colspan="4" id="appartment-{{ reservation.appartment.id }}">
-                                <div class="row" id="appartment-options-{{ reservation.appartment.id }}">
-                                    {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' with {'appartment': reservation.appartment, 'reservation': reservation } %}
-                                </div>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
                 </div>
             </div>
 
-            <div id="box-available-appartments" class="d-none">
-                <div class="row align-items-center">
-                        <div class="col-sm-8">
-                            <h4>{{ 'reservation.appartment.available'|trans }}</h4>
-                        </div>
-                        <div class="col text-end">
-                            <select id="objects" name="object" class="form-select"
-                                    data-action="change->reservations#getAvailableAppartmentsAction"
-                                    data-mode="edit">
-                                <option value="all"
-                                        {% if objectSelected == "all" %}selected{% endif %}>{{ 'reservation.objects.all'|trans }}</option>
-                                {% for object in objects %}
-                                    <option value="{{ object.id }}"
-                                            {% if objectSelected == object.id %}selected{% endif %}>{{ object.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+            {# The booked room with its guests and status; ids and classes are used by the
+               reservations controller to swap in another room. #}
+            <div id="selectedAppartments" class="mt-4">
+                <div class="d-flex align-items-center gap-2 border rounded px-3 py-2">
+                    <div class="me-auto">
+                        <div class="fw-semibold">{{ reservation.appartment.number }} · {{ reservation.appartment.description }}</div>
+                        <div class="small text-body-secondary">{{ 'appartment.bedsmax'|trans }}: {{ reservation.appartment.bedsmax }}</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            data-action="click->reservations#toggleReservationEditAppartmentsAction"
+                            data-appartment-id="{{ reservation.appartment.id }}">
+                        <i class="fas fa-exchange-alt me-1"></i> {{ 'reservation.edit.change_room'|trans }}
+                    </button>
                 </div>
-                <div class="row">
-                    <div class="col">
-                         <div id="available-appartments"></div>
+                <div id="appartment-{{ reservation.appartment.id }}" class="mt-3">
+                    <div class="row g-3" id="appartment-options-{{ reservation.appartment.id }}">
+                        {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' with {'appartment': reservation.appartment, 'reservation': reservation } %}
                     </div>
                 </div>
             </div>
-        </form>  
+
+            <div id="box-available-appartments" class="d-none mt-4">
+                <h2 class="small text-uppercase fw-semibold text-body-secondary mb-2">{{ 'reservation.appartment.available'|trans }}</h2>
+                <div class="mb-2">
+                    <select id="objects" name="object" class="form-select"
+                            data-action="change->reservations#getAvailableAppartmentsAction"
+                            data-mode="edit">
+                        <option value="all"
+                                {% if objectSelected == "all" %}selected{% endif %}>{{ 'reservation.objects.all'|trans }}</option>
+                        {% for object in objects %}
+                            <option value="{{ object.id }}"
+                                    {% if objectSelected == object.id %}selected{% endif %}>{{ object.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="available-appartments"></div>
+            </div>
+        </form>
     </div>
 </div>
 <div class="modal-footer">
-    <ul class="pagination me-auto">
-        <li class="page-item">
-            <a class="page-link" href="#"
-               data-action="click->reservations#openReservationAction"
-               data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
-               data-reservation-id="{{ reservation.id }}">&larr; {{ 'button.back'|trans }}</a>
-        </li>
-        <li class="page-item">
-            <a class="page-link" href="#"
-               data-action="click->reservations#toggleReservationEditAppartmentsAction"
-               data-appartment-id="{{ reservation.appartment.id }}">{{ 'reservation.edit.change.appartment'|trans }}</a>
-        </li>
-    </ul>
+    <a class="btn btn-link me-auto px-0 text-decoration-none" href="#"
+       data-action="click->reservations#openReservationAction"
+       data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
+       data-reservation-id="{{ reservation.id }}">&larr; {{ 'button.back'|trans }}</a>
     <button id="reservation-edit-save" class="btn btn-primary" type="button"
             data-action="click->reservations#editUpdateReservationAction"
             data-appartment-id="{{ reservation.appartment.id }}">{{ 'button.save'|trans }}</button>

@@ -963,6 +963,63 @@ div .reservation-yearly-day {
     font-size: 14px;
 }
 
+/*
+ * Dialogs on phones and tablets
+ * Below the xl breakpoint a dialog with .modal-fullscreen-xl-down covers the screen like a page
+ * (Bootstrap): header and footer stay put, the body scrolls between them. Ajax content wraps
+ * .modal-body and .modal-footer in Stimulus roots and forms, which would keep the body from
+ * scrolling on its own; display: contents takes those wrappers out of the layout.
+ * Class and breakpoint belong together: another fullscreen class needs its own breakpoint here.
+ */
+@media (max-width: 1199.98px) {
+    .modal-fullscreen-xl-down .modal-content :has(.modal-body, .modal-footer):not(.modal-body *, .modal-footer *) {
+        display: contents;
+    }
+
+    /* Safety net for content nested in other ways: then the dialog itself scrolls, with header
+       and footer sticking to its edges, instead of the content spilling past the screen. */
+    .modal-fullscreen-xl-down .modal-content {
+        overflow-y: auto;
+    }
+
+    .modal-fullscreen-xl-down .modal-header,
+    .modal-fullscreen-xl-down .modal-footer {
+        position: sticky;
+        z-index: 3;
+        background-color: var(--bs-modal-bg);
+    }
+
+    .modal-fullscreen-xl-down .modal-header {
+        top: 0;
+    }
+
+    .modal-fullscreen-xl-down .modal-footer {
+        bottom: 0;
+    }
+
+    /* Tabs stay in reach while the body scrolls, flush below the header and across its width */
+    .modal-fullscreen-xl-down .modal-tabs {
+        position: sticky;
+        top: calc(-1 * var(--bs-modal-padding));
+        z-index: 2;
+        margin-inline: calc(-1 * var(--bs-modal-padding));
+        padding-inline: var(--bs-modal-padding);
+        background-color: var(--bs-modal-bg);
+        /* Swiped sideways; a scrollbar would only cover the underline */
+        scrollbar-width: none;
+    }
+
+    .modal-fullscreen-xl-down .modal-tabs::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* Reservation details: the wrapper around business card and tabs takes no part in the layout, so
+   the tabs can stick within the whole body (reservation_form_show_fields.html.twig) */
+.reservation-head {
+    display: contents;
+}
+
 /* add hint to required fields */
 #accordionSettings label.required:after {
     content: " *";

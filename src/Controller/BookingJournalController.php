@@ -14,10 +14,12 @@ use App\Repository\AccountingAccountRepository;
 use App\Repository\AccountingSettingsRepository;
 use App\Repository\BookingBatchRepository;
 use App\Repository\BookingEntryRepository;
+use App\Repository\ReceiptProposalRepository;
 use App\Service\BookingJournal\AccountingSettingsService;
 use App\Service\BookingJournal\BookingJournalService;
 use App\Service\BookingJournal\OpeningBalanceService;
 use App\Service\JournalExport\DatevExportService;
+use App\Service\Mcp\McpSettings;
 use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -37,14 +39,17 @@ class BookingJournalController extends AbstractController
     private const PER_PAGE = 40;
 
     #[Route('', name: 'journal.overview', methods: ['GET'])]
-    public function index(BookingBatchRepository $batchRepo): Response
+    public function index(BookingBatchRepository $batchRepo, ReceiptProposalRepository $receiptProposalRepo, McpSettings $mcpSettings): Response
     {
         $years = $batchRepo->getAvailableYears();
         $currentYear = count($years) > 0 ? $years[0]['year'] : (int) date('Y');
+        $openReceiptProposals = $receiptProposalRepo->countOpen();
 
         return $this->render('BookingJournal/index.html.twig', [
             'years' => $years,
             'currentYear' => $currentYear,
+            'openReceiptProposals' => $openReceiptProposals,
+            'showReceiptProposals' => $mcpSettings->isActive() || $openReceiptProposals > 0 || $receiptProposalRepo->hasAny(),
         ]);
     }
 
