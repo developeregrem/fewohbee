@@ -20,7 +20,7 @@ import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@cod
 import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { templateAutocomplete } from '../js/template-autocomplete.js';
-import { enablePopovers } from '../js/utils.js';
+import { enablePopovers, enableTooltips, disposeTooltips } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 
@@ -449,12 +449,15 @@ export default class extends Controller {
         this.updateSubjectRowVisibility();
         this.updatePaymentMeansVisibility();
         this.updateImageUploadAvailability();
+        // Without this the help icons only showed the browser's native title on hover, never on touch
+        enableTooltips(this.element);
         this.showEditTab();
         this.refreshToolbarState();
         this.previewPdfObjectUrl = null;
     }
 
     disconnect() {
+        disposeTooltips(this.element);
         if (this.editorInstance) {
             this.editorInstance.destroy();
         }

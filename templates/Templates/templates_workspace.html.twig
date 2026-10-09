@@ -53,15 +53,6 @@
                             <option value="{{ type.id }}" data-template-type-name="{{ type.name }}"{% if template.templateType and template.templateType.id == type.id %} selected{% endif %}>{{ type.name|trans }}</option>
                         {% endfor %}
                     </select>
-                    {# No label: the empty option names the field. #}
-                    <div class="d-none" data-template-editor-target="paymentMeansField">
-                        <select name="paymentMeans-{{ template.id }}" id="paymentMeans-{{ template.id }}" class="form-select form-select-sm w-auto pe-5" aria-label="{{ 'templates.payment_means'|trans }}" data-bs-toggle="tooltip" title="{{ 'templates.payment_means.tooltip'|trans }}">
-                            <option value="">{{ 'templates.payment_means.all'|trans }}</option>
-                            {% for means in enum_cases('App\\Entity\\Enum\\PaymentMeansCode') %}
-                                <option value="{{ means.value }}"{% if template.paymentMeans is not null and template.paymentMeans == means %} selected{% endif %}>{{ means.name|trans }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
                     <div class="form-check form-switch form-check-inline m-0">
                         <input type="checkbox" class="form-check-input" name="default-{{ template.id }}" id="default-{{ template.id }}" {% if template.isDefault %}checked{% endif %}>
                         <label for="default-{{ template.id }}" class="form-check-label small">{{ 'templates.default'|trans }}</label>
@@ -79,6 +70,22 @@
                         </a>
                         <button type="submit" class="btn btn-primary btn-sm">{{ 'button.save'|trans }}</button>
                     </div>
+                </div>
+                {# Own row like the subject of mail templates: in the bar above it pushed the buttons onto a second line #}
+                <div class="mt-3 d-none" data-template-editor-target="paymentMeansField">
+                    {# The help icon sits outside the label: on touch screens a tap on a label focuses the select instead #}
+                    <div class="mb-1">
+                        <label for="paymentMeans-{{ template.id }}" class="form-label small mb-0">{{ 'templates.payment_means'|trans }}</label>
+                        <span class="ms-1 text-muted" data-bs-toggle="tooltip" title="{{ 'templates.payment_means.tooltip'|trans }}">
+                            <i class="fas fa-circle-question"></i>
+                        </span>
+                    </div>
+                    <select name="paymentMeans-{{ template.id }}" id="paymentMeans-{{ template.id }}" class="form-select form-select-sm" style="max-width:300px">
+                        <option value="">{{ 'templates.payment_means.all'|trans }}</option>
+                        {% for means in enum_cases('App\\Entity\\Enum\\PaymentMeansCode') %}
+                            <option value="{{ means.value }}"{% if template.paymentMeans is not null and template.paymentMeans == means %} selected{% endif %}>{{ means.name|trans }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="mt-3 d-none" data-template-editor-target="subjectRow">
                     <label for="subject-{{ template.id }}" class="form-label small mb-1">{{ 'templates.subject'|trans }}</label>

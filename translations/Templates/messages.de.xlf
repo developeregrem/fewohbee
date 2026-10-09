@@ -692,7 +692,7 @@
             </trans-unit>
             <trans-unit id="templates.payment_means.all">
                 <source>templates.payment_means.all</source>
-                <target>Standardvorlage für Zahlungsmethode …</target>
+                <target>Keine – für alle übrigen Rechnungen</target>
             </trans-unit>
             <trans-unit id="templates.flash.payment_means.conflict">
                 <source>templates.flash.payment_means.conflict</source>
