@@ -1140,7 +1140,10 @@ body.reservations-week-pointer .reservations-week-controls > .btn {
    Their accent lines (box-shadow) need no equivalent override - box-shadow
    and background-color are different properties and never fight for
    precedence the way two background-colors do. */
-.reservation-table-weekend.holiday-info {
+.reservation-table-weekend.holiday-info,
+#reservation-table .holiday-info {
+    /* The second selector covers holidays on weekdays: there the cell only has
+       Bootstrap's translucent bg-info bg-opacity-25, and the bars showed through */
     background-color: color-mix(in srgb, rgb(var(--bs-info-rgb)) 25%, var(--bs-body-bg)) !important;
 }
 
