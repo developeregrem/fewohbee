@@ -2463,9 +2463,11 @@ export default class extends Controller {
                 endCell = cell;
                 highlightRange(startCell, endCell);
             }, { passive: false });
-            container.addEventListener('touchend', () => {
+            container.addEventListener('touchend', (e) => {
                 cancelPress();
                 if (!dragging) return;
+                // A selection is no swipe: keep it from paging or closing the week view
+                e.stopPropagation();
                 // Some browsers still send a click after the long press; it
                 // must not start a two-tap selection
                 suppressClickUntil = Date.now() + 600;
