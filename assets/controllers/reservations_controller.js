@@ -62,6 +62,7 @@ export default class extends Controller {
         this.setupCalendarEntryDeleteListener();
         this.applyStoredTableSettings();
         this.initWeekView();
+        this.initTapPopoverDismissal();
         this.observeModalContent();
         this.modalElement = document.getElementById('modalCenter');
         this.boundPauseTablePopovers = () => this.setTablePopoversEnabled(false);
@@ -78,6 +79,7 @@ export default class extends Controller {
     // ----- bootstrap helpers -----
     disconnect() {
         this.weekViewAbort?.abort();
+        this.tapPopoverAbort?.abort();
         if (this.boundResize) {
             window.removeEventListener('load', this.boundResize);
             window.removeEventListener('resize', this.boundResize);
@@ -730,17 +732,19 @@ export default class extends Controller {
             this.suppressReservationClick = false;
             return;
         }
-        // Touch week view: the first tap shows the bar's popover, as hovering
-        // does with a mouse; a second tap on the same bar opens the reservation
+        // Touch: the first tap shows the reservation's popover, as hovering does
+        // with a mouse; a second tap on the same reservation opens it. Compared
+        // by id, because the annual view draws one element per day.
         const bar = event.currentTarget;
-        if (this.isSwipeViewOpen() && bar.classList.contains('reservation-inner') && window.jQuery) {
-            if (this.weekPopoverBar !== bar) {
-                this.hideWeekPopover();
+        if (!this.isDesktopWeekMode() && bar.matches('.reservation-inner, .reservation-popover') && window.jQuery) {
+            if (this.tapPopoverReservationId !== bar.dataset.reservationId) {
+                this.hideTapPopover();
                 $(bar).popover('show');
-                this.weekPopoverBar = bar;
+                this.tapPopoverBar = bar;
+                this.tapPopoverReservationId = bar.dataset.reservationId;
                 return;
             }
-            this.hideWeekPopover();
+            this.hideTapPopover();
         }
         const tab = event.currentTarget.dataset.tab || null;
         const url = event.currentTarget.dataset.url;
@@ -751,12 +755,28 @@ export default class extends Controller {
         }
     }
 
-    /** Touch week view: closes the popover a first tap on a bar opened. */
-    hideWeekPopover() {
-        if (this.weekPopoverBar && window.jQuery) {
-            $(this.weekPopoverBar).popover('hide');
+    /** Touch: closes the popover a first tap on a reservation opened. */
+    hideTapPopover() {
+        if (this.tapPopoverBar && window.jQuery) {
+            $(this.tapPopoverBar).popover('hide');
         }
-        this.weekPopoverBar = null;
+        this.tapPopoverBar = null;
+        this.tapPopoverReservationId = null;
+    }
+
+    /** Touch: a tap anywhere but on the reservation or its popover closes the popover. */
+    initTapPopoverDismissal() {
+        this.tapPopoverAbort = new AbortController();
+        document.addEventListener('click', (event) => {
+            if (!this.tapPopoverBar || event.target.closest('.popover')) {
+                // Inside the popover itself a tap may be on a phone link
+                return;
+            }
+            const bar = event.target.closest('.reservation-inner, .reservation-popover');
+            if (!bar || bar.dataset.reservationId !== this.tapPopoverReservationId) {
+                this.hideTapPopover();
+            }
+        }, { signal: this.tapPopoverAbort.signal });
     }
 
     selectCustomerAction(event) {
@@ -1123,7 +1143,8 @@ export default class extends Controller {
      * lose their trigger and remain as permanent orphan elements in the page.
      */
     disposeTablePopovers() {
-        this.weekPopoverBar = null;
+        this.tapPopoverBar = null;
+        this.tapPopoverReservationId = null;
         clearTimeout(this.hoverPopoverTimer);
         this.hoverPopoverBar = null;
         this.tablePopoverTriggers().forEach((trigger) => {
@@ -1321,14 +1342,6 @@ export default class extends Controller {
             this.initWeekControls(signal);
             return;
         }
-        // Touch week view: a tap anywhere but on the bar or its popover closes it
-        document.addEventListener('click', (event) => {
-            // Inside the popover itself a tap may be on a phone link
-            if (this.weekPopoverBar && !this.weekPopoverBar.contains(event.target) && !event.target.closest('.popover')) {
-                this.hideWeekPopover();
-            }
-        }, { signal });
-
         // Touch: left and right page through the days shown - in the normal
         // view by its day count, in the week view by a week - and swiping up
         // ends the week view. Listening on the persistent container keeps the
@@ -1493,7 +1506,7 @@ export default class extends Controller {
         if (!this.isSwipeViewOpen()) {
             return;
         }
-        this.hideWeekPopover();
+        this.hideTapPopover();
         this.setWeekFocus(false);
         localStorage.removeItem('reservations-interval-before-week');
         localStorage.removeItem('reservations-swipe-view');
@@ -2070,18 +2083,18 @@ export default class extends Controller {
         if (!window.jQuery) {
             return;
         }
-        if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-            // With a mouse the popover stays while the pointer moves onto it,
-            // so its phone and e-mail links can be clicked
-            $('.reservation-inner').popover({ placement: 'top', html: true, trigger: 'manual' });
-            this.initHoverPopovers(this.tableContainer?.querySelectorAll('.reservation-inner') ?? []);
-        } else {
-            $('.reservation-inner').popover({ placement: 'top', html: true, trigger: 'hover' });
+        // Reservation bars of the table (.reservation-inner) and days of the
+        // annual view (.reservation-popover): with a mouse the popover stays
+        // while the pointer moves onto it, so its phone and e-mail links can be
+        // clicked; on touch screens a first tap shows it (openReservationAction)
+        const bars = '.reservation-inner, .reservation-popover';
+        $(bars).popover({ placement: 'top', html: true, trigger: 'manual' });
+        if (this.isDesktopWeekMode()) {
+            this.initHoverPopovers(this.tableContainer?.querySelectorAll(bars) ?? []);
         }
         $('.room-info').popover({ html: true });
         $('.holiday-info').popover();
         $('.calendar-info').popover();
-        $('.reservation-popover').popover({ placement: 'top', html: true, trigger: 'hover' });
 
         this.initClickPopoverDismissal();
         this.initCalendarEntryModal();
