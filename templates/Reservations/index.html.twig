@@ -81,8 +81,8 @@
                 {% endif %}
                 {% endif %}
                 {% if is_granted('ROLE_RESERVATIONS') %}
-                {# On phones the round button at the bottom right takes its place #}
-                <button type="button" class="btn btn-secondary mb-2 me-sm-2 d-none d-md-inline-block"
+                {# On touch screens the round button at the bottom right takes its place #}
+                <button type="button" class="btn btn-secondary mb-2 me-sm-2 reservations-add-inline"
                         data-action="click->reservations#selectAppartmentAction"
                         data-reservations-create-new="true"
                         data-url="{{ path('reservations.select.appartment') }}"
@@ -124,14 +124,14 @@
         </div>
     </form>
     {% if is_granted('ROLE_RESERVATIONS') %}
-    {# Phones: new reservation as a floating button, see "New reservation button" in app.css #}
-    <button type="button" class="btn btn-secondary rounded-circle shadow reservations-fab d-md-none"
+    {# Touch screens: new reservation as a floating button, see "New reservation button" in app.css #}
+    <button type="button" class="btn reservations-fab"
             data-action="click->reservations#selectAppartmentAction"
             data-reservations-create-new="true"
             data-url="{{ path('reservations.select.appartment') }}"
             data-bs-toggle="modal" data-bs-target="#modalCenter"
             title="{{ 'nav.reservation.add'|trans }}" aria-label="{{ 'nav.reservation.add'|trans }}">
-        <i class="fas fa-plus fa-lg"></i>
+        <i class="fas fa-plus"></i>
     </button>
     {% endif %}
     <div class="row mt-2" >

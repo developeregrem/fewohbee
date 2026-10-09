@@ -436,8 +436,24 @@ body.reservations-week-fit #flash-message-container {
     display: none !important;
 }
 
-/* New reservation button on phones (Reservations/index.html.twig): round, at the bottom
-   right above the table; the full-screen week view has no filter row and no button either */
+/* New reservation button on touch screens, phones and tablets alike (Reservations/index.html.twig):
+   round, at the bottom right above the table, in place of the button in the filter row; the
+   full-screen week view has no filter row and no button either. Same touch test as
+   isDesktopWeekMode(). */
+.reservations-fab {
+    display: none;
+}
+
+@media not all and (hover: hover) and (pointer: fine) {
+    .reservations-fab {
+        display: inline-block;
+    }
+
+    .reservations-add-inline {
+        display: none;
+    }
+}
+
 .reservations-fab {
     position: fixed;
     right: 1rem;
@@ -446,6 +462,31 @@ body.reservations-week-fit #flash-message-container {
     width: 3.5rem;
     height: 3.5rem;
     padding: 0;
+    /* Glass in the manner of iOS 26: nearly transparent, the content behind it
+       blurred, a fine light edge instead of a hard border and a soft shadow */
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, .6);
+    background-color: rgba(255, 255, 255, .25);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(12px) saturate(180%);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .12), inset 0 1px 1px rgba(255, 255, 255, .7);
+    color: #757575;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.reservations-fab:hover,
+.reservations-fab:active {
+    border-color: rgba(255, 255, 255, .6);
+    background-color: rgba(255, 255, 255, .45);
+    color: #555;
+}
+
+[data-bs-theme="dark"] .reservations-fab {
+    border-color: rgba(255, 255, 255, .15);
+    background-color: rgba(30, 30, 30, .35);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .4), inset 0 1px 1px rgba(255, 255, 255, .12);
+    color: #bbb;
 }
 
 body.reservations-week-focus .reservations-fab {
