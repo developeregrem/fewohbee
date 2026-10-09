@@ -415,7 +415,7 @@ body.reservations-week-layout #reservation-table tbody {
     overscroll-behavior-y: contain;
 }
 
-/* Touch, normal view: swiping up hides filter row, then navbar (stepNormalViewChrome) */
+/* Touch, normal view: swiping up hides navbar, then filter row (stepNormalViewChrome) */
 body.reservations-hide-filter #table-filter,
 body.reservations-hide-nav > nav.navbar,
 body.reservations-hide-nav #flash-message-container {

@@ -1387,22 +1387,22 @@ export default class extends Controller {
     }
 
     /**
-     * Touch, normal view: swiping up hides the filter row, a second swipe the
-     * navbar, so the rooms get the whole screen; swiping down brings them back
-     * in reverse order.
+     * Touch, normal view: swiping up hides the navbar, a second swipe the
+     * filter row, so the rooms get the whole screen; swiping down brings them
+     * back in reverse order.
      */
     stepNormalViewChrome(hide) {
         const body = document.body.classList;
         if (hide) {
-            if (!body.contains('reservations-hide-filter')) {
-                body.add('reservations-hide-filter');
-            } else {
+            if (!body.contains('reservations-hide-nav')) {
                 body.add('reservations-hide-nav');
+            } else {
+                body.add('reservations-hide-filter');
             }
-        } else if (body.contains('reservations-hide-nav')) {
-            body.remove('reservations-hide-nav');
-        } else {
+        } else if (body.contains('reservations-hide-filter')) {
             body.remove('reservations-hide-filter');
+        } else {
+            body.remove('reservations-hide-nav');
         }
         // The rooms take over the freed height
         this.handleResize();
