@@ -375,11 +375,16 @@ body.reservations-week-fit .table-reservation .table-days-compact > th {
     display: block;
 }
 
-/* The sticky header draws its top line on the first row only (the month row),
-   which is hidden here; the scroll container supplies it instead, since the
-   day cells may carry inline accent shadows that a cell rule would override */
-body.reservations-week-layout .table-responsive.js-fit-vh {
+/* The sticky header drew its top line on the first row only (the month row),
+   which the table settings or the week view may hide; the scroll container
+   supplies it instead, since the day cells may carry inline accent shadows
+   that a cell rule would override. The first row then keeps only its bottom line. */
+.table-responsive.js-fit-vh:has(> #reservation-table) {
     border-top: 1px solid var(--bs-border-color);
+}
+
+#reservation-table.table-sticky thead tr:first-child td {
+    box-shadow: inset 0 -1px 0 var(--bs-border-color);
 }
 
 /* Week view: the FewohBee logo as a faint grey watermark behind the rooms.
