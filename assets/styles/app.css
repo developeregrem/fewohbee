@@ -437,9 +437,8 @@ body.reservations-week-fit #flash-message-container {
 }
 
 /* New reservation button on touch screens, phones and tablets alike (Reservations/index.html.twig):
-   round, at the bottom right above the table, in place of the button in the filter row; the
-   full-screen week view has no filter row and no button either. Same touch test as
-   isDesktopWeekMode(). */
+   round, at the bottom right above the table, in place of the button in the filter row, and
+   also in the full-screen week view. Same touch test as isDesktopWeekMode(). */
 .reservations-fab {
     display: none;
 }
@@ -487,10 +486,6 @@ body.reservations-week-fit #flash-message-container {
     background-color: rgba(30, 30, 30, .35);
     box-shadow: 0 4px 16px rgba(0, 0, 0, .4), inset 0 1px 1px rgba(255, 255, 255, .12);
     color: #bbb;
-}
-
-body.reservations-week-focus .reservations-fab {
-    display: none !important;
 }
 
 /* Desktop week view: paging arrows at the screen edges and a close button,
