@@ -63,9 +63,8 @@
             {% else %}
                 {% include 'Reservations/_index_yearly_form.html.twig' %}
             {% endif %}
-            <div class="col-md-auto">
+            <div class="col-auto">
                 {% if is_granted('ROLE_RESERVATIONS') %}
-                <a href="#" class="me-3" data-action="click->reservations#getNewTableAction" title="{{ 'reservation.table.reload'|trans }}" data-url="{{ path('reservations.get.table') }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
                 {% if conflictCount > 0 %}
                     {% set alertClass = hasConflicts ? 'btn-outline-danger' : 'btn-outline-warning' %}
                     {% set alertBadge = hasConflicts ? 'bg-danger' : 'bg-warning' %}
@@ -82,7 +81,8 @@
                 {% endif %}
                 {% endif %}
                 {% if is_granted('ROLE_RESERVATIONS') %}
-                <button type="button" class="btn btn-secondary mb-2 me-sm-2"
+                {# On phones the round button at the bottom right takes its place #}
+                <button type="button" class="btn btn-secondary mb-2 me-sm-2 d-none d-md-inline-block"
                         data-action="click->reservations#selectAppartmentAction"
                         data-reservations-create-new="true"
                         data-url="{{ path('reservations.select.appartment') }}"
@@ -91,7 +91,8 @@
                 </button>
                 {% endif %}
             </div>
-            <div class="col-auto text-end ms-auto">
+            {# Phones: centred line of its own below date and day count #}
+            <div class="col-12 col-md-auto text-center text-md-end ms-md-auto">
                 {% if is_granted('ROLE_RESERVATIONS') %}
                 <a href="#" class="fs-5 text-secondary me-2" role="button"
                    data-action="click->reservations#openBlockFormAction"
@@ -122,6 +123,17 @@
             </div>
         </div>
     </form>
+    {% if is_granted('ROLE_RESERVATIONS') %}
+    {# Phones: new reservation as a floating button, see "New reservation button" in app.css #}
+    <button type="button" class="btn btn-secondary rounded-circle shadow reservations-fab d-md-none"
+            data-action="click->reservations#selectAppartmentAction"
+            data-reservations-create-new="true"
+            data-url="{{ path('reservations.select.appartment') }}"
+            data-bs-toggle="modal" data-bs-target="#modalCenter"
+            title="{{ 'nav.reservation.add'|trans }}" aria-label="{{ 'nav.reservation.add'|trans }}">
+        <i class="fas fa-plus fa-lg"></i>
+    </button>
+    {% endif %}
     <div class="row mt-2" >
         <div class="col" id="table-ajax" data-reservations-add-appartment-selectable-url="{{ path('reservations.add.appartment.to.reservation.selectable') }}"
              style="--week-watermark: url('{{ app.request.basepath }}/img/logo-fewohbee.png');">

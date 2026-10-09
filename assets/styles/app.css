@@ -273,15 +273,15 @@ body.reservations-week-layout #reservation-table {
     width: 100%;
 }
 
-/* Rooms are stretched to fill the screen (stretchRoomRows), keep the bars
-   level with the room names */
-body.reservations-week-layout #reservation-table tbody td {
+/* Rooms are stretched to fill the screen in the normal and the week view
+   (stretchRoomRows), keep the bars level with the room names */
+#reservation-table tbody td {
     vertical-align: middle;
 }
 
 /* --week-bar-height is set per row by stretchRoomRows; the line height centres
    the text (padding 3px and border 1px on each side) */
-body.reservations-week-layout #reservation-table tr[style*="--week-bar-height"] .reservation-inner {
+#reservation-table tr[style*="--week-bar-height"] .reservation-inner {
     height: var(--week-bar-height);
     line-height: calc(var(--week-bar-height) - 8px);
 }
@@ -358,12 +358,41 @@ body.reservations-week-layout #reservation-table tbody {
     --bs-table-bg: transparent;
 }
 
+/* Swiping down on the table brings filter row and navbar back; it must not reach
+   the browser's pull-to-refresh */
+#table-ajax .js-fit-vh {
+    overscroll-behavior-y: contain;
+}
+
+/* Touch, normal view: swiping up hides filter row, then navbar (stepNormalViewChrome) */
+body.reservations-hide-filter #table-filter,
+body.reservations-hide-nav > nav.navbar,
+body.reservations-hide-nav #flash-message-container {
+    display: none !important;
+}
+
 body.reservations-week-focus > nav.navbar,
 body.reservations-week-focus #table-filter,
 body.reservations-week-focus #flash-message-container,
 body.reservations-week-fit > nav.navbar,
 body.reservations-week-fit #table-filter,
 body.reservations-week-fit #flash-message-container {
+    display: none !important;
+}
+
+/* New reservation button on phones (Reservations/index.html.twig): round, at the bottom
+   right above the table; the full-screen week view has no filter row and no button either */
+.reservations-fab {
+    position: fixed;
+    right: 1rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    z-index: 1030;
+    width: 3.5rem;
+    height: 3.5rem;
+    padding: 0;
+}
+
+body.reservations-week-focus .reservations-fab {
     display: none !important;
 }
 

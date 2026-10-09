@@ -1354,12 +1354,20 @@ export default class extends Controller {
                 if (direction === 'forward' ? edges.right : edges.left) {
                     this.shiftStartDate(direction);
                 }
-            } else if (this.isSwipeViewOpen() && -dy >= 50 && Math.abs(dy) >= 1.5 * Math.abs(dx)) {
+            } else if (Math.abs(dy) >= 50 && Math.abs(dy) >= 1.5 * Math.abs(dx)) {
                 // On the header always; elsewhere only once the rooms cannot
                 // scroll any further, so a long room list can still be
-                // scrolled and swiping on past its end closes the view
-                if (target.closest('thead') || edges.bottom) {
-                    this.closeSwipeView();
+                // scrolled and swiping on past its end acts
+                const up = dy < 0;
+                if (!target.closest('thead') && !(up ? edges.bottom : edges.top)) {
+                    return;
+                }
+                if (this.isSwipeViewOpen()) {
+                    if (up) {
+                        this.closeSwipeView();
+                    }
+                } else {
+                    this.stepNormalViewChrome(up);
                 }
             }
         }, () => {
@@ -1367,14 +1375,37 @@ export default class extends Controller {
             // edge must not page or close as well
             const scroller = this.tableContainer.querySelector('.js-fit-vh');
             if (!scroller) {
-                return { left: true, right: true, bottom: true };
+                return { left: true, right: true, top: true, bottom: true };
             }
             return {
+                top: scroller.scrollTop <= 1,
                 left: scroller.scrollLeft <= 1,
                 right: scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 1,
                 bottom: scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1,
             };
         });
+    }
+
+    /**
+     * Touch, normal view: swiping up hides the filter row, a second swipe the
+     * navbar, so the rooms get the whole screen; swiping down brings them back
+     * in reverse order.
+     */
+    stepNormalViewChrome(hide) {
+        const body = document.body.classList;
+        if (hide) {
+            if (!body.contains('reservations-hide-filter')) {
+                body.add('reservations-hide-filter');
+            } else {
+                body.add('reservations-hide-nav');
+            }
+        } else if (body.contains('reservations-hide-nav')) {
+            body.remove('reservations-hide-nav');
+        } else {
+            body.remove('reservations-hide-filter');
+        }
+        // The rooms take over the freed height
+        this.handleResize();
     }
 
     /** Desktop: edge arrows and close button that show while the mouse moves. */
@@ -1819,7 +1850,7 @@ export default class extends Controller {
     }
 
     /**
-     * Swipe view: spreads the free space below the table over the rooms, so a
+     * Normal and week view: spreads the free space below the table over the rooms, so a
      * short room list fills the screen instead of leaving it half empty. Each
      * room gets the same share; a room split into several lines divides its
      * share among them. The reservation bars grow along with their row.
@@ -1835,13 +1866,13 @@ export default class extends Controller {
             row.style.height = '';
             row.style.removeProperty('--week-bar-height');
         });
-        if (!this.isWeekLayout()) {
-            return;
-        }
         // Unstretched bar height, measured before the rows grow
         const barHeight = table.querySelector('.reservation-inner')?.getBoundingClientRect().height;
-        // One pixel spare: fractional layout heights otherwise add up to a scrollbar
-        const free = parseFloat(container.style.maxHeight) - table.offsetHeight
+        // A horizontal scrollbar (normal view, wide table) takes its share of the
+        // height too. One pixel spare: fractional layout heights otherwise add up
+        // to a scrollbar.
+        const scrollbar = container.offsetHeight - container.clientHeight;
+        const free = parseFloat(container.style.maxHeight) - scrollbar - table.offsetHeight
             - parseFloat(getComputedStyle(table).marginBottom) - 1;
         const rowsPerRoom = new Map();
         rows.forEach((row) => rowsPerRoom.set(row.dataset.appartment, (rowsPerRoom.get(row.dataset.appartment) || 0) + 1));
