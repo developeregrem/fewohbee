@@ -1001,6 +1001,14 @@ class InvoiceServiceController extends AbstractController
     {
         // save id, after page reload template will be preselected in dropdown
         $requestStack->getSession()->set('invoice-template-id', $template->getId());
+        // The link carries the template chosen in the settings; one bound to the invoice's payment
+        // means takes precedence.
+        $template = $ts->resolveInvoiceTemplate($invoice, $template);
+        if (!$template instanceof Template) {
+            $this->addFlash('warning', 'invoice.template.none_found');
+
+            return $this->redirect($this->generateUrl('invoices.overview'));
+        }
 
         // Default export is the hybrid PDF with embedded e-invoice XML; plain PDF is the fallback
         // when mandatory fields are missing or the merge fails.

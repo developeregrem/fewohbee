@@ -138,16 +138,23 @@ class TemplatesServiceController extends AbstractController
      * Create new entity.
      */
     #[Route('/create', name: 'settings.templates.create', methods: ['POST'])]
-    public function createAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, Request $request): Response
+    public function createAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, TranslatorInterface $translator, Request $request): Response
     {
         $error = false;
         if ($csrf->validateCSRFToken($request)) {
             $template = $ts->getEntityFromForm($request, 'new');
+            $conflict = $ts->findPaymentMeansConflict($template);
 
             // check for mandatory fields
             if (0 == strlen($template->getName())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
+            } elseif (null !== $conflict) {
+                $error = true;
+                $this->addFlash('warning', $this->paymentMeansConflictMessage($translator, $template, $conflict));
+            } elseif ($ts->leavesNoUnboundInvoiceTemplate($template)) {
+                $error = true;
+                $this->addFlash('warning', 'templates.flash.payment_means.no_unbound');
             } else {
                 $em = $doctrine->getManager();
                 $em->persist($template);
@@ -167,12 +174,13 @@ class TemplatesServiceController extends AbstractController
      * update entity end show update result.
      */
     #[Route('/{id}/edit', name: 'settings.templates.edit', methods: ['POST'], defaults: ['id' => '0'])]
-    public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, Request $request, $id): Response
+    public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, TranslatorInterface $translator, Request $request, $id): Response
     {
         $error = false;
         if ($csrf->validateCSRFToken($request)) {
             $template = $ts->getEntityFromForm($request, $id);
             $em = $doctrine->getManager();
+            $conflict = $ts->findPaymentMeansConflict($template);
 
             // check for mandatory fields
             if (0 == strlen($template->getName())) {
@@ -180,6 +188,14 @@ class TemplatesServiceController extends AbstractController
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
                 $em->clear(Template::class);
+            } elseif (null !== $conflict) {
+                $error = true;
+                $this->addFlash('warning', $this->paymentMeansConflictMessage($translator, $template, $conflict));
+                $em->clear();
+            } elseif ($ts->leavesNoUnboundInvoiceTemplate($template)) {
+                $error = true;
+                $this->addFlash('warning', 'templates.flash.payment_means.no_unbound');
+                $em->clear();
             } else {
                 $em->persist($template);
                 $em->flush();
@@ -205,6 +221,8 @@ class TemplatesServiceController extends AbstractController
 
             if ($countCor > 0) {
                 $this->addFlash('warning', 'templates.flash.delete.inuse.reservations');
+            } elseif ($ts->leavesNoUnboundInvoiceTemplate($template, true)) {
+                $this->addFlash('warning', 'templates.flash.payment_means.no_unbound');
             } else {
                 $template = $ts->deleteEntity($template->getId());
                 if ($template) {
@@ -671,5 +689,13 @@ class TemplatesServiceController extends AbstractController
                 static fn (CustomFontFamily $family): bool => $family->isUsable(),
             ),
         ));
+    }
+
+    private function paymentMeansConflictMessage(TranslatorInterface $translator, Template $template, Template $conflict): string
+    {
+        return $translator->trans('templates.flash.payment_means.conflict', [
+            '%means%' => $translator->trans($template->getPaymentMeans()->name ?? ''),
+            '%name%' => (string) $conflict->getName(),
+        ]);
     }
 }

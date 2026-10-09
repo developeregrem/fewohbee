@@ -342,7 +342,7 @@ final class WorkflowActionTest extends TestCase
     {
         // The resolution is deliberately private; going through execute() would pull
         // in PDF rendering, mailing and persistence for a pure lookup decision.
-        return (new \ReflectionMethod($action, 'resolvePdfTemplate'))->invoke($action, $config);
+        return (new \ReflectionMethod($action, 'resolvePdfTemplate'))->invoke($action, $config, new Invoice());
     }
 
     private function createInvoiceEmailAction(?Template $findResult, ?Template $defaultTemplate): SendInvoiceEmailAction
@@ -356,6 +356,7 @@ final class WorkflowActionTest extends TestCase
 
         $templatesService = $this->createStub(TemplatesService::class);
         $templatesService->method('getDefaultTemplate')->willReturn($defaultTemplate);
+        $templatesService->method('resolveInvoiceTemplate')->willReturn($defaultTemplate);
 
         return new SendInvoiceEmailAction(
             $templatesService,

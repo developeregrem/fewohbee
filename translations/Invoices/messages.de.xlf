@@ -206,6 +206,14 @@
                 <source>invoice.template</source>
                 <target>Rechnungstemplate wählen</target>
             </trans-unit>
+            <trans-unit id="invoice.template.bound_count">
+                <source>invoice.template.bound_count</source>
+                <target>{1} 1 Vorlage wird automatisch nach Zahlungsmethode gewählt|]1,Inf[ %count% Vorlagen werden automatisch nach Zahlungsmethode gewählt</target>
+            </trans-unit>
+            <trans-unit id="invoice.template.none_found">
+                <source>invoice.template.none_found</source>
+                <target>Für diese Rechnung gibt es keine passende Rechnungsvorlage. Lege eine nicht eingebettete Rechnungsvorlage ohne Zahlungsmethode an.</target>
+            </trans-unit>
             <trans-unit id="invoice.position.service">
                 <source>invoice.position.service</source>
                 <target>Leistung</target>
