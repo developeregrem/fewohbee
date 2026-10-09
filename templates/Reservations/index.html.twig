@@ -57,7 +57,8 @@
           data-reservations-table-settings-url="{{ path('reservations.table.settings') }}"
                     data-reservations-explicit-yearly-apartment-requested="{{ hasExplicitYearlyApartmentRequested ? 'true' : 'false' }}"
           data-action="submit->reservations#getNewTableAction">
-        <div class="row">
+        {# Vertically centred: the icons are shorter than the date and day fields #}
+        <div class="row align-items-center">
             {% if show == 'table' %}
                 {% include 'Reservations/_index_table_form.html.twig' %}
             {% else %}
@@ -91,8 +92,8 @@
                 </button>
                 {% endif %}
             </div>
-            {# Phones: centred line of its own below date and day count #}
-            <div class="col-12 col-md-auto text-center text-md-end ms-md-auto">
+            {# Phones upright: centred line of its own below date and day count #}
+            <div class="col-12 col-sm-auto text-center text-sm-end ms-sm-auto mb-2">
                 {% if is_granted('ROLE_RESERVATIONS') %}
                 <a href="#" class="fs-5 text-secondary me-2" role="button"
                    data-action="click->reservations#openBlockFormAction"

@@ -1,10 +1,10 @@
 {# Year, refresh and room share one line on phones too #}
-<div class="col-12 col-md-auto d-flex align-items-center mb-2 gap-2">
+<div class="col-12 col-sm-auto d-flex align-items-center mb-2 gap-2">
     <input name="year" type="number" class="form-control flex-shrink-0" style="width: 6rem" id="year" min="1900" max="2099" step="1" value="{{ year }}" />
     {% if is_granted('ROLE_RESERVATIONS') %}
     <a href="#" class="mx-1" data-action="click->reservations#getNewTableAction" title="{{ 'reservation.table.reload'|trans }}" data-url="{{ path('reservations.get.table') }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
     {% endif %}
-    <select name="apartment" class="form-select pe-2 ms-md-2">
+    <select name="apartment" class="form-select pe-2 ms-sm-2">
         <option disabled="disabled">{{ 'reservation.appartment.name'|trans }}</option>
         <option disabled="disabled">----</option>
         {% for apartment in apartments %}

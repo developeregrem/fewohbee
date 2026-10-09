@@ -1,5 +1,5 @@
 {# Date and day count share one line on phones too #}
-<div class="col-12 col-md-auto d-flex align-items-center mb-2 gap-2">
+<div class="col-12 col-sm-auto d-flex align-items-center mb-2 gap-2">
     <div class="input-group flex-nowrap">
         <span class="js-shift-date d-flex align-items-center px-3" role="button" tabindex="0" data-direction="backward" title="{{ 'button.back'|trans }}" aria-label="{{ 'button.back'|trans }}">
             <i class="fa-solid fa-arrow-left"></i>
@@ -9,11 +9,11 @@
             <i class="fa-solid fa-arrow-right"></i>
         </span>
     </div>
-    <div class="d-flex align-items-center flex-shrink-0 ms-md-2">
+    <div class="d-flex align-items-center flex-shrink-0 ms-sm-2">
         <input type="number" class="form-control me-2" style="width: 4.5rem" name="interval" value="{{ interval }}" min="6" max="180" />
         <span class="form-text mt-0">{{ 'reservation.days'|trans }}</span>
     </div>
     {% if is_granted('ROLE_RESERVATIONS') %}
-    <a href="#" class="ms-1 ms-md-2" data-action="click->reservations#getNewTableAction" title="{{ 'reservation.table.reload'|trans }}" data-url="{{ path('reservations.get.table') }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
+    <a href="#" class="ms-1 ms-sm-2" data-action="click->reservations#getNewTableAction" title="{{ 'reservation.table.reload'|trans }}" data-url="{{ path('reservations.get.table') }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
     {% endif %}
 </div>

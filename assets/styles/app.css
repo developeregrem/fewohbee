@@ -49,6 +49,9 @@
     --bs-navbar-active-color: rgba(255, 255, 255, 1);
     --bs-navbar-brand-color: rgba(255, 255, 255, 1);
     --bs-navbar-brand-hover-color: rgba(255, 255, 255, 1);
+    /* Menu button in white like the rest of the bar */
+    --bs-navbar-toggler-border-color: rgba(255, 255, 255, 0.35);
+    --bs-navbar-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
 [data-bs-theme="dark"] .navbar.bg-primary {
@@ -434,6 +437,88 @@ body.reservations-week-fit > nav.navbar,
 body.reservations-week-fit #table-filter,
 body.reservations-week-fit #flash-message-container {
     display: none !important;
+}
+
+/* Touch screens: a slimmer filter row above the reservation table, so the rooms get
+   more of the screen. Materia's fields are 56px tall; desktop keeps them as they are. */
+@media not all and (hover: hover) and (pointer: fine) {
+    /* Slimmer navbar (82px with Materia's padding and 24px brand) */
+    body > nav.navbar {
+        padding-top: .25rem;
+        padding-bottom: .25rem;
+    }
+
+    body > nav.navbar .navbar-brand {
+        font-size: 1.125rem;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    body > nav.navbar .navbar-toggler {
+        padding: .125rem .5rem;
+    }
+
+    /* With less padding the bell's badge (translate-middle on the link's corner) would
+       stick out above the bar; keep it inside */
+    body > nav.navbar [data-notifications-badge] {
+        top: .6rem !important;
+        font-size: .65em;
+    }
+
+    .container-fluid.mt-3:has(> #flash-message-container) {
+        margin-top: .5rem !important;
+    }
+
+    #table-filter .form-control,
+    #table-filter .form-select {
+        padding-top: .25rem;
+        padding-bottom: .25rem;
+        min-height: 0;
+        height: auto;
+    }
+
+    #table-filter .mb-2 {
+        margin-bottom: .25rem !important;
+    }
+
+    /* Tighter spacing, so the filter row fits one line on a phone held sideways */
+    #table-filter .js-shift-date {
+        padding-left: .5rem !important;
+        padding-right: .5rem !important;
+    }
+
+    #table-filter .vr {
+        margin-left: .5rem !important;
+        margin-right: .5rem !important;
+    }
+
+    #table-filter .me-4 {
+        margin-right: .75rem !important;
+    }
+
+    /* The column of the inline add button is empty here unless there are conflicts */
+    #table-filter > .row > .col-auto:not(:has(> a)) {
+        display: none;
+    }
+
+    #table-filter + * + .row.mt-2,
+    #table-filter ~ .row.mt-2 {
+        margin-top: .25rem !important;
+    }
+
+    /* Header rows of the normal view: less padding; the weekday and date rows keep
+       6px at the top for two rows of calendar accent bars (3px each) */
+    /* !important: the month and week cells carry Bootstrap's p-1 */
+    #reservation-table thead tr:not(.table-days-compact) > * {
+        padding-top: .125rem !important;
+        padding-bottom: .125rem !important;
+        line-height: 1.2;
+    }
+
+    #reservation-table thead tr.table-weekdays > *,
+    #reservation-table thead tr.table-days > * {
+        padding-top: 6px !important;
+    }
 }
 
 /* New reservation button on touch screens, phones and tablets alike (Reservations/index.html.twig):
