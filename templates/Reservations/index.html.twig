@@ -95,29 +95,29 @@
             {# Phones upright: centred line of its own below date and day count #}
             <div class="col-12 col-sm-auto text-center text-sm-end ms-sm-auto mb-2">
                 {% if is_granted('ROLE_RESERVATIONS') %}
-                <a href="#" class="fs-5 text-secondary me-2" role="button"
+                <a href="#" class="fs-5 text-body-secondary me-2" role="button"
                    data-action="click->reservations#openBlockFormAction"
                    data-url="{{ path('reservations.blocks.form') }}"
                    title="{{ 'roomblock.title'|trans }}">
                     <i class="fas fa-ban"></i></a>
                 {% endif %}
-                <a href="#" class="fs-5 text-secondary" role="button"
+                <a href="#" class="fs-5 text-body-secondary" role="button"
                    data-action="click->reservations#openBlockListAction"
                    data-url="{{ path('reservations.blocks.list') }}"
                    title="{{ 'roomblock.list.title'|trans }}">
                     <i class="fas fa-lock"></i></a>
                 <span class="vr mx-3 align-middle"></span>
-                <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 {% if show == 'table' %}text-primary{% else %}text-secondary{% endif %}" title="{{ 'reservation.table.view.table'|trans }}" data-reservations-table-view-link
+                <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 {% if show == 'table' %}text-primary{% else %}text-body-secondary{% endif %}" title="{{ 'reservation.table.view.table'|trans }}" data-reservations-table-view-link
                    {% if show != 'table' %}data-action="click->reservations#leaveWeekViewFromYearlyAction"{% endif %}>
                     <i class="fas fa-list"></i></a>
                 {# Week view: full screen on touch screens, fitted whole weeks with a mouse
                    (see initWeekView in reservations_controller.js); from the annual
                    view it opens the table view first #}
-                <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 ms-2 text-secondary" role="button" aria-pressed="false"
+                <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 ms-2 text-body-secondary" role="button" aria-pressed="false"
                    {% if show == 'table' %}data-reservations-week-toggle{% else %}data-action="click->reservations#openWeekViewFromYearlyAction"{% endif %}
                    title="{{ 'reservation.table.view.week'|trans }}" aria-label="{{ 'reservation.table.view.week'|trans }}">
                     <i class="fas fa-calendar-week"></i></a>
-                <a href="{{ path('start.toggle.view', {show: 'yearly'}) }}" class="fs-5 me-4 ms-2 {% if show == 'yearly' %}text-primary{% else %}text-secondary{% endif %}" title="{{ 'reservation.table.view.yearly'|trans }}">
+                <a href="{{ path('start.toggle.view', {show: 'yearly'}) }}" class="fs-5 me-4 ms-2 {% if show == 'yearly' %}text-primary{% else %}text-body-secondary{% endif %}" title="{{ 'reservation.table.view.yearly'|trans }}">
                     <i class="far fa-calendar-alt"></i></a>
 
                 {% include 'Reservations/reservation_table_settings.html.twig' %}

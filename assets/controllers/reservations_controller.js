@@ -50,11 +50,14 @@ export default class extends Controller {
             : this.readTranslationsFromDom();
 
         this.modalContent = document.getElementById('modal-content-ajax');
-        const invoicesBootstrapped = this.modalContent.hasAttribute('data-reservations-bootstrapped');
-        if (invoicesBootstrapped) {
+        // Set up once per page. A property, not an attribute: Turbo's page cache keeps
+        // attributes, so after "back" the restored page claimed to be set up already and
+        // no listeners (swiping, week view, filter row) were bound.
+        if (this.modalContent.reservationsBootstrapped) {
             return;
         }
-        this.modalContent.dataset.reservationsBootstrapped = 'true';
+        this.modalContent.reservationsBootstrapped = true;
+        this.isBootstrapper = true;
         window.lastClickedReservationId = window.lastClickedReservationId || 0;
         window.lastClickedReservationUrl = window.lastClickedReservationUrl || null;
 
@@ -78,6 +81,11 @@ export default class extends Controller {
 
     // ----- bootstrap helpers -----
     disconnect() {
+        if (this.isBootstrapper && this.modalContent) {
+            delete this.modalContent.reservationsBootstrapped;
+            this.isBootstrapper = false;
+        }
+        this.modalObserver?.disconnect();
         this.weekViewAbort?.abort();
         this.tapPopoverAbort?.abort();
         if (this.boundResize) {
@@ -1584,11 +1592,11 @@ export default class extends Controller {
         if (toggle) {
             const on = this.isWeekFitOn();
             toggle.classList.toggle('text-primary', on);
-            toggle.classList.toggle('text-secondary', !on);
+            toggle.classList.toggle('text-body-secondary', !on);
             toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
             const tableLink = this.tableFilter.querySelector('[data-reservations-table-view-link]');
             tableLink?.classList.toggle('text-primary', !on);
-            tableLink?.classList.toggle('text-secondary', on);
+            tableLink?.classList.toggle('text-body-secondary', on);
         }
     }
 
