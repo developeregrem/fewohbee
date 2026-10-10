@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\PaymentMeansCode;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -28,6 +29,12 @@ class Template
     private $isDefault;
     #[ORM\Column(type: 'boolean', nullable: false, options: ['default' => false])]
     private bool $hidden = false;
+    /**
+     * Invoice templates only: when set, invoices with this payment means are created with this
+     * template instead of the default one.
+     */
+    #[ORM\Column(nullable: true, enumType: PaymentMeansCode::class)]
+    private ?PaymentMeansCode $paymentMeans = null;
     #[ORM\ManyToOne(targetEntity: 'TemplateType', inversedBy: 'templates')]
     private $templateType;
     #[ORM\OneToMany(targetEntity: 'Correspondence', mappedBy: 'template')]
@@ -226,5 +233,17 @@ class Template
     public function isHidden(): bool
     {
         return $this->hidden;
+    }
+
+    public function getPaymentMeans(): ?PaymentMeansCode
+    {
+        return $this->paymentMeans;
+    }
+
+    public function setPaymentMeans(?PaymentMeansCode $paymentMeans): static
+    {
+        $this->paymentMeans = $paymentMeans;
+
+        return $this;
     }
 }

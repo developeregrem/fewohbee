@@ -20,7 +20,7 @@ import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@cod
 import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { templateAutocomplete } from '../js/template-autocomplete.js';
-import { enablePopovers } from '../js/utils.js';
+import { enablePopovers, enableTooltips, disposeTooltips } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 
@@ -406,6 +406,8 @@ export default class extends Controller {
         'rowMetaBadge',
         'pdfParamsPanel',
         'subjectRow',
+        'paymentMeansField',
+        'hiddenSwitch',
         'subjectInputGroup',
         'subjectInput',
         'previewSubjectResult',
@@ -445,13 +447,17 @@ export default class extends Controller {
         this.refreshSnippets();
         this.updatePdfParamsVisibility();
         this.updateSubjectRowVisibility();
+        this.updatePaymentMeansVisibility();
         this.updateImageUploadAvailability();
+        // Without this the help icons only showed the browser's native title on hover, never on touch
+        enableTooltips(this.element);
         this.showEditTab();
         this.refreshToolbarState();
         this.previewPdfObjectUrl = null;
     }
 
     disconnect() {
+        disposeTooltips(this.element);
         if (this.editorInstance) {
             this.editorInstance.destroy();
         }
@@ -1053,6 +1059,7 @@ export default class extends Controller {
         this.refreshSnippets();
         this.updatePdfParamsVisibility();
         this.updateSubjectRowVisibility();
+        this.updatePaymentMeansVisibility();
         this.initToolbar();
         this.updateImageUploadAvailability();
         this.refreshToolbarState();
@@ -1074,6 +1081,20 @@ export default class extends Controller {
             return;
         }
         this.subjectRowTarget.classList.toggle('d-none', !this.isCurrentTemplateTypeEmail());
+    }
+
+    /**
+     * Only invoice templates can be bound to a payment means, and embedded ones are never picked,
+     * so the binding would have no effect there.
+     */
+    updatePaymentMeansVisibility() {
+        if (!this.hasPaymentMeansFieldTarget || !this.templateTypeSelect) {
+            return;
+        }
+        const selectedOption = this.templateTypeSelect.options[this.templateTypeSelect.selectedIndex];
+        const isInvoicePdf = selectedOption?.dataset?.templateTypeName === 'TEMPLATE_INVOICE_PDF';
+        const isEmbedded = this.hasHiddenSwitchTarget && this.hiddenSwitchTarget.checked;
+        this.paymentMeansFieldTarget.classList.toggle('d-none', !isInvoicePdf || isEmbedded);
     }
 
     async refreshSnippets() {
