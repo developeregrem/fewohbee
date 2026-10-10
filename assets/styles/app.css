@@ -69,30 +69,35 @@
 }
 
 /*
- * Main navigation on touch screens below lg (phones, tablets upright): the links slide in from the side (offcanvas,
- * base.html.twig) on the page's own colours instead of the blue bar; notifications and the
- * user menu stay in the bar (.navbar-quick), so their dropdowns float instead of opening
- * inline. With a mouse main_nav_controller.js adds .main-nav-desktop and the bar is always
- * expanded, wrapping onto a second line in a narrow window.
+ * Main navigation: below xl the links slide in from the side (offcanvas, base.html.twig) on
+ * the page's own colours instead of the blue bar; notifications and the user menu stay in
+ * the bar (.navbar-quick), so their dropdowns float instead of opening inline. On touch
+ * screens main_nav_controller.js lowers the breakpoint to lg, so a tablet held sideways
+ * keeps the full bar. The rules below are tied to the expand class in use.
  */
 .main-nav-offcanvas {
     --bs-offcanvas-width: min(20rem, 85vw);
 }
 
-@media (max-width: 991.98px) {
-    .navbar:not(.main-nav-desktop) .main-nav-offcanvas {
+.navbar-quick {
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+}
+
+@media (max-width: 1199.98px) {
+    .navbar.navbar-expand-xl .main-nav-offcanvas {
         --bs-navbar-color: var(--bs-body-color);
         --bs-navbar-hover-color: var(--bs-primary);
         --bs-navbar-active-color: var(--bs-primary);
         color: var(--bs-body-color);
     }
 
-    .navbar:not(.main-nav-desktop) .main-nav-offcanvas .nav-item.active > .nav-link {
+    .navbar.navbar-expand-xl .main-nav-offcanvas .nav-item.active > .nav-link {
         color: var(--bs-primary);
         font-weight: 500;
     }
 
-    .navbar:not(.main-nav-desktop) .main-nav-offcanvas .dropdown-menu {
+    .navbar.navbar-expand-xl .main-nav-offcanvas .dropdown-menu {
         border: 0;
         box-shadow: none;
         padding-top: 0;
@@ -100,60 +105,85 @@
     }
 
     /* Brand, quick bar and menu button share one line; a long page title gives way */
-    .navbar:not(.main-nav-desktop):has(.main-nav-offcanvas) > .container-fluid {
+    .navbar.navbar-expand-xl > .container-fluid {
         flex-wrap: nowrap;
     }
 
-    .navbar:not(.main-nav-desktop):has(.main-nav-offcanvas) .navbar-brand {
+    .navbar.navbar-expand-xl .navbar-brand {
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    .navbar-quick .nav-item {
+    .navbar.navbar-expand-xl .navbar-quick .nav-item {
         position: relative;
     }
 
-    .navbar-quick .dropdown-menu {
+    .navbar.navbar-expand-xl .navbar-quick .dropdown-menu {
         position: absolute;
         right: 0;
         left: auto;
     }
 }
 
-/* With a mouse: always the full bar; it wraps in a narrow window, as on a tablet held
-   sideways where the bar is just about wide enough. The touch-only icons and divider of
-   the side menu stay hidden. */
-/* The links wrap between page title and quick bar, which stay on the first line */
-.navbar-quick {
-    flex-wrap: nowrap;
-    flex-shrink: 0;
+@media (max-width: 991.98px) {
+    .navbar.navbar-expand-lg .main-nav-offcanvas {
+        --bs-navbar-color: var(--bs-body-color);
+        --bs-navbar-hover-color: var(--bs-primary);
+        --bs-navbar-active-color: var(--bs-primary);
+        color: var(--bs-body-color);
+    }
+
+    .navbar.navbar-expand-lg .main-nav-offcanvas .nav-item.active > .nav-link {
+        color: var(--bs-primary);
+        font-weight: 500;
+    }
+
+    .navbar.navbar-expand-lg .main-nav-offcanvas .dropdown-menu {
+        border: 0;
+        box-shadow: none;
+        padding-top: 0;
+        padding-left: 1.75rem;
+    }
+
+    /* Brand, quick bar and menu button share one line; a long page title gives way */
+    .navbar.navbar-expand-lg > .container-fluid {
+        flex-wrap: nowrap;
+    }
+
+    .navbar.navbar-expand-lg .navbar-brand {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .navbar.navbar-expand-lg .navbar-quick .nav-item {
+        position: relative;
+    }
+
+    .navbar.navbar-expand-lg .navbar-quick .dropdown-menu {
+        position: absolute;
+        right: 0;
+        left: auto;
+    }
 }
 
-.navbar.main-nav-desktop .main-nav-offcanvas {
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-.navbar.main-nav-desktop .offcanvas-body,
-.navbar.main-nav-desktop .offcanvas-body .navbar-nav {
-    flex-wrap: wrap;
-}
-
-@media (min-width: 992px) {
-    .navbar:has(.main-nav-offcanvas) .main-nav-offcanvas {
+/* Touch screens between lg and xl (a tablet held sideways): full bar; the links wrap
+   between page title and quick bar if needed, the side menu's icons and divider stay hidden */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .navbar.navbar-expand-lg .main-nav-offcanvas {
         flex: 1 1 auto;
         min-width: 0;
     }
 
-    .navbar:has(.main-nav-offcanvas) .offcanvas-body,
-    .navbar:has(.main-nav-offcanvas) .offcanvas-body .navbar-nav {
+    .navbar.navbar-expand-lg .offcanvas-body,
+    .navbar.navbar-expand-lg .offcanvas-body .navbar-nav {
         flex-wrap: wrap;
     }
-}
 
-.navbar.main-nav-desktop .main-nav-offcanvas .d-lg-none {
-    display: none !important;
+    .navbar.navbar-expand-lg .main-nav-offcanvas .d-xl-none {
+        display: none !important;
+    }
 }
 
 [data-bs-theme="dark"] .btn-secondary {

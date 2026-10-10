@@ -26,12 +26,12 @@
         {% set activeRouteName = getActiveRouteName() %}
         {% set showReservations = is_granted('ROLE_RESERVATIONS') %}
         {% set showReservationsRO = is_granted('ROLE_RESERVATIONS_RO') %}
-        <nav class="navbar navbar-expand-lg bg-primary">
+        <nav class="navbar navbar-expand-xl bg-primary">
             <div class="container-fluid">
                 {% if showReservations or showReservationsRO %}
                 <a class="navbar-brand" href="{{ path('start') }}">{{ 'nav.reservation.overview'|trans }}</a>
                 {% endif %}
-                {# Below lg the links slide in from the side (offcanvas); notifications and
+                {# Below xl (lg on touch screens) the links slide in from the side (offcanvas); notifications and
                    the user menu stay in the bar, see "Main navigation" in app.css #}
                 <div class="offcanvas offcanvas-end main-nav-offcanvas" tabindex="-1" id="navbarSupportedContent" data-controller="main-nav" aria-labelledby="navbarSupportedContentLabel">
                     <div class="offcanvas-header">
@@ -53,7 +53,7 @@
                         {% if showOperations %}
                         <li class="nav-item dropdown{% if activeRouteName starts with "operations." %} active{% endif %}">
                             <a class="nav-link dropdown-toggle" href="#" id="operationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-concierge-bell fa-fw me-2 d-lg-none"></i>{{ 'nav.operations'|trans }}
+                                <i class="fas fa-concierge-bell fa-fw me-2 d-xl-none"></i>{{ 'nav.operations'|trans }}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="operationsDropdown">
                                 <a class="dropdown-item{% if activeRouteName starts with "operations.frontdesk" %} active{% endif %}" href="{{ path('operations.frontdesk') }}">{{ 'nav.operations.frontdesk'|trans }}</a>
@@ -63,18 +63,18 @@
                         </li>
                         {% endif %}
                         {% if showCustomers %}
-                        <li class="nav-item{% if activeRouteName starts with "customers" %} active{% endif %}"><a class="nav-link" href="{{ path('customers.overview') }}"><i class="fas fa-users fa-fw me-2 d-lg-none"></i>{{ 'nav.customers'|trans }}</a></li>
+                        <li class="nav-item{% if activeRouteName starts with "customers" %} active{% endif %}"><a class="nav-link" href="{{ path('customers.overview') }}"><i class="fas fa-users fa-fw me-2 d-xl-none"></i>{{ 'nav.customers'|trans }}</a></li>
                         {% endif %}
                         {% if showInvoices %}
-                        <li class="nav-item{% if activeRouteName starts with "invoices" %} active{% endif %}"><a class="nav-link" href="{{ path('invoices.overview') }}"><i class="fas fa-file-invoice fa-fw me-2 d-lg-none"></i>{{ 'nav.invoices'|trans }}</a></li>
+                        <li class="nav-item{% if activeRouteName starts with "invoices" %} active{% endif %}"><a class="nav-link" href="{{ path('invoices.overview') }}"><i class="fas fa-file-invoice fa-fw me-2 d-xl-none"></i>{{ 'nav.invoices'|trans }}</a></li>
                         {% endif %}
                         {% if showRegistrationbook %}
-                        <li class="nav-item{% if activeRouteName starts with "registrationbook" %} active{% endif %}"><a class="nav-link" href="{{ path('registrationbook.overview') }}"><i class="fas fa-book fa-fw me-2 d-lg-none"></i>{{ 'nav.registrationbook'|trans }}</a></li>
+                        <li class="nav-item{% if activeRouteName starts with "registrationbook" %} active{% endif %}"><a class="nav-link" href="{{ path('registrationbook.overview') }}"><i class="fas fa-book fa-fw me-2 d-xl-none"></i>{{ 'nav.registrationbook'|trans }}</a></li>
                         {% endif %}
                         {% if showStatistics %}
                         <li class="nav-item dropdown{% if activeRouteName starts with "statistics" %} active{% endif %}">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-chart-bar fa-fw me-2 d-lg-none"></i>{{ 'nav.statistics'|trans }}
+                                <i class="fas fa-chart-bar fa-fw me-2 d-xl-none"></i>{{ 'nav.statistics'|trans }}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 <a class="dropdown-item{% if activeRouteName starts with "statistics.utilization" %} active{% endif %}" href="{{ path('statistics.utilization') }}">{{ 'nav.utilization'|trans }}</a>
@@ -86,17 +86,17 @@
                         {% endif %}
                         {% if showCashjournal %}
                         <li class="nav-item{% if activeRouteName starts with "journal" %} active{% endif %}">
-                            <a class="nav-link" href="{{ path('journal.overview') }}"><i class="fas fa-book-open fa-fw me-2 d-lg-none"></i>{{ 'nav.journal'|trans }}</a>
+                            <a class="nav-link" href="{{ path('journal.overview') }}"><i class="fas fa-book-open fa-fw me-2 d-xl-none"></i>{{ 'nav.journal'|trans }}</a>
                         </li>
                         {% endif %}
                     </ul>
-                    <hr class="d-lg-none my-2">
+                    <hr class="d-xl-none my-2">
                     {% endif %}
                     <ul class="navbar-nav d-flex ms-auto">
                         {% if is_granted('ROLE_ADMIN') %}
                             <li class="nav-item dropdown{% if activeRouteName starts with "settings" %} active{% endif %}">
                                 <a class="nav-link dropdown-toggle" href="#"  id="navbarDropdown2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-tools fa-fw me-2 me-lg-0"></i> {{ 'nav.settings'|trans }}
+                                    <i class="fas fa-tools fa-fw me-2 me-xl-0"></i> {{ 'nav.settings'|trans }}
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown2">
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.general" %} active{% endif %}" href="{{ path('settings.general.index') }}"><i class="fas fa-cog text-secondary"></i> {{ 'app_settings.nav.label'|trans }}</a>
@@ -124,11 +124,11 @@
                     </ul>
                     </div>
                 </div>
-                <ul class="navbar-nav navbar-quick flex-row align-items-center ms-auto ms-lg-0">
+                <ul class="navbar-nav navbar-quick flex-row align-items-center ms-auto ms-xl-0">
                         {% set notifications = notification_summary() %}
                         <li class="nav-item dropdown" data-controller="notifications"
                             data-notifications-url-value="{{ path('notifications.panel') }}">
-                            <a class="nav-link position-relative d-inline-block d-lg-block" href="#" id="navbarNotifications" role="button"
+                            <a class="nav-link position-relative d-inline-block d-xl-block" href="#" id="navbarNotifications" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false"
                                data-action="show.bs.dropdown->notifications#loadPanelAction"
                                aria-label="{{ 'notification.title'|trans }}">
@@ -147,7 +147,7 @@
                             </div>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle ms-3 ms-lg-0" href="#" id="navbarDropdown3" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ 'nav.profile'|trans }}">
+                            <a class="nav-link dropdown-toggle ms-3 ms-xl-0" href="#" id="navbarDropdown3" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ 'nav.profile'|trans }}">
                                 <i class="fas fa-user-circle d-xl-none"></i>
                                 <span class="d-none d-xl-inline">{{ 'nav.welcome'|trans({ '%user%': app.user.getUsername() }) }}</span>
                             </a>
