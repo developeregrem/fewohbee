@@ -1134,6 +1134,9 @@ export default class extends Controller {
                 this.initTableInteractions();
             },
             onComplete: () => {
+                // Switching between normal and week view hides the table until the new one
+                // is in place (startTableSwitch)
+                document.body.classList.remove('reservations-table-switching');
                 // disable spinner
                 const spinnerEl = this.tableFilter ? this.tableFilter.querySelector('[data-reservations-table-spinner]') : null;
                 if (spinnerEl) {
@@ -1371,9 +1374,9 @@ export default class extends Controller {
                     return;
                 }
                 if (this.isSwipeViewOpen()) {
-                    if (up) {
-                        this.closeSwipeView();
-                    }
+                    // Up leaves for the complete normal view; down steps back to where
+                    // the third swipe up came from, with navbar and filter row still hidden
+                    this.closeSwipeView(up);
                 } else {
                     this.stepNormalViewChrome(up);
                 }
@@ -1538,19 +1541,26 @@ export default class extends Controller {
         // page from the touch week view would bring the normal view back with 7 days
         setLocalStorageItemIfNotExists('reservations-interval-before-week', this.intervalBeforeWeek, true);
         setLocalStorageItemIfNotExists('reservations-swipe-view', 'true', true);
+        this.startTableSwitch();
         this.setWeekFocus(true);
         this.snapToWeek(1);
         document.getElementById('start').dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    /** Back to the normal view at the week last shown, with its own day count. */
-    closeSwipeView() {
+    /**
+     * Back to the normal view at the week last shown, with its own day count; with
+     * restoreChrome false, navbar and filter row stay hidden if swiping had hidden them.
+     */
+    closeSwipeView(restoreChrome = true) {
         if (!this.isSwipeViewOpen()) {
             return;
         }
         this.hideTapPopover();
+        this.startTableSwitch();
         // Back to the normal view as a whole, with navbar and filter row
-        document.body.classList.remove('reservations-hide-nav', 'reservations-hide-filter');
+        if (restoreChrome) {
+            document.body.classList.remove('reservations-hide-nav', 'reservations-hide-filter');
+        }
         this.setWeekFocus(false);
         localStorage.removeItem('reservations-interval-before-week');
         localStorage.removeItem('reservations-swipe-view');
@@ -1558,8 +1568,17 @@ export default class extends Controller {
         document.getElementById('start').dispatchEvent(new Event('change', { bubbles: true }));
     }
 
+    /**
+     * Hides the table while the view switches, so the old table does not flash up in the
+     * new layout before the new one has loaded; the table request's onComplete shows it again.
+     */
+    startTableSwitch() {
+        document.body.classList.add('reservations-table-switching');
+    }
+
     /** Desktop: switches the fitted multi-week view on or off and remembers it. */
     setWeekFit(enabled) {
+        this.startTableSwitch();
         const intervalInput = this.tableFilter.querySelector('input[name="interval"]');
         if (enabled) {
             setLocalStorageItemIfNotExists('reservations-interval-before-fit', intervalInput.value, true);

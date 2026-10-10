@@ -465,6 +465,11 @@ body.reservations-week-layout #reservation-table tbody {
     overscroll-behavior-y: contain;
 }
 
+/* While switching between normal and week view (startTableSwitch) */
+body.reservations-table-switching #table-ajax {
+    visibility: hidden;
+}
+
 /* Touch, normal view: swiping up hides navbar, then filter row (stepNormalViewChrome) */
 body.reservations-hide-filter #table-filter,
 body.reservations-hide-nav > nav.navbar,
