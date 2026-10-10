@@ -55,7 +55,10 @@ final class ReservationPopoverEscapingTest extends TestCase
         // entity and becomes text when Bootstrap assigns it via innerHTML.
         $popoverHtml = htmlspecialchars_decode($rendered, \ENT_QUOTES | \ENT_HTML5);
 
-        self::assertSame(11, substr_count($popoverHtml, '&lt;img src=x onerror=alert(1)&gt;'));
+        // The e-mail address appears twice, as mailto: target and as link text
+        self::assertSame(12, substr_count($popoverHtml, '&lt;img src=x onerror=alert(1)&gt;'));
+        // The tel: target drops spaces and brackets, but stays escaped as well
+        self::assertStringContainsString("href='tel:&lt;imgsrc=xonerror=alert1&gt;'", $popoverHtml);
         self::assertStringContainsString('<i>', $popoverHtml);
         self::assertStringNotContainsString($payload, $popoverHtml);
     }

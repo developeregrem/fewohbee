@@ -31,12 +31,16 @@
                 {% if showReservations or showReservationsRO %}
                 <a class="navbar-brand" href="{{ path('start') }}">{{ 'nav.reservation.overview'|trans }}</a>
                 {% endif %}
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>                
-            
-                <!-- Collect the nav links, forms, and other content for toggling -->
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                {# Below xl (lg on touch screens) the links slide in from the side (offcanvas); notifications and
+                   the user menu stay in the bar, see "Main navigation" in app.css #}
+                <div class="offcanvas offcanvas-end main-nav-offcanvas" tabindex="-1" id="navbarSupportedContent" data-controller="main-nav" aria-labelledby="navbarSupportedContentLabel">
+                    <div class="offcanvas-header">
+                        <h5 class="offcanvas-title" id="navbarSupportedContentLabel">{{ 'nav.menu'|trans }}</h5>
+                        <button type="button" class="btn btn-link text-body p-1 ms-auto" data-bs-dismiss="offcanvas" aria-label="{{ 'button.close'|trans }}">
+                            <i class="fas fa-xmark fa-lg"></i>
+                        </button>
+                    </div>
+                    <div class="offcanvas-body">
                     {% set showHousekeeping = is_granted('ROLE_OPERATIONS') %}
                     {% set showOperations = showHousekeeping %}
                     {% set showCustomers = is_granted('ROLE_CUSTOMERS') %}
@@ -49,7 +53,7 @@
                         {% if showOperations %}
                         <li class="nav-item dropdown{% if activeRouteName starts with "operations." %} active{% endif %}">
                             <a class="nav-link dropdown-toggle" href="#" id="operationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                {{ 'nav.operations'|trans }}
+                                <i class="fas fa-concierge-bell fa-fw me-2 d-xl-none"></i>{{ 'nav.operations'|trans }}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="operationsDropdown">
                                 <a class="dropdown-item{% if activeRouteName starts with "operations.frontdesk" %} active{% endif %}" href="{{ path('operations.frontdesk') }}">{{ 'nav.operations.frontdesk'|trans }}</a>
@@ -59,18 +63,18 @@
                         </li>
                         {% endif %}
                         {% if showCustomers %}
-                        <li class="nav-item{% if activeRouteName starts with "customers" %} active{% endif %}"><a class="nav-link" href="{{ path('customers.overview') }}">{{ 'nav.customers'|trans }}</a></li>
+                        <li class="nav-item{% if activeRouteName starts with "customers" %} active{% endif %}"><a class="nav-link" href="{{ path('customers.overview') }}"><i class="fas fa-users fa-fw me-2 d-xl-none"></i>{{ 'nav.customers'|trans }}</a></li>
                         {% endif %}
                         {% if showInvoices %}
-                        <li class="nav-item{% if activeRouteName starts with "invoices" %} active{% endif %}"><a class="nav-link" href="{{ path('invoices.overview') }}">{{ 'nav.invoices'|trans }}</a></li>
+                        <li class="nav-item{% if activeRouteName starts with "invoices" %} active{% endif %}"><a class="nav-link" href="{{ path('invoices.overview') }}"><i class="fas fa-file-invoice fa-fw me-2 d-xl-none"></i>{{ 'nav.invoices'|trans }}</a></li>
                         {% endif %}
                         {% if showRegistrationbook %}
-                        <li class="nav-item{% if activeRouteName starts with "registrationbook" %} active{% endif %}"><a class="nav-link" href="{{ path('registrationbook.overview') }}">{{ 'nav.registrationbook'|trans }}</a></li>
+                        <li class="nav-item{% if activeRouteName starts with "registrationbook" %} active{% endif %}"><a class="nav-link" href="{{ path('registrationbook.overview') }}"><i class="fas fa-book fa-fw me-2 d-xl-none"></i>{{ 'nav.registrationbook'|trans }}</a></li>
                         {% endif %}
                         {% if showStatistics %}
                         <li class="nav-item dropdown{% if activeRouteName starts with "statistics" %} active{% endif %}">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                {{ 'nav.statistics'|trans }}
+                                <i class="fas fa-chart-bar fa-fw me-2 d-xl-none"></i>{{ 'nav.statistics'|trans }}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 <a class="dropdown-item{% if activeRouteName starts with "statistics.utilization" %} active{% endif %}" href="{{ path('statistics.utilization') }}">{{ 'nav.utilization'|trans }}</a>
@@ -82,7 +86,7 @@
                         {% endif %}
                         {% if showCashjournal %}
                         <li class="nav-item{% if activeRouteName starts with "journal" %} active{% endif %}">
-                            <a class="nav-link" href="{{ path('journal.overview') }}">{{ 'nav.journal'|trans }}</a>
+                            <a class="nav-link" href="{{ path('journal.overview') }}"><i class="fas fa-book-open fa-fw me-2 d-xl-none"></i>{{ 'nav.journal'|trans }}</a>
                         </li>
                         {% endif %}
                     </ul>
@@ -92,7 +96,7 @@
                         {% if is_granted('ROLE_ADMIN') %}
                             <li class="nav-item dropdown{% if activeRouteName starts with "settings" %} active{% endif %}">
                                 <a class="nav-link dropdown-toggle" href="#"  id="navbarDropdown2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-tools"></i> {{ 'nav.settings'|trans }}
+                                    <i class="fas fa-tools fa-fw me-2 me-xl-0"></i> {{ 'nav.settings'|trans }}
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown2">
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.general" %} active{% endif %}" href="{{ path('settings.general.index') }}"><i class="fas fa-cog text-secondary"></i> {{ 'app_settings.nav.label'|trans }}</a>
@@ -117,6 +121,10 @@
                                 </div>
                             </li>
                         {% endif %}
+                    </ul>
+                    </div>
+                </div>
+                <ul class="navbar-nav navbar-quick flex-row align-items-center ms-auto ms-xl-0">
                         {% set notifications = notification_summary() %}
                         <li class="nav-item dropdown" data-controller="notifications"
                             data-notifications-url-value="{{ path('notifications.panel') }}">
@@ -125,7 +133,6 @@
                                data-action="show.bs.dropdown->notifications#loadPanelAction"
                                aria-label="{{ 'notification.title'|trans }}">
                                 <i class="fas fa-bell"></i>
-                                <span class="d-xl-none">{{ 'notification.title'|trans }}</span>
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill {{ notifications.badgeClassOnPrimary }}{{ notifications.isEmpty ? ' d-none' : '' }}"
                                       data-notifications-badge>
                                     <span data-notifications-count>{{ notifications.total }}</span>
@@ -140,8 +147,9 @@
                             </div>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown3" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                {{ 'nav.welcome'|trans({ '%user%': app.user.getUsername() }) }}
+                            <a class="nav-link dropdown-toggle ms-3 ms-xl-0" href="#" id="navbarDropdown3" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ 'nav.profile'|trans }}">
+                                <i class="fas fa-user-circle d-xl-none"></i>
+                                <span class="d-none d-xl-inline">{{ 'nav.welcome'|trans({ '%user%': app.user.getUsername() }) }}</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown3">
                                 <a class="dropdown-item" href="{{ path('profile') }}"><i class="fas fa-user"></i> {{ 'nav.profile'|trans }}</a>
@@ -154,8 +162,10 @@
                                 <a class="dropdown-item" href="{{ path('logout') }}"><i class="fas fa-sign-out-alt"></i> {{ 'nav.logout'|trans }}</a>
                             </div>
                         </li>
-                    </ul>
-                </div>
+                </ul>
+                <button class="navbar-toggler ms-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-label="{{ 'nav.menu'|trans }}">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
             </div>
         </nav>
     {% endblock %}

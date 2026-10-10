@@ -83,6 +83,7 @@
 
 <div class="table-responsive js-fit-vh" data-min-height="200">
     <table class="table table-hover table-bordered table-reservation m-0 table-sticky mb-2" id="reservation-table"
+           data-calendar-week-label="{{ 'reservation.table.calendarweek'|trans }}"
            data-reservation-move-token="{{ csrf_token('reservation_move') }}"
            style="--reservation-name-col: {{ nameColumnChars }}ch; --reservation-day-count: {{ grid.dayColumns|length }};">
         {# Explicit columns because the layout is fixed: without them the month

@@ -49,6 +49,14 @@
     --bs-navbar-active-color: rgba(255, 255, 255, 1);
     --bs-navbar-brand-color: rgba(255, 255, 255, 1);
     --bs-navbar-brand-hover-color: rgba(255, 255, 255, 1);
+    /* Menu button in white like the rest of the bar, without a frame */
+    --bs-navbar-toggler-border-color: transparent;
+    --bs-navbar-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* No thick focus ring around the menu button after a tap; keyboard focus keeps it */
+.navbar.bg-primary .navbar-toggler:focus:not(:focus-visible) {
+    box-shadow: none;
 }
 
 [data-bs-theme="dark"] .navbar.bg-primary {
@@ -58,6 +66,124 @@
     --bs-navbar-brand-color: rgba(var(--bs-body-color-rgb), 1);
     --bs-navbar-brand-hover-color: rgba(var(--bs-body-color-rgb), 1);
     --bs-navbar-toggler-border-color: rgba(var(--bs-body-color-rgb), 0.2);
+}
+
+/*
+ * Main navigation: below xl the links slide in from the side (offcanvas, base.html.twig) on
+ * the page's own colours instead of the blue bar; notifications and the user menu stay in
+ * the bar (.navbar-quick), so their dropdowns float instead of opening inline. On touch
+ * screens main_nav_controller.js lowers the breakpoint to lg, so a tablet held sideways
+ * keeps the full bar. The rules below are tied to the expand class in use.
+ */
+.main-nav-offcanvas {
+    --bs-offcanvas-width: min(20rem, 85vw);
+}
+
+.navbar-quick {
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+}
+
+@media (max-width: 1199.98px) {
+    .navbar.navbar-expand-xl .main-nav-offcanvas {
+        --bs-navbar-color: var(--bs-body-color);
+        --bs-navbar-hover-color: var(--bs-primary);
+        --bs-navbar-active-color: var(--bs-primary);
+        color: var(--bs-body-color);
+    }
+
+    .navbar.navbar-expand-xl .main-nav-offcanvas .nav-item.active > .nav-link {
+        color: var(--bs-primary);
+        font-weight: 500;
+    }
+
+    .navbar.navbar-expand-xl .main-nav-offcanvas .dropdown-menu {
+        border: 0;
+        box-shadow: none;
+        padding-top: 0;
+        padding-left: 1.75rem;
+    }
+
+    /* Brand, quick bar and menu button share one line; a long page title gives way */
+    .navbar.navbar-expand-xl > .container-fluid {
+        flex-wrap: nowrap;
+    }
+
+    .navbar.navbar-expand-xl .navbar-brand {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .navbar.navbar-expand-xl .navbar-quick .nav-item {
+        position: relative;
+    }
+
+    .navbar.navbar-expand-xl .navbar-quick .dropdown-menu {
+        position: absolute;
+        right: 0;
+        left: auto;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .navbar.navbar-expand-lg .main-nav-offcanvas {
+        --bs-navbar-color: var(--bs-body-color);
+        --bs-navbar-hover-color: var(--bs-primary);
+        --bs-navbar-active-color: var(--bs-primary);
+        color: var(--bs-body-color);
+    }
+
+    .navbar.navbar-expand-lg .main-nav-offcanvas .nav-item.active > .nav-link {
+        color: var(--bs-primary);
+        font-weight: 500;
+    }
+
+    .navbar.navbar-expand-lg .main-nav-offcanvas .dropdown-menu {
+        border: 0;
+        box-shadow: none;
+        padding-top: 0;
+        padding-left: 1.75rem;
+    }
+
+    /* Brand, quick bar and menu button share one line; a long page title gives way */
+    .navbar.navbar-expand-lg > .container-fluid {
+        flex-wrap: nowrap;
+    }
+
+    .navbar.navbar-expand-lg .navbar-brand {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .navbar.navbar-expand-lg .navbar-quick .nav-item {
+        position: relative;
+    }
+
+    .navbar.navbar-expand-lg .navbar-quick .dropdown-menu {
+        position: absolute;
+        right: 0;
+        left: auto;
+    }
+}
+
+/* Touch screens between lg and xl (a tablet held sideways): full bar; the links wrap
+   between page title and quick bar if needed, the side menu's icons and divider stay hidden */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .navbar.navbar-expand-lg .main-nav-offcanvas {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .navbar.navbar-expand-lg .offcanvas-body,
+    .navbar.navbar-expand-lg .offcanvas-body .navbar-nav {
+        flex-wrap: wrap;
+    }
+
+    .navbar.navbar-expand-lg .main-nav-offcanvas .d-xl-none {
+        display: none !important;
+    }
 }
 
 [data-bs-theme="dark"] .btn-secondary {
@@ -266,9 +392,315 @@ body {
     width: calc(var(--reservation-name-col, 8ch) + 1.5rem);
 }
 
+/* Week view (initWeekView in reservations_controller.js):
+   the table is squeezed to the screen width, so a horizontal swipe never
+   competes with scrolling the table sideways. */
+body.reservations-week-layout #reservation-table {
+    width: 100%;
+}
+
+/* Rooms are stretched to fill the screen in the normal and the week view
+   (stretchRoomRows), keep the bars level with the room names */
+#reservation-table tbody td {
+    vertical-align: middle;
+}
+
+/* --week-bar-height is set per row by stretchRoomRows; the line height centres
+   the text (padding 3px and border 1px on each side) */
+#reservation-table tr[style*="--week-bar-height"] .reservation-inner {
+    height: var(--week-bar-height);
+    line-height: calc(var(--week-bar-height) - 8px);
+}
+
+/* Single-row header (compactWeekHeader) replaces the regular header rows
+   in the week view; the normal view keeps its header as configured */
+#reservation-table thead tr.table-days-compact {
+    display: none;
+}
+
+body.reservations-week-layout #reservation-table thead tr.table-days-compact {
+    display: table-row;
+}
+
+body.reservations-week-layout #reservation-table thead tr:not(.table-days-compact) {
+    display: none !important;
+}
+
+.table-reservation .table-days-compact > th {
+    position: relative;
+    /* Day columns are about 40px wide on a phone: the date only fits with
+       less padding and a smaller font, and must never widen the table */
+    /* Room at the top for two rows of calendar accent bars (3px each, see
+       getCalendarAccentMarkerStyle) above the centred text */
+    padding: 8px 2px 4px;
+    font-size: .75rem;
+    overflow: hidden;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+/* With a mouse there is room for the normal header size; fittingWeeks()
+   measures in whatever font this sets */
+body.reservations-week-fit .table-reservation .table-days-compact > th {
+    font-size: .875rem;
+}
+
+/* Weekday above the date (fitCompactHeader shortens it on narrow columns) */
+.table-days-compact .reservations-weekday {
+    display: block;
+}
+
+/* The sticky header drew its top line on the first row only (the month row),
+   which the table settings or the week view may hide; the scroll container
+   supplies it instead, since the day cells may carry inline accent shadows
+   that a cell rule would override. The first row then keeps only its bottom line. */
+.table-responsive.js-fit-vh:has(> #reservation-table) {
+    border-top: 1px solid var(--bs-border-color);
+}
+
+#reservation-table.table-sticky thead tr:first-child td {
+    box-shadow: inset 0 -1px 0 var(--bs-border-color);
+}
+
+/* Week view: the FewohBee logo as a faint grey watermark behind the rooms.
+   A pseudo-element, since a filter cannot reach a background image; it sits
+   on the container around the scrolling table so it stays put. The free day
+   cells turn transparent so it shows between the bars. */
+body.reservations-week-layout #table-ajax {
+    position: relative;
+}
+
+body.reservations-week-layout #table-ajax::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--week-watermark) center / auto 50% no-repeat;
+    filter: grayscale(1);
+    opacity: .04;
+    pointer-events: none;
+}
+
+body.reservations-week-layout #table-ajax > * {
+    position: relative;
+    z-index: 1;
+}
+
+body.reservations-week-layout #reservation-table tbody {
+    --bs-table-bg: transparent;
+}
+
+/* Swiping down on the table brings filter row and navbar back; it must not reach
+   the browser's pull-to-refresh */
+#table-ajax .js-fit-vh {
+    overscroll-behavior-y: contain;
+}
+
+/* While switching between normal and week view (startTableSwitch) */
+body.reservations-table-switching #table-ajax {
+    visibility: hidden;
+}
+
+/* Touch, normal view: swiping up hides navbar, then filter row (stepNormalViewChrome) */
+body.reservations-hide-filter #table-filter,
+body.reservations-hide-nav > nav.navbar,
+body.reservations-hide-nav #flash-message-container {
+    display: none !important;
+}
+
+body.reservations-week-focus > nav.navbar,
+body.reservations-week-focus #table-filter,
+body.reservations-week-focus #flash-message-container,
+body.reservations-week-fit > nav.navbar,
+body.reservations-week-fit #table-filter,
+body.reservations-week-fit #flash-message-container {
+    display: none !important;
+}
+
+/* Touch screens: a slimmer filter row above the reservation table, so the rooms get
+   more of the screen. Materia's fields are 56px tall; desktop keeps them as they are. */
+@media not all and (hover: hover) and (pointer: fine) {
+    /* Slimmer navbar (82px with Materia's padding and 24px brand) */
+    body > nav.navbar {
+        padding-top: .25rem;
+        padding-bottom: .25rem;
+    }
+
+    body > nav.navbar .navbar-brand {
+        font-size: 1.125rem;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    body > nav.navbar .navbar-toggler {
+        padding: .125rem .5rem;
+    }
+
+    /* With less padding the bell's badge (translate-middle on the link's corner) would
+       stick out above the bar; keep it inside */
+    body > nav.navbar [data-notifications-badge] {
+        top: .6rem !important;
+        font-size: .65em;
+    }
+
+    .container-fluid.mt-3:has(> #flash-message-container) {
+        margin-top: .5rem !important;
+    }
+
+    #table-filter .form-control,
+    #table-filter .form-select {
+        padding-top: .25rem;
+        padding-bottom: .25rem;
+        min-height: 0;
+        height: auto;
+    }
+
+    #table-filter .mb-2 {
+        margin-bottom: .25rem !important;
+    }
+
+    /* Tighter spacing, so the filter row fits one line on a phone held sideways */
+    #table-filter .js-shift-date {
+        padding-left: .5rem !important;
+        padding-right: .5rem !important;
+    }
+
+    #table-filter .vr {
+        margin-left: .5rem !important;
+        margin-right: .5rem !important;
+    }
+
+    #table-filter .me-4 {
+        margin-right: .75rem !important;
+    }
+
+    /* The column of the inline add button is empty here unless there are conflicts */
+    #table-filter > .row > .col-auto:not(:has(> a)) {
+        display: none;
+    }
+
+    #table-filter + * + .row.mt-2,
+    #table-filter ~ .row.mt-2 {
+        margin-top: .25rem !important;
+    }
+
+    /* Header rows of the normal view: less padding; the weekday and date rows keep
+       6px at the top for two rows of calendar accent bars (3px each) */
+    /* !important: the month and week cells carry Bootstrap's p-1 */
+    #reservation-table thead tr:not(.table-days-compact) > * {
+        padding-top: .125rem !important;
+        padding-bottom: .125rem !important;
+        line-height: 1.2;
+    }
+
+    #reservation-table thead tr.table-weekdays > *,
+    #reservation-table thead tr.table-days > * {
+        padding-top: 6px !important;
+    }
+}
+
+/* New reservation button on touch screens, phones and tablets alike (Reservations/index.html.twig):
+   round, at the bottom right above the table, in place of the button in the filter row, and
+   also in the full-screen week view. Same touch test as isDesktopWeekMode(). */
+.reservations-fab {
+    display: none;
+}
+
+@media not all and (hover: hover) and (pointer: fine) {
+    .reservations-fab {
+        display: inline-block;
+    }
+
+    .reservations-add-inline {
+        display: none;
+    }
+}
+
+.reservations-fab {
+    position: fixed;
+    right: 1rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    z-index: 1030;
+    width: 3.5rem;
+    height: 3.5rem;
+    padding: 0;
+    /* Glass in the manner of iOS 26: nearly transparent, the content behind it
+       blurred, a fine light edge instead of a hard border and a soft shadow. Theme
+       colours only, so it follows light and dark mode and a swapped theme. */
+    border-radius: 50%;
+    border: 1px solid rgba(var(--bs-body-bg-rgb), .6);
+    background-color: rgba(var(--bs-body-bg-rgb), .25);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(12px) saturate(180%);
+    box-shadow: var(--bs-box-shadow), inset 0 1px 1px rgba(var(--bs-body-bg-rgb), .7);
+    color: var(--bs-secondary-color);
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.reservations-fab:hover,
+.reservations-fab:active {
+    border-color: rgba(var(--bs-body-bg-rgb), .6);
+    background-color: rgba(var(--bs-body-bg-rgb), .45);
+    color: var(--bs-body-color);
+}
+
+/* Desktop week view: paging arrows at the screen edges and a close button,
+   shown only while the mouse moves (reservations-week-pointer) */
+.reservations-week-controls {
+    display: none;
+}
+
+body.reservations-week-fit .reservations-week-controls {
+    display: block;
+}
+
+.reservations-week-controls > .btn {
+    position: fixed;
+    z-index: 1030;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+}
+
+body.reservations-week-pointer .reservations-week-controls > .btn {
+    opacity: .85;
+    pointer-events: auto;
+}
+
+.reservations-week-controls > .btn:hover {
+    opacity: 1;
+}
+
+.reservations-week-prev,
+.reservations-week-next {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.reservations-week-prev {
+    left: .5rem;
+}
+
+.reservations-week-next {
+    right: .5rem;
+}
+
+.reservations-week-close {
+    top: .5rem;
+    right: .5rem;
+}
+
 /* Right border on the last cell of each row */
 #reservation-table tbody tr > :last-child {
     border-right: 1px solid var(--feb-border-muted) !important;
+}
+
+/* Long press starts a selection on touch screens (initCellSelection):
+   no text selection or iOS callout menu on the free cells */
+.table-reservation .td-empty, .table-reservation-year .reservation-yearly-parent {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .table-reservation .ui-selecting, .table-reservation-year .ui-selecting {
@@ -779,7 +1211,10 @@ body {
    Their accent lines (box-shadow) need no equivalent override - box-shadow
    and background-color are different properties and never fight for
    precedence the way two background-colors do. */
-.reservation-table-weekend.holiday-info {
+.reservation-table-weekend.holiday-info,
+#reservation-table .holiday-info {
+    /* The second selector covers holidays on weekdays: there the cell only has
+       Bootstrap's translucent bg-info bg-opacity-25, and the bars showed through */
     background-color: color-mix(in srgb, rgb(var(--bs-info-rgb)) 25%, var(--bs-body-bg)) !important;
 }
 

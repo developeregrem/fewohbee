@@ -18,6 +18,10 @@
                 <source>nav.user.add</source>
                 <target>Benutzer anlegen</target>
             </trans-unit>
+            <trans-unit id="nav.menu">
+                <source>nav.menu</source>
+                <target>Menü</target>
+            </trans-unit>
             <trans-unit id="nav.logout">
                 <source>nav.logout</source>
                 <target>Abmelden</target>

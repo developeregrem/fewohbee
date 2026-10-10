@@ -197,8 +197,9 @@ class ReservationServiceController extends AbstractController
 
         if (null == $interval) {
             $interval = 30;
-        } elseif ($interval < 8) {
-            $interval = 8;
+        } elseif ($interval < 6) {
+            // 6 is one week, the week view: buildDays() is inclusive, so Monday to Sunday
+            $interval = 6;
         } elseif ($interval > 180) {
             $interval = 180;
         } else {
