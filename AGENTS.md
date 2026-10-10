@@ -322,6 +322,12 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   into partials/macros. Use the existing delete popover rather than `confirm()`.
 - Bootstrap/Materia is vendored under `public/resources/` and loaded by `templates/base.html.twig`.
   Project CSS lives in `assets/styles/app.css`. Production deploys need `asset-map:compile`.
+- Stay close to standard Bootstrap so the theme can be swapped without touching templates. Build
+  layouts from Bootstrap components and utilities (grid, spacing, flex, `list-group`, responsive
+  `d-*`/`order-*`) first. Add CSS to `app.css` only when Bootstrap cannot express the result; keep
+  it small and use theme variables (`var(--bs-*)`) instead of fixed colours.
+- Don't depend on theme quirks: Materia's `secondary` is near white, so use `text-body-secondary`
+  for muted text, not `text-secondary`.
 
 ## 13. Before reporting completion
 
