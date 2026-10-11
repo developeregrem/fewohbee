@@ -95,7 +95,7 @@ final class PriceRuleControllerTest extends WebTestCase
         $form = $client->request('GET', '/settings/prices/rules/limits')->filter('form')->form();
         $form['price_change_limits[maxDecrease]'] = '20';
         $form['price_change_limits[maxIncrease]'] = '40';
-        $form['price_change_limits[rounding]'] = PriceRounding::CENT->value;
+        $form['price_change_limits[rounding]'] = PriceRounding::NONE->value;
 
         try {
             $client->submit($form);
@@ -105,10 +105,10 @@ final class PriceRuleControllerTest extends WebTestCase
             $settings = $this->em()->getRepository(AppSettings::class)->findOneBy([]);
             self::assertSame(-20, $settings?->getPriceChangeMinPercent());
             self::assertSame(40, $settings->getPriceChangeMaxPercent());
-            self::assertSame(PriceRounding::CENT, $settings->getPriceChangeRounding());
+            self::assertSame(PriceRounding::NONE, $settings->getPriceChangeRounding());
         } finally {
             $settings = $this->em()->getRepository(AppSettings::class)->findOneBy([]);
-            $settings?->setPriceChangeLimits(-30, 50)->setPriceChangeRounding(PriceRounding::EURO);
+            $settings?->setPriceChangeLimits(-30, 50)->setPriceChangeRounding(PriceRounding::WHOLE);
             $this->em()->flush();
         }
     }

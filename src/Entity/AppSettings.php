@@ -100,8 +100,8 @@ class AppSettings
     #[ORM\Column(type: Types::SMALLINT, options: ['default' => 50])]
     private int $priceChangeMaxPercent = 50;
 
-    #[ORM\Column(type: Types::STRING, length: 10, enumType: PriceRounding::class, options: ['default' => 'euro'])]
-    private PriceRounding $priceChangeRounding = PriceRounding::EURO;
+    #[ORM\Column(type: Types::STRING, length: 10, enumType: PriceRounding::class, options: ['default' => 'whole'])]
+    private PriceRounding $priceChangeRounding = PriceRounding::WHOLE;
 
     /**
      * Host names the MCP endpoint answers for (DNS rebinding protection), normalized by McpSettings.

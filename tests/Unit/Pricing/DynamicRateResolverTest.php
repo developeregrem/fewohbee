@@ -183,7 +183,7 @@ final class DynamicRateResolverTest extends TestCase
         $settings = new AppSettings();
 
         self::assertSame('49.00', $this->resolver([], settings: $settings)->apply('44.00', $adjustment));
-        $settings->setPriceChangeRounding(PriceRounding::CENT);
+        $settings->setPriceChangeRounding(PriceRounding::NONE);
         self::assertSame('49.28', $this->resolver([], settings: $settings)->apply('44.00', $adjustment));
     }
 
