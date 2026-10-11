@@ -80,7 +80,7 @@ class ReservationRepository extends ServiceEntityRepository
             // ->andWhere('u.invoice IS NULL')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
-            ->addOrderBy('u.endDate', 'ASC');
+            ->addOrderBy('u.endDate', \SortDirection::Ascending);
         $this->applyBlockingStatusFilter($qb, 'u');
         $q = $qb->getQuery();
         //        } else {
@@ -133,7 +133,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->andWhere('r.isConflictIgnored = 0')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
-            ->addOrderBy('r.startDate', 'ASC');
+            ->addOrderBy('r.startDate', \SortDirection::Ascending);
 
         if ($subsidiary instanceof Subsidiary) {
             $qb->andWhere('a.object = :subsidiary')
@@ -168,7 +168,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->join('r.invoices', 'i')
             ->andWhere('i.id IN (:ids)')
             ->setParameter('ids', $invoiceIds, ArrayParameterType::INTEGER)
-            ->orderBy('r.startDate', 'ASC')
+            ->orderBy('r.startDate', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
 
@@ -201,7 +201,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->setParameter('app', $apartment->getId())
-            ->addOrderBy('u.endDate', 'ASC');
+            ->addOrderBy('u.endDate', \SortDirection::Ascending);
 
         $this->applyBlockingStatusFilter($qb, 'u', $statusMode);
 
@@ -231,7 +231,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->setParameter('app', $apartment->getId())
-            ->addOrderBy('u.endDate', 'ASC');
+            ->addOrderBy('u.endDate', \SortDirection::Ascending);
 
         $this->applyBlockingStatusFilter($qb, 'u');
 
@@ -305,7 +305,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->setParameter('from', $from)
             ->setParameter('to', $toExclusive)
             ->setParameter('canceled', ReservationStatus::CODE_CANCELED_NOSHOW)
-            ->orderBy('u.endDate', 'ASC');
+            ->orderBy('u.endDate', \SortDirection::Ascending);
         if ($subsidiary instanceof Subsidiary) {
             $qb->andWhere('a.object = :subsidiary')->setParameter('subsidiary', $subsidiary);
         }
@@ -393,8 +393,8 @@ class ReservationRepository extends ServiceEntityRepository
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->setParameter('apps', $apartmentIds, ArrayParameterType::INTEGER)
-            ->addOrderBy('u.startDate', 'ASC')
-            ->addOrderBy('u.endDate', 'ASC');
+            ->addOrderBy('u.startDate', \SortDirection::Ascending)
+            ->addOrderBy('u.endDate', \SortDirection::Ascending);
 
         $this->applyBlockingStatusFilter($qb, 'u', $statusMode);
 
@@ -409,7 +409,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->where('u.booker = :booker')
             // ->andWhere('u.invoice IS NULL')
             ->setParameter('booker', $customer->getId())
-            ->addOrderBy('u.endDate', 'ASC')
+            ->addOrderBy('u.endDate', \SortDirection::Ascending)
             ->getQuery();
 
         $reservations = null;
@@ -429,8 +429,8 @@ class ReservationRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('u')
             ->where('u.bookingGroupUuid = :bookingGroupUuid')
             ->setParameter('bookingGroupUuid', $bookingGroupUuid, 'uuid')
-            ->orderBy('u.startDate', 'ASC')
-            ->addOrderBy('u.id', 'ASC')
+            ->orderBy('u.startDate', \SortDirection::Ascending)
+            ->addOrderBy('u.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -504,7 +504,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->andWhere('u.isConflictIgnored = 0')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
-            ->addOrderBy('u.endDate', 'ASC');
+            ->addOrderBy('u.endDate', \SortDirection::Ascending);
 
         if ('all' !== $objectId) {
             $qb->andWhere('a.object = :objId')
@@ -581,7 +581,7 @@ class ReservationRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('u')
             ->where('u.isConflict = 1')
             ->andWhere('u.isConflictIgnored = 0')
-            ->orderBy('u.startDate', 'ASC')
+            ->orderBy('u.startDate', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -626,7 +626,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->where('u.calendarSyncImport IS NOT NULL')
             ->andWhere('u.booker IS NULL')
             ->andWhere('u.isConflict = 0')
-            ->orderBy('u.startDate', 'ASC')
+            ->orderBy('u.startDate', \SortDirection::Ascending)
             ->setFirstResult($offset)
             ->setMaxResults($perPage)
             ->getQuery()
@@ -649,7 +649,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->where('r.booker = :customer')
             ->orWhere(':customer MEMBER OF r.customers')
             ->setParameter('customer', $customer)
-            ->orderBy('r.startDate', 'DESC')
+            ->orderBy('r.startDate', \SortDirection::Descending)
             ->distinct()
             ->getQuery()
             ->getResult();
@@ -670,7 +670,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->setParameter('canceled', InvoiceStatus::CANCELED->value)
             ->andWhere('r.endDate >= :endFrom')
             ->setParameter('endFrom', $endFrom->format('Y-m-d'))
-            ->orderBy('r.id', 'ASC')
+            ->orderBy('r.id', \SortDirection::Ascending)
             ->getQuery()
             ->getSingleColumnResult();
 

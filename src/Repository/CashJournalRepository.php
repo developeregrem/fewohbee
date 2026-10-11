@@ -19,7 +19,7 @@ class CashJournalRepository extends EntityRepository
             ->createQueryBuilder('cj')
             ->select('cj.cashYear')
             ->addGroupBy('cj.cashYear')
-            ->addOrderBy('cj.cashYear', 'DESC')
+            ->addOrderBy('cj.cashYear', \SortDirection::Descending)
             ->getQuery();
 
         return $q->getResult();
@@ -32,7 +32,7 @@ class CashJournalRepository extends EntityRepository
             ->select('cj')
             ->where('cj.cashYear = :search')
             ->setParameter('search', $search)
-            ->addOrderBy('cj.cashMonth', 'DESC')
+            ->addOrderBy('cj.cashMonth', \SortDirection::Descending)
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
             ->getQuery();

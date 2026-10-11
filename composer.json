@@ -12,7 +12,7 @@
         "doctrine/doctrine-bundle": "^3.2",
         "doctrine/doctrine-fixtures-bundle": "^4.0",
         "doctrine/doctrine-migrations-bundle": "^4.0",
-        "doctrine/orm": "^3.6",
+        "doctrine/orm": "^3.7",
         "endroid/qr-code": "^6.1",
         "horstoeko/zugferd": "^1.0",
         "league/commonmark": "^2.10",

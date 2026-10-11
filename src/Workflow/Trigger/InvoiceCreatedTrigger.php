@@ -37,7 +37,7 @@ class InvoiceCreatedTrigger implements WorkflowTriggerInterface
     public function findPreviewEntities(EntityManagerInterface $em, array $config, int $limit = 20): array
     {
         return $em->getRepository(Invoice::class)->createQueryBuilder('i')
-            ->orderBy('i.date', 'DESC')
+            ->orderBy('i.date', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

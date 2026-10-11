@@ -28,7 +28,7 @@ class CashJournal
     #[ORM\Column(type: 'boolean')]
     private $isBooked;
     #[ORM\OneToMany(targetEntity: 'CashJournalEntry', mappedBy: 'cashJournal', cascade: ['remove'])]
-    #[ORM\OrderBy(['date' => 'ASC'])]
+    #[ORM\OrderBy(['date' => \SortDirection::Ascending])]
     private $cashJournalEntries;
 
     public function __construct()

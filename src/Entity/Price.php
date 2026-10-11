@@ -93,7 +93,7 @@ class Price
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isMandatoryOnline;
     #[ORM\OneToMany(targetEntity: 'App\Entity\PriceComponent', mappedBy: 'price', orphanRemoval: true, cascade: ['persist'])]
-    #[ORM\OrderBy(['sortOrder' => 'ASC', 'id' => 'ASC'])]
+    #[ORM\OrderBy(['sortOrder' => \SortDirection::Ascending, 'id' => \SortDirection::Ascending])]
     private Collection $components;
     #[ORM\ManyToOne(targetEntity: 'App\Entity\AccountingAccount')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]

@@ -36,8 +36,8 @@ class TouristTaxRepository extends ServiceEntityRepository
             ->setParameter('active', true)
             ->setParameter('start', $start->format('Y-m-d'))
             ->setParameter('end', $end->format('Y-m-d'))
-            ->orderBy('t.sortOrder', 'ASC')
-            ->addOrderBy('t.id', 'ASC');
+            ->orderBy('t.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('t.id', \SortDirection::Ascending);
 
         if (null !== $subsidiary) {
             $qb->andWhere('s.id IS NULL OR s.id = :sid')
@@ -67,8 +67,8 @@ class TouristTaxRepository extends ServiceEntityRepository
     public function findAllOrdered(): array
     {
         return $this->createQueryBuilder('t')
-            ->orderBy('t.sortOrder', 'ASC')
-            ->addOrderBy('t.id', 'ASC')
+            ->orderBy('t.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('t.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }

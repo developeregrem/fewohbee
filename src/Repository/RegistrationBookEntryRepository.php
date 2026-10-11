@@ -36,8 +36,8 @@ class RegistrationBookEntryRepository extends EntityRepository
             ->where('c.lastname LIKE :search or c.firstname LIKE :search or c.company LIKE :search or c.year LIKE :search')
             ->join('c.reservation', 'r')
             ->setParameter('search', '%'.$search.'%')
-            ->addOrderBy('c.year', 'DESC')
-            ->addOrderBy('c.date', 'DESC')
+            ->addOrderBy('c.year', \SortDirection::Descending)
+            ->addOrderBy('c.date', \SortDirection::Descending)
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
             ->getQuery();
@@ -66,7 +66,7 @@ class RegistrationBookEntryRepository extends EntityRepository
                     .'WHERE r2.endDate >= :start AND r2.endDate <= :end)')
             ->setParameter('start', $start->format('Y-m-d'))
             ->setParameter('end', $end->format('Y-m-d'))
-            ->addOrderBy('r.endDate', 'ASC')
+            ->addOrderBy('r.endDate', \SortDirection::Ascending)
             ->getQuery();
 
         return $q->getResult();

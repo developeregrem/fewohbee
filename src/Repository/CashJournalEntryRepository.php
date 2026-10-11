@@ -29,7 +29,7 @@ class CashJournalEntryRepository extends EntityRepository
             ->where('cje.cashJournal = :journal and cje.remark LIKE :search')
             ->setParameter('search', '%'.$search.'%')
             ->setParameter('journal', $journal)
-            ->addOrderBy('cje.date', 'ASC')
+            ->addOrderBy('cje.date', \SortDirection::Ascending)
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
             ->getQuery();

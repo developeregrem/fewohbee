@@ -29,6 +29,6 @@ class BankCsvProfileRepository extends ServiceEntityRepository
     public function createOrderedQueryBuilder(): QueryBuilder
     {
         return $this->createQueryBuilder('p')
-            ->orderBy('p.name', 'ASC');
+            ->orderBy('p.name', \SortDirection::Ascending);
     }
 }

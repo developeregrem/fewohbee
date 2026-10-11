@@ -51,7 +51,7 @@ class ReceiptProposalRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('p')
             ->where('p.status != :open')
             ->setParameter('open', ReceiptProposalStatus::OPEN)
-            ->orderBy('p.decidedAt', 'DESC')
+            ->orderBy('p.decidedAt', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

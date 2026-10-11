@@ -37,8 +37,8 @@ class AccountingAccountRepository extends ServiceEntityRepository
     public function findAllOrdered(?string $preset = null): array
     {
         $qb = $this->createQueryBuilder('a')
-            ->orderBy('a.sortOrder', 'ASC')
-            ->addOrderBy('a.accountNumber', 'ASC');
+            ->orderBy('a.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('a.accountNumber', \SortDirection::Ascending);
 
         if (null !== $preset) {
             $this->applyPresetScope($qb, $preset);
@@ -59,8 +59,8 @@ class AccountingAccountRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('a')
             ->andWhere('a.type IN (:types)')
             ->setParameter('types', [AccountingAccount::TYPE_REVENUE, AccountingAccount::TYPE_LIABILITY])
-            ->orderBy('a.sortOrder', 'ASC')
-            ->addOrderBy('a.accountNumber', 'ASC');
+            ->orderBy('a.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('a.accountNumber', \SortDirection::Ascending);
 
         if (null !== $preset) {
             $this->applyPresetScope($qb, $preset);
@@ -122,7 +122,7 @@ class AccountingAccountRepository extends ServiceEntityRepository
         if (null !== $preset) {
             $this->applyPresetScope($qb, $preset);
             // Preset-scoped match wins over user-created when both exist for the same number.
-            $qb->orderBy('a.chartPreset', 'DESC');
+            $qb->orderBy('a.chartPreset', \SortDirection::Descending);
         }
 
         return $qb->getQuery()->getOneOrNullResult();
@@ -143,8 +143,8 @@ class AccountingAccountRepository extends ServiceEntityRepository
     public function createOrderedQueryBuilder(?string $preset = null): QueryBuilder
     {
         $qb = $this->createQueryBuilder('a')
-            ->orderBy('a.sortOrder', 'ASC')
-            ->addOrderBy('a.accountNumber', 'ASC');
+            ->orderBy('a.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('a.accountNumber', \SortDirection::Ascending);
 
         if (null !== $preset) {
             $this->applyPresetScope($qb, $preset);
@@ -163,8 +163,8 @@ class AccountingAccountRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('a')
             ->andWhere('a.isCashAccount = false')
-            ->orderBy('a.sortOrder', 'ASC')
-            ->addOrderBy('a.accountNumber', 'ASC');
+            ->orderBy('a.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('a.accountNumber', \SortDirection::Ascending);
 
         if (null !== $preset) {
             $this->applyPresetScope($qb, $preset);
@@ -181,8 +181,8 @@ class AccountingAccountRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('a')
             ->andWhere('a.type = :type')
             ->setParameter('type', $type)
-            ->orderBy('a.sortOrder', 'ASC')
-            ->addOrderBy('a.accountNumber', 'ASC');
+            ->orderBy('a.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('a.accountNumber', \SortDirection::Ascending);
 
         if (null !== $preset) {
             $this->applyPresetScope($qb, $preset);

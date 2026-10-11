@@ -27,8 +27,8 @@ class McpToolCallLogRepository extends ServiceEntityRepository
     {
         /** @var list<McpToolCallLog> $result */
         $result = $this->createQueryBuilder('l')
-            ->orderBy('l.createdAt', 'DESC')
-            ->addOrderBy('l.id', 'DESC')
+            ->orderBy('l.createdAt', \SortDirection::Descending)
+            ->addOrderBy('l.id', \SortDirection::Descending)
             ->setFirstResult(($page - 1) * $perPage)
             ->setMaxResults($perPage)
             ->getQuery()

@@ -76,7 +76,7 @@ final class InvoicePaymentDueFormTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         // The saved dialog forwards to the invoice view, which states the date by the invoice date.
-        $header = implode(' ', $crawler->filter('.col.text-end')->each(static fn (Crawler $cell): string => $cell->text()));
+        $header = $crawler->filter('.modal-body .row.g-3 table.text-nowrap')->text();
         self::assertStringContainsString('22.09.2026', $header);
         self::assertSame('2026-09-22', $this->reload($invoice)->getPaymentDueDate()?->format('Y-m-d'));
     }

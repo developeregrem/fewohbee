@@ -40,7 +40,7 @@ class OnlineBookingCreatedTrigger implements WorkflowTriggerInterface
             ->innerJoin('r.calendarSyncImport', 'csi')
             ->where('csi IS NULL')
             ->andWhere('r.booker IS NOT NULL')
-            ->orderBy('r.reservationDate', 'DESC')
+            ->orderBy('r.reservationDate', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

@@ -28,8 +28,8 @@ class BankImportRuleRepository extends ServiceEntityRepository
             ->andWhere('r.isEnabled = true')
             ->andWhere('r.bankAccount = :account OR r.bankAccount IS NULL')
             ->setParameter('account', $bankAccount)
-            ->orderBy('r.priority', 'DESC')
-            ->addOrderBy('r.id', 'ASC')
+            ->orderBy('r.priority', \SortDirection::Descending)
+            ->addOrderBy('r.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -40,8 +40,8 @@ class BankImportRuleRepository extends ServiceEntityRepository
     public function findAllOrdered(): array
     {
         return $this->createQueryBuilder('r')
-            ->orderBy('r.priority', 'DESC')
-            ->addOrderBy('r.name', 'ASC')
+            ->orderBy('r.priority', \SortDirection::Descending)
+            ->addOrderBy('r.name', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }

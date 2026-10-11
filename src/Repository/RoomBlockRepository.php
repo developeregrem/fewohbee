@@ -36,7 +36,7 @@ class RoomBlockRepository extends ServiceEntityRepository
             ->setParameter('apartment', $apartment)
             ->setParameter('start', $start->format('Y-m-d'))
             ->setParameter('end', $end->format('Y-m-d'))
-            ->addOrderBy('b.startDate', 'ASC');
+            ->addOrderBy('b.startDate', \SortDirection::Ascending);
 
         if (null !== $ignore && null !== $ignore->getId()) {
             $qb->andWhere('b.id != :ignore')
@@ -68,7 +68,7 @@ class RoomBlockRepository extends ServiceEntityRepository
             ->setParameter('apartments', $apartments)
             ->setParameter('start', $start->format('Y-m-d'))
             ->setParameter('end', $end->format('Y-m-d'))
-            ->addOrderBy('b.startDate', 'ASC')
+            ->addOrderBy('b.startDate', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -119,9 +119,9 @@ class RoomBlockRepository extends ServiceEntityRepository
             ->andWhere('b.endDate > :periodStart')
             ->setParameter('periodStart', $periodStart->format('Y-m-d'))
             ->setParameter('periodEnd', $periodEnd->format('Y-m-d'))
-            ->addOrderBy('b.startDate', 'DESC')
-            ->addOrderBy('b.endDate', 'DESC')
-            ->addOrderBy('a.number', 'ASC');
+            ->addOrderBy('b.startDate', \SortDirection::Descending)
+            ->addOrderBy('b.endDate', \SortDirection::Descending)
+            ->addOrderBy('a.number', \SortDirection::Ascending);
 
         if (null !== $subsidiary) {
             $qb->andWhere('a.object = :subsidiary')

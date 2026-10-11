@@ -33,8 +33,8 @@ class GuestCategoryRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('gc')
             ->where('gc.active = :active')
             ->setParameter('active', true)
-            ->orderBy('gc.sortOrder', 'ASC')
-            ->addOrderBy('gc.id', 'ASC')
+            ->orderBy('gc.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('gc.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -59,8 +59,8 @@ class GuestCategoryRepository extends ServiceEntityRepository
             ->setParameter('active', true)
             ->setParameter('adult', GuestStatisticalGroup::ADULT->value)
             ->setParameter('counted', true)
-            ->orderBy('gc.sortOrder', 'ASC')
-            ->addOrderBy('gc.id', 'ASC')
+            ->orderBy('gc.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('gc.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -77,8 +77,8 @@ class GuestCategoryRepository extends ServiceEntityRepository
             ->leftJoin('gc.subsidiaries', 's')
             ->where('gc.active = :active')
             ->setParameter('active', true)
-            ->orderBy('gc.sortOrder', 'ASC')
-            ->addOrderBy('gc.id', 'ASC');
+            ->orderBy('gc.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('gc.id', \SortDirection::Ascending);
 
         if (null !== $subsidiary) {
             $qb->andWhere('s.id IS NULL OR s.id = :sid')
@@ -100,7 +100,7 @@ class GuestCategoryRepository extends ServiceEntityRepository
             ->andWhere('gc.active = :active')
             ->setParameter('g', GuestStatisticalGroup::ADULT)
             ->setParameter('active', true)
-            ->orderBy('gc.sortOrder', 'ASC')
+            ->orderBy('gc.sortOrder', \SortDirection::Ascending)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();

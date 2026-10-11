@@ -42,7 +42,7 @@ class PricePeriodRepository extends ServiceEntityRepository
             ->setParameter('prices', $priceIds)
             ->setParameter('start', $start, Types::DATE_IMMUTABLE)
             ->setParameter('end', $end, Types::DATE_IMMUTABLE)
-            ->orderBy('pp.start', 'ASC')
+            ->orderBy('pp.start', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
 

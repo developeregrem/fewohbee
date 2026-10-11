@@ -27,8 +27,8 @@ class AmenityRepository extends ServiceEntityRepository
     public function findAllGroupedByCategory(): array
     {
         $amenities = $this->createQueryBuilder('a')
-            ->orderBy('a.category', 'ASC')
-            ->addOrderBy('a.sortOrder', 'ASC')
+            ->orderBy('a.category', \SortDirection::Ascending)
+            ->addOrderBy('a.sortOrder', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
 

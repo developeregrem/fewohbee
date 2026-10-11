@@ -60,9 +60,9 @@ class DayPriceRepository extends ServiceEntityRepository
             ->setParameter('to', $toExclusive->format('Y-m-d'))
             ->join('d.subsidiary', 's')
             ->join('d.roomCategory', 'c')
-            ->orderBy('s.id', 'ASC')
-            ->addOrderBy('c.id', 'ASC')
-            ->addOrderBy('d.night', 'ASC');
+            ->orderBy('s.id', \SortDirection::Ascending)
+            ->addOrderBy('c.id', \SortDirection::Ascending)
+            ->addOrderBy('d.night', \SortDirection::Ascending);
         if (null !== $subsidiary) {
             $qb->andWhere('d.subsidiary = :subsidiary')->setParameter('subsidiary', $subsidiary);
         }

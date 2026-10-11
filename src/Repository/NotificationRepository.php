@@ -44,7 +44,7 @@ class NotificationRepository extends ServiceEntityRepository
     {
         return $this->unreadQueryBuilder($user, $roles)
             ->select('n')
-            ->orderBy('n.createdAt', 'DESC')
+            ->orderBy('n.createdAt', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

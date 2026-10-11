@@ -22,7 +22,7 @@ class BookingBatchRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('b')
             ->select('b.year')
             ->groupBy('b.year')
-            ->orderBy('b.year', 'DESC')
+            ->orderBy('b.year', \SortDirection::Descending)
             ->getQuery()
             ->getResult();
     }
@@ -32,7 +32,7 @@ class BookingBatchRepository extends ServiceEntityRepository
         $q = $this->createQueryBuilder('b')
             ->where('b.year = :year')
             ->setParameter('year', $year)
-            ->orderBy('b.month', 'DESC')
+            ->orderBy('b.month', \SortDirection::Descending)
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
             ->getQuery();
@@ -51,7 +51,7 @@ class BookingBatchRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('b')
             ->where('b.year = :year')
             ->setParameter('year', $year)
-            ->orderBy('b.month', 'ASC')
+            ->orderBy('b.month', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -59,8 +59,8 @@ class BookingBatchRepository extends ServiceEntityRepository
     public function getYoungestBatch(): ?BookingBatch
     {
         return $this->createQueryBuilder('b')
-            ->orderBy('b.year', 'DESC')
-            ->addOrderBy('b.month', 'DESC')
+            ->orderBy('b.year', \SortDirection::Descending)
+            ->addOrderBy('b.month', \SortDirection::Descending)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();

@@ -66,7 +66,7 @@ class GuestCheckInSubmittedTrigger implements ConditionalWorkflowTriggerInterfac
         /** @var list<GuestCheckIn> $checkIns */
         $checkIns = $em->getRepository(GuestCheckIn::class)->createQueryBuilder('g')
             ->where('g.firstSubmittedAt IS NOT NULL')
-            ->orderBy('g.lastSubmittedAt', 'DESC')
+            ->orderBy('g.lastSubmittedAt', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
