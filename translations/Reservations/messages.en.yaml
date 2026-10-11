@@ -83,10 +83,13 @@ reservation.table.settings.showCalendarEntries: Show calendar entries
 reservation.table.settings.subdivision: Subdivision
 reservation.table.settings.title: Table settings
 reservation.table.view.table: Table View
+reservation.table.view.week: Week View
 reservation.table.view.yearly: Annual View
 reservation.table.view.yearly.multiple.hint: >-
   This view is not optimized for rooms with multiple occupancy. Please use the
   tabular view.
+reservation.table.week.next: Next
+reservation.table.week.previous: Previous
 reservation.table.weekday.monday: Mon
 reservation.table.weekday.tuesday: Tue
 reservation.table.weekday.wednesday: Wed
