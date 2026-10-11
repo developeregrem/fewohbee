@@ -9,7 +9,7 @@ parameters:
     roomCategoryImagePublicDirectory: 'resources/images/room-categories'
     defaultCustomFontDirectory: '%kernel.project_dir%/var/storage/fonts'
     customFontDirectory: '%env(default:defaultCustomFontDirectory:CUSTOM_FONT_DIR)%'
-    version: '4.12.0'
+    version: '4.13.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     mailEnabled: '%env(bool:default:default_mail_enabled:MAIL_ENABLED)%'
     default_mailcopy: 'true'
