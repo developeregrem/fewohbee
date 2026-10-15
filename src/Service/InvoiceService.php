@@ -1024,7 +1024,7 @@ class InvoiceService
             $invoice->setCity($address->getCity());
             $invoice->setCountry($address->getCountry());
             $invoice->setPhone($address->getPhone());
-            $invoice->setEmail($address->getEmail());
+            $invoice->setEmail($address->getEffectiveInvoiceEmail());
             $invoice->setBuyerVatId($address->getBuyerVatId());
             $invoice->setBuyerReference($address->getBuyerReference());
             $invoice->setCustomerIBAN($address->getCustomerIBAN());

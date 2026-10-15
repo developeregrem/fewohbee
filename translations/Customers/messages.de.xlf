@@ -182,6 +182,14 @@
                 <source>customer.buyerVatId</source>
                 <target>USt-IdNr. (Käufer)</target>
             </trans-unit>
+            <trans-unit id="customer.invoiceEmail.label">
+                <source>customer.invoiceEmail.label</source>
+                <target>E-Mail für Rechnungen</target>
+            </trans-unit>
+            <trans-unit id="customer.invoiceEmail.placeholder">
+                <source>customer.invoiceEmail.placeholder</source>
+                <target>nur, wenn abweichend</target>
+            </trans-unit>
             <trans-unit id="customer.buyerReference.label">
                 <source>customer.buyerReference.label</source>
                 <target>Kundenreferenz</target>

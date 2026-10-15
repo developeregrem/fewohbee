@@ -47,6 +47,8 @@ customer.search.addresses: Search addresses ...
 customer.template: Template
 customer.zip: Zip code
 customer.buyerVatId: VAT ID (Buyer)
+customer.invoiceEmail.label: Email for invoices
+customer.invoiceEmail.placeholder: only if different
 customer.buyerReference.label: Customer Reference
 customer.buyerReference.placeholder: e.g. Leitweg-ID
 customer.buyerReference.hint: >-

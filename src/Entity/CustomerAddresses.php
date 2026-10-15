@@ -36,6 +36,10 @@ class CustomerAddresses
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
     private $email;
 
+    /** Separate recipient for invoices; empty means invoices go to the regular email. */
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $invoiceEmail = null;
+
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $buyerVatId = null;
 
@@ -304,6 +308,33 @@ class CustomerAddresses
     public function getEmail()
     {
         return $this->email;
+    }
+
+    public function getInvoiceEmail(): ?string
+    {
+        return $this->invoiceEmail;
+    }
+
+    public function setInvoiceEmail(?string $invoiceEmail): static
+    {
+        $invoiceEmail = null !== $invoiceEmail ? trim($invoiceEmail) : null;
+        $this->invoiceEmail = '' !== $invoiceEmail ? $invoiceEmail : null;
+
+        return $this;
+    }
+
+    /**
+     * The address invoices are sent to: the invoice email if one is set, otherwise the
+     * regular email. Null when neither is filled in.
+     */
+    public function getEffectiveInvoiceEmail(): ?string
+    {
+        if (null !== $this->invoiceEmail) {
+            return $this->invoiceEmail;
+        }
+        $email = null !== $this->email ? trim((string) $this->email) : '';
+
+        return '' !== $email ? $email : null;
     }
 
     public function getBuyerVatId(): ?string
