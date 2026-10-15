@@ -710,6 +710,10 @@
                 <source>templates.recipient</source>
                 <target>Empfänger</target>
             </trans-unit>
+            <trans-unit id="templates.recipient.from_invoice">
+                <source>templates.recipient.from_invoice</source>
+                <target>Empfänger auf die E-Mail der Rechnung %number% geändert.</target>
+            </trans-unit>
             <trans-unit id="templates.subject">
                 <source>templates.subject</source>
                 <target>Betreff</target>

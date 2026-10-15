@@ -284,6 +284,7 @@ templates.editor.snippets.sidebar: Building blocks
 templates.editor.tab.edit: Edit
 templates.editor.tab.preview: Preview
 templates.recipient: Recipient
+templates.recipient.from_invoice: Recipient changed to the email of invoice %number%.
 templates.savefile.success: File was successfully saved .
 templates.select.reservations: Select reservation
 templates.select.template: Select template

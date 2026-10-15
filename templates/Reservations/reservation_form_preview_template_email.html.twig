@@ -4,14 +4,13 @@
       data-url="{{ path('correspondence.email.send') }}"
       data-refresh-url="{{ path('reservations.get.reservation', {'id': attribute(reservations, 0).id, 'tab': 'correspondence'}) }}">
     <fieldset id="template-form-fieldset-primary-">
-        {% set mail = "" %}
-        {% for address in attribute(reservations, 0).booker.customerAddresses %}
-            {% if address.email|length > 0 %}{% set mail = address.email %}{% endif %}
-        {% endfor %}
         <div class="row g-3">
             <div class="col-12 col-lg-6">
                 <label for="template-to" class="form-label">{{ 'templates.recipient'|trans }} *</label>
-                <input type="email" class="form-control" id="template-to" name="to" value="{{ emailDraft.to|default(mail) }}" required>
+                <input type="email" class="form-control" id="template-to" name="to" value="{{ emailDraft.to|default(defaultRecipient) }}" required>
+                {% if emailDraft.recipientFromInvoice is defined %}
+                    <div class="form-text"><i class="fas fa-circle-info me-1"></i>{{ 'templates.recipient.from_invoice'|trans({'%number%': emailDraft.recipientFromInvoice}) }}</div>
+                {% endif %}
             </div>
             <div class="col-12 col-lg-6">
                 <label for="template-subject" class="form-label">{{ 'templates.subject'|trans }} *</label>
