@@ -18,6 +18,7 @@ use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\TouristTax;
 use App\Entity\User;
+use App\Repository\ReservationRepository;
 use App\Service\InvoiceService;
 use App\Service\Pricing\PricePromiseService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -124,14 +125,19 @@ final class ReservationPricePromiseTest extends WebTestCase
         $this->em()->find(Price::class, $price->getId())?->setPrice('99.00');
         $this->em()->flush();
         $viewUrl = sprintf('/reservation/get/%d?tab=prices', $reservation->getId());
-        $promises = self::getContainer()->get(PricePromiseService::class);
+        $reservations = self::getContainer()->get(ReservationRepository::class);
+        // Without a promise, the booking is one of those still to be promised a price.
+        $withoutPromise = function () use ($reservations, $reservation): bool {
+            $this->em()->getConnection()->executeStatement('UPDATE reservations SET price_promise = NULL WHERE id = ?', [$reservation->getId()]);
+
+            return \in_array($reservation->getId(), $reservations->findIdsWithoutPricePromise(new \DateTimeImmutable('-1 year')), true);
+        };
 
         try {
             // A canceled invoice states no price: the booking can still take today's.
             $notice = $client->request('GET', $viewUrl)->filter('.alert:has(form[action$="/price/reprice"])');
             self::assertCount(1, $notice);
             $token = $notice->filter('input[name="_token"]')->attr('value');
-            self::assertSame(1, $promises->countOpenPromisesUsing((int) $price->getId()));
 
             $this->em()->find(Invoice::class, $invoice->getId())?->setStatus(InvoiceStatus::OPEN->value);
             $this->em()->flush();
@@ -140,7 +146,11 @@ final class ReservationPricePromiseTest extends WebTestCase
             $client->request('POST', sprintf('/reservation/%d/price/reprice', $reservation->getId()), ['_token' => $token]);
             $this->em()->clear();
             self::assertSame('80.00', $this->promisedUnit($reservation));
-            self::assertSame(0, $promises->countOpenPromisesUsing((int) $price->getId()));
+
+            self::assertFalse($withoutPromise(), 'An open invoice states the price.');
+            $this->em()->find(Invoice::class, $invoice->getId())?->setStatus(InvoiceStatus::CANCELED->value);
+            $this->em()->flush();
+            self::assertTrue($withoutPromise(), 'A canceled invoice does not.');
         } finally {
             $this->em()->clear();
             $booked = $this->em()->find(Reservation::class, $reservation->getId());
@@ -238,17 +248,56 @@ final class ReservationPricePromiseTest extends WebTestCase
         $price = $this->createRoomPrice('80.00');
         $this->createReservation('+840 days', withPromise: true);
 
+        $this->deletePrice($client, $price);
+
+        $this->em()->clear();
+        $kept = $this->em()->find(Price::class, $price->getId());
+        self::assertInstanceOf(Price::class, $kept);
+        self::assertFalse((bool) $kept->getActive());
+    }
+
+    public function testAPricePromisedToAnInvoicedBookingIsSwitchedOffInsteadOfDeleted(): void
+    {
+        $client = $this->authenticatedClient();
+        $price = $this->createRoomPrice('80.00');
+        $reservation = $this->createReservation('+845 days', withPromise: true);
+        // The invoice may still be canceled and issued anew from the promise.
+        $invoice = new Invoice();
+        $invoice->setNumber('T-'.bin2hex(random_bytes(3)));
+        $invoice->setDate(new \DateTime());
+        $invoice->setStatus(InvoiceStatus::OPEN->value);
+        $this->em()->persist($invoice);
+        $reservation->addInvoice($invoice);
+        $this->em()->flush();
+
+        try {
+            $this->deletePrice($client, $price);
+
+            $this->em()->clear();
+            $kept = $this->em()->find(Price::class, $price->getId());
+            self::assertInstanceOf(Price::class, $kept);
+            self::assertFalse((bool) $kept->getActive());
+        } finally {
+            $this->em()->clear();
+            $booked = $this->em()->find(Reservation::class, $reservation->getId());
+            $stored = $this->em()->find(Invoice::class, $invoice->getId());
+            if (null !== $booked && null !== $stored) {
+                $booked->removeInvoice($stored);
+                $this->em()->remove($stored);
+                $this->em()->flush();
+            }
+        }
+    }
+
+    /** Deletes the price through the delete popover of the price list. */
+    private function deletePrice(KernelBrowser $client, Price $price): void
+    {
         $crawler = $client->request('GET', '/settings/prices/');
         $popover = $crawler->filter(sprintf('[data-bs-content*="/settings/prices/%d/delete"]', $price->getId()));
         self::assertCount(1, $popover);
         self::assertSame(1, preg_match('/name="_token" value="([^"]+)"/', (string) $popover->attr('data-bs-content'), $match));
 
         $client->request('DELETE', sprintf('/settings/prices/%d/delete', $price->getId()), ['_token' => $match[1]]);
-
-        $this->em()->clear();
-        $kept = $this->em()->find(Price::class, $price->getId());
-        self::assertInstanceOf(Price::class, $kept);
-        self::assertFalse((bool) $kept->getActive());
     }
 
     private function promisedUnit(Reservation $reservation): ?string

@@ -219,8 +219,9 @@ class PriceServiceController extends AbstractController
         if ($this->isCsrfTokenValid('delete'.$entry->getId(), $request->request->get('_token'))) {
             $pricePromises->promiseOpenReservations();
             // Deleting would also drop it from bookings that were promised this price (booked
-            // extras cascade away), so a price still in use is only switched off.
-            $inUse = $pricePromises->countOpenPromisesUsing((int) $entry->getId());
+            // extras cascade away), also from invoiced ones whose invoice may still be canceled
+            // and issued anew. So a price still in use is only switched off.
+            $inUse = $pricePromises->countPromisesUsing((int) $entry->getId());
             if ($inUse > 0) {
                 $entry->setActive(false);
                 $doctrine->getManager()->flush();

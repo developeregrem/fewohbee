@@ -697,17 +697,16 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * The stored price promises of all reservations without an active invoice.
+     * The stored price promises of all reservations, invoiced or not: an invoice can be canceled
+     * and issued anew from the promise.
      *
      * @return list<array<string, mixed>>
      */
-    public function findOpenPricePromises(): array
+    public function findPricePromises(): array
     {
         $rows = $this->createQueryBuilder('r')
             ->select('r.pricePromise')
             ->andWhere('r.pricePromise IS NOT NULL')
-            ->andWhere(self::WITHOUT_ACTIVE_INVOICE)
-            ->setParameter('canceled', InvoiceStatus::CANCELED->value)
             ->getQuery()
             ->getSingleColumnResult();
 
