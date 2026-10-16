@@ -8,19 +8,21 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Online check-in for guests.
+ * Online check-in for guests and the guest-facing settings around it.
  *
  * - guest_check_in holds the link selector and the guest's submission per reservation;
  * - guest_check_in_config is the single settings row, created here (switched off) so public
  *   requests never have to write it;
  * - app_settings.public_base_url is the address links for guests are built from;
- * - customers.nationality is printed on the registration form.
+ * - customers.nationality is printed on the registration form;
+ * - online_booking_config.comment_placeholder is a hint text for the comment field of the
+ *   public booking form; nullable, so existing installations keep an empty field.
  */
 final class Version20260924120000 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Add the online check-in, the public address setting and the customer nationality';
+        return 'Add the online check-in, the public address setting, the customer nationality and the online booking comment placeholder';
     }
 
     public function isTransactional(): bool
@@ -38,6 +40,7 @@ final class Version20260924120000 extends AbstractMigration
 
         $this->addSql('ALTER TABLE app_settings ADD public_base_url VARCHAR(255) DEFAULT NULL');
         $this->addSql('ALTER TABLE customers ADD nationality VARCHAR(2) DEFAULT NULL');
+        $this->addSql('ALTER TABLE online_booking_config ADD comment_placeholder VARCHAR(255) DEFAULT NULL');
     }
 
     /**
@@ -54,6 +57,7 @@ final class Version20260924120000 extends AbstractMigration
         $this->abortIf($submissions > 0,
             sprintf('%d online check-in submission(s) are not reviewed yet. Rolling back would delete them; apply or discard them first.', $submissions));
 
+        $this->addSql('ALTER TABLE online_booking_config DROP comment_placeholder');
         $this->addSql('ALTER TABLE customers DROP nationality');
         $this->addSql('ALTER TABLE app_settings DROP public_base_url');
 

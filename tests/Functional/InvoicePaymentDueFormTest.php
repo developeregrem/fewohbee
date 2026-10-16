@@ -181,7 +181,8 @@ final class InvoicePaymentDueFormTest extends WebTestCase
         $crawler = $this->openCreationStep($client);
 
         $client->request('POST', '/invoices/create/positions/meta', [
-            'invoiceid' => (string) $crawler->filter('#invoiceidInput')->attr('value'),
+            // An own number: the suggested one is empty when the last invoice number ends in a letter.
+            'invoiceid' => 'DUE-'.bin2hex(random_bytes(4)),
             'invoiceDate' => (string) $crawler->filter('#invoiceDate')->attr('value'),
             'paymentDueDate' => '2027-01-15',
         ]);
