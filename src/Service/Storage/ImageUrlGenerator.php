@@ -33,10 +33,10 @@ final class ImageUrlGenerator
     public function exportUrl(string $filename): string
     {
         if ($this->isS3()) {
-            return $this->s3Url('export/' . $filename);
+            return $this->s3Url('export/'.$filename);
         }
 
-        return $this->localUrl($this->localExportPrefix . '/' . $filename);
+        return $this->localUrl($this->localExportPrefix.'/'.$filename);
     }
 
     /**
@@ -52,13 +52,13 @@ final class ImageUrlGenerator
             default => '',
         };
 
-        $path = $categoryId . '/' . $prefix . $filename;
+        $path = $categoryId.'/'.$prefix.$filename;
 
         if ($this->isS3()) {
-            return $this->s3Url('room-categories/' . $path);
+            return $this->s3Url('room-categories/'.$path);
         }
 
-        return $this->localUrl($this->localRoomCategoryPrefix . '/' . $path);
+        return $this->localUrl($this->localRoomCategoryPrefix.'/'.$path);
     }
 
     public function isS3(): bool
@@ -72,16 +72,16 @@ final class ImageUrlGenerator
         // config/packages/flysystem.php). Empty prefix → bucket root.
         $prefix = trim($this->s3Prefix, '/');
         if ('' !== $prefix) {
-            $key = $prefix . '/' . $key;
+            $key = $prefix.'/'.$key;
         }
 
-        return rtrim($this->s3PublicUrl, '/') . '/' . $key;
+        return rtrim($this->s3PublicUrl, '/').'/'.$key;
     }
 
     private function localUrl(string $relativePath): string
     {
         $basePath = $this->requestStack->getCurrentRequest()?->getBasePath() ?? '';
 
-        return rtrim($basePath, '/') . '/' . $relativePath;
+        return rtrim($basePath, '/').'/'.$relativePath;
     }
 }

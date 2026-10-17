@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use App\Dto\PublicBooking\RoomTotal;
+use App\Dto\Pricing\NightRate;
 use App\Entity\Appartment;
 use App\Entity\Enum\ModifierType;
 use App\Entity\GuestCategory;
@@ -191,7 +192,9 @@ final class PublicBookingGuestAdjustmentTest extends TestCase
         $price->method('getPrice')->willReturn((string) self::PER_HEAD_RATE);
 
         $priceService = $this->createStub(PriceService::class);
-        $priceService->method('getPricesForReservationDays')->willReturn([[$price]]);
+        $priceService->method('getNightRates')->willReturn([
+            new NightRate(new \DateTimeImmutable('2026-06-01'), $price, number_format(self::PER_HEAD_RATE, 2, '.', ''), true, false, $perRoom),
+        ]);
 
         $configService = $this->createStub(OnlineBookingConfigService::class);
         $configService->method('getReservationOrigin')->willReturn(null);

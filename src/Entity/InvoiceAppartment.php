@@ -45,7 +45,7 @@ class InvoiceAppartment
     private $includesVat;
     #[ORM\Column(type: 'boolean', nullable: true)]
     private $isFlatPrice;
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $isPerRoom;
     #[ORM\ManyToOne(targetEntity: AccountingAccount::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]

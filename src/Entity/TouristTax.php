@@ -43,16 +43,16 @@ class TouristTax
     #[ORM\JoinColumn(name: 'revenue_account_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?AccountingAccount $revenueAccount = null;
 
-    #[ORM\Column(name: 'includes_vat', type: 'boolean')]
+    #[ORM\Column(name: 'includes_vat', type: 'boolean', options: ['default' => true])]
     private bool $includesVat = true;
 
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $active = true;
 
-    #[ORM\Column(name: 'applies_only_to_adult', type: 'boolean')]
+    #[ORM\Column(name: 'applies_only_to_adult', type: 'boolean', options: ['default' => false])]
     private bool $appliesOnlyToAdult = false;
 
-    #[ORM\Column(name: 'sort_order', type: 'integer')]
+    #[ORM\Column(name: 'sort_order', type: 'integer', options: ['default' => 0])]
     private int $sortOrder = 0;
 
     #[ORM\Column(name: 'calculation_mode', type: 'string', length: 32, enumType: TaxCalculationMode::class, options: ['default' => 'per_night_flat'])]

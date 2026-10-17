@@ -61,6 +61,7 @@ final class ApartmentActivationTest extends TestCase
                 $this->createStub(AppartmentRepository::class),
             ),
             new \App\Service\ReservationPeriodService(),
+            $this->createStub(\App\Service\Pricing\PricePromiseService::class),
         );
 
         $apartment = (new Appartment())->setActive(false);
@@ -93,6 +94,7 @@ final class ApartmentActivationTest extends TestCase
                 $this->createStub(AvailabilityService::class),
                 $this->createStub(GuestCategoryRepository::class),
                 $this->createStub(ReservationService::class),
+                $this->createStub(\App\Service\Pricing\PricePromiseService::class),
             ),
             new CalendarImportSummaryMatcher(),
         );

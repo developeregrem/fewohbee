@@ -67,6 +67,9 @@ final class WorkflowAttachmentResolverTest extends TestCase
         $this->templatesService->method('getDefaultTemplate')->willReturnCallback(
             static fn (array $templates): ?Template => $templates[0] ?? null
         );
+        $this->templatesService->method('resolveInvoiceTemplate')->willReturnCallback(
+            fn (): ?Template => $this->invoicePdfTemplates[0] ?? null
+        );
 
         $this->invoiceService->method('sanitizeFilename')->willReturnCallback(
             static fn (string $value): string => str_replace(' ', '_', $value)

@@ -113,6 +113,7 @@ export default class extends Controller {
             trigger.dataset.startSelector,
             trigger.dataset.endSelector,
             trigger.dataset.targetSelector,
+            trigger.dataset.descriptionSelector,
         );
     }
 
@@ -256,8 +257,10 @@ export default class extends Controller {
     applyStartEndState(allPeriodsChecked, priceId) {
         const start = this.element.querySelector(`#periodstart-${priceId}`);
         const end = this.element.querySelector(`#periodend-${priceId}`);
+        const description = this.element.querySelector(`#perioddescription-${priceId}`);
         if (start) start.disabled = allPeriodsChecked;
         if (end) end.disabled = allPeriodsChecked;
+        if (description) description.disabled = allPeriodsChecked;
     }
 
     applyBookableOnlineState(bookableChecked, priceId) {
@@ -304,10 +307,10 @@ export default class extends Controller {
         const startSel = form.dataset.pricesStartSelector || (this.hasStartSelectorValue ? this.startSelectorValue : null);
         const endSel = form.dataset.pricesEndSelector || (this.hasEndSelectorValue ? this.endSelectorValue : null);
         const targetSel = form.dataset.pricesPeriodsSelector || (this.hasPeriodsSelectorValue ? this.periodsSelectorValue : null);
-        this.addPeriod(startSel, endSel, targetSel);
+        this.addPeriod(startSel, endSel, targetSel, form.dataset.pricesDescriptionSelector);
     }
 
-    addPeriod(startSelector, endSelector, targetSelector) {
+    addPeriod(startSelector, endSelector, targetSelector, descriptionSelector = null) {
         if (!startSelector || !endSelector || !targetSelector) return;
         const start = document.querySelector(startSelector);
         const end = document.querySelector(endSelector);
@@ -322,9 +325,11 @@ export default class extends Controller {
         const dEnd = new Date(end.value);
         const txtStart = `${('0' + dStart.getDate()).slice(-2)}.${('0' + (dStart.getMonth() + 1)).slice(-2)}.${dStart.getFullYear()}`;
         const txtEnd = `${('0' + dEnd.getDate()).slice(-2)}.${('0' + (dEnd.getMonth() + 1)).slice(-2)}.${dEnd.getFullYear()}`;
+        const description = descriptionSelector ? document.querySelector(descriptionSelector) : null;
+        const label = description ? description.value.trim() : '';
         const periodText = clone.querySelector('.period-text');
         if (periodText) {
-            periodText.textContent = `${txtStart} - ${txtEnd}`;
+            periodText.textContent = label ? `${txtStart} - ${txtEnd} · ${label}` : `${txtStart} - ${txtEnd}`;
         }
 
         clone.querySelectorAll('input[type=hidden]').forEach((input) => {
@@ -332,12 +337,15 @@ export default class extends Controller {
         });
         const startInput = clone.querySelector("input[name='periodstart-new[]']");
         const endInput = clone.querySelector("input[name='periodend-new[]']");
+        const descriptionInput = clone.querySelector("input[name='perioddescription-new[]']");
         if (startInput) startInput.value = start.value;
         if (endInput) endInput.value = end.value;
+        if (descriptionInput) descriptionInput.value = label;
 
         target.prepend(clone);
         start.value = '';
         end.value = '';
+        if (description) description.value = '';
     }
 
     observePeriodList() {

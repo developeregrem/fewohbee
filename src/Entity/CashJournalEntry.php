@@ -7,7 +7,8 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\CashJournalEntryRepository')]
-#[ORM\Table(name: 'cash_journal_entries')]
+#[ORM\Table(name: '_legacy_cash_journal_entries')]
+#[ORM\Index(name: 'IDX_E92E3C1DF3608108', columns: ['cash_journal_id'])]
 class CashJournalEntry
 {
     #[ORM\Id]

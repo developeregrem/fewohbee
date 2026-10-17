@@ -362,6 +362,7 @@ ICS,
             static::getContainer()->get(\App\Service\AvailabilityService::class),
             static::getContainer()->get(\App\Repository\GuestCategoryRepository::class),
             static::getContainer()->get(\App\Service\ReservationService::class),
+            static::getContainer()->get(\App\Service\Pricing\PricePromiseService::class),
         );
 
         return new ReservationCalendarImportService(

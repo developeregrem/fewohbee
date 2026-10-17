@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Controller\Attribute\ImportDraft;
-use App\Exception\BankImportEditException;
 use App\Dto\BookingJournal\BankImport\BankImportFormatChoice;
 use App\Dto\BookingJournal\BankImport\ImportState;
 use App\Dto\BookingJournal\BankImport\MultipleSourceAccountsException;
@@ -13,18 +12,20 @@ use App\Dto\BookingJournal\BankImport\ParseResult;
 use App\Entity\AccountingAccount;
 use App\Entity\BankCsvProfile;
 use App\Entity\BankImportRule;
+use App\Exception\BankImportEditException;
 use App\Form\BankStatementUploadType;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\BankStatementImportRepository;
 use App\Repository\TaxRateRepository;
-use App\Service\InvoiceNumberGenerator;
-use App\Service\BookingJournal\BankImport\BankImportDraftSession;
+use App\Service\BookingJournal\BankImport\BankImportDraftStore;
+use App\Service\BookingJournal\BankImport\BankImportLineEditor;
 use App\Service\BookingJournal\BankImport\BankImportRuleMatcher;
 use App\Service\BookingJournal\BankImport\BankStatementCommitter;
 use App\Service\BookingJournal\BankImport\BankStatementDeduplicator;
 use App\Service\BookingJournal\BankImport\InvoiceMatcher;
 use App\Service\BookingJournal\BankImport\Parser\BankStatementParserRegistry;
 use App\Service\BookingJournal\BankImport\Parser\ParserInterface;
+use App\Service\InvoiceNumberGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
@@ -42,7 +43,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class BankImportController extends AbstractController
 {
     #[Route('', name: 'bank_import.index', methods: ['GET'])]
-    public function index(BankImportDraftSession $drafts, AccountingAccountRepository $accountRepo): Response
+    public function index(BankImportDraftStore $drafts, AccountingAccountRepository $accountRepo): Response
     {
         $form = $this->createForm(BankStatementUploadType::class, null, [
             'action' => $this->generateUrl('bank_import.upload'),
@@ -55,7 +56,7 @@ class BankImportController extends AbstractController
     public function upload(
         Request $request,
         BankStatementParserRegistry $parsers,
-        BankImportDraftSession $drafts,
+        BankImportDraftStore $drafts,
         BankStatementDeduplicator $deduplicator,
         InvoiceMatcher $invoiceMatcher,
         BankImportRuleMatcher $ruleMatcher,
@@ -146,7 +147,7 @@ class BankImportController extends AbstractController
      * Renders the bank-import overview with either a fresh or submitted upload form.
      */
     private function renderIndex(
-        BankImportDraftSession $drafts,
+        BankImportDraftStore $drafts,
         AccountingAccountRepository $accountRepo,
         FormInterface $form,
         int $status = Response::HTTP_OK,
@@ -212,7 +213,7 @@ class BankImportController extends AbstractController
     #[Route('/{sessionImportId}', name: 'bank_import.preview', methods: ['GET'], requirements: ['sessionImportId' => '[0-9a-f-]{36}'])]
     public function preview(
         string $sessionImportId,
-        BankImportDraftSession $drafts,
+        BankImportDraftStore $drafts,
         AccountingAccountRepository $accountRepo,
         TaxRateRepository $taxRateRepo,
         InvoiceNumberGenerator $numberGenerator,
@@ -250,53 +251,26 @@ class BankImportController extends AbstractController
     public function updateLine(
         int $idx,
         Request $request,
-        #[ImportDraft] ImportState $state,
-        BankImportDraftSession $drafts,
+        #[ImportDraft]
+        ImportState $state,
+        BankImportDraftStore $drafts,
     ): JsonResponse {
         if (!isset($state->lines[$idx])) {
             throw BankImportEditException::lineNotFound();
         }
 
-        if (true === ($state->lines[$idx]['isDuplicate'] ?? false)
-            && true !== ($state->lines[$idx]['forceImportDuplicate'] ?? false)
-        ) {
-            // Duplicates are read-only — silently ignore the change.
-            return new JsonResponse(['status' => $state->lines[$idx]['status']]);
-        }
-
         $field = (string) $request->request->get('field');
+        if (!\in_array($field, BankImportLineEditor::FIELDS, true)) {
+            return new JsonResponse(['error' => 'unknown_field'], Response::HTTP_BAD_REQUEST);
+        }
         $value = $request->request->get('value');
 
-        $line = &$state->lines[$idx];
-
-        switch ($field) {
-            case 'debitAccountId':
-                $line['userDebitAccountId'] = $this->normalizeAccountId($value);
-                break;
-            case 'creditAccountId':
-                $line['userCreditAccountId'] = $this->normalizeAccountId($value);
-                break;
-            case 'taxRateId':
-                $line['userTaxRateId'] = $this->normalizeTaxRateId($value);
-                break;
-            case 'remark':
-                $remark = trim((string) $value);
-                $line['userRemark'] = '' === $remark ? null : mb_substr($remark, 0, 255);
-                break;
-            case 'invoiceNumber':
-                $line['userInvoiceNumber'] = $this->cleanInvoiceNumber($value);
-                break;
-            case 'isIgnored':
-                $line['isIgnored'] = (bool) ((int) $value);
-                break;
-            default:
-                return new JsonResponse(['error' => 'unknown_field'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $line['status'] = ImportState::deriveLineStatus($line);
-        unset($line);
-
-        $drafts->save($state);
+        $state = $drafts->update($state->sessionImportId, static function (ImportState $state) use ($idx, $field, $value): void {
+            // Duplicates are read-only — silently ignore the change.
+            if (isset($state->lines[$idx]) && BankImportLineEditor::isEditable($state->lines[$idx])) {
+                BankImportLineEditor::setField($state->lines[$idx], $field, $value);
+            }
+        }) ?? throw BankImportEditException::draftNotFound();
 
         return new JsonResponse([
             'status' => $state->lines[$idx]['status'],
@@ -308,8 +282,9 @@ class BankImportController extends AbstractController
     public function splitLine(
         int $idx,
         Request $request,
-        #[ImportDraft] ImportState $state,
-        BankImportDraftSession $drafts,
+        #[ImportDraft]
+        ImportState $state,
+        BankImportDraftStore $drafts,
     ): JsonResponse {
         if (!isset($state->lines[$idx])) {
             throw BankImportEditException::lineNotFound();
@@ -326,39 +301,41 @@ class BankImportController extends AbstractController
             $rawSplits = [];
         }
 
-        $line = &$state->lines[$idx];
-        $isOutgoing = ((float) ($line['amount'] ?? 0)) < 0.0;
-        $splits = [];
+        $splitCount = 0;
+        $state = $drafts->update($state->sessionImportId, function (ImportState $state) use ($idx, $rawSplits, &$splitCount): void {
+            $line = &$state->lines[$idx];
+            $isOutgoing = ((float) ($line['amount'] ?? 0)) < 0.0;
+            $splits = [];
 
-        foreach ($rawSplits as $piece) {
-            if (!is_array($piece)) {
-                continue;
+            foreach ($rawSplits as $piece) {
+                if (!is_array($piece)) {
+                    continue;
+                }
+
+                $absAmount = abs((float) ($piece['amount'] ?? 0));
+                if ($absAmount <= 0) {
+                    continue;
+                }
+                $signed = $isOutgoing ? -$absAmount : $absAmount;
+
+                $splits[] = [
+                    'amount' => number_format($signed, 2, '.', ''),
+                    'debitAccountId' => BankImportLineEditor::normalizeId($piece['debitAccountId'] ?? null),
+                    'creditAccountId' => BankImportLineEditor::normalizeId($piece['creditAccountId'] ?? null),
+                    'taxRateId' => BankImportLineEditor::normalizeId($piece['taxRateId'] ?? null),
+                    'remark' => BankImportLineEditor::cleanRemark($piece['remark'] ?? null),
+                ];
             }
 
-            $absAmount = abs((float) ($piece['amount'] ?? 0));
-            if ($absAmount <= 0) {
-                continue;
-            }
-            $signed = $isOutgoing ? -$absAmount : $absAmount;
-
-            $splits[] = [
-                'amount' => number_format($signed, 2, '.', ''),
-                'debitAccountId' => $this->normalizeAccountId($piece['debitAccountId'] ?? null),
-                'creditAccountId' => $this->normalizeAccountId($piece['creditAccountId'] ?? null),
-                'taxRateId' => $this->normalizeTaxRateId($piece['taxRateId'] ?? null),
-                'remark' => $this->cleanRemark($piece['remark'] ?? null),
-            ];
-        }
-
-        $line['splits'] = $splits;
-        $line['status'] = ImportState::deriveLineStatus($line);
-        unset($line);
-
-        $drafts->save($state);
+            $line['splits'] = $splits;
+            $line['status'] = ImportState::deriveLineStatus($line);
+            unset($line);
+            $splitCount = count($splits);
+        }) ?? throw BankImportEditException::draftNotFound();
 
         return new JsonResponse([
             'status' => $state->lines[$idx]['status'],
-            'splitCount' => count($splits),
+            'splitCount' => $splitCount,
             'counts' => $state->countByStatus(),
         ]);
     }
@@ -367,8 +344,9 @@ class BankImportController extends AbstractController
     public function saveRuleFromLine(
         int $idx,
         Request $request,
-        #[ImportDraft] ImportState $state,
-        BankImportDraftSession $drafts,
+        #[ImportDraft]
+        ImportState $state,
+        BankImportDraftStore $drafts,
         AccountingAccountRepository $accountRepo,
         BankImportRuleMatcher $ruleMatcher,
         EntityManagerInterface $em,
@@ -410,8 +388,8 @@ class BankImportController extends AbstractController
 
         // Re-run the rule matcher so the freshly saved rule is applied to all
         // remaining unassigned lines in this draft immediately.
-        $ruleMatcher->annotate($state, $bankAccount);
-        $drafts->save($state);
+        $state = $drafts->update($state->sessionImportId, static fn (ImportState $state) => $ruleMatcher->annotate($state, $bankAccount))
+            ?? throw BankImportEditException::draftNotFound();
 
         return new JsonResponse([
             'ruleId' => $rule->getId(),
@@ -424,8 +402,9 @@ class BankImportController extends AbstractController
         string $sessionImportId,
         int $idx,
         Request $request,
-        #[ImportDraft] ImportState $state,
-        BankImportDraftSession $drafts,
+        #[ImportDraft]
+        ImportState $state,
+        BankImportDraftStore $drafts,
         AccountingAccountRepository $accountRepo,
         BankImportRuleMatcher $ruleMatcher,
     ): Response {
@@ -444,10 +423,7 @@ class BankImportController extends AbstractController
             return new JsonResponse(['error' => 'account_missing'], Response::HTTP_NOT_FOUND);
         }
 
-        $line = &$state->lines[$idx];
-        if (true !== ($line['isDuplicate'] ?? false)) {
-            unset($line);
-
+        if (true !== ($state->lines[$idx]['isDuplicate'] ?? false)) {
             if (!$request->isXmlHttpRequest()) {
                 return $this->redirectToRoute('bank_import.preview', ['sessionImportId' => $sessionImportId]);
             }
@@ -455,12 +431,11 @@ class BankImportController extends AbstractController
             return new JsonResponse(['error' => 'not_duplicate'], Response::HTTP_BAD_REQUEST);
         }
 
-        $line['forceImportDuplicate'] = true;
-        $line['status'] = ImportState::deriveLineStatus($line);
-        unset($line);
-        $ruleMatcher->annotateLine($state, $idx, $bankAccount);
-
-        $drafts->save($state);
+        $state = $drafts->update($sessionImportId, static function (ImportState $state) use ($idx, $bankAccount, $ruleMatcher): void {
+            $state->lines[$idx]['forceImportDuplicate'] = true;
+            $state->lines[$idx]['status'] = ImportState::deriveLineStatus($state->lines[$idx]);
+            $ruleMatcher->annotateLine($state, $idx, $bankAccount);
+        }) ?? throw BankImportEditException::draftNotFound();
 
         if (!$request->isXmlHttpRequest()) {
             return $this->redirectToRoute('bank_import.preview', ['sessionImportId' => $sessionImportId]);
@@ -475,51 +450,34 @@ class BankImportController extends AbstractController
     #[Route('/{sessionImportId}/bulk', name: 'bank_import.bulk', methods: ['POST'], requirements: ['sessionImportId' => '[0-9a-f-]{36}'])]
     public function bulkAction(
         Request $request,
-        #[ImportDraft] ImportState $state,
-        BankImportDraftSession $drafts,
+        #[ImportDraft]
+        ImportState $state,
+        BankImportDraftStore $drafts,
     ): JsonResponse {
         $action = (string) $request->request->get('action');
+        [$field, $value] = match ($action) {
+            'ignore' => ['isIgnored', 1],
+            'unignore' => ['isIgnored', 0],
+            'assign_debit' => ['debitAccountId', $request->request->get('debitAccountId')],
+            'assign_credit' => ['creditAccountId', $request->request->get('creditAccountId')],
+            default => [null, null],
+        };
+        if (null === $field) {
+            return new JsonResponse(['error' => 'unknown_action'], Response::HTTP_BAD_REQUEST);
+        }
         $indices = $request->request->all('indices');
         $indices = array_map('intval', is_array($indices) ? $indices : []);
 
         $touched = 0;
-        foreach ($indices as $idx) {
-            if (!isset($state->lines[$idx])) {
-                continue;
+        $state = $drafts->update($state->sessionImportId, static function (ImportState $state) use ($indices, $field, $value, &$touched): void {
+            foreach ($indices as $idx) {
+                if (!isset($state->lines[$idx]) || !BankImportLineEditor::isEditable($state->lines[$idx])) {
+                    continue;
+                }
+                BankImportLineEditor::setField($state->lines[$idx], $field, $value);
+                ++$touched;
             }
-            if (true === ($state->lines[$idx]['isDuplicate'] ?? false)
-                && true !== ($state->lines[$idx]['forceImportDuplicate'] ?? false)
-            ) {
-                continue;
-            }
-
-            $line = &$state->lines[$idx];
-
-            switch ($action) {
-                case 'ignore':
-                    $line['isIgnored'] = true;
-                    break;
-                case 'unignore':
-                    $line['isIgnored'] = false;
-                    break;
-                case 'assign_debit':
-                    $line['userDebitAccountId'] = $this->normalizeAccountId($request->request->get('debitAccountId'));
-                    break;
-                case 'assign_credit':
-                    $line['userCreditAccountId'] = $this->normalizeAccountId($request->request->get('creditAccountId'));
-                    break;
-                default:
-                    unset($line);
-
-                    return new JsonResponse(['error' => 'unknown_action'], Response::HTTP_BAD_REQUEST);
-            }
-
-            $line['status'] = ImportState::deriveLineStatus($line);
-            unset($line);
-            ++$touched;
-        }
-
-        $drafts->save($state);
+        }) ?? throw BankImportEditException::draftNotFound();
 
         return new JsonResponse([
             'touched' => $touched,
@@ -531,7 +489,7 @@ class BankImportController extends AbstractController
     public function reapplyRules(
         string $sessionImportId,
         Request $request,
-        BankImportDraftSession $drafts,
+        BankImportDraftStore $drafts,
         AccountingAccountRepository $accountRepo,
         BankImportRuleMatcher $ruleMatcher,
     ): Response {
@@ -556,8 +514,10 @@ class BankImportController extends AbstractController
             return $this->redirectToRoute('bank_import.index');
         }
 
-        $touched = $ruleMatcher->reapplyPreviouslyAppliedRules($state, $bankAccount);
-        $drafts->save($state);
+        $touched = 0;
+        $drafts->update($sessionImportId, static function (ImportState $state) use ($ruleMatcher, $bankAccount, &$touched): void {
+            $touched = $ruleMatcher->reapplyPreviouslyAppliedRules($state, $bankAccount);
+        });
 
         $this->addFlash('success', new TranslatableMessage('accounting.bank_import.preview.reapply_rules.flash.done', [
             '%count%' => $touched,
@@ -570,7 +530,7 @@ class BankImportController extends AbstractController
     public function commit(
         string $sessionImportId,
         Request $request,
-        BankImportDraftSession $drafts,
+        BankImportDraftStore $drafts,
         AccountingAccountRepository $accountRepo,
         BankStatementCommitter $committer,
     ): Response {
@@ -620,7 +580,7 @@ class BankImportController extends AbstractController
     public function discard(
         string $sessionImportId,
         Request $request,
-        BankImportDraftSession $drafts,
+        BankImportDraftStore $drafts,
     ): Response {
         if (!$this->isCsrfTokenValid('delete'.$sessionImportId, $request->request->get('_token'))) {
             $this->addFlash('danger', 'flash.invalidtoken');
@@ -701,10 +661,10 @@ class BankImportController extends AbstractController
                 }
 
                 $base = [
-                    'debitAccountId' => $this->normalizeAccountId($piece['debitAccountId'] ?? null),
-                    'creditAccountId' => $this->normalizeAccountId($piece['creditAccountId'] ?? null),
-                    'taxRateId' => $this->normalizeTaxRateId($piece['taxRateId'] ?? null),
-                    'remarkTemplate' => $this->cleanRemark($piece['remark'] ?? null),
+                    'debitAccountId' => BankImportLineEditor::normalizeId($piece['debitAccountId'] ?? null),
+                    'creditAccountId' => BankImportLineEditor::normalizeId($piece['creditAccountId'] ?? null),
+                    'taxRateId' => BankImportLineEditor::normalizeId($piece['taxRateId'] ?? null),
+                    'remarkTemplate' => BankImportLineEditor::cleanRemark($piece['remark'] ?? null),
                 ];
 
                 if ('purpose_marker' === (string) ($piece['amountSource'] ?? '')) {
@@ -762,10 +722,10 @@ class BankImportController extends AbstractController
 
         return [
             'mode' => BankImportRule::ACTION_MODE_ASSIGN,
-            'debitAccountId' => $this->normalizeAccountId($request->request->get('debitAccountId')),
-            'creditAccountId' => $this->normalizeAccountId($request->request->get('creditAccountId')),
-            'taxRateId' => $this->normalizeTaxRateId($request->request->get('taxRateId')),
-            'remarkTemplate' => $this->cleanRemark($request->request->get('remarkTemplate')),
+            'debitAccountId' => BankImportLineEditor::normalizeId($request->request->get('debitAccountId')),
+            'creditAccountId' => BankImportLineEditor::normalizeId($request->request->get('creditAccountId')),
+            'taxRateId' => BankImportLineEditor::normalizeId($request->request->get('taxRateId')),
+            'remarkTemplate' => BankImportLineEditor::cleanRemark($request->request->get('remarkTemplate')),
             'invoiceNumberExtraction' => $this->buildInvoiceNumberExtractionFromRequest($request),
         ];
     }
@@ -795,27 +755,6 @@ class BankImportController extends AbstractController
         return ['mode' => 'none'];
     }
 
-    private function cleanRemark(mixed $value): ?string
-    {
-        if (null === $value) {
-            return null;
-        }
-        $value = trim((string) $value);
-
-        return '' === $value ? null : mb_substr($value, 0, 255);
-    }
-
-    private function cleanInvoiceNumber(mixed $value): ?string
-    {
-        if (null === $value) {
-            return null;
-        }
-
-        $value = trim((string) $value);
-
-        return '' === $value ? null : mb_substr($value, 0, 50);
-    }
-
     private function truthy(mixed $value): bool
     {
         return true === $value || 1 === $value || in_array((string) $value, ['1', 'true', 'on', 'yes'], true);
@@ -837,22 +776,6 @@ class BankImportController extends AbstractController
                 $line['userCreditAccountId'] = $bankAccountId;
             }
         }
-    }
-
-    private function normalizeAccountId(mixed $value): ?int
-    {
-        if (null === $value || '' === $value) {
-            return null;
-        }
-
-        $id = (int) $value;
-
-        return $id > 0 ? $id : null;
-    }
-
-    private function normalizeTaxRateId(mixed $value): ?int
-    {
-        return $this->normalizeAccountId($value);
     }
 
     private function appendOverlapWarnings(

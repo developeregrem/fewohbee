@@ -162,6 +162,14 @@
                 <source>reservation.preview.customer.inroom</source>
                 <target>Gäste in diesem Zimmer</target>
             </trans-unit>
+            <trans-unit id="reservation.tab.details">
+                <source>reservation.tab.details</source>
+                <target>Details</target>
+            </trans-unit>
+            <trans-unit id="reservation.tab.guests">
+                <source>reservation.tab.guests</source>
+                <target>Gäste</target>
+            </trans-unit>
             <trans-unit id="reservation.details">
                 <source>reservation.details</source>
                 <target>Reservierungsdetails</target>
@@ -309,6 +317,18 @@
             <trans-unit id="reservation.table.settings.showCalendarEntries">
                 <source>reservation.table.settings.showCalendarEntries</source>
                 <target>Kalendereinträge anzeigen</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.week.next">
+                <source>reservation.table.week.next</source>
+                <target>Weiterblättern</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.week.previous">
+                <source>reservation.table.week.previous</source>
+                <target>Zurückblättern</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.view.week">
+                <source>reservation.table.view.week</source>
+                <target>Wochenansicht</target>
             </trans-unit>
             <trans-unit id="reservation.table.view.yearly">
                 <source>reservation.table.view.yearly</source>
@@ -745,6 +765,122 @@
             <trans-unit id="roomblock.error.rooms">
                 <source>roomblock.error.rooms</source>
                 <target>Bitte mindestens ein Zimmer auswählen.</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.changed">
+                <source>reservation.price.changed</source>
+                <target>Der Preis dieser Buchung ändert sich von %before% auf %after%.</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.reprice.confirm">
+                <source>reservation.price.reprice.confirm</source>
+                <target>Heutige Preise übernehmen</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.reprice.invoiced">
+                <source>reservation.price.reprice.invoiced</source>
+                <target>Für diese Buchung gibt es schon eine Rechnung, dort steht ihr Preis.</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.list_changed.title">
+                <source>reservation.price.list_changed.title</source>
+                <target>Die Preise haben sich seit der Buchung geändert</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.list_changed.text">
+                <source>reservation.price.list_changed.text</source>
+                <target>Diese Buchung behält ihre Preise vom %date% (%promised%). Mit den heutigen Preisen würde sie %current% kosten.</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.reprice.done">
+                <source>reservation.price.reprice.done</source>
+                <target>Die heutigen Preise wurden übernommen. Die Buchung kostet jetzt %total%.</target>
+            </trans-unit>
+            <trans-unit id="reservation.prices.invoice_note">
+                <source>reservation.prices.invoice_note</source>
+                <target>Diese Preise übernimmt die Rechnung. Dort kannst du sie bei Bedarf noch anpassen.</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.rules_applied">
+                <source>reservation.price.rules_applied</source>
+                <target>Angepasst durch</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.rules_nights">
+                <source>reservation.price.rules_nights</source>
+                <target>{1}1 Nacht|]1,Inf[%count% Nächte</target>
+            </trans-unit>
+            <trans-unit id="reservation.price.day_price">
+                <source>reservation.price.day_price</source>
+                <target>Tagespreis</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.nights">
+                <source>reservation.summary.nights</source>
+                <target>{0}0 Nächte|{1}1 Nacht|]1,Inf[%count% Nächte</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.persons">
+                <source>reservation.summary.persons</source>
+                <target>{0}0 Personen|{1}1 Person|]1,Inf[%count% Personen</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.call">
+                <source>reservation.summary.call</source>
+                <target>Anrufen</target>
+            </trans-unit>
+            <trans-unit id="reservation.guests.room">
+                <source>reservation.guests.room</source>
+                <target>Gäste · Zimmer %number%</target>
+            </trans-unit>
+            <trans-unit id="reservation.guests.empty">
+                <source>reservation.guests.empty</source>
+                <target>Noch keine Gäste eingetragen.</target>
+            </trans-unit>
+            <trans-unit id="reservation.edit.change_room">
+                <source>reservation.edit.change_room</source>
+                <target>Zimmer wechseln</target>
+            </trans-unit>
+            <trans-unit id="reservation.guests.remove">
+                <source>reservation.guests.remove</source>
+                <target>Entfernen</target>
+            </trans-unit>
+            <trans-unit id="reservation.guests.remove_ask">
+                <source>reservation.guests.remove_ask</source>
+                <target>Gast aus der Reservierung entfernen?</target>
+            </trans-unit>
+            <trans-unit id="reservation.new.create">
+                <source>reservation.new.create</source>
+                <target>Reservierung anlegen</target>
+            </trans-unit>
+            <trans-unit id="reservation.details.stay">
+                <source>reservation.details.stay</source>
+                <target>Aufenthalt</target>
+            </trans-unit>
+            <trans-unit id="reservation.details.guest">
+                <source>reservation.details.guest</source>
+                <target>Gastdaten</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.guest_menu">
+                <source>reservation.summary.guest_menu</source>
+                <target>Gast</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.guest_edit">
+                <source>reservation.summary.guest_edit</source>
+                <target>Gastdaten bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.guest_change">
+                <source>reservation.summary.guest_change</source>
+                <target>Anderen Gast zuweisen</target>
+            </trans-unit>
+            <trans-unit id="reservation.summary.change_booking">
+                <source>reservation.summary.change_booking</source>
+                <target>Buchung ändern</target>
+            </trans-unit>
+            <trans-unit id="reservation.selected.reservations">
+                <source>reservation.selected.reservations</source>
+                <target>Ausgewählte Reservierungen</target>
+            </trans-unit>
+            <trans-unit id="reservation.filter.by_period">
+                <source>reservation.filter.by_period</source>
+                <target>Nach Zeitraum</target>
+            </trans-unit>
+            <trans-unit id="reservation.filter.by_guest">
+                <source>reservation.filter.by_guest</source>
+                <target>Nach Gast</target>
+            </trans-unit>
+            <trans-unit id="reservation.correspondences.empty">
+                <source>reservation.correspondences.empty</source>
+                <target>Noch keine Konversationen.</target>
             </trans-unit>
         </body>
     </file>

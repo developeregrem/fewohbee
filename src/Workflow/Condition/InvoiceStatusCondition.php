@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Workflow\Condition;
 
-use App\Entity\Invoice;
 use App\Entity\Enum\InvoiceStatus;
+use App\Entity\Invoice;
 
 class InvoiceStatusCondition implements WorkflowConditionInterface
 {

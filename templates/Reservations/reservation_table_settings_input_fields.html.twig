@@ -70,7 +70,7 @@
 
             <div class="tab-pane fade" id="nav-holidays" role="tabpanel" aria-labelledby="nav-holidays-tab" tabindex="1">
 				<div class="row">
-                    <label for="holidayCountry" class="col-sm-4 col-form-label text-end">{{ 'reservation.table.settings.country'|trans }}</label>
+                    <label for="holidayCountry" class="col-sm-4 col-form-label text-sm-end">{{ 'reservation.table.settings.country'|trans }}</label>
                     <div class="col-sm">
                         <select id="holidayCountry" name="holidayCountry" class="form-select">
                             {% for code, country in holidayCountries %}
@@ -81,7 +81,7 @@
                 </div>
                 {% if holidayCountries[selectedCountry] is defined and holidayCountries[selectedCountry].subdivisions|length > 0 %}
                 <div class="row">
-                    <label for="holidaySubdivision" class="col-sm-4 col-form-label text-end">{{ 'reservation.table.settings.subdivision'|trans }}</label>
+                    <label for="holidaySubdivision" class="col-sm-4 col-form-label text-sm-end">{{ 'reservation.table.settings.subdivision'|trans }}</label>
                     <div class="col-sm">
                         <select id="holidaySubdivision" name="holidaySubdivision" class="form-select">
                             <option value="all"{% if selectedSubdivision == 'all' %} selected{% endif %}>-- {{ 'reservation.table.settings.all'|trans }} --</option>

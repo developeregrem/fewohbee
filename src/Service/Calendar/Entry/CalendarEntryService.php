@@ -107,7 +107,7 @@ final class CalendarEntryService
         for ($day = $startDate; $day <= $endDate; $day = $day->modify('+1 day')) {
             $dayEntry = $day == $startDate
                 ? $entry
-                : (new CalendarEntry())->setCalendar($entry->getCalendar())->setTitle($entry->getTitle());
+                : new CalendarEntry()->setCalendar($entry->getCalendar())->setTitle($entry->getTitle());
             $dayEntry->setDate($day);
             if ($day != $startDate && $day == $endDate) {
                 $dayEntry->setEndTime($endTime);

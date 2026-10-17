@@ -28,13 +28,13 @@ use App\Service\ReservationService;
 use App\Service\TemplatesService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\ExpressionLanguage\Expression;
 
 #[Route(path: '/correspondence')]
 class CorrespondenceController extends AbstractController
@@ -278,7 +278,7 @@ class CorrespondenceController extends AbstractController
     }
 
     #[IsGranted('ROLE_RESERVATIONS')]
-    #[Route('/remove', name: 'correspondence.remove', methods: ['POST'])]
+    #[Route('/remove', name: 'correspondence.remove', methods: ['DELETE'])]
     public function deleteCorrespondenceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
         $em = $doctrine->getManager();
@@ -321,24 +321,24 @@ class CorrespondenceController extends AbstractController
         $cId = $request->request->get('id');
         if ('false' != $isInvoice) {
             $invoice = $cId ? $em->getRepository(Invoice::class)->find($cId) : null;
-            if (!($invoice instanceof Invoice)) {
+            $invoiceTemplate = $invoice instanceof Invoice ? $ts->resolveInvoiceTemplate($invoice) : null;
+            if (!$invoice instanceof Invoice) {
                 $this->addFlash('warning', 'templates.attachment.notfound');
+                $error = true;
+            } elseif (!$invoiceTemplate instanceof Template) {
+                $this->addFlash('warning', 'invoice.template.none_found');
                 $error = true;
             } else {
                 $binaryPayload = null;
                 $asEInvoice = false;
                 $readiness = $readinessService->check($invoice);
                 if ($readiness->ready) {
-                    $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
-                    $defaultTemplate = $ts->getDefaultTemplate($templates);
-                    if (null !== $defaultTemplate) {
-                        try {
-                            $binaryPayload = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $defaultTemplate, $readinessService->resolveSettingsFor($invoice));
-                            $asEInvoice = true;
-                        } catch (\Throwable $e) {
-                            $this->addFlash('warning', 'invoice.einvoice.export.fallback');
-                            $binaryPayload = null;
-                        }
+                    try {
+                        $binaryPayload = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $invoiceTemplate, $readinessService->resolveSettingsFor($invoice));
+                        $asEInvoice = true;
+                    } catch (\Throwable $e) {
+                        $this->addFlash('warning', 'invoice.einvoice.export.fallback');
+                        $binaryPayload = null;
                     }
                 }
                 $cId = $ts->makeCorespondenceOfInvoice($cId, $is, $binaryPayload, $asEInvoice);

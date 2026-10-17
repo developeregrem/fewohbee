@@ -183,5 +183,4 @@ class AccountingSettings
 
         return $this;
     }
-
 }

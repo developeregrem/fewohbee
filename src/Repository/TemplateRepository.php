@@ -21,8 +21,8 @@ class TemplateRepository extends EntityRepository
             ->createQueryBuilder('t')
             ->select('t', 'tt')
             ->leftJoin('t.templateType', 'tt')
-            ->addOrderBy('tt.name', 'ASC')
-            ->addOrderBy('t.name', 'ASC')
+            ->addOrderBy('tt.name', \SortDirection::Ascending)
+            ->addOrderBy('t.name', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -33,7 +33,7 @@ class TemplateRepository extends EntityRepository
             ->createQueryBuilder('t')
             ->select('t', 'tt')
             ->join('t.templateType', 'tt')
-            ->addOrderBy('t.name', 'ASC');
+            ->addOrderBy('t.name', \SortDirection::Ascending);
 
         $len = count($names);
         for ($i = 0; $i < $len; ++$i) {

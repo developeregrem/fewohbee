@@ -10,6 +10,7 @@
 
 {% block content %}
 <div class="container" data-controller="settings prices">
+    {% include 'Prices/_tabs.html.twig' with {'active': 'prices'} %}
     <div class="row">
         <div class="col">
             <button type="button" class="btn btn-secondary"

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Security;
 
+use App\Entity\Enum\ApiScope;
 use App\Service\ApiTokenService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -44,6 +45,9 @@ class ApiTokenBasicAuthenticator extends AbstractAuthenticator implements Authen
 
         if (0 !== strcasecmp((string) $request->getUser(), $user->getUsername())) {
             throw new BadCredentialsException('Invalid API token.');
+        }
+        if ($apiToken->hasScope(ApiScope::MCP_ACCESS)) {
+            throw new BadCredentialsException('Tokens for AI assistants only work at the MCP endpoint.');
         }
 
         $this->apiTokenContext->setToken($apiToken);

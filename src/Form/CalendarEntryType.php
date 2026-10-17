@@ -23,7 +23,7 @@ class CalendarEntryType extends AbstractType
                 'label' => 'calendar_entry.form.calendar',
                 'class' => Calendar::class,
                 'choice_label' => 'name',
-                'query_builder' => fn ($repo) => $repo->createQueryBuilder('c')->orderBy('c.name', 'ASC'),
+                'query_builder' => fn ($repo) => $repo->createQueryBuilder('c')->orderBy('c.name', \SortDirection::Ascending),
             ]);
         }
 

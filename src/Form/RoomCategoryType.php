@@ -45,8 +45,8 @@ class RoomCategoryType extends AbstractType
                 'class' => Amenity::class,
                 'query_builder' => static fn (AmenityRepository $repo) => $repo
                     ->createQueryBuilder('a')
-                    ->orderBy('a.category', 'ASC')
-                    ->addOrderBy('a.sortOrder', 'ASC'),
+                    ->orderBy('a.category', \SortDirection::Ascending)
+                    ->addOrderBy('a.sortOrder', \SortDirection::Ascending),
                 'choice_label' => static fn (Amenity $amenity) => $translator->trans('amenity.' . $amenity->getSlug()),
                 'choice_attr' => static fn (Amenity $amenity) => [
                     'data-icon' => $amenity->getIconFaClass(),

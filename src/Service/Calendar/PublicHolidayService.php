@@ -34,8 +34,6 @@ class PublicHolidayService
 
     /**
      * Build and cache the holiday provider for one exact year, country code and locale.
-     *
-     * @return ProviderInterface
      */
     private function initPublicdays(int $year, string $code, string $locale): ProviderInterface
     {

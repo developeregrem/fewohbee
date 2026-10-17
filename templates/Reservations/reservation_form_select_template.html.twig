@@ -1,112 +1,73 @@
+{% set titleClass = 'small text-uppercase fw-semibold text-body-secondary mb-2' %}
 <div data-controller="reservations" data-preview-template-url="{{ path('reservations.select.template.preview', {'id': '0'}) }}">
 <div class="modal-body">
-    <div class="ps-5 pe-5">
+    <div class="px-lg-5">
         <div id="flash-message-overlay">
             <div class="col"></div>
         </div>
-        {% if correspondences|length > 0 %}
-        <div class="row">
-            <div class="col">
-                <h4 class="pb-2">{{ 'reservation.correspondences.available'|trans }}</h4>
+        {# Existing documents and invoices are added as attachments to the mail being written #}
+        {% set files = correspondences|filter(c => 'FILE' in c.template.templateType.name or 'PDF' in c.template.templateType.name) %}
+        {% if files|length > 0 %}
+            <h2 class="{{ titleClass }}">{{ 'reservation.correspondences.available'|trans }}</h2>
+            <div class="list-group mb-4">
+                {% for correspondence in files %}
+                    <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-2"
+                       data-action="click->reservations#addAttachmentAction"
+                       data-url="{{ path('correspondence.attachment.add') }}"
+                       data-attachment-id="{{ correspondence.id }}"
+                       data-is-invoice="false">
+                        <i class="fas {{ correspondence.template.templateType.icon }} fa-fw text-body-secondary" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i>
+                        <span class="me-auto">{{ correspondence.name }}</span>
+                        <i class="fas fa-paperclip text-body-secondary" aria-hidden="true"></i>
+                    </a>
+                {% endfor %}
             </div>
-        </div>
-        <table class="table table-hover">
-            <thead>
-            <tr>
-                <th></th>
-                <th>{{ 'templates.name'|trans }}</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for correspondence in correspondences %}
-                {# do not allow other mails #}
-                {% if 'FILE' in correspondence.template.templateType.name or 'PDF' in correspondence.template.templateType.name %}
-                    <tr class="mouse-pointer"
-                        data-action="click->reservations#addAttachmentAction"
-                        data-url="{{ path('correspondence.attachment.add') }}"
-                        data-attachment-id="{{ correspondence.id }}"
-                        data-is-invoice="false">
-                        <td style="width:10.0pt"><i class="fas {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i></td>
-                        <td>{{ correspondence.name }}</td>
-                    </tr>
-                {% endif %}
-            {% endfor %}
-            </tbody>
-        </table>
         {% endif %}
         {% if invoices|length > 0 %}
-        <div class="row">
-            <div class="col">
-                <h4 class="pb-2">{{ 'reservation.templates.availableprices'|trans }}</h4>
-            </div>
-        </div>
-        <table class="table table-hover">
-            <thead>
-            <tr>
-                <th></th>
-                <th>{{ 'invoice.number'|trans }}</th>
-                <th class="text-center">{{ 'invoice.einvoice'|trans }}</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for invoice in invoices %}
+            <h2 class="{{ titleClass }}">{{ 'reservation.templates.availableprices'|trans }}</h2>
+            <div class="list-group mb-4">
+                {% for invoice in invoices %}
                     {% set readiness = einvoiceReadiness[invoice.id] ?? null %}
-                    <tr class="mouse-pointer"
-                        data-action="click->reservations#addAttachmentAction"
-                        data-url="{{ path('correspondence.attachment.add') }}"
-                        data-attachment-id="{{ invoice.id }}"
-                        data-is-invoice="true">
-                        <td style="width:10.0pt"><i class="fas fa-file-pdf" aria-hidden="true" title="{{ 'invoice.number.short'|trans }}"></i></td>
-                        <td>{{ invoice.number }} ({{ invoice.date|date('d.m.Y') }})</td>
-                        <td class="text-center">
-                            {% if readiness and readiness.configured %}
-                                {% if readiness.ready %}
-                                    <span class="text-success" title="{{ 'invoice.einvoice.attach.auto'|trans }}">
-                                        <i class="fa-solid fa-circle-check"></i></span>
-                                {% else %}
-                                    <span class="text-warning" title="{{ 'invoice.einvoice.status.missing'|trans }}:&#10;{{ readiness.result.messageKeys|map(key => key|trans)|join("\n") }}">
-                                        <i class="fa-solid fa-triangle-exclamation"></i></span>
-                                {% endif %}
+                    <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-2"
+                       data-action="click->reservations#addAttachmentAction"
+                       data-url="{{ path('correspondence.attachment.add') }}"
+                       data-attachment-id="{{ invoice.id }}"
+                       data-is-invoice="true">
+                        <i class="fas fa-file-pdf fa-fw text-body-secondary" aria-hidden="true" title="{{ 'invoice.number.short'|trans }}"></i>
+                        <span class="me-auto">{{ invoice.number }} ({{ invoice.date|date('d.m.Y') }})</span>
+                        {% if readiness and readiness.configured %}
+                            {% if readiness.ready %}
+                                <span class="text-success" title="{{ 'invoice.einvoice.attach.auto'|trans }}">
+                                    <i class="fa-solid fa-circle-check"></i></span>
+                            {% else %}
+                                <span class="text-warning" title="{{ 'invoice.einvoice.status.missing'|trans }}:&#10;{{ readiness.result.messageKeys|map(key => key|trans)|join("\n") }}">
+                                    <i class="fa-solid fa-triangle-exclamation"></i></span>
                             {% endif %}
-                        </td>
-                    </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-        <div class="row">
-            <div class="col">
-                <h4 class="pb-2">{{ 'templates.title'|trans }}</h4>
+                        {% endif %}
+                        <i class="fas fa-paperclip text-body-secondary" aria-hidden="true"></i>
+                    </a>
+                {% endfor %}
             </div>
-        </div>
-        <table class="table table-hover">
-            <thead>
-            <tr>
-                <th></th>
-                <th>{{ 'templates.name'|trans }}</th>
-            </tr>
-            </thead>
-            <tbody>
+        {% endif %}
+        <h2 class="{{ titleClass }}">{{ 'templates.title'|trans }}</h2>
+        <div class="list-group">
             {% for template in templates %}
-                    <tr class="mouse-pointer"
-                        data-action="click->reservations#previewTemplateForReservationAction"
-                        data-template-id="{{ template.id }}"
-                        data-inprocess="{{ inProcess }}"
-                        data-url="{{ path('reservations.select.template.preview', {'id': template.id}) }}">
-                        <td style="width:10.0pt"><i class="fas {{ template.templateType.icon }}" aria-hidden="true" title="{{ template.templateType.name|trans }}"></i></td>
-                        <td>{{ template.name }}</td>
-                    </tr>
+                <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-2"
+                   data-action="click->reservations#previewTemplateForReservationAction"
+                   data-template-id="{{ template.id }}"
+                   data-inprocess="{{ inProcess }}"
+                   data-url="{{ path('reservations.select.template.preview', {'id': template.id}) }}">
+                    <i class="fas {{ template.templateType.icon }} fa-fw text-body-secondary" aria-hidden="true" title="{{ template.templateType.name|trans }}"></i>
+                    <span class="me-auto">{{ template.name }}</span>
+                    <i class="fas fa-chevron-right text-body-secondary" aria-hidden="true"></i>
+                </a>
             {% endfor %}
-            </tbody>
-        </table>
+        </div>
     </div>
 </div>
-<div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pagination me-auto">
-        <li class="page-item ">
-            <a class="page-link" href="#"
-               data-action="click->reservations#selectReservationForTemplateAction"
-               data-url="{{ path('correspondence.select.reservation') }}">&larr; {{ 'button.back'|trans }}</a></li>
-    </ul>
+<div class="modal-footer">
+    <a href="#" class="btn btn-link px-0 me-auto text-decoration-none"
+       data-action="click->reservations#selectReservationForTemplateAction"
+       data-url="{{ path('correspondence.select.reservation') }}">&larr; {{ 'button.back'|trans }}</a>
 </div>
 </div>

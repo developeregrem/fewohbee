@@ -6,6 +6,7 @@ namespace App\Tests\Functional;
 
 use App\Entity\Appartment;
 use App\Entity\Price;
+use App\Entity\PricePeriod;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
@@ -78,6 +79,29 @@ final class PriceSettingsControllerTest extends WebTestCase
 
         self::assertCount(0, $crawler->filter('.alert'));
         self::assertSame([$double], $this->idsOf($this->findPrice('editable')));
+    }
+
+    public function testSpecialPeriodKeepsItsDescription(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+
+        $this->postPrice($client, 'event', 2, [$single], 'new', [
+            'allperiods-new' => '',
+            'period-new' => ['new'],
+            'periodstart-new' => ['2031-05-01'],
+            'periodend-new' => ['2031-05-03'],
+            'perioddescription-new' => ['  Stadtfest  '],
+        ]);
+
+        self::assertResponseIsSuccessful();
+        $period = $this->findPrice('event')?->getPricePeriods()->first();
+        self::assertInstanceOf(PricePeriod::class, $period);
+        self::assertSame('Stadtfest', $period->getDescription());
+        self::assertSame('2031-05-03', $period->getEnd()?->format('Y-m-d'));
+
+        $client->request('GET', '/settings/prices/');
+        self::assertStringContainsString('01.05.2031 - 03.05.2031 <span class="text-body-secondary small">Stadtfest</span>', (string) $client->getResponse()->getContent());
     }
 
     public function testRoomPriceWithoutCategoryIsRejected(): void
@@ -176,8 +200,9 @@ final class PriceSettingsControllerTest extends WebTestCase
      * otherwise the existing one is edited.
      *
      * @param list<int> $categoryIds
+     * @param array<string, string|list<string>> $overrides extra or replaced form fields
      */
-    private function postPrice(KernelBrowser $client, string $name, int $type, array $categoryIds, string $id = 'new'): \Symfony\Component\DomCrawler\Crawler
+    private function postPrice(KernelBrowser $client, string $name, int $type, array $categoryIds, string $id = 'new', array $overrides = []): \Symfony\Component\DomCrawler\Crawler
     {
         // The legacy CSRF token lives in the session and is created by rendering the form.
         $form = $client->request('GET', '/settings/prices/new');
@@ -186,7 +211,7 @@ final class PriceSettingsControllerTest extends WebTestCase
         $origin = $this->em()->getRepository(ReservationOrigin::class)->findOneBy([]);
         $url = 'new' === $id ? '/settings/prices/create' : sprintf('/settings/prices/%s/edit', $id);
 
-        return $client->request('POST', $url, [
+        return $client->request('POST', $url, array_merge([
             '_csrf_token' => $token,
             'description-'.$id => self::PREFIX.$name,
             'price-'.$id => '80,00',
@@ -200,7 +225,7 @@ final class PriceSettingsControllerTest extends WebTestCase
             'allperiods-'.$id => '1',
             'number-of-persons-'.$id => (string) self::PERSONS,
             'min-stay-'.$id => (string) self::MIN_STAY,
-        ]);
+        ], $overrides));
     }
 
     /**

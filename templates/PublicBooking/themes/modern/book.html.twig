@@ -125,6 +125,8 @@
                         {{ include('PublicBooking/themes/modern/_summary.html.twig') }}
 
                         <div class="fhb-actions">
+                            {# The total the guest sees; booking stops if the price has moved since. #}
+                            {% if grandTotal is not null %}<input type="hidden" name="quotedTotal" value="{{ (grandTotal * 100)|round }}">{% endif %}
                             <button type="submit" name="intent" value="submit" class="btn btn-primary">
                                 {{ config.bookingMode == 'BOOKING' ? ('online_booking.public.submit_booking'|trans) : ('online_booking.public.submit_inquiry'|trans) }}
                             </button>

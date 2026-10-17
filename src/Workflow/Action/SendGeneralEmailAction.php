@@ -120,11 +120,8 @@ class SendGeneralEmailAction implements WorkflowActionInterface
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_template_not_found', ['%id%' => $templateId]));
         }
 
-        if ($template->getTemplateType()?->getName() !== 'TEMPLATE_GENERAL_EMAIL') {
-            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_template_incompatible', [
-                '%type%' => $template->getTemplateType()?->getName() ?? 'null',
-                '%expected%' => 'TEMPLATE_GENERAL_EMAIL',
-            ]));
+        if ('TEMPLATE_GENERAL_EMAIL' !== $template->getTemplateType()?->getName()) {
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_template_incompatible', ['%type%' => $template->getTemplateType()?->getName() ?? 'null', '%expected%' => 'TEMPLATE_GENERAL_EMAIL']));
         }
 
         $recipient = $this->resolveRecipient($config);

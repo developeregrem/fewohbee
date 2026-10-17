@@ -61,7 +61,9 @@ class En16931InvoiceValidator implements EInvoiceValidatorInterface
             $violations[] = new EInvoiceViolation('sellerIdentifier', 'invoice.einvoice.violation.sellerIdentifier', EInvoiceFixLocation::SETTINGS);
         }
 
-        if (empty($settings->getPaymentDueDays()) && empty($settings->getPaymentTerms())) {
+        // An invoice with its own due date satisfies BR-CO-25 even when the settings state
+        // no period of their own.
+        if (empty($settings->getPaymentDueDays()) && empty($settings->getPaymentTerms()) && null === $invoice->getPaymentDueDate()) {
             $violations[] = new EInvoiceViolation('paymentTerms', 'invoice.einvoice.violation.paymentTerms', EInvoiceFixLocation::SETTINGS);
         }
 

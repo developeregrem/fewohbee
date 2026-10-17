@@ -24,13 +24,13 @@ class InvoiceSumCalculator
     /**
      * Calculates the sums and vats for an invoice.
      *
-     * @param Collection<int, InvoiceAppartment>      $apps            The invoice positions for apartment prices
-     * @param Collection<int, InvoicePosition>        $poss            The invoice positions for miscellaneous prices
-     * @param array<array-key, array<string, string|float>> $vats      Returns array of all vat values
-     * @param float                                   $brutto          Returns the total price including vat
-     * @param float                                   $netto           Returns the toal price for all vats
-     * @param float                                   $appartmentTotal Returns the total sum for all apartment prices
-     * @param float                                   $miscTotal       Returns the total price for all miscellaneous prices
+     * @param Collection<int, InvoiceAppartment>            $apps            The invoice positions for apartment prices
+     * @param Collection<int, InvoicePosition>              $poss            The invoice positions for miscellaneous prices
+     * @param array<array-key, array<string, string|float>> $vats            Returns array of all vat values
+     * @param float                                         $brutto          Returns the total price including vat
+     * @param float                                         $netto           Returns the toal price for all vats
+     * @param float                                         $appartmentTotal Returns the total sum for all apartment prices
+     * @param float                                         $miscTotal       Returns the total price for all miscellaneous prices
      */
     public function calculate(Collection $apps, Collection $poss, array &$vats, float &$brutto, float &$netto, float &$appartmentTotal, float &$miscTotal): void
     {

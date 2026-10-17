@@ -1,0 +1,24 @@
+{# First step of "add rule": pick what the rule is about; the form then opens prefilled. #}
+{% set templates = {
+    'weekend': 'fa-calendar-week',
+    'season': 'fa-calendar-day',
+    'last_minute': 'fa-hourglass-end',
+    'early_bird': 'fa-hourglass-start',
+    'occupancy_high': 'fa-arrow-trend-up',
+    'occupancy_low': 'fa-arrow-trend-down',
+} %}
+<p class="text-body-secondary small">{{ 'price_rules.template.intro'|trans }}</p>
+<div class="d-grid gap-2">
+    {% for template, icon in templates %}
+        <button type="button" class="btn btn-outline-secondary text-start d-flex align-items-center gap-3 py-2"
+                data-action="price-rules#openOffcanvas"
+                data-url="{{ path('prices.rules.new', {'template': template}) }}"
+                data-offcanvas-title="{{ ('price_rules.template.' ~ template)|trans }}">
+            <i class="fas {{ icon }} fa-fw fa-lg text-primary"></i>
+            <span>
+                <span class="d-block fw-semibold">{{ ('price_rules.template.' ~ template)|trans }}</span>
+                <span class="d-block small text-body-secondary">{{ ('price_rules.template.' ~ template ~ '_help')|trans }}</span>
+            </span>
+        </button>
+    {% endfor %}
+</div>

@@ -35,6 +35,42 @@ final class ApiTokenServiceTest extends TestCase
         self::assertNull($result->token->getExpiresAt());
     }
 
+    public function testMcpTokenRequiresExpiry(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->buildService()->createToken($this->buildUser(true), 'AI', [ApiScope::MCP_ACCESS->value], null);
+    }
+
+    public function testMcpTokenMustExpireWithinOneYear(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->buildService()->createToken($this->buildUser(true), 'AI', [ApiScope::MCP_ACCESS->value], new \DateTimeImmutable('+2 years'));
+    }
+
+    public function testMcpTokenWithExpiryIsCreated(): void
+    {
+        $result = $this->buildService()->createToken(
+            $this->buildUser(true),
+            'AI',
+            [ApiScope::MCP_ACCESS->value, ApiScope::RESERVATIONS_READ->value],
+            new \DateTimeImmutable('+1 year')
+        );
+
+        self::assertTrue($result->token->hasScope(ApiScope::MCP_ACCESS));
+    }
+
+    public function testGrantableScopesFollowRoles(): void
+    {
+        $scopes = ApiTokenService::grantableScopes(
+            [ApiScope::MCP_ACCESS, ApiScope::GUESTS_READ, ApiScope::RESERVATIONS_WRITE],
+            ['ROLE_RESERVATIONS', 'ROLE_RESERVATIONS_RO']
+        );
+
+        self::assertSame([ApiScope::MCP_ACCESS, ApiScope::RESERVATIONS_WRITE], $scopes);
+    }
+
     public function testValidateRejectsWrongPrefix(): void
     {
         $service = $this->buildService();

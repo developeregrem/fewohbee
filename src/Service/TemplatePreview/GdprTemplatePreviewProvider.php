@@ -30,7 +30,7 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
 
     public function supportsPreview(Template $template): bool
     {
-        return $template->getTemplateType()?->getName() === 'TEMPLATE_GDPR_PDF';
+        return 'TEMPLATE_GDPR_PDF' === $template->getTemplateType()?->getName();
     }
 
     public function getPreviewContextDefinition(): array
@@ -123,6 +123,20 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
                 'group' => 'GDPR',
                 'complexity' => 'simple',
                 'content' => "[[ customer.birthday ? customer.birthday|date('d.m.Y') : '' ]]",
+            ],
+            [
+                'id' => 'gdpr.general.nationality',
+                'label' => 'templates.preview.snippet.gdpr.general_nationality',
+                'group' => 'GDPR',
+                'complexity' => 'simple',
+                'content' => '[[ customer.nationality ]]',
+            ],
+            [
+                'id' => 'gdpr.general.id_document',
+                'label' => 'templates.preview.snippet.gdpr.general_id_document',
+                'group' => 'GDPR',
+                'complexity' => 'simple',
+                'content' => "<span data-if=\"customer.IDNumber\">[[ customer.idType ? customer.idType.value|trans : '' ]] [[ customer.IDNumber ]]</span>",
             ],
             [
                 'id' => 'gdpr.general.remark',

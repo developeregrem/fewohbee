@@ -14,4 +14,3 @@ namespace App\Entity\Attribute;
 final class TemplateIgnore
 {
 }
-

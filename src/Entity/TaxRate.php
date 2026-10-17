@@ -11,6 +11,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TaxRateRepository::class)]
 #[ORM\Table(name: 'tax_rates')]
+#[ORM\Index(name: 'idx_tax_chart_preset', columns: ['chart_preset'])]
 class TaxRate
 {
     #[ORM\Id]

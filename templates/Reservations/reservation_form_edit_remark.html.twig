@@ -7,19 +7,15 @@
     }
 }) }}
 <div class="modal-body">
-    <div class="ps-5 pe-5">
+    <div class="px-lg-5">
         {{ form_widget(form) }}
     </div>
 </div>
 <div class="modal-footer">
-    <ul class="pagination me-auto">
-        <li class="page-item">
-            <a class="page-link" href="#"
-               data-action="click->reservations#openReservationAction"
-               data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
-               data-reservation-id="{{ reservation.id }}">&larr; {{ 'button.back'|trans }}</a>
-        </li>
-    </ul>
+    <a class="btn btn-link me-auto px-0 text-decoration-none" href="#"
+       data-action="click->reservations#openReservationAction"
+       data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
+       data-reservation-id="{{ reservation.id }}">&larr; {{ 'button.back'|trans }}</a>
     <input id="reservation-edit-save" class="btn btn-primary" type="submit" value="{{ 'button.save'|trans }}" />
 </div>
 {{ form_end(form) }}

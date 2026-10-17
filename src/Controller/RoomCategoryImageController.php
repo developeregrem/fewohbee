@@ -70,7 +70,7 @@ class RoomCategoryImageController extends AbstractController
         RoomCategoryImageService $imageService,
         EntityManagerInterface $em,
     ): JsonResponse {
-        if (!$this->isCsrfTokenValid('delete' . $imageId, $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('delete'.$imageId, $request->request->get('_token'))) {
             return new JsonResponse(['error' => 'Invalid CSRF token'], Response::HTTP_FORBIDDEN);
         }
 
@@ -87,7 +87,7 @@ class RoomCategoryImageController extends AbstractController
 
     /**
      * Updates the display order of images.
-     * Expects JSON body: { "order": [imageId1, imageId2, ...] }
+     * Expects JSON body: { "order": [imageId1, imageId2, ...] }.
      */
     #[Route('/reorder', name: 'room_category_image_reorder', methods: ['POST'])]
     public function reorder(
@@ -161,7 +161,7 @@ class RoomCategoryImageController extends AbstractController
                 'id' => $categoryId,
                 'imageId' => $imageId,
             ]),
-            'csrfToken' => $this->csrfTokenManager->getToken('delete' . $imageId)->getValue(),
+            'csrfToken' => $this->csrfTokenManager->getToken('delete'.$imageId)->getValue(),
         ];
     }
 }

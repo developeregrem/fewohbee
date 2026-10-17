@@ -39,7 +39,7 @@ class ReservationCreatedTrigger implements WorkflowTriggerInterface
         return $em->getRepository(Reservation::class)->createQueryBuilder('r')
             ->leftJoin('r.calendarSyncImport', 'csi')
             ->where('csi IS NULL')
-            ->orderBy('r.reservationDate', 'DESC')
+            ->orderBy('r.reservationDate', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

@@ -32,8 +32,8 @@ class AppartmentService
             $this->em->flush();
 
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 }

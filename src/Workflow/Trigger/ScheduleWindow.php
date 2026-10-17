@@ -136,7 +136,7 @@ final class ScheduleWindow
     {
         $days = [];
         for ($offset = $this->backlogDays($runDay); $offset > 0; --$offset) {
-            $days[] = $runDay->modify('-' . $offset . ' days');
+            $days[] = $runDay->modify('-'.$offset.' days');
         }
         $days[] = $runDay;
 
@@ -155,7 +155,7 @@ final class ScheduleWindow
         $backlog = $this->backlogDays($runDay);
 
         return [
-            $backlog > 0 ? $targetDate->modify('-' . $backlog . ' days') : $targetDate,
+            $backlog > 0 ? $targetDate->modify('-'.$backlog.' days') : $targetDate,
             $targetDate,
         ];
     }

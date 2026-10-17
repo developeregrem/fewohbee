@@ -31,7 +31,7 @@ class PostalCodeDataRepository extends ServiceEntityRepository
             ->andWhere('p.postalCode LIKE :zip')
             ->setParameter('country', $country)
             ->setParameter('zip', $zip.'%')
-            ->orderBy('p.placeName', 'ASC')
+            ->orderBy('p.placeName', \SortDirection::Ascending)
             ->setMaxResults(100)
             ->getQuery()
             ->getResult()

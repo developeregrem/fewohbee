@@ -33,7 +33,7 @@ class PublicBookingRequestMapper
     }
 
     /**
-     * @param Appartment|null $calendarRoom the room the guest picked in the calendar, already scope-checked
+     * @param Appartment|null $calendarRoom   the room the guest picked in the calendar, already scope-checked
      * @param string          $defaultCountry ISO country used when the guest left the field empty
      *
      * @throws PublicBookingException on unusable dates
@@ -63,6 +63,7 @@ class PublicBookingRequestMapper
             $occupancySelection,
             $this->extractExtrasSelection($request),
             $this->mapBooker($request, $defaultCountry),
+            ctype_digit((string) $request->request->get('quotedTotal', '')) ? $request->request->getInt('quotedTotal') : null,
         );
     }
 

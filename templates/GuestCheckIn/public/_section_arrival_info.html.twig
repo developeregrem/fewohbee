@@ -1,0 +1,9 @@
+{# Next to the form the check-in window already sits under the time field; the note is new. #}
+{% set times = formShown ? '' : check_in_times(subsidiary) %}
+{% if times or subsidiary.checkInNote %}
+<div class="fhb-section">
+    <h2 class="fhb-section-title">{{ 'guest_checkin.public.section.arrival_info'|trans }}</h2>
+    {% if times %}<p class="mb-1">{{ times }}</p>{% endif %}
+    {% if subsidiary.checkInNote %}<p class="mb-0">{{ subsidiary.checkInNote|nl2br }}</p>{% endif %}
+</div>
+{% endif %}

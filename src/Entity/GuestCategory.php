@@ -38,16 +38,16 @@ class GuestCategory
     #[ORM\Column(type: 'smallint', nullable: true)]
     private ?int $maxAge = null;
 
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $isCountedInOccupancy = true;
 
     #[ORM\Column(type: 'string', enumType: GuestStatisticalGroup::class, length: 20)]
     private GuestStatisticalGroup $statisticalGroup = GuestStatisticalGroup::OTHER;
 
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
     private int $sortOrder = 0;
 
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $active = true;
 
     #[ORM\Column(type: 'string', length: 50, unique: true, nullable: true)]

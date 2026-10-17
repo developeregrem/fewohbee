@@ -12,7 +12,7 @@ class SpecialDays
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(name: 'special_days_id', type: 'integer')]
     private $id;
     #[ORM\Column(type: 'time')]
     private $start;

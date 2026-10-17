@@ -113,8 +113,6 @@ class Correspondence
 
     /**
      * Get created.
-     *
-     * @return \DateTime
      */
     public function getCreated(): \DateTime
     {

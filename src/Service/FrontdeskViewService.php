@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Entity\Reservation;
 use App\Entity\Enum\InvoiceStatus;
+use App\Entity\Reservation;
 
 /**
  * Builds frontdesk list items with arrival/departure/inhouse categories.
@@ -14,7 +14,7 @@ class FrontdeskViewService
 {
     /**
      * @param array<int, array<string, mixed>> $rows
-     * @param array<int, string> $selectedCategories
+     * @param array<int, string>               $selectedCategories
      *
      * @return array<int, array<string, mixed>>
      */
@@ -52,7 +52,7 @@ class FrontdeskViewService
                     continue;
                 }
 
-                if (count(array_intersect($categories, $selectedCategories)) === 0) {
+                if (0 === count(array_intersect($categories, $selectedCategories))) {
                     continue;
                 }
 

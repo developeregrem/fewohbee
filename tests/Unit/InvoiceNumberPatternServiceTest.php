@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
-use App\Service\Exception\InvalidInvoiceNumberPatternException;
+use App\Exception\InvalidInvoiceNumberPatternException;
 use App\Service\InvoiceNumberPatternService;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;

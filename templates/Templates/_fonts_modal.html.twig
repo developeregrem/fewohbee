@@ -1,0 +1,69 @@
+{% use "common/delete_popover.html.twig" %}
+
+<form id="custom-font-upload-form"
+      method="post"
+      action="{{ path('settings.templates.fonts.upload') }}"
+      enctype="multipart/form-data">
+    <div class="modal-body">
+        <p class="text-body-secondary">{{ 'templates.fonts.description'|trans }}</p>
+
+        {% if customFonts is empty %}
+            <div class="alert alert-light border">{{ 'templates.fonts.empty'|trans }}</div>
+        {% else %}
+            <div class="list-group mb-4">
+                {% for family in customFonts %}
+                    <div class="list-group-item d-flex align-items-center gap-2">
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">{{ family.name }}</div>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                {% for style in ['R', 'B', 'I', 'BI'] %}
+                                    {% if family.faces[style] is defined %}
+                                        <span class="badge text-bg-secondary">{{ ('templates.fonts.style.' ~ (style|lower))|trans }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if not family.usable %}
+                                    <span class="badge text-bg-warning">{{ 'templates.fonts.missing_regular'|trans }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% set id = 'font-' ~ family.alias %}
+                        {% set targetUrl = path('settings.templates.fonts.delete', {'alias': family.alias}) %}
+                        {% set deletePopoverHint = 'templates.fonts.delete.hint'|trans %}
+                        <button type="button"
+                                class="btn btn-outline-danger btn-sm"
+                                data-popover="delete"
+                                data-title="{{ 'templates.fonts.delete.ask'|trans }}"
+                                data-bs-content='{{ block('deletePopoverContent') }}'
+                                title="{{ 'button.delete'|trans }}">
+                            <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="mb-3">
+            <label class="form-label" for="custom-font-files">{{ 'templates.fonts.upload.label'|trans }}</label>
+            <input class="form-control"
+                   id="custom-font-files"
+                   type="file"
+                   name="fonts[]"
+                   accept=".ttf,.otf,font/ttf,font/otf"
+                   multiple
+                   required>
+            <div class="form-text">{{ 'templates.fonts.upload.help'|trans }}</div>
+        </div>
+        <input type="hidden" name="_csrf_token" value="{{ fontUploadToken }}">
+
+        <p class="d-flex align-items-start gap-2 small text-body-secondary mb-0 mt-3">
+            <i class="fas fa-info-circle text-info mt-1" aria-hidden="true"></i>
+            <span>{{ 'templates.fonts.license_hint'|trans }}</span>
+        </p>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-upload me-1" aria-hidden="true"></i>{{ 'templates.fonts.upload.button'|trans }}
+        </button>
+    </div>
+</form>

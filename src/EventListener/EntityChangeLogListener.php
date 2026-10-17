@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace App\EventListener;
 
+use App\Entity\BankImportDraft;
+use App\Entity\DayPrice;
 use App\Entity\Enum\LogAction;
+use App\Entity\GuestCheckIn;
 use App\Entity\Log;
 use App\Entity\MonthlyStatsSnapshot;
+use App\Entity\ReceiptProposal;
 use App\Entity\User;
 use App\Entity\WorkflowLog;
+use App\EventSubscriber\McpAccessSubscriber;
+use App\Security\ApiTokenContext;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\OnFlushEventArgs;
@@ -26,8 +32,12 @@ final class EntityChangeLogListener
     /** Recursion guard (Log itself), separate audit tables, and request-only caches. */
     private const IGNORED_ENTITIES = [
         Log::class,
+        // Serialized bank statement lines: personal data of third parties, rewritten on every edit.
+        BankImportDraft::class,
         WorkflowLog::class,
         MonthlyStatsSnapshot::class,
+        // One row per night; a pricing tool rewrites hundreds at once.
+        DayPrice::class,
     ];
 
     private const SENSITIVE_FIELD_NEEDLES = [
@@ -37,6 +47,16 @@ final class EntityChangeLogListener
         // a person. Redacting the value keeps the linking event itself in the
         // audit trail - the field name still shows that the binding changed.
         'oidcsubject',
+    ];
+
+    /**
+     * Fields redacted for an entity where the name gives no hint: the check-in payload contains
+     * personal data, and receipt proposals can contain personal and financial details. Their
+     * status changes and reviewers remain in the audit trail.
+     */
+    private const SENSITIVE_FIELDS_BY_ENTITY = [
+        GuestCheckIn::class => ['payload', 'selector'],
+        ReceiptProposal::class => ['supplier', 'receiptDate', 'receiptNumber', 'total', 'payment', 'lines', 'note'],
     ];
 
     /** LastActionSubscriber writes this on every request; filter defensively. */
@@ -52,6 +72,7 @@ final class EntityChangeLogListener
         private readonly Security $security,
         private readonly RequestStack $requestStack,
         private readonly LoggerInterface $logger,
+        private readonly ApiTokenContext $apiTokenContext,
     ) {
     }
 
@@ -125,7 +146,15 @@ final class EntityChangeLogListener
         $user = $this->security->getUser();
         $username = $user instanceof User ? $user->getUserIdentifier() : null;
         $userId = $user instanceof User ? $user->getId() : null;
-        $ip = $this->requestStack->getCurrentRequest()?->getClientIp();
+        $request = $this->requestStack->getCurrentRequest();
+        $ip = $request?->getClientIp();
+        $apiToken = $this->apiTokenContext->getToken();
+        $channel = match (true) {
+            null === $request => null,
+            null === $apiToken => 'web',
+            McpAccessSubscriber::isMcpPath($request->getPathInfo()) => 'mcp',
+            default => 'api',
+        };
         $now = new \DateTimeImmutable();
 
         // background EM isolates audit writes from the primary flush so they cannot recurse or pick up unrelated dirty entities.
@@ -146,10 +175,12 @@ final class EntityChangeLogListener
                 $log->setEntityClass($item['class']);
                 $log->setEntityId($item['id'] ?? $this->getEntityId($item['entity'], $em));
                 $log->setAction($item['action']);
-                $log->setChanges($this->sanitize($item['changes']));
+                $log->setChanges($this->sanitize($item['changes'], $item['class']));
                 $log->setUser($userRef);
                 $log->setUsername($username);
                 $log->setIpAddress($ip);
+                $log->setChannel($channel);
+                $log->setApiTokenPrefix($apiToken?->getTokenPrefix());
                 $logEm->persist($log);
             }
             $logEm->flush();
@@ -261,11 +292,11 @@ final class EntityChangeLogListener
      *
      * @return array<string, array{0: mixed, 1: mixed}|array{0: string, 1: string}>
      */
-    private function sanitize(array $changes): array
+    private function sanitize(array $changes, string $class): array
     {
         $out = [];
         foreach ($changes as $field => $values) {
-            if ($this->isSensitive($field)) {
+            if ($this->isSensitive($field) || \in_array($field, self::SENSITIVE_FIELDS_BY_ENTITY[$class] ?? [], true)) {
                 $out[$field] = ['***redacted***', '***redacted***'];
                 continue;
             }

@@ -33,9 +33,9 @@ class AppartmentRepository extends ServiceEntityRepository
     private function addDefaultSorting(QueryBuilder $qb): QueryBuilder
     {
         return $qb
-            ->addOrderBy('o.name', 'ASC')
-            ->addOrderBy('LENGTH(a.number)', 'ASC')
-            ->addOrderBy('a.number', 'ASC');
+            ->addOrderBy('o.name', \SortDirection::Ascending)
+            ->addOrderBy('LENGTH(a.number)', \SortDirection::Ascending)
+            ->addOrderBy('a.number', \SortDirection::Ascending);
     }
 
     public function findAll(): array
@@ -175,9 +175,9 @@ class AppartmentRepository extends ServiceEntityRepository
             ->andWhere('o.id IN (:subsidiaryIds)')
             ->setParameter('roomIds', $roomIds)
             ->setParameter('subsidiaryIds', $subsidiaryIds)
-            ->addOrderBy('rc.name', 'ASC')
-            ->addOrderBy('LENGTH(a.number)', 'ASC')
-            ->addOrderBy('a.number', 'ASC')
+            ->addOrderBy('rc.name', \SortDirection::Ascending)
+            ->addOrderBy('LENGTH(a.number)', \SortDirection::Ascending)
+            ->addOrderBy('a.number', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }

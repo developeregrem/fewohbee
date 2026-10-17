@@ -77,25 +77,13 @@ class TouristTaxApiController extends AbstractController
         $subsidiary = $this->resolveSubsidiary($request);
         $statusIds = $this->resolveStatusIds($request);
 
-        $payload = $this->touristTaxReportService->buildPayload(
+        $summary = $this->touristTaxReportService->buildMonthlySummary(
             $start,
             $end->modify('last day of this month')->setTime(23, 59, 59),
             $subsidiary,
             $statusIds,
         );
-
-        $months = [];
-        foreach ($payload['months'] as $month) {
-            $taxes = array_values($month['taxes']);
-            $months[] = [
-                'month' => sprintf('%d-%02d', $month['year'], $month['month']),
-                'taxes' => $taxes,
-                'total' => round(array_sum(array_map(
-                    static fn (array $tax): float => (float) $tax['totalAmount'],
-                    $taxes
-                )), 2),
-            ];
-        }
+        $months = $summary['months'];
 
         return new JsonResponse([
             'data' => $months,
@@ -103,7 +91,7 @@ class TouristTaxApiController extends AbstractController
                 'start' => $start->format('Y-m'),
                 'end' => $end->format('Y-m'),
                 'objectId' => $subsidiary?->getId(),
-                'guestCategories' => $payload['guestCategories'],
+                'guestCategories' => $summary['guestCategories'],
                 'count' => \count($months),
             ],
         ]);

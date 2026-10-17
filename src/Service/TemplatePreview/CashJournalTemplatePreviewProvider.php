@@ -16,8 +16,8 @@ namespace App\Service\TemplatePreview;
 use App\Entity\AccountingAccount;
 use App\Entity\BookingBatch;
 use App\Entity\BookingEntry;
-use App\Entity\Template;
 use App\Entity\TaxRate;
+use App\Entity\Template;
 use App\Interfaces\ITemplatePreviewProvider;
 use App\Repository\BookingBatchRepository;
 use App\Service\BookingJournal\BookingJournalService;
@@ -35,7 +35,7 @@ class CashJournalTemplatePreviewProvider implements ITemplatePreviewProvider
 
     public function supportsPreview(Template $template): bool
     {
-        return $template->getTemplateType()?->getName() === 'TEMPLATE_CASHJOURNAL_PDF';
+        return 'TEMPLATE_CASHJOURNAL_PDF' === $template->getTemplateType()?->getName();
     }
 
     public function getPreviewContextDefinition(): array
@@ -202,24 +202,24 @@ class CashJournalTemplatePreviewProvider implements ITemplatePreviewProvider
         $batch->setMonth((int) date('n'));
         $batch->setYear((int) date('Y'));
 
-        $assetAccount = (new AccountingAccount())
+        $assetAccount = new AccountingAccount()
             ->setAccountNumber('1200')
             ->setName('Bank')
             ->setType(AccountingAccount::TYPE_ASSET);
-        $revenueAccount = (new AccountingAccount())
+        $revenueAccount = new AccountingAccount()
             ->setAccountNumber('8400')
             ->setName('Erlöse 19 % USt')
             ->setType(AccountingAccount::TYPE_REVENUE);
-        $expenseAccount = (new AccountingAccount())
+        $expenseAccount = new AccountingAccount()
             ->setAccountNumber('4930')
             ->setName('Bürobedarf')
             ->setType(AccountingAccount::TYPE_EXPENSE);
-        $vat19 = (new TaxRate())
+        $vat19 = new TaxRate()
             ->setName('19 % USt')
             ->setRate('19.00')
             ->setRevenueAccount($revenueAccount);
 
-        $entry1 = (new BookingEntry())
+        $entry1 = new BookingEntry()
             ->setDate(new \DateTime('first day of this month'))
             ->setDocumentNumber(1001)
             ->setAmount('245.00')
@@ -230,7 +230,7 @@ class CashJournalTemplatePreviewProvider implements ITemplatePreviewProvider
             ->setRemark('Zahlung Zimmerrechnung')
             ->setSourceType(BookingEntry::SOURCE_MANUAL);
 
-        $entry2 = (new BookingEntry())
+        $entry2 = new BookingEntry()
             ->setDate(new \DateTime('first day of this month +3 days'))
             ->setDocumentNumber(1002)
             ->setAmount('58.40')
@@ -241,7 +241,7 @@ class CashJournalTemplatePreviewProvider implements ITemplatePreviewProvider
             ->setRemark('Einkauf Bürobedarf')
             ->setSourceType(BookingEntry::SOURCE_MANUAL);
 
-        $entry3 = (new BookingEntry())
+        $entry3 = new BookingEntry()
             ->setDate(new \DateTime('first day of this month +5 days'))
             ->setDocumentNumber(1003)
             ->setAmount('120.00')

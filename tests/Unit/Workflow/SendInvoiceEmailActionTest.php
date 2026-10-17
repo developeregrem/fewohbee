@@ -82,6 +82,7 @@ final class SendInvoiceEmailActionTest extends TestCase
         $this->em->method('getRepository')->willReturn($this->repository);
 
         $this->templatesService->method('getDefaultTemplate')->willReturn($this->pdfTemplate);
+        $this->templatesService->method('resolveInvoiceTemplate')->willReturn($this->pdfTemplate);
         $this->templatesService->method('renderTemplate')->willReturn('<html>rendered</html>');
         $this->templatesService->method('getPDFOutput')->willReturn('PLAIN_PDF_BYTES');
 

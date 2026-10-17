@@ -5,17 +5,14 @@
                 <div class="col-md-7">
                     {{ form_widget(form) }}
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-5 order-first order-md-last mb-4 mb-md-0">
                     {% include 'Invoices/invoice_form_reservation_list_fields.html.twig' %}
                 </div>
             </div>
         </div>
     </div>
     <div class="modal-footer">
-        <ul class="pagination me-auto">
-        <li class="page-item " data-action="click->invoices#showInvoiceAction" data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}" data-edit="true">
-            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
-        </ul>
+        <a href="#" class="btn btn-link px-0 me-auto text-decoration-none" data-action="click->invoices#showInvoiceAction" data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}" data-edit="true">&larr; {{ 'button.back'|trans }}</a>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" />
     </div>
 {{ form_end(form) }}

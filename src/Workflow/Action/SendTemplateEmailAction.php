@@ -148,10 +148,7 @@ class SendTemplateEmailAction implements WorkflowActionInterface
         $typeName = $template->getTemplateType()?->getName();
         $expectedType = self::ENTITY_TEMPLATE_TYPES[get_class($entity)] ?? null;
         if (null !== $expectedType && $typeName !== $expectedType) {
-            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_template_incompatible', [
-                '%type%' => $typeName ?? 'null',
-                '%expected%' => $expectedType,
-            ]));
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_template_incompatible', ['%type%' => $typeName ?? 'null', '%expected%' => $expectedType]));
         }
 
         $recipient = $this->resolveRecipient($config, $entity);

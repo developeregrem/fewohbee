@@ -182,6 +182,17 @@ final class En16931InvoiceValidatorTest extends TestCase
         self::assertContains('paymentTerms', $this->violationFields($this->buildValidInvoice(), $settings));
     }
 
+    /** A due date set on the invoice itself is a payment term of its own (BR-CO-25). */
+    public function testTheInvoicesOwnDueDateSatisfiesPaymentTerms(): void
+    {
+        $settings = $this->buildValidSettings();
+        $settings->setPaymentDueDays(null);
+        $settings->setPaymentTerms(null);
+        $invoice = $this->buildValidInvoice()->setPaymentDueDate(new \DateTime('2026-01-22'));
+
+        self::assertNotContains('paymentTerms', $this->violationFields($invoice, $settings));
+    }
+
     public function testNoPaymentMeansCausesNoPaymentViolations(): void
     {
         $settings = $this->buildValidSettings();

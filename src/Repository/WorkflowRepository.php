@@ -24,7 +24,7 @@ class WorkflowRepository extends ServiceEntityRepository
             ->where('w.triggerType = :triggerType')
             ->andWhere('w.isEnabled = true')
             ->setParameter('triggerType', $triggerType)
-            ->orderBy('w.priority', 'DESC')
+            ->orderBy('w.priority', \SortDirection::Descending)
             ->getQuery()
             ->getResult();
     }
@@ -134,7 +134,7 @@ class WorkflowRepository extends ServiceEntityRepository
             ->where('w.triggerType IN (:triggerTypes)')
             ->andWhere('w.isEnabled = true')
             ->setParameter('triggerTypes', $triggerTypes)
-            ->orderBy('w.priority', 'DESC')
+            ->orderBy('w.priority', \SortDirection::Descending)
             ->getQuery()
             ->getResult();
     }

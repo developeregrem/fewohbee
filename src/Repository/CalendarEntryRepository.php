@@ -51,9 +51,9 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->setParameter('today', new \DateTimeImmutable('today', new \DateTimeZone('UTC')))
             ->setParameter('tomorrow', new \DateTimeImmutable('tomorrow', new \DateTimeZone('UTC')))
             ->addSelect(self::TIME_OF_DAY_SELECT)
-            ->orderBy('e.date', 'ASC')
-            ->addOrderBy(self::TIME_OF_DAY_ORDER, 'ASC')
-            ->addOrderBy('e.title', 'ASC')
+            ->orderBy('e.date', \SortDirection::Ascending)
+            ->addOrderBy(self::TIME_OF_DAY_ORDER, \SortDirection::Ascending)
+            ->addOrderBy('e.title', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -109,7 +109,7 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->andWhere('e.sourceUid = :sourceUid')
             ->setParameter('calendar', $calendar)
             ->setParameter('sourceUid', $sourceUid)
-            ->orderBy('e.date', 'ASC')
+            ->orderBy('e.date', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -188,9 +188,9 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->setParameter('from', $from)
             ->setParameter('to', $to)
             ->addSelect(self::TIME_OF_DAY_SELECT)
-            ->orderBy('c.name', 'ASC')
-            ->addOrderBy('e.date', 'ASC')
-            ->addOrderBy(self::TIME_OF_DAY_ORDER, 'ASC')
+            ->orderBy('c.name', \SortDirection::Ascending)
+            ->addOrderBy('e.date', \SortDirection::Ascending)
+            ->addOrderBy(self::TIME_OF_DAY_ORDER, \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -208,7 +208,7 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->setParameter('calendar', $calendar)
             ->setParameter('from', $from)
             ->setParameter('to', $to)
-            ->orderBy('e.date', 'ASC')
+            ->orderBy('e.date', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }

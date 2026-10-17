@@ -46,6 +46,14 @@ class Log
     #[ORM\Column(name: 'ip_address', type: 'string', length: 45, nullable: true)]
     private ?string $ipAddress = null;
 
+    /** Where the change came from: "web", "api" or "mcp" (AI assistant); null for console jobs. */
+    #[ORM\Column(type: 'string', length: 8, nullable: true)]
+    private ?string $channel = null;
+
+    /** Display prefix of the API token that authenticated the change, if any. */
+    #[ORM\Column(name: 'api_token_prefix', type: 'string', length: 12, nullable: true)]
+    private ?string $apiTokenPrefix = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -145,6 +153,30 @@ class Log
     public function setIpAddress(?string $ipAddress): self
     {
         $this->ipAddress = $ipAddress;
+
+        return $this;
+    }
+
+    public function getChannel(): ?string
+    {
+        return $this->channel;
+    }
+
+    public function setChannel(?string $channel): self
+    {
+        $this->channel = $channel;
+
+        return $this;
+    }
+
+    public function getApiTokenPrefix(): ?string
+    {
+        return $this->apiTokenPrefix;
+    }
+
+    public function setApiTokenPrefix(?string $apiTokenPrefix): self
+    {
+        $this->apiTokenPrefix = $apiTokenPrefix;
 
         return $this;
     }

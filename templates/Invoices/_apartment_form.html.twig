@@ -7,7 +7,7 @@
 {{ form_row(form.beds) }}
 <div class="row">
     <label for="pricecategory"
-           class="col-sm-4 col-form-label text-end">{{ 'invoice.appartment.position.pricecategory'|trans }}</label>
+           class="col-sm-4 col-form-label text-sm-end">{{ 'invoice.appartment.position.pricecategory'|trans }}</label>
 
     <div class="col-sm">
         <select id="pricecategory" name="pricecategory" class="form-select"
@@ -21,7 +21,7 @@
 </div>                   
 {{ form_row(form.vat) }}
 {{ form_row(form.price) }}
-<div class="row mt-4 ps-5">
+<div class="row mt-4 ps-lg-5">
     <div class="col-sm">
         {{ form_widget(form.includesVat) }}
         {{ form_widget(form.isFlatPrice, {'attr': {'data-action': 'change->invoices#flatPriceTogglePerRoomAction', 'data-per-room-selector': '#' ~ form.isPerRoom.vars.id}}) }}

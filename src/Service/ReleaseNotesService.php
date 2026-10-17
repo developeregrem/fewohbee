@@ -107,7 +107,7 @@ class ReleaseNotesService
      */
     public function getHtml(ReleaseNote $note): string
     {
-        $key = 'release_notes.html.' . str_replace('.', '_', $note->version) . '.' . $note->locale;
+        $key = 'release_notes.html.'.str_replace('.', '_', $note->version).'.'.$note->locale;
 
         return $this->cache->get($key, function (ItemInterface $item) use ($note): string {
             $item->expiresAfter(null);
@@ -138,7 +138,7 @@ class ReleaseNotesService
         $index = [];
         $directory = $this->getDirectory();
 
-        foreach (glob($directory . '/*.md') ?: [] as $path) {
+        foreach (glob($directory.'/*.md') ?: [] as $path) {
             if (!preg_match('/^(.+)\.([a-z]{2})\.md$/', basename($path), $matches)) {
                 continue;
             }
@@ -152,7 +152,7 @@ class ReleaseNotesService
 
     private function getDirectory(): string
     {
-        return $this->projectDir . '/' . self::SUBDIRECTORY;
+        return $this->projectDir.'/'.self::SUBDIRECTORY;
     }
 
     private function read(string $version, string $locale): ?ReleaseNote

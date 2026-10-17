@@ -36,8 +36,8 @@ class GuestCategoryAgeMapper
      * or whenever the only one has age bounds. A category with both bounds
      * NULL serves as a catch-all that matches every age.
      *
-     * @param int   $adults     count of adults (≥ 0)
-     * @param int[] $childAges  list of ages, one entry per child
+     * @param int   $adults    count of adults (≥ 0)
+     * @param int[] $childAges list of ages, one entry per child
      *
      * @return array<int, int> categoryId => count
      */

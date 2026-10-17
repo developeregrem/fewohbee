@@ -173,10 +173,7 @@ final class Iso20022CamtParser implements ParserInterface
         }
 
         if ($version < 8) {
-            throw new \RuntimeException($this->trans('accounting.bank_import.parser.error.camt_version_too_old', [
-                '%type%' => $messageType,
-                '%version%' => sprintf('%02d', $version),
-            ]));
+            throw new \RuntimeException($this->trans('accounting.bank_import.parser.error.camt_version_too_old', ['%type%' => $messageType, '%version%' => sprintf('%02d', $version)]));
         }
 
         if ($version > 14) {

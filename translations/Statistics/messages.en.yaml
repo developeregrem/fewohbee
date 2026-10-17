@@ -7,11 +7,23 @@ statistics:
   turnover:
     description: Turnovers
     help: >-
-      Turnover is based on invoices (gross) with invoice date in the respective
-      month and the following status:
+      Turnover: invoices (gross) by invoice date, with the status selected below. Forecast: expected
+      turnover of the reservations not yet counted there, by month of departure. Canceled reservations
+      and conflicts do not count.
     monthly: monthly turnover
     title: Turnovers
     yearly: annual turnover
+    series:
+      invoiced: Invoices (by invoice date)
+      invoiced_year: 'Invoices %year% (by invoice date)'
+      forecast: Forecast (by month of departure)
+      forecast_year: 'Forecast %year% (by month of departure)'
+    forecast:
+      show: Show forecast from reservations
+      include_invoiced: Include reservations with an invoice
+      tooltip:
+        reservations: '{0}no reservation|{1}one reservation|]1,Inf[%count% reservations'
+        invoiced: '{1}of which %amount% from one reservation with an invoice|]1,Inf[of which %amount% from %count% reservations with an invoice'
   utilization:
     description: Utilization
     monthly: Monthly Utilization

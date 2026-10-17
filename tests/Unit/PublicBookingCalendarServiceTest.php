@@ -31,25 +31,32 @@ final class PublicBookingCalendarServiceTest extends TestCase
     public function testAvailabilityMarksOccupiedNightsAsTakenAndKeepsDepartureDayFree(): void
     {
         $room = $this->makeRoom(1, 'Doppelzimmer');
-        $service = $this->makeService([$room], ['2026-09-02' => true, '2026-09-03' => true]);
+        $month = new \DateTimeImmutable('first day of next month');
+        $firstNight = $month->format('Y-m-d');
+        $occupiedNight = $month->modify('+1 day')->format('Y-m-d');
+        $lastOccupiedNight = $month->modify('+2 days')->format('Y-m-d');
+        $departureDay = $month->modify('+3 days')->format('Y-m-d');
+        $service = $this->makeService([$room], [$occupiedNight => true, $lastOccupiedNight => true]);
 
-        $result = $service->getAvailability((string) $room->getUuid(), '2026-09', 1);
+        $result = $service->getAvailability((string) $room->getUuid(), $month->format('Y-m'), 1);
 
         self::assertNotNull($result);
-        self::assertTrue($result->nights['2026-09-01']);
-        self::assertFalse($result->nights['2026-09-02']);
-        self::assertFalse($result->nights['2026-09-03']);
+        self::assertTrue($result->nights[$firstNight]);
+        self::assertFalse($result->nights[$occupiedNight]);
+        self::assertFalse($result->nights[$lastOccupiedNight]);
         // The night after the last occupied one is free again — that is the
         // departure day, and it must stay bookable as the next arrival.
-        self::assertTrue($result->nights['2026-09-04']);
+        self::assertTrue($result->nights[$departureDay]);
     }
 
     public function testAvailabilityExposesNothingBeyondNightBooleans(): void
     {
         $room = $this->makeRoom(1, 'Doppelzimmer');
-        $service = $this->makeService([$room], ['2026-09-02' => true]);
+        $month = new \DateTimeImmutable('first day of next month');
+        $occupiedNight = $month->modify('+1 day')->format('Y-m-d');
+        $service = $this->makeService([$room], [$occupiedNight => true]);
 
-        $payload = $service->getAvailability((string) $room->getUuid(), '2026-09', 1)->toArray();
+        $payload = $service->getAvailability((string) $room->getUuid(), $month->format('Y-m'), 1)->toArray();
 
         self::assertSame(['room', 'from', 'toExclusive', 'nights', 'hasMore'], array_keys($payload));
         self::assertSame((string) $room->getUuid(), $payload['room']);

@@ -57,8 +57,8 @@ class PriceRepository extends ServiceEntityRepository
                 ->addSelect('components', 'rc')
                 ->leftJoin('p.components', 'components')
                 ->leftJoin('p.roomCategories', 'rc')
-                ->addOrderBy('p.active', 'DESC')
-                ->addOrderBy('p.id', 'ASC')
+                ->addOrderBy('p.active', \SortDirection::Descending)
+                ->addOrderBy('p.id', \SortDirection::Ascending)
                 ->getQuery();
 
         try {
@@ -188,7 +188,7 @@ class PriceRepository extends ServiceEntityRepository
             ->andWhere('p.type = 2')
                 /* make sure that all room specific fields match */
             ->andWhere(':rc MEMBER OF p.roomCategories AND p.numberOfPersons = :nop AND p.minStay <= :ms')
-            ->addOrderBy('p.minStay', 'DESC')
+            ->addOrderBy('p.minStay', \SortDirection::Descending)
             ->setParameter('rc', $reservation->getAppartment()->getRoomCategory())
             ->setParameter('nop', $reservation->getPersons())
             ->setParameter('ms', $stays);
@@ -279,7 +279,7 @@ class PriceRepository extends ServiceEntityRepository
                 .'(pp.start <= :end AND pp.end > :end) OR'
                 .'(pp.start < :start AND pp.end > :end))')
                 /* select only prices for the given reservation origin */
-            ->addOrderBy('start_is_null', 'ASC')
+            ->addOrderBy('start_is_null', \SortDirection::Ascending)
             ->setParameter('start', $reservation->getStartDate())
             ->setParameter('end', $reservation->getEndDate())
             ->setParameter('roid', $reservation->getReservationOrigin()->getId());
@@ -365,9 +365,9 @@ class PriceRepository extends ServiceEntityRepository
             ->join('p.reservationOrigins', 'ro', Expr\Join::WITH, 'ro.id = :oid')
             ->where('p.active = true')
             ->setParameter('oid', $originId)
-            ->addOrderBy('p.type', 'DESC')
-            ->addOrderBy('p.numberOfPersons', 'ASC')
-            ->addOrderBy('p.description', 'ASC')
+            ->addOrderBy('p.type', \SortDirection::Descending)
+            ->addOrderBy('p.numberOfPersons', \SortDirection::Ascending)
+            ->addOrderBy('p.description', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
 
@@ -408,11 +408,11 @@ class PriceRepository extends ServiceEntityRepository
             ->leftJoin('p.reservationOrigins', 'ro')
             ->leftJoin('p.components', 'pc')
             ->leftJoin('p.roomCategories', 'rc')
-            ->addOrderBy('p.type', 'DESC')
-            ->addOrderBy('rc.name', 'ASC')
-            ->addOrderBy('p.numberOfPersons', 'ASC')
-            ->addOrderBy('p.minStay', 'ASC')
-            ->addOrderBy('p.description', 'ASC');
+            ->addOrderBy('p.type', \SortDirection::Descending)
+            ->addOrderBy('rc.name', \SortDirection::Ascending)
+            ->addOrderBy('p.numberOfPersons', \SortDirection::Ascending)
+            ->addOrderBy('p.minStay', \SortDirection::Ascending)
+            ->addOrderBy('p.description', \SortDirection::Ascending);
 
         if (null !== $type) {
             $q->andWhere('p.type = :type')->setParameter('type', $type);
@@ -455,7 +455,7 @@ class PriceRepository extends ServiceEntityRepository
             ->andWhere('p.type = 2')
             ->andWhere(':rc MEMBER OF p.roomCategories')
             ->andWhere('p.numberOfPersons IS NOT NULL')
-            ->orderBy('p.numberOfPersons', 'ASC')
+            ->orderBy('p.numberOfPersons', \SortDirection::Ascending)
             ->setParameter('rc', $roomCategory)
             ->getQuery()
             ->getScalarResult();

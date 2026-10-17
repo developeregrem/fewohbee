@@ -31,4 +31,3 @@ class TemplateRenderParamsResolver
         return $provider->buildRenderParams($template, $input);
     }
 }
-

@@ -16,6 +16,29 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
  */
 class CustomerRepository extends EntityRepository
 {
+    /**
+     * A narrow starting set for staff-reviewed check-in deduplication. The service checks
+     * birth date and email before any result may be offered as an existing guest.
+     *
+     * @return list<Customer>
+     */
+    public function findCheckInCandidatesByName(string $firstname, string $lastname): array
+    {
+        $result = $this->createQueryBuilder('c')
+            ->select('c', 'a')
+            ->distinct()
+            ->leftJoin('c.customerAddresses', 'a')
+            ->where('c.id > 1')
+            ->andWhere('LOWER(TRIM(c.firstname)) = :firstname')
+            ->andWhere('LOWER(TRIM(c.lastname)) = :lastname')
+            ->setParameter('firstname', mb_strtolower(trim($firstname)))
+            ->setParameter('lastname', mb_strtolower(trim($lastname)))
+            ->getQuery()
+            ->getResult();
+
+        return array_values(array_filter($result, static fn (mixed $customer): bool => $customer instanceof Customer));
+    }
+
     public function getCustomersLike($lastname, $page, $limit)
     {
         $q = $this
@@ -24,7 +47,7 @@ class CustomerRepository extends EntityRepository
             ->where('c.id > 1 AND ((c.lastname LIKE :lastname or c.firstname LIKE :lastname) OR a.company LIKE :lastname)')
             ->leftJoin('c.customerAddresses', 'a')
             ->setParameter('lastname', $lastname)
-            ->addOrderBy('c.lastname', 'ASC')
+            ->addOrderBy('c.lastname', \SortDirection::Ascending)
             ->groupBy('c.id')
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
@@ -45,7 +68,7 @@ class CustomerRepository extends EntityRepository
                     .'or a.address LIKE :search or a.phone LIKE :search))')
             ->leftJoin('c.customerAddresses', 'a')
             ->setParameter('search', '%'.$search.'%')
-            ->addOrderBy('c.lastname', 'ASC')
+            ->addOrderBy('c.lastname', \SortDirection::Ascending)
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
             ->distinct()
@@ -74,7 +97,7 @@ class CustomerRepository extends EntityRepository
         $q = $this
             ->createQueryBuilder('c')
             ->select('c')
-            ->addOrderBy('c.id', 'DESC')
+            ->addOrderBy('c.id', \SortDirection::Descending)
             ->setFirstResult(0)
             ->setMaxResults($limit)
             ->getQuery();
@@ -102,7 +125,7 @@ class CustomerRepository extends EntityRepository
             ->leftJoin('c.customerAddresses', 'a')
             ->where('LOWER(a.email) = :email')
             ->setParameter('email', mb_strtolower($email))
-            ->addOrderBy('c.id', 'ASC')
+            ->addOrderBy('c.id', \SortDirection::Ascending)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();

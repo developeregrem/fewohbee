@@ -60,6 +60,7 @@ final class ImportedReservationSynchronizerTest extends TestCase
             $availability,
             $this->createStub(GuestCategoryRepository::class),
             $this->createStub(ReservationService::class),
+            $this->createStub(\App\Service\Pricing\PricePromiseService::class),
         );
 
         $outcome = $service->synchronize($import, new IcsOccurrence(
@@ -137,6 +138,7 @@ final class ImportedReservationSynchronizerTest extends TestCase
             $availability,
             $guestCategories,
             $reservationService,
+            $this->createStub(\App\Service\Pricing\PricePromiseService::class),
         );
 
         $outcome = $service->synchronize($import, new IcsOccurrence(

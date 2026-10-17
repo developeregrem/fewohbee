@@ -31,7 +31,7 @@ class ReservationStatus
     private $contrastColor;
     #[ORM\Column(type: 'string', length: 50, unique: true, nullable: true)]
     private $code;
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private $isBlocking = true;
     #[ORM\ManyToMany(targetEntity: CalendarSync::class, mappedBy: 'reservationStatus')]
     private $calendarSyncs;

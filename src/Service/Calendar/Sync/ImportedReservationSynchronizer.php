@@ -11,6 +11,7 @@ use App\Event\CalendarImportBookingCreatedEvent;
 use App\Repository\GuestCategoryRepository;
 use App\Repository\ReservationRepository;
 use App\Service\AvailabilityService;
+use App\Service\Pricing\PricePromiseService;
 use App\Service\ReservationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
@@ -30,6 +31,7 @@ final class ImportedReservationSynchronizer
         private readonly AvailabilityService $availabilityService,
         private readonly GuestCategoryRepository $guestCategoryRepository,
         private readonly ReservationService $reservationService,
+        private readonly PricePromiseService $pricePromises,
     ) {
     }
 
@@ -200,6 +202,9 @@ final class ImportedReservationSynchronizer
             $reservation->setCalendarSyncImport($import);
             $this->entityManager->persist($reservation);
         }
+        // A portal booking is promised the house's own price as of its import; a date change
+        // from the feed keeps that price for the nights that remain.
+        $this->pricePromises->reconcile($reservation);
 
         $this->entityManager->flush();
 

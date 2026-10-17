@@ -118,6 +118,8 @@ function completionSource(ctx, schema) {
                         changes: { from, to, insert },
                         selection: { anchor: from + insert.length },
                     });
+                } else if (isDate && def.nullable) {
+                    applyNullableDateCompletion(view, from, to, key, pathParts, docText);
                 } else if (isDate) {
                     // Date: insert name with date filter and close the bracket
                     const afterCursor = docText.substring(pos);
@@ -352,7 +354,7 @@ function applyCollectionCompletion(view, completion, from, to, def, pathParts, d
     const textBefore = docText.substring(0, from);
     const bracketOpen = textBefore.lastIndexOf('[[');
     const textAfter = docText.substring(to);
-    const bracketCloseMatch = textAfter.match(/\s*]]/);
+    const bracketCloseMatch = textAfter.match(/^\s*]]/);
     const bracketCloseEnd = bracketCloseMatch
         ? to + bracketCloseMatch[0].length
         : to;
@@ -393,7 +395,7 @@ function applyArrayCompletion(view, _completion, from, to, def, key, pathParts, 
     const textBefore = docText.substring(0, from);
     const bracketOpen = textBefore.lastIndexOf('[[');
     const textAfter = docText.substring(to);
-    const bracketCloseMatch = textAfter.match(/\s*]]/);
+    const bracketCloseMatch = textAfter.match(/^\s*]]/);
     const bracketCloseEnd = bracketCloseMatch
         ? to + bracketCloseMatch[0].length
         : to;
@@ -410,6 +412,29 @@ function applyArrayCompletion(view, _completion, from, to, def, key, pathParts, 
     view.dispatch({
         changes: { from: replaceFrom, to: replaceTo, insert: loopHtml },
         selection: { anchor: replaceFrom + cursorOffset },
+    });
+}
+
+/**
+ * When the user selects a nullable date, wrap the placeholder in a data-if guard:
+ * Twig's date filter prints the current date for null, so a missing date would
+ * otherwise render as today.
+ */
+function applyNullableDateCompletion(view, from, to, key, pathParts, docText) {
+    const datePath = pathParts.length > 0
+        ? pathParts.join('.') + '.' + key
+        : key;
+
+    // Replace the entire [[ … ]] placeholder, including a closing ]] right after the cursor
+    const bracketOpen = docText.substring(0, from).lastIndexOf('[[');
+    const bracketCloseMatch = docText.substring(to).match(/^\s*]]/);
+    const replaceTo = bracketCloseMatch ? to + bracketCloseMatch[0].length : to;
+
+    const insert = `<span data-if="${datePath}">[[ ${datePath}|date('d.m.Y') ]]</span>`;
+
+    view.dispatch({
+        changes: { from: bracketOpen, to: replaceTo, insert },
+        selection: { anchor: bracketOpen + insert.length },
     });
 }
 

@@ -17,6 +17,9 @@ class PricePeriod
     private $start;
     #[ORM\Column(type: 'date')]
     private $end;
+    /** Optional label, e.g. the event the period was created for. */
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    private ?string $description = null;
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Price', inversedBy: 'pricePeriods')]
     #[ORM\JoinColumn(nullable: false)]
     private $price;
@@ -46,6 +49,19 @@ class PricePeriod
     public function setEnd(\DateTimeInterface $end): self
     {
         $this->end = $end;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): self
+    {
+        $description = null !== $description ? trim($description) : null;
+        $this->description = '' === $description ? null : $description;
 
         return $this;
     }

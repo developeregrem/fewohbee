@@ -1,0 +1,17 @@
+{# Number, invoice date and due date as label-value lines, shared by the invoice view and the new-invoice preview. #}
+<table class="text-nowrap">
+    <tr>
+        <th class="text-end pe-3">{{ 'invoice.number'|trans }}</th>
+        <td class="text-end">{{ invoice.number }}</td>
+    </tr>
+    <tr>
+        <th class="text-end pe-3">{{ 'invoice.date'|trans }}</th>
+        <td class="text-end">{{ invoice.date|date('d.m.Y') }}</td>
+    </tr>
+    {% if invoice.paymentDueDate %}
+        <tr>
+            <th class="text-end pe-3">{{ 'invoice.payment_due.date'|trans }}</th>
+            <td class="text-end">{{ invoice.paymentDueDate|date('d.m.Y') }}</td>
+        </tr>
+    {% endif %}
+</table>

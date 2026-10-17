@@ -20,15 +20,15 @@ class ReservationTableService
     /**
      * Build a complete grid model for the reservation table view.
      *
-     * @param Appartment[]  $apartments
-     * @param \DateTimeImmutable $startDate first day of the visible period
-     * @param int           $interval number of days in the visible period
-     * @param Reservation[] $allReservations all reservations for ALL apartments in the period (pre-loaded)
-     * @param bool          $showSubsidiaryHeaders whether to show subsidiary group headers
-     * @param RoomBlock[]   $allBlocks all room blocks for ALL apartments in the period (pre-loaded)
-     * @param array<string, DayDecoration> $decorations holidays/calendar entries per Y-m-d, from
-     *                                                  ReservationTableDecorationService; empty leaves the
-     *                                                  day columns bare
+     * @param Appartment[]                 $apartments
+     * @param \DateTimeImmutable           $startDate             first day of the visible period
+     * @param int                          $interval              number of days in the visible period
+     * @param Reservation[]                $allReservations       all reservations for ALL apartments in the period (pre-loaded)
+     * @param bool                         $showSubsidiaryHeaders whether to show subsidiary group headers
+     * @param RoomBlock[]                  $allBlocks             all room blocks for ALL apartments in the period (pre-loaded)
+     * @param array<string, DayDecoration> $decorations           holidays/calendar entries per Y-m-d, from
+     *                                                            ReservationTableDecorationService; empty leaves the
+     *                                                            day columns bare
      */
     public function buildGrid(
         array $apartments,
@@ -106,7 +106,7 @@ class ReservationTableService
         $roomCategory = $apartment->getRoomCategory();
         $acronym = $roomCategory?->getAcronym();
 
-        if ($acronym !== null && $acronym !== '') {
+        if (null !== $acronym && '' !== $acronym) {
             $label .= ' ('.$acronym.')';
         }
 
@@ -141,7 +141,7 @@ class ReservationTableService
 
         foreach ($days as $day) {
             $month = (int) $day->format('n');
-            if ($currentMonth === null) {
+            if (null === $currentMonth) {
                 $currentMonth = $month;
                 $count = 1;
             } elseif ($month === $currentMonth) {
@@ -152,7 +152,7 @@ class ReservationTableService
                 $count = 1;
             }
         }
-        if ($count > 0 && $currentMonth !== null) {
+        if ($count > 0 && null !== $currentMonth) {
             $headers[] = new TableHeader((string) $currentMonth, $count);
         }
 
@@ -172,7 +172,7 @@ class ReservationTableService
 
         foreach ($days as $day) {
             $week = (int) $day->format('W');
-            if ($currentWeek === null) {
+            if (null === $currentWeek) {
                 $currentWeek = $week;
                 $count = 1;
             } elseif ($week === $currentWeek) {
@@ -183,7 +183,7 @@ class ReservationTableService
                 $count = 1;
             }
         }
-        if ($count > 0 && $currentWeek !== null) {
+        if ($count > 0 && null !== $currentWeek) {
             $headers[] = new TableHeader((string) $currentWeek, $count);
         }
 
@@ -280,10 +280,10 @@ class ReservationTableService
                 // Single-day (both start and end): fill both
                 // Middle day (neither): fill both
 
-                if ($fillLeft && $slots[$leftSlot] === null) {
+                if ($fillLeft && null === $slots[$leftSlot]) {
                     $slots[$leftSlot] = $entry;
                 }
-                if ($fillRight && $slots[$rightSlot] === null) {
+                if ($fillRight && null === $slots[$rightSlot]) {
                     $slots[$rightSlot] = $entry;
                 }
             }
@@ -295,10 +295,10 @@ class ReservationTableService
 
         while ($i < $numSlots) {
             $dayIndex = intdiv($i, 2);
-            $isLeft = ($i % 2 === 0);
+            $isLeft = (0 === $i % 2);
             $dayStr = $days[$dayIndex]->format('Y-m-d');
 
-            if ($slots[$i] === null) {
+            if (null === $slots[$i]) {
                 // Empty half-day cell
                 $cells[] = new TableCell(
                     date: $dayStr,
@@ -434,12 +434,12 @@ class ReservationTableService
      */
     public function getDisplayName(Reservation $reservation): string
     {
-        if ($reservation->getBooker() !== null) {
+        if (null !== $reservation->getBooker()) {
             $booker = $reservation->getBooker();
 
             // Check for business company name
             foreach ($booker->getCustomerAddresses() as $address) {
-                if ($address->getType() === 'CUSTOMER_ADDRESS_TYPE_BUSINESS' && !empty($address->getCompany())) {
+                if ('CUSTOMER_ADDRESS_TYPE_BUSINESS' === $address->getType() && !empty($address->getCompany())) {
                     return $address->getCompany();
                 }
             }
@@ -452,7 +452,7 @@ class ReservationTableService
             return $name;
         }
 
-        if ($reservation->getCalendarSyncImport() !== null) {
+        if (null !== $reservation->getCalendarSyncImport()) {
             return $reservation->getCalendarSyncImport()->getName();
         }
 

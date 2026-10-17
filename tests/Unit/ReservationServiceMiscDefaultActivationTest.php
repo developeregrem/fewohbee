@@ -56,6 +56,7 @@ final class ReservationServiceMiscDefaultActivationTest extends TestCase
             $this->createStub(\App\Repository\GuestCategoryRepository::class),
             $this->createStub(\App\Service\AvailabilityService::class),
             new \App\Service\ReservationPeriodService(),
+            $this->createStub(\App\Service\Pricing\PricePromiseService::class),
         );
 
         $reservationService->getMiscPricesInCreation(

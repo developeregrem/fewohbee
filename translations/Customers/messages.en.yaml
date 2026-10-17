@@ -8,6 +8,8 @@ customer.address.add: Add new address
 customer.address.delete: Remove Address
 customer.addresstype: Type
 customer.birthday: Birthday
+customer.nationality: Nationality
+customer.nationality_unknown: Not specified
 customer.city: City
 customer.company: Company
 customer.contact: Contact

@@ -31,8 +31,8 @@ use Symfony\Component\Uid\Uuid;
  * Every committed line — including ignored ones — is recorded as a
  * {@see BankImportFingerprint} so a re-import recognises it as a duplicate.
  *
- * The whole flow runs in a single DB transaction. On success the session
- * draft is discarded and a {@see BankStatementImport} audit row remains.
+ * The whole flow runs in a single DB transaction, which also deletes the
+ * draft; a {@see BankStatementImport} audit row remains.
  */
 final class BankStatementCommitter
 {
@@ -44,7 +44,7 @@ final class BankStatementCommitter
         private readonly BankImportFingerprintRepository $fingerprintRepo,
         private readonly InvoiceRepository $invoiceRepo,
         private readonly TaxRateRepository $taxRateRepo,
-        private readonly BankImportDraftSession $drafts,
+        private readonly BankImportDraftStore $drafts,
     ) {
     }
 
@@ -162,13 +162,12 @@ final class BankStatementCommitter
             if ([] !== $statementEntryYears) {
                 $this->journal->recalculateDocumentNumbersForYears(...array_values(array_unique($statementEntryYears)));
             }
+            $this->drafts->discard($state->sessionImportId);
             $this->em->commit();
         } catch (\Throwable $e) {
             $this->em->rollback();
             throw $e;
         }
-
-        $this->drafts->discard($state->sessionImportId);
 
         return [
             'importId' => (int) $audit->getId(),
@@ -180,8 +179,8 @@ final class BankStatementCommitter
     }
 
     /**
-     * @param list<BookingEntry>      $entries
-     * @param array<string, mixed>    $line
+     * @param list<BookingEntry>   $entries
+     * @param array<string, mixed> $line
      */
     private function updateExistingInvoiceEntries(array $entries, array $line, \DateTimeImmutable $valueDate, AccountingAccount $bankAccount): void
     {
@@ -199,8 +198,8 @@ final class BankStatementCommitter
     }
 
     /**
-     * @param array<string, mixed>          $line
-     * @param array<int, AccountingAccount> $accounts
+     * @param array<string, mixed>            $line
+     * @param array<int, AccountingAccount>   $accounts
      * @param array<int, \App\Entity\TaxRate> $taxRates
      *
      * @return list<BookingEntry>
@@ -220,7 +219,7 @@ final class BankStatementCommitter
                 $accounts[(int) ($line['userCreditAccountId'] ?? 0)] ?? null,
                 $line['userRemark'] ?? null,
                 $invoiceNumber,
-                $invoiceId !== null ? (int) $invoiceId : null,
+                null !== $invoiceId ? (int) $invoiceId : null,
                 null,
                 $taxRates[(int) ($line['userTaxRateId'] ?? 0)] ?? null,
             );
@@ -238,7 +237,7 @@ final class BankStatementCommitter
                 $accounts[(int) ($split['creditAccountId'] ?? 0)] ?? null,
                 $split['remark'] ?? null,
                 $invoiceNumber,
-                $invoiceId !== null ? (int) $invoiceId : null,
+                null !== $invoiceId ? (int) $invoiceId : null,
                 $groupUuid,
                 $taxRates[(int) ($split['taxRateId'] ?? 0)] ?? null,
             );

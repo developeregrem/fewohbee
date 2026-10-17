@@ -37,7 +37,7 @@ class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
 
     public function supportsPreview(Template $template): bool
     {
-        return $template->getTemplateType()?->getName() === 'TEMPLATE_OPERATIONS_PDF';
+        return 'TEMPLATE_OPERATIONS_PDF' === $template->getTemplateType()?->getName();
     }
 
     public function getPreviewContextDefinition(): array

@@ -175,7 +175,10 @@ function _enableDeletePopoverNow({ onSuccess, root }) {
     popoverTriggerList.push(...Array.from(rootEl.querySelectorAll('[data-popover="delete"]')));
 
     popoverTriggerList.forEach((popoverTriggerEl) => {
-        popoverTriggerEl._deletePopoverOnSuccess = onSuccess || null;
+        // A page-wide call without handler must not drop one a specific call has set
+        if (onSuccess || popoverTriggerEl._deletePopoverOnSuccess === undefined) {
+            popoverTriggerEl._deletePopoverOnSuccess = onSuccess || null;
+        }
         popoverTriggerEl.setAttribute('data-bs-toggle', 'popover');
         if (popoverTriggerEl.dataset.deletePopoverInitialized === 'true') {
             return;
@@ -219,7 +222,8 @@ function _enableDeletePopoverNow({ onSuccess, root }) {
                             method: 'DELETE',
                             data: form ? new FormData(form) : null,
                             target: successHandler ? null : (target || null),
-                            onSuccess: successHandler ? () => successHandler(popoverTriggerEl) : null,
+                            // The response is passed along for handlers that report the outcome themselves
+                            onSuccess: successHandler ? (data) => successHandler(popoverTriggerEl, data) : null,
                         });
                     }
                 });
@@ -238,6 +242,24 @@ function _enableDeletePopoverNow({ onSuccess, root }) {
             });
         });
     });
+}
+
+/**
+ * Phones and small tablets: below Bootstrap's lg breakpoint, where content switches to its narrow
+ * layout. The layout follows the width; gestures follow the pointer (see isCompactTouchViewport).
+ */
+export const COMPACT_VIEWPORT_QUERY = '(max-width: 991.98px)';
+
+export function isCompactViewport() {
+    return window.matchMedia(COMPACT_VIEWPORT_QUERY).matches;
+}
+
+/**
+ * Compact and operated by finger, so swiping can replace small buttons. Touch alone is not
+ * enough: a tablet in landscape has room for the desktop layout.
+ */
+export function isCompactTouchViewport() {
+    return isCompactViewport() && window.matchMedia('(pointer: coarse)').matches;
 }
 
 export function setModalTitle(title) {

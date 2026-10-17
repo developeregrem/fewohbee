@@ -109,9 +109,7 @@ class WorkflowAttachmentResolver
         $this->assertTotalSize($attachments);
 
         if (self::POLICY_REQUIRE_ALL === $policy && [] !== $warnings) {
-            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_attachment_missing', [
-                '%reason%' => implode('; ', $warnings),
-            ]));
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_attachment_missing', ['%reason%' => implode('; ', $warnings)]));
         }
 
         return new ResolvedAttachmentSet($attachments, $warnings);
@@ -256,16 +254,20 @@ class WorkflowAttachmentResolver
             return [];
         }
 
-        $pdfTemplate = $this->resolveInvoiceTemplate($pdfTemplateId, $warnings);
-        if (!$pdfTemplate instanceof Template) {
-            $warnings[] = $this->translator->trans('workflow.log.skipped_no_pdf_template');
-
-            return [];
-        }
+        $configuredTemplate = $this->resolveInvoiceTemplate($pdfTemplateId, $warnings);
 
         $resolved = [];
 
         foreach ($invoices as $invoice) {
+            // Without a usable configured layout each invoice gets the one bound to its payment
+            // means, or else the default.
+            $pdfTemplate = $configuredTemplate ?? $this->templatesService->resolveInvoiceTemplate($invoice);
+            if (!$pdfTemplate instanceof Template) {
+                $warnings[] = $this->translator->trans('workflow.log.skipped_no_pdf_template');
+
+                return [];
+            }
+
             // Resolved per invoice: with per-branch issuers the company can differ between
             // the invoices of a single workflow run.
             $settings = $this->readinessService->resolveSettingsFor($invoice);
@@ -279,10 +281,11 @@ class WorkflowAttachmentResolver
     }
 
     /**
-     * The layout for attached invoices: the configured one, otherwise the default.
+     * The configured layout for attached invoices, or null to pick one per invoice (see
+     * TemplatesService::resolveInvoiceTemplate()).
      *
      * A template that has been deleted or retyped since the workflow was set up does
-     * not cost the recipient their invoice — it is rendered with the default layout and
+     * not cost the recipient their invoice — it is rendered with the per-invoice layout and
      * the reason is recorded as a warning, which POLICY_REQUIRE_ALL still escalates.
      *
      * @param string[] $warnings
@@ -301,9 +304,7 @@ class WorkflowAttachmentResolver
             }
         }
 
-        return $this->templatesService->getDefaultTemplate(
-            $this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF'])
-        );
+        return null;
     }
 
     /** @param string[] $warnings */
@@ -448,9 +449,7 @@ class WorkflowAttachmentResolver
         }
 
         if ($total > self::MAX_TOTAL_BYTES) {
-            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_attachments_too_large', [
-                '%size%' => number_format($total / 1024 / 1024, 1),
-            ]));
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_attachments_too_large', ['%size%' => number_format($total / 1024 / 1024, 1)]));
         }
     }
 }

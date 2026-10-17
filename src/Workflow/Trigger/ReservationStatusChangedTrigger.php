@@ -37,7 +37,7 @@ class ReservationStatusChangedTrigger implements WorkflowTriggerInterface
     public function findPreviewEntities(EntityManagerInterface $em, array $config, int $limit = 20): array
     {
         return $em->getRepository(Reservation::class)->createQueryBuilder('r')
-            ->orderBy('r.startDate', 'DESC')
+            ->orderBy('r.startDate', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

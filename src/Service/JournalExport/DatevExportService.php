@@ -99,7 +99,7 @@ class DatevExportService implements BookingExportInterface
     public function export(BookingBatch $batch, AccountingSettings $settings, string $currency = 'EUR'): string
     {
         $periodStart = sprintf('%d%02d01', $batch->getYear(), $batch->getMonth());
-        $periodEnd = (new \DateTimeImmutable($periodStart))->format('Ymt');
+        $periodEnd = new \DateTimeImmutable($periodStart)->format('Ymt');
 
         $lines = [];
         $lines[] = $this->buildHeaderLine(

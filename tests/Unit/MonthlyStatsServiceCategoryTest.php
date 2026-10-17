@@ -100,6 +100,27 @@ final class MonthlyStatsServiceCategoryTest extends TestCase
         self::assertEqualsWithDelta(8.0, $metrics['tourism']['overnights_by_country_and_category']['AT'][$adultCatId], 0.0001);
     }
 
+    public function testGuestListIncludingInfantsIsUsedInsteadOfTheBooker(): void
+    {
+        $statusId = 1;
+
+        // Adult and child counted in the occupancy (persons=2) plus an infant who is not; all three
+        // registered as guests → the list is complete, their countries count, not the booker's.
+        $reservation = $this->makeReservation(
+            '2026-03-10',
+            '2026-03-13', // 3 nights
+            persons: 2,
+            statusId: $statusId,
+            guestCounts: [1 => 1, 2 => 1, 3 => 1],
+            customers: [$this->makeCustomer('DE'), $this->makeCustomer('CH'), $this->makeCustomer('CH')],
+            booker: $this->makeCustomer('AT'),
+        );
+
+        $metrics = $this->buildMetrics([$reservation], $statusId);
+
+        self::assertEquals(['DE' => 3, 'CH' => 6], $metrics['tourism']['overnights_by_country']);
+    }
+
     public function testPartialMonthOverlapClipsNights(): void
     {
         $adultCatId = 1;

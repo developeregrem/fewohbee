@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Mcp\DependencyInjection\McpServerPass;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
@@ -22,6 +25,12 @@ class Kernel extends BaseKernel
         }
 
         return parent::getCacheDir();
+    }
+
+    protected function build(ContainerBuilder $container): void
+    {
+        // After the MCP bundle's own pass, which registers the tool services on the server builder.
+        $container->addCompilerPass(new McpServerPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, -10);
     }
 
     protected function configureContainer(ContainerConfigurator $container): void

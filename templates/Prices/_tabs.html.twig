@@ -1,0 +1,12 @@
+{# Base prices, price calendar and price rules are separate pages behind one menu entry. Expects: active ('prices'|'calendar'|'rules'). #}
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link{{ active == 'prices' ? ' active' }}"{% if active == 'prices' %} aria-current="page"{% endif %} href="{{ path('prices.overview') }}">{{ 'price_rules.tab.prices'|trans }}</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link{{ active == 'calendar' ? ' active' }}"{% if active == 'calendar' %} aria-current="page"{% endif %} href="{{ path('prices.calendar') }}">{{ 'price_rules.tab.calendar'|trans }}</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link{{ active == 'rules' ? ' active' }}"{% if active == 'rules' %} aria-current="page"{% endif %} href="{{ path('prices.rules') }}">{{ 'price_rules.tab.rules'|trans }}</a>
+    </li>
+</ul>

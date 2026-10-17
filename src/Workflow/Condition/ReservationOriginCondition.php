@@ -27,8 +27,8 @@ class ReservationOriginCondition implements WorkflowConditionInterface
     {
         return [
             [
-                'key'   => 'originId',
-                'type'  => 'reservation_origin_select',
+                'key' => 'originId',
+                'type' => 'reservation_origin_select',
                 'label' => 'workflow.condition.reservation_origin_is',
             ],
         ];

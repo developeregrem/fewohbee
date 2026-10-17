@@ -63,16 +63,16 @@ class RoomCategoryImageService
             $originalFilename
         );
         $extension = $file->guessExtension() ?: 'jpg';
-        $baseFilename = $safeFilename . '-' . uniqid() . '.' . $extension;
+        $baseFilename = $safeFilename.'-'.uniqid().'.'.$extension;
 
         $categoryId = $roomCategory->getId();
 
         // GD requires real file paths — work in sys temp, then stream into storage.
-        $tempDir = sys_get_temp_dir() . '/fewohbee-rcimg-' . uniqid();
-        mkdir($tempDir, 0775, true);
+        $tempDir = sys_get_temp_dir().'/fewohbee-rcimg-'.uniqid();
+        mkdir($tempDir, 0o775, true);
 
         try {
-            $sourcePath = $tempDir . '/source.' . $extension;
+            $sourcePath = $tempDir.'/source.'.$extension;
             $file->move($tempDir, basename($sourcePath));
 
             $source = $this->loadAndOrient($sourcePath);
@@ -85,9 +85,9 @@ class RoomCategoryImageService
                     ['thumb_', self::VARIANT_THUMB],
                 ] as [$prefix, $maxWidth]
             ) {
-                $variantTemp = $tempDir . '/' . $prefix . $baseFilename;
+                $variantTemp = $tempDir.'/'.$prefix.$baseFilename;
                 $this->saveVariant($source, $variantTemp, $maxWidth, $mime);
-                $this->writeToStorage($categoryId . '/' . $prefix . $baseFilename, $variantTemp);
+                $this->writeToStorage($categoryId.'/'.$prefix.$baseFilename, $variantTemp);
             }
 
             unset($source);
@@ -127,8 +127,8 @@ class RoomCategoryImageService
         $categoryId = $image->getRoomCategory()->getId();
         $filename = $image->getFilename();
 
-        foreach ([$filename, 'medium_' . $filename, 'thumb_' . $filename] as $variant) {
-            $path = $categoryId . '/' . $variant;
+        foreach ([$filename, 'medium_'.$filename, 'thumb_'.$filename] as $variant) {
+            $path = $categoryId.'/'.$variant;
             try {
                 if ($this->storage->fileExists($path)) {
                     $this->storage->delete($path);
@@ -212,11 +212,11 @@ class RoomCategoryImageService
             'image/jpeg' => imagecreatefromjpeg($sourcePath),
             'image/png' => imagecreatefrompng($sourcePath),
             'image/webp' => imagecreatefromwebp($sourcePath),
-            default => throw new \RuntimeException('Unsupported image type: ' . $mime),
+            default => throw new \RuntimeException('Unsupported image type: '.$mime),
         };
 
         if (false === $source) {
-            throw new \RuntimeException('Failed to create image resource from: ' . $sourcePath);
+            throw new \RuntimeException('Failed to create image resource from: '.$sourcePath);
         }
 
         // Downscale to max variant size first to reduce memory before rotation
@@ -287,12 +287,12 @@ class RoomCategoryImageService
     {
         $stream = fopen($localPath, 'rb');
         if (false === $stream) {
-            throw new \RuntimeException('Cannot read variant temp file: ' . $localPath);
+            throw new \RuntimeException('Cannot read variant temp file: '.$localPath);
         }
         try {
             $this->storage->writeStream($key, $stream);
         } catch (FilesystemException $e) {
-            throw new \RuntimeException('Failed to write image to storage: ' . $e->getMessage(), previous: $e);
+            throw new \RuntimeException('Failed to write image to storage: '.$e->getMessage(), previous: $e);
         } finally {
             if (is_resource($stream)) {
                 fclose($stream);
@@ -305,7 +305,7 @@ class RoomCategoryImageService
     {
         $info = getimagesize($path);
         if (false === $info) {
-            throw new \RuntimeException('Cannot read image: ' . $path);
+            throw new \RuntimeException('Cannot read image: '.$path);
         }
 
         return $info['mime'];
@@ -316,7 +316,7 @@ class RoomCategoryImageService
         if (!is_dir($tempDir)) {
             return;
         }
-        foreach (glob($tempDir . '/*') ?: [] as $file) {
+        foreach (glob($tempDir.'/*') ?: [] as $file) {
             if (is_file($file)) {
                 @unlink($file);
             }

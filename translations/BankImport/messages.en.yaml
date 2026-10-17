@@ -17,12 +17,12 @@ accounting:
       open: Open
       discard: Discard
       account_missing: (Bank account was deleted)
+      retention: 'Drafts stay until you commit or discard them and are deleted automatically after %days% days without changes.'
 
     draft:
-      not_found: This import draft was not found (session may have expired).
+      not_found: This import draft was not found (it may have expired or been committed already).
       account_missing: The bank account for this draft no longer exists — draft discarded.
       discarded: Draft discarded.
-      session_required: Bank import drafts require an active HTTP session.
 
     parser:
       warning:

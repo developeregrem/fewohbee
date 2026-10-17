@@ -104,7 +104,7 @@ class AccountingPresetSeeder
 
             if (!empty($def['revenueAccountNumber'])) {
                 $account = $this->accountRepo->findByNumberAndPreset($def['revenueAccountNumber'], $preset);
-                if ($account !== null) {
+                if (null !== $account) {
                     $taxRate->setRevenueAccount($account);
                 }
             }

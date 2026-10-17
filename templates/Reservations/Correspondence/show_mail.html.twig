@@ -1,51 +1,36 @@
 <div data-controller="reservations">
-<div class="modal-body ps-5 pe-5">
-    <div class="row" >
-        <div class="col" id="flash-message-overlay">
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-3">{{ 'templates.recipient'|trans }}</div>
-        <div class="col-md-9">{{ correspondence.recipient }}</div>
-    </div>
-    <div class="row">
-        <div class="col-md-3">{{ 'templates.subject'|trans }}</div>
-        <div class="col-md-9">{{ correspondence.subject }}</div>
-    </div>
-    <br />
-    <div class="row">
-        <div class="col-md">{{ correspondence.text|raw }}</div>
-    </div>
-    <div class="row">
-        <div class="col-sm">{{ 'templates.attachment'|trans }}</div>
-    </div>
-    <div class="row">
-        <div class="col-sm">
-            <table class="table">
+<div class="modal-body">
+    <div class="px-lg-5">
+        <div id="flash-message-overlay"></div>
+        <dl class="row mb-3">
+            <dt class="col-4 col-sm-3 fw-normal text-body-secondary">{{ 'templates.recipient'|trans }}</dt>
+            <dd class="col-8 col-sm-9 mb-1 text-break">{{ correspondence.recipient }}</dd>
+            <dt class="col-4 col-sm-3 fw-normal text-body-secondary">{{ 'templates.subject'|trans }}</dt>
+            <dd class="col-8 col-sm-9 mb-1 text-break">{{ correspondence.subject }}</dd>
+        </dl>
+        <div class="border rounded p-3 text-break">{{ correspondence.text|raw }}</div>
+        {% if correspondence.children|length > 0 %}
+            <h2 class="small text-uppercase fw-semibold text-body-secondary mt-4 mb-2">{{ 'templates.attachment'|trans }}</h2>
+            <ul class="list-group">
                 {% for attachment in correspondence.children %}
-                <tr id="aid-{{ attachment.id }}">
-                    <td style="width:10.0pt"><i class="fas {{ attachment.template.templateType.icon }}" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></i></td>
-                    <td>{{ attachment.name }}</td>
-                    <td class="text-end">
-                        <a href="#"
+                    <li class="list-group-item d-flex align-items-center gap-2" id="aid-{{ attachment.id }}">
+                        <i class="fas {{ attachment.template.templateType.icon }} fa-fw text-body-secondary" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></i>
+                        <span class="me-auto text-break">{{ attachment.name }}</span>
+                        <a href="#" class="btn btn-sm btn-link text-body-secondary"
                            data-action="click->reservations#exportPDFCorrespondenceAction"
                            data-url="{{ path('correspondence.export.pdf', {'id': attachment.id}) }}"
-                                       title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
-                    </td>
-                </tr>
+                           title="{{ 'button.download'|trans }}" aria-label="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
+                    </li>
                 {% endfor %}
-            </table>
-        </div>
+            </ul>
+        {% endif %}
     </div>
 </div>
-<div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pagination me-auto">
-        <li class="page-item ">
-            <a class="page-link" href="#"
-               data-action="click->reservations#openReservationAction"
-               data-url="{{ path('reservations.get.reservation', {'id': reservationId, 'tab': 'correspondence'}) }}"
-               data-reservation-id="{{ reservationId }}"
-               data-tab="correspondence">&larr; {{ 'button.back'|trans }}</a></li>
-    </ul>   
+<div class="modal-footer">
+    <a href="#" class="btn btn-link px-0 me-auto text-decoration-none"
+       data-action="click->reservations#openReservationAction"
+       data-url="{{ path('reservations.get.reservation', {'id': reservationId, 'tab': 'correspondence'}) }}"
+       data-reservation-id="{{ reservationId }}"
+       data-tab="correspondence">&larr; {{ 'button.back'|trans }}</a>
 </div>
 </div>

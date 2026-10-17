@@ -10,6 +10,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\InvoiceRepository')]
 #[ORM\Table(name: 'invoices')]
+#[ORM\Index(name: 'idx_invoice_number', columns: ['number'])]
+#[ORM\Index(name: 'idx_invoice_date', columns: ['date'])]
 class Invoice
 {
     #[ORM\Id]
@@ -76,6 +78,15 @@ class Invoice
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $buyerVatId = null;
+
+    /**
+     * The day payment falls due. Set when the invoice is created - from the issuer's
+     * payment period unless entered otherwise - and kept from then on, so a later
+     * change of that period does not rewrite invoices already sent. Null only when
+     * the issuer states no period (free-text terms instead).
+     */
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
+    private ?\DateTimeImmutable $paymentDueDate = null;
 
     /**
      * Branch this invoice was issued for, derived from its reservations at creation time.
@@ -425,6 +436,74 @@ class Invoice
         $this->buyerVatId = $buyerVatId;
 
         return $this;
+    }
+
+    public function getPaymentDueDate(): ?\DateTimeImmutable
+    {
+        return $this->paymentDueDate;
+    }
+
+    public function setPaymentDueDate(?\DateTimeInterface $paymentDueDate): static
+    {
+        $this->paymentDueDate = null === $paymentDueDate ? null : \DateTimeImmutable::createFromInterface($paymentDueDate)->setTime(0, 0);
+
+        return $this;
+    }
+
+    /**
+     * The due date the issuer's payment period gives: invoice date plus that period.
+     * What a new invoice starts with; null without a period or an invoice date.
+     */
+    public function defaultPaymentDueDate(?InvoiceSettingsData $settings): ?\DateTimeImmutable
+    {
+        $days = $settings?->getPaymentDueDays();
+        if (null === $days || null === $this->date) {
+            return null;
+        }
+
+        return \DateTimeImmutable::createFromInterface($this->date)->setTime(0, 0)->modify('+'.$days.' days');
+    }
+
+    /**
+     * The earliest start date among the given apartment positions, null without any.
+     *
+     * Static because an invoice in creation keeps its positions in the session, not
+     * in its own collection.
+     *
+     * @param iterable<InvoiceAppartment> $apartments
+     */
+    public static function firstArrivalOf(iterable $apartments): ?\DateTimeImmutable
+    {
+        $first = null;
+        foreach ($apartments as $apartment) {
+            $start = \DateTimeImmutable::createFromInterface($apartment->getStartDate())->setTime(0, 0);
+            if (null === $first || $start < $first) {
+                $first = $start;
+            }
+        }
+
+        return $first;
+    }
+
+    /**
+     * The latest end date among the given apartment positions, null without any.
+     *
+     * Static because an invoice in creation keeps its positions in the session, not
+     * in its own collection.
+     *
+     * @param iterable<InvoiceAppartment> $apartments
+     */
+    public static function lastDepartureOf(iterable $apartments): ?\DateTimeImmutable
+    {
+        $last = null;
+        foreach ($apartments as $apartment) {
+            $end = \DateTimeImmutable::createFromInterface($apartment->getEndDate())->setTime(0, 0);
+            if (null === $last || $end > $last) {
+                $last = $end;
+            }
+        }
+
+        return $last;
     }
 
     /**

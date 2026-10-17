@@ -1,0 +1,49 @@
+<div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+        <thead>
+            <tr>
+                <th>{{ 'mcp.settings.log.date'|trans }}</th>
+                <th>{{ 'mcp.settings.tokens.user'|trans }}</th>
+                <th>{{ 'mcp.settings.log.tool'|trans }}</th>
+                <th>{{ 'mcp.settings.log.outcome'|trans }}</th>
+                <th>{{ 'mcp.settings.log.details'|trans }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+                <tr>
+                    <td class="text-nowrap">{{ log.createdAt|date('Y-m-d H:i:s') }}</td>
+                    <td>{{ log.username }} <span class="font-monospace text-body-secondary small">{{ log.tokenPrefix }}</span></td>
+                    <td class="font-monospace small">{{ log.toolName }}</td>
+                    <td>
+                        <span class="badge {{ log.outcome.value == 'ok' ? 'text-bg-success' : (log.outcome.value == 'error' ? 'text-bg-danger' : 'text-bg-warning') }}">
+                            {{ ('mcp.settings.log.outcomes.' ~ log.outcome.value)|trans }}
+                        </span>
+                    </td>
+                    <td class="small">
+                        {% if log.details.reservationId is defined %}
+                            {{ 'mcp.settings.log.reservation'|trans({'%id%': log.details.reservationId}) }}
+                            {% if log.details.arrival is defined %}{{ log.details.arrival }} – {{ log.details.departure }}{% endif %}
+                        {% elseif log.details.priceId is defined %}
+                            {{ 'mcp.settings.log.price'|trans({'%id%': log.details.priceId}) }}
+                            {% if log.details.firstNight is defined %}{{ log.details.firstNight }} – {{ log.details.lastNight }}{% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" class="text-center text-body-secondary">{{ 'mcp.settings.log.none'|trans }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if pages > 1 %}
+<div class="mt-3">
+    {% include 'paginator.html.twig' with {
+        url: path('settings.mcp.logs'),
+        page: page,
+        pages: pages,
+        search: '',
+        pagination_class: 'pagination-sm mb-0'
+    } %}
+</div>
+{% endif %}

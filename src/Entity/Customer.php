@@ -43,6 +43,10 @@ class Customer
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $IDNumber = null;
 
+    /** Nationality as ISO 3166-1 alpha-2 code, e.g. "DE"; printed on the registration form. */
+    #[ORM\Column(length: 2, nullable: true)]
+    private ?string $nationality = null;
+
     public function __construct()
     {
         $this->reservations = new ArrayCollection();
@@ -236,5 +240,16 @@ class Customer
     public function setIdType(?IDCardType $idType): void
     {
         $this->idType = $idType;
+    }
+
+    public function getNationality(): ?string
+    {
+        return $this->nationality;
+    }
+
+    public function setNationality(?string $nationality): void
+    {
+        $nationality = null === $nationality ? '' : strtoupper(trim($nationality));
+        $this->nationality = '' === $nationality ? null : $nationality;
     }
 }

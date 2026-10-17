@@ -13,6 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: AccountingAccountRepository::class)]
 #[ORM\Table(name: 'accounting_accounts')]
 #[ORM\UniqueConstraint(name: 'uniq_account_per_preset', columns: ['account_number', 'chart_preset'])]
+#[ORM\Index(name: 'idx_acct_chart_preset', columns: ['chart_preset'])]
 #[UniqueEntity(fields: ['accountNumber', 'chartPreset'])]
 class AccountingAccount
 {

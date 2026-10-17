@@ -7,8 +7,8 @@ namespace App\Service\EInvoice\Profile;
 use App\Entity\Invoice;
 use App\Entity\InvoiceSettingsData;
 use App\Service\EInvoice\EInvoiceProfileGeneratorInterface;
-use App\Service\EInvoice\Validation\En16931InvoiceValidator;
 use App\Service\EInvoice\Validation\EInvoiceValidationResult;
+use App\Service\EInvoice\Validation\En16931InvoiceValidator;
 use App\Service\EInvoice\ZugferdInvoiceGenerator;
 use horstoeko\zugferd\ZugferdProfiles;
 

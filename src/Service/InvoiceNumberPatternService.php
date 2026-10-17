@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Dto\InvoiceNumberPattern;
-use App\Service\Exception\InvalidInvoiceNumberPatternException;
+use App\Exception\InvalidInvoiceNumberPatternException;
 
 /**
  * Parses and validates user-written invoice number patterns such as `RE-<year>-<number:4>`.
@@ -82,17 +82,11 @@ final class InvoiceNumberPatternService
                 $segments[] = $this->numberSegment($width);
             } elseif (isset(self::DATE_PLACEHOLDERS[$token])) {
                 if (null !== $width) {
-                    throw new InvalidInvoiceNumberPatternException(
-                        'invoice_number_pattern.width_not_allowed',
-                        ['%placeholder%' => $token],
-                    );
+                    throw new InvalidInvoiceNumberPatternException('invoice_number_pattern.width_not_allowed', ['%placeholder%' => $token]);
                 }
                 $segments[] = ['kind' => self::DATE_PLACEHOLDERS[$token], 'value' => '', 'width' => 0];
             } else {
-                throw new InvalidInvoiceNumberPatternException(
-                    'invoice_number_pattern.unknown_placeholder',
-                    ['%placeholder%' => $match[0][0]],
-                );
+                throw new InvalidInvoiceNumberPatternException('invoice_number_pattern.unknown_placeholder', ['%placeholder%' => $match[0][0]]);
             }
 
             $offset = $start + strlen($match[0][0]);
@@ -219,10 +213,7 @@ final class InvoiceNumberPatternService
         $width ??= InvoiceNumberPattern::DEFAULT_NUMBER_WIDTH;
 
         if ($width < 1 || $width > InvoiceNumberPattern::MAX_NUMBER_WIDTH) {
-            throw new InvalidInvoiceNumberPatternException(
-                'invoice_number_pattern.invalid_width',
-                ['%max%' => (string) InvoiceNumberPattern::MAX_NUMBER_WIDTH],
-            );
+            throw new InvalidInvoiceNumberPatternException('invoice_number_pattern.invalid_width', ['%max%' => (string) InvoiceNumberPattern::MAX_NUMBER_WIDTH]);
         }
 
         return ['kind' => InvoiceNumberPattern::KIND_NUMBER, 'value' => '', 'width' => $width];

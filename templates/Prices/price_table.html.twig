@@ -47,7 +47,7 @@
                 {{ 'price.abbreviation.alldays'|trans }}                            
             {% else %}
                 {% for pricePeriod in price.pricePeriods %}
-                    {{ pricePeriod.start|date('d.m.Y') }} - {{ pricePeriod.end|date('d.m.Y') }}<br />
+                    {{ pricePeriod.start|date('d.m.Y') }} - {{ pricePeriod.end|date('d.m.Y') }}{% if pricePeriod.description %} <span class="text-body-secondary small">{{ pricePeriod.description }}</span>{% endif %}<br />
                 {% endfor %}
             {% endif %}
         </td>

@@ -1,0 +1,21 @@
+{# Outcome of a check-in: confirmed online (the guest records hold the data now) or done at the desk. #}
+<dl class="row small mb-3">
+    <dt class="col-sm-4 fw-normal text-body-secondary">{{ 'guest_checkin.tab.room_now'|trans }}</dt>
+    <dd class="col-sm-8">{{ reservation.customers|map(guest => (guest.firstname ~ ' ' ~ guest.lastname)|trim)|join(', ') ?: '–' }}</dd>
+    <dt class="col-sm-4 fw-normal text-body-secondary">{{ 'reservation.arrivalTime'|trans }}</dt>
+    <dd class="col-sm-8">{{ reservation.arrivalTime ? reservation.arrivalTime|date('H:i') : '–' }}</dd>
+</dl>
+<div class="d-flex flex-wrap align-items-center gap-2">
+    {% if is_granted('ROLE_RESERVATIONS') or is_granted('ROLE_OPERATIONS') %}
+        <a class="btn btn-sm btn-primary" href="{{ path('correspondence.registration.download', {'id': reservation.id}) }}" target="_blank" rel="noopener">
+            <i class="fas fa-print me-1"></i>{{ 'guest_checkin.tab.registration_print'|trans }}
+        </a>
+    {% endif %}
+    {# Only a desk check-in can be taken back; a confirmed online one already changed the guest records. #}
+    {% if checkIn.checkedInAtDesk and is_granted('ROLE_RESERVATIONS') %}
+        <form method="post" action="{{ path('reservations.guest_checkin.desk_undo', {'id': reservation.id}) }}" data-action="submit->guest-checkin#post">
+            <input type="hidden" name="_token" value="{{ csrf_token('guest-checkin-' ~ reservation.id) }}">
+            <button type="submit" class="btn btn-sm btn-link text-body-secondary"><i class="fas fa-rotate-left me-1"></i>{{ 'guest_checkin.tab.desk_undo'|trans }}</button>
+        </form>
+    {% endif %}
+</div>

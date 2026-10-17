@@ -55,7 +55,7 @@ class ReservationDaysBeforeStartTrigger extends AbstractScheduledTrigger
         return $em->getRepository(Reservation::class)->createQueryBuilder('r')
             ->where('r.startDate = :targetDate')
             ->setParameter('targetDate', $targetDate)
-            ->orderBy('r.startDate', 'ASC')
+            ->orderBy('r.startDate', \SortDirection::Ascending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

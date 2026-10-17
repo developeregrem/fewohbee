@@ -164,6 +164,29 @@ final class InvoiceServiceApartmentModifierTest extends TestCase
         self::assertSame([], $service->buildApartmentModifierPositions([$r]));
     }
 
+    public function testNightsWorthADifferentDeltaGetTheirOwnPosition(): void
+    {
+        // A stay across a weekday and a weekend row: the same 50 % off is worth
+        // a different amount per night and must not be billed at the first night's.
+        $weekday = $this->makePrice('100.00');
+        $weekend = $this->makePrice('120.00');
+        $child = $this->makeCategory(2, GuestStatisticalGroup::CHILD);
+        $modifier = $this->makeModifier($child, ModifierType::DISCOUNT_PERCENT, '50');
+
+        $r = new Reservation();
+        $breakdowns = [
+            $this->makeBreakdown($weekday, [new PriceBreakdownLine($child, 1, 50.0, $modifier)]),
+            $this->makeBreakdown($weekend, [new PriceBreakdownLine($child, 1, 60.0, $modifier)]),
+        ];
+
+        $positions = $this->createService($r, $breakdowns)->buildApartmentModifierPositions([$r]);
+
+        self::assertCount(2, $positions);
+        self::assertSame('-50.00', $positions[0]->getPrice());
+        self::assertSame('-60.00', $positions[1]->getPrice());
+        self::assertSame(-110.0, $positions[0]->getTotalPriceRaw() + $positions[1]->getTotalPriceRaw());
+    }
+
     /**
      * @param PriceBreakdown[] $breakdowns
      */

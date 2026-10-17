@@ -1,0 +1,30 @@
+{# Hand out the check-in link. It is fetched on demand (guest-checkin controller), so it never
+   sits in the page for users who may not pass it on. #}
+<div class="d-flex flex-wrap gap-2">
+    <button type="button" class="btn btn-sm btn-outline-primary" data-action="guest-checkin#showLink">
+        <i class="fas fa-link me-1"></i>{{ 'guest_checkin.tab.show_link'|trans }}
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-primary" data-action="guest-checkin#showQr">
+        <i class="fas fa-qrcode me-1"></i>{{ 'guest_checkin.tab.show_qr'|trans }}
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#guest-checkin-regenerate-{{ reservation.id }}" aria-expanded="false">
+        <i class="fas fa-rotate me-1"></i>{{ 'guest_checkin.tab.regenerate'|trans }}
+    </button>
+</div>
+<div class="collapse mt-2" id="guest-checkin-regenerate-{{ reservation.id }}" data-guest-checkin-target="regenerateBox">
+    <div class="alert alert-warning small mb-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <span>{{ 'guest_checkin.tab.regenerate_hint'|trans }}</span>
+        <button type="button" class="btn btn-sm btn-warning" data-action="guest-checkin#regenerate">{{ 'guest_checkin.tab.regenerate_confirm'|trans }}</button>
+    </div>
+</div>
+<div class="d-flex align-items-center gap-1 mt-2 d-none" data-guest-checkin-target="linkBox" data-controller="copy" data-copy-hint-value="{{ 'guest_checkin.tab.copied'|trans }}">
+    <input type="text" class="form-control form-control-sm" readonly data-guest-checkin-target="url" data-copy-target="input" aria-label="{{ 'guest_checkin.tab.show_link'|trans }}">
+    <button type="button" class="btn btn-sm border-0 shadow-none text-secondary" data-action="copy#copy"
+            title="{{ 'guest_checkin.tab.copy'|trans }}" aria-label="{{ 'guest_checkin.tab.copy'|trans }}"><i class="fas fa-copy"></i></button>
+</div>
+<div class="mt-2 d-none" data-guest-checkin-target="qrBox">
+    <img data-guest-checkin-target="qr" alt="{{ 'guest_checkin.tab.show_qr'|trans }}" width="160" height="160" class="border rounded p-1 bg-white">
+    <a class="d-block small mt-1" data-guest-checkin-target="qrDownload" download="online-checkin-{{ reservation.id }}.png"><i class="fas fa-download me-1"></i>{{ 'guest_checkin.tab.download_qr'|trans }}</a>
+</div>
+<div class="small text-warning-emphasis mt-1" data-guest-checkin-target="error" role="alert"></div>
+<p class="small text-body-secondary mt-2 mb-0">{{ 'guest_checkin.tab.link_hint'|trans }}</p>

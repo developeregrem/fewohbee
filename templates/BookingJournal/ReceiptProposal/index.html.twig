@@ -1,0 +1,100 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'accounting.receipt_proposal.title'|trans }}
+{% endblock %}
+
+{% block flashMessage %}
+    {% include 'BookingJournal/_flash_messages.html.twig' %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-2">
+        <div class="col">
+            <ul class="pagination me-auto">
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('journal.overview') }}">&larr; {{ 'button.back'|trans }}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <h4 class="mb-0">{{ 'accounting.receipt_proposal.title'|trans }}</h4>
+        <p class="text-muted small mb-0">{{ 'accounting.receipt_proposal.subtitle'|trans }}</p>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">{{ 'accounting.receipt_proposal.open'|trans }}</h6>
+        </div>
+        {% if open is empty %}
+            <div class="card-body text-muted small">{{ 'accounting.receipt_proposal.none_open'|trans }}</div>
+        {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>{{ 'accounting.journal.entry.date'|trans }}</th>
+                        <th>{{ 'accounting.receipt_proposal.supplier'|trans }}</th>
+                        <th>{{ 'accounting.receipt_proposal.receipt_number'|trans }}</th>
+                        <th class="text-end">{{ 'accounting.receipt_proposal.total'|trans }}</th>
+                        <th>{{ 'accounting.receipt_proposal.payment'|trans }}</th>
+                        <th>{{ 'accounting.receipt_proposal.submitted'|trans }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for proposal in open %}
+                    <tr>
+                        <td>{{ proposal.receiptDate|date('d.m.Y') }}</td>
+                        <td>{{ proposal.supplier }}</td>
+                        <td>{{ proposal.receiptNumber }}</td>
+                        <td class="text-end">{{ proposal.total|number_format(2, ',', '.') }}</td>
+                        <td>{{ ('accounting.receipt_proposal.payment_' ~ proposal.payment)|trans }}</td>
+                        <td class="small text-muted">{{ proposal.createdAt|date('d.m.Y H:i') }}</td>
+                        <td class="text-end">
+                            <a href="{{ path('journal.receipts.show', {'id': proposal.id}) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-check-double"></i> {{ 'accounting.receipt_proposal.review'|trans }}
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if decided is not empty %}
+    <div class="card">
+        <div class="card-header">
+            <h6 class="mb-0">{{ 'accounting.receipt_proposal.recently_decided'|trans }}</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <tbody>
+                {% for proposal in decided %}
+                    <tr>
+                        <td>{{ proposal.receiptDate|date('d.m.Y') }}</td>
+                        <td>{{ proposal.supplier }}</td>
+                        <td class="text-end">{{ proposal.total|number_format(2, ',', '.') }}</td>
+                        <td>{{ proposal.status.labelKey|trans }}</td>
+                        <td class="small text-muted">{{ proposal.decidedAt ? proposal.decidedAt|date('d.m.Y H:i') }}</td>
+                        <td class="text-end">
+                            <a href="{{ path('journal.receipts.show', {'id': proposal.id}) }}" class="btn btn-sm btn-link"
+                               title="{{ 'accounting.receipt_proposal.details'|trans }}"
+                               aria-label="{{ 'accounting.receipt_proposal.details'|trans }}">
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

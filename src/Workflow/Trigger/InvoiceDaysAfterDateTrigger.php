@@ -58,7 +58,7 @@ class InvoiceDaysAfterDateTrigger extends AbstractScheduledTrigger
         return $em->getRepository(Invoice::class)->createQueryBuilder('i')
             ->where('i.date = :targetDate')
             ->setParameter('targetDate', $targetDate)
-            ->orderBy('i.date', 'DESC')
+            ->orderBy('i.date', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

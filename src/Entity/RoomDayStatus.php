@@ -28,7 +28,7 @@ class RoomDayStatus
     #[ORM\Column(type: 'date_immutable')]
     private \DateTimeImmutable $date;
 
-    #[ORM\Column(type: 'string', enumType: HousekeepingStatus::class)]
+    #[ORM\Column(type: 'string', length: 20, enumType: HousekeepingStatus::class)]
     private HousekeepingStatus $hkStatus = HousekeepingStatus::OPEN;
 
     #[ORM\ManyToOne(targetEntity: User::class)]

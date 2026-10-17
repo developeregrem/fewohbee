@@ -1,0 +1,49 @@
+{# Check-in column of the frontdesk: print the registration form and, with the online check-in
+   on, the check-in state with what can be done about it. One group of fixed width, so the print
+   button sits in the same place on every row. After an action the server sends this cell again
+   (frontdesk-checkin controller). #}
+{% set state = checkInState ? checkInState.status.value : 'open' %}
+{% set atDesk = checkInState ? checkInState.atDesk : false %}
+<div class="btn-group btn-group-sm" role="group"
+     {%- if guestCheckInEnabled %}
+     data-controller="frontdesk-checkin"
+     data-frontdesk-checkin-url-value="{{ path('operations.frontdesk.checkin', {'id': reservation.id}) }}"
+     data-frontdesk-checkin-token-value="{{ csrf_token('frontdesk-checkin-' ~ reservation.id) }}"
+     {%- endif %}>
+    <a class="btn btn-outline-secondary" href="{{ path('correspondence.registration.download', {'id': reservation.id}) }}"
+       target="_blank" rel="noopener" title="{{ 'operations.frontdesk.registration.print'|trans }}">
+        <i class="fas fa-print" aria-hidden="true"></i>
+        <span class="visually-hidden">{{ 'operations.frontdesk.registration.print'|trans }}</span>
+    </a>
+    {% if guestCheckInEnabled %}
+        {% set description = ('guest_checkin.frontdesk.' ~ (atDesk ? 'desk' : state))|trans %}
+        <button type="button" class="btn {{ {'open': 'btn-outline-secondary', 'submitted': 'btn-primary', 'applied': 'btn-success'}[state] }} dropdown-toggle fd-checkin-state"
+                data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" title="{{ description }}">
+            <i class="fas fa-fw {{ state == 'applied' ? 'fa-circle-check' : 'fa-id-card' }} me-1" aria-hidden="true"></i>
+            {#- All labels stacked, only the current one visible: every row gets the width of the longest. #}
+            <span class="fd-checkin-labels">
+                {%- for label in ['open', 'submitted', 'applied'] -%}
+                    <span{% if label != state %} aria-hidden="true"{% endif %}>{{ ('guest_checkin.frontdesk.state.' ~ label)|trans }}</span>
+                {%- endfor -%}
+            </span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><span class="dropdown-item-text small text-body-secondary">{{ description }}</span></li>
+            {% if state == 'open' %}
+                <li><button type="button" class="dropdown-item" data-action="frontdesk-checkin#send" data-frontdesk-checkin-intent-param="mark">
+                    <i class="fas fa-check me-2" aria-hidden="true"></i>{{ 'guest_checkin.frontdesk.mark'|trans }}</button></li>
+            {% elseif atDesk %}
+                <li><button type="button" class="dropdown-item" data-action="frontdesk-checkin#send" data-frontdesk-checkin-intent-param="undo">
+                    <i class="fas fa-rotate-left me-2" aria-hidden="true"></i>{{ 'guest_checkin.frontdesk.undo'|trans }}</button></li>
+            {% endif %}
+            {% if is_granted('ROLE_RESERVATIONS_RO') %}
+                <li><a class="dropdown-item" href="#"
+                       data-action="click->reservations#openReservationAction"
+                       data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
+                       data-tab="checkin" data-reservation-id="{{ reservation.id }}"
+                       data-bs-toggle="modal" data-bs-target="#modalCenter">
+                    <i class="fas fa-id-card me-2" aria-hidden="true"></i>{{ (state == 'submitted' ? 'guest_checkin.frontdesk.review' : 'guest_checkin.frontdesk.open_tab')|trans }}</a></li>
+            {% endif %}
+        </ul>
+    {% endif %}
+</div>

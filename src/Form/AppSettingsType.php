@@ -6,6 +6,7 @@ namespace App\Form;
 
 use App\Entity\AppSettings;
 use App\Service\InvoiceNumberPatternService;
+use App\Service\PublicUrlService;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -124,12 +125,32 @@ class AppSettingsType extends AbstractType
                 'help' => 'app_settings.form.smtp_password_help',
             ])
         ;
+
+        // A hosting provider that presets PUBLIC_BASE_URI owns the address; the page shows it read-only.
+        if (!$options['public_base_url_locked']) {
+            $builder->add('publicBaseUrl', TextType::class, [
+                'label' => 'app_settings.form.public_base_url',
+                'help' => 'app_settings.form.public_base_url_help',
+                'required' => false,
+                'attr' => ['maxlength' => 255, 'placeholder' => 'https://fewohbee.example.com', 'inputmode' => 'url'],
+                'constraints' => [
+                    new Assert\Length(max: 255),
+                    new Assert\Callback(static function (?string $url, ExecutionContextInterface $context): void {
+                        if (null !== $url && '' !== trim($url) && null === PublicUrlService::normalize($url)) {
+                            $context->buildViolation('public_base_url.invalid')->addViolation();
+                        }
+                    }),
+                ],
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => AppSettings::class,
+            'public_base_url_locked' => false,
         ]);
+        $resolver->setAllowedTypes('public_base_url_locked', 'bool');
     }
 }

@@ -1,0 +1,38 @@
+{# Sentences describing a price rule, composed from the entity: when it applies, and where. #}
+
+{% macro percent(value) -%}
+    {{ value > 0 ? '+' : '−' }}{{ value|abs|number_format(value == value|round ? 0 : 2, ',', '.') }} %
+{%- endmacro %}
+
+{% macro when(rule) -%}
+    {% set parts = [] %}
+    {% set condition = rule.condition.value %}
+    {% if condition == 'last_minute' %}
+        {% set parts = parts|merge(['price_rules.when.last_minute'|trans({'%count%': rule.days})]) %}
+    {% elseif condition == 'early_bird' %}
+        {% set parts = parts|merge(['price_rules.when.early_bird'|trans({'%count%': rule.days})]) %}
+    {% elseif condition == 'occupancy_high' %}
+        {% set parts = parts|merge(['price_rules.when.occupancy_high'|trans({'%occupancy%': rule.occupancy})]) %}
+    {% elseif condition == 'occupancy_low' %}
+        {% set parts = parts|merge(['price_rules.when.occupancy_low'|trans({'%occupancy%': rule.occupancy, '%count%': rule.days})]) %}
+    {% endif %}
+    {% if rule.occupancyAcrossSubsidiaries %}
+        {% set parts = parts|merge(['price_rules.when.across'|trans]) %}
+    {% endif %}
+    {% if rule.weekdays|length < 7 %}
+        {% set parts = parts|merge(['price_rules.when.weekdays'|trans({'%days%': rule.weekdays|map(day => ('booking_rules.day_' ~ day)|trans)|join(', ')})]) %}
+    {% endif %}
+    {% if rule.startDate %}
+        {% set parts = parts|merge([rule.startDate|date('d.m.Y') ~ '–' ~ rule.endDate|date_modify('-1 day')|date('d.m.Y')]) %}
+    {% endif %}
+    {{ parts is empty ? 'price_rules.when.always'|trans : parts|join(' · ') }}
+{%- endmacro %}
+
+{% macro scope(rule, multipleSubsidiaries) -%}
+    {% set parts = [] %}
+    {% if multipleSubsidiaries %}
+        {% set parts = parts|merge([rule.allSubsidiaries ? 'price_rules.all_subsidiaries'|trans : rule.subsidiaries|map(s => s.name)|join(', ')]) %}
+    {% endif %}
+    {% set parts = parts|merge([rule.allCategories ? 'price_rules.all_categories'|trans : rule.categories|map(c => c.name)|join(', ')]) %}
+    {{ parts|join(' · ') }}
+{%- endmacro %}

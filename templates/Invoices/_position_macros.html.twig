@@ -1,0 +1,27 @@
+{# List items of the positions of an invoice being created (kept in the session until it is saved) #}
+
+{% macro vat(value) -%}
+    {{ value|number_format(is_decimal_place_0(value) ? 0 : 2, ',', '.') }}
+{%- endmacro %}
+
+{# A miscellaneous, apartment modifier or tourist tax position with edit and remove buttons #}
+{% macro misc_item(key, position) -%}
+    {% import _self as m %}
+    <li class="list-group-item d-flex align-items-center gap-2">
+        <div class="me-auto text-break">
+            <div>{{ position.description }}</div>
+            <div class="small text-body-secondary">
+                {{ 'invoice.position.amount'|trans }}: {{ position.amount }} · {{ 'invoice.vat'|trans }} {{ m.vat(position.vat) }} %
+            </div>
+        </div>
+        <div class="text-end text-nowrap">{{ position.price|number_format(2, ',', '.') }}</div>
+        <button type="button" class="btn btn-sm btn-link text-body-secondary"
+                data-action="click->invoices#openModalAction"
+                data-url="{{ path('invoices.edit.miscellaneous.position', {'invoiceId': 'new', 'id': key}) }}"
+                title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}"><i class="fas fa-edit"></i></button>
+        <button type="button" class="btn btn-sm btn-link text-danger"
+                data-action="click->invoices#removeMiscPositionAction"
+                data-url="{{ path('invoices.delete.miscellaneous.invoice.position') }}" data-index="{{ key }}"
+                title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></button>
+    </li>
+{%- endmacro %}

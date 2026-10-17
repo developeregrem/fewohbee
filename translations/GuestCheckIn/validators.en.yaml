@@ -1,0 +1,4 @@
+guest_checkin:
+  public:
+    extras:
+      changed: "A service or its price has changed. Please reload the page and review your selection."

@@ -16,8 +16,8 @@ namespace App\Controller;
 use App\Entity\Appartment;
 use App\Entity\CalendarSync;
 use App\Entity\CalendarSyncImport;
-use App\Entity\RoomCategory;
 use App\Entity\Reservation;
+use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
 use App\Exception\CalendarSyncException;
 use App\Form\ApartmentType;
@@ -141,8 +141,7 @@ class ApartmentServiceController extends AbstractController
         Request $request,
         CalendarSync $sync,
         FormFactoryInterface $formFactory
-    ): Response
-    {
+    ): Response {
         $exportForm = $this->createForm(CalendarSyncExportType::class, $sync);
         $exportForm->handleRequest($request);
 
@@ -221,8 +220,7 @@ class ApartmentServiceController extends AbstractController
         ReservationCalendarImportService $calendarImportService,
         CalendarImportFilterSharingService $filterSharingService,
         FormFactoryInterface $formFactory
-    ): Response
-    {
+    ): Response {
         $import = $this->createImportModel($sync);
         $importCreateForm = $formFactory->createNamed('import_new', CalendarSyncImportType::class, $import);
         $importCreateForm->handleRequest($request);
@@ -249,8 +247,7 @@ class ApartmentServiceController extends AbstractController
         CalendarSyncImport $import,
         CalendarImportFilterSharingService $filterSharingService,
         FormFactoryInterface $formFactory
-    ): Response
-    {
+    ): Response {
         $importEditForm = $formFactory->createNamed('import_'.$import->getId(), CalendarSyncImportType::class, $import);
         $importEditForm->handleRequest($request);
 
@@ -278,8 +275,7 @@ class ApartmentServiceController extends AbstractController
         ManagerRegistry $doctrine,
         CalendarSyncImport $import,
         FormFactoryInterface $formFactory
-    ): Response
-    {
+    ): Response {
         $em = $doctrine->getManager();
         $reservations = $em->getRepository(Reservation::class)->findBy(['calendarSyncImport' => $import]);
         foreach ($reservations as $reservation) {

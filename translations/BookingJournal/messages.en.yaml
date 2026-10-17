@@ -293,3 +293,64 @@ preset.workflow.booking_card.desc: "Automatically creates a booking entry (debit
 
 # General
 journal.action: Action
+
+# Receipt proposals (handed in by AI assistants)
+accounting.receipt_proposal.title: Receipt proposals
+accounting.receipt_proposal.subtitle: "Receipts an AI assistant read and handed in. Nothing is booked until you check and confirm them here."
+accounting.receipt_proposal.open: Open
+accounting.receipt_proposal.none_open: No open receipt proposals.
+accounting.receipt_proposal.supplier: Supplier
+accounting.receipt_proposal.receipt_number: Receipt no.
+accounting.receipt_proposal.total: Total
+accounting.receipt_proposal.payment: Paid by
+accounting.receipt_proposal.payment_bank: Bank / card
+accounting.receipt_proposal.payment_cash: Cash
+accounting.receipt_proposal.payment_unknown: unknown
+accounting.receipt_proposal.submitted: Handed in
+accounting.receipt_proposal.review: Review
+accounting.receipt_proposal.recently_decided: Recently done
+accounting.receipt_proposal.details: Details
+accounting.receipt_proposal.status.open: Open
+accounting.receipt_proposal.status.booked: Booked
+accounting.receipt_proposal.status.discarded: Discarded
+accounting.receipt_proposal.review_title: "Review receipt from %supplier%"
+accounting.receipt_proposal.as_read: How the AI assistant read the receipt
+accounting.receipt_proposal.note: Note from the AI assistant
+accounting.receipt_proposal.payment_choice: Which payment does the receipt belong to?
+accounting.receipt_proposal.payment_choice_help: "FewohBee looked for entries of the same amount around the receipt date. Pick the matching one and it will be split. If there is none, book the receipt anew."
+accounting.receipt_proposal.split_entry: "Split the entry of %date% over %amount% (%debit% to %credit%)"
+accounting.receipt_proposal.booked_already.title: Possibly booked already
+accounting.receipt_proposal.booked_already.text: "Around the receipt date there are entries that fit this receipt: they name the supplier or add up to the receipt total."
+accounting.receipt_proposal.booked_already.hint: "If they belong to this receipt, discard the proposal. Booked anew, the purchase would be in the journal twice."
+accounting.receipt_proposal.no_candidates: "No matching payment is in the journal. If it still comes with a bank statement, book the receipt after the import, otherwise the payment ends up in the journal twice."
+accounting.receipt_proposal.book_new: "Book anew against %account% on %date%"
+accounting.receipt_proposal.book_new_hint: "Book anew only if none of the entries above is the payment, otherwise it ends up in the journal twice."
+accounting.receipt_proposal.parts: Parts
+accounting.receipt_proposal.parts_help: "One part per account and VAT rate, gross amounts. When splitting an entry the parts must add up exactly to its amount (%total% according to the receipt)."
+accounting.receipt_proposal.part_text: As read
+accounting.receipt_proposal.account: Account
+accounting.receipt_proposal.no_tax_rate: none
+accounting.receipt_proposal.discard: Discard
+accounting.receipt_proposal.book: Book
+accounting.receipt_proposal.flash.booked: Receipt booked.
+accounting.receipt_proposal.flash.discarded: Receipt proposal discarded.
+accounting.receipt_proposal.error.not_open: This receipt proposal is already done.
+accounting.receipt_proposal.error.account_missing: "Line %line%: please choose an account."
+accounting.receipt_proposal.error.payment_missing: Please choose which payment the receipt belongs to.
+accounting.receipt_booking.error.lines_count: "A receipt needs 1 to %max% parts."
+accounting.receipt_booking.error.amount_invalid: "Line %line%: please enter an amount greater than 0 with at most two decimals."
+accounting.receipt_booking.error.sum_mismatch: "The parts add up to %sum%, but the entry is booked with %booked%. When splitting, the total must match exactly."
+accounting.receipt_booking.error.unknown_entry: The chosen entry no longer exists.
+accounting.receipt_booking.error.entry_opening_balance: Opening balance entries cannot be split.
+accounting.receipt_booking.error.entry_from_invoice: This entry was booked from an invoice in FewohBee and cannot be split.
+accounting.receipt_booking.error.entry_already_split: This entry is already split.
+accounting.receipt_booking.error.entry_not_a_payment: Only entries against a cash or bank account can be split.
+accounting.receipt_booking.error.payment_account_missing: Please choose a payment account.
+accounting.receipt_booking.error.payment_account_invalid: The payment account must be a cash or bank account.
+accounting.receipt_booking.error.unknown_account: "Line %line%: account %account% does not exist."
+accounting.receipt_booking.error.payment_account_as_part: "Line %line%: %account% is a cash or bank account. Choose the account of what was bought."
+accounting.receipt_booking.error.tax_rate_invalid: "Line %line%: invalid VAT rate."
+accounting.receipt_booking.error.tax_rate_missing: "Line %line%: no %rate% % VAT rate is valid on %date%."
+accounting.receipt_booking.error.month_closed: "The booking month %month%/%year% is closed."
+accounting.receipt_booking.warning.invoice_number_used: "Invoice number %number% is already used by an entry of %date%."
+accounting.receipt_booking.warning.possible_duplicate: "An entry over %amount% on account %account% already exists on %date%. If it is this payment, split it instead."

@@ -1,19 +1,15 @@
-<form id="template-form" class="form-horizontal" role="form"
+<form id="template-form" role="form"
       data-controller="reservations"
       data-action="submit->reservations#saveTemplateFileAction"
       data-url="{{ path('correspondence.file.save') }}">
     <fieldset id="template-form-fieldset-primary-">
-        <div class="row">
-            <label for="subject" class="col-sm-3 col-form-label">Bezeichnung
-                *</label>
-
-            <div class="col-sm-9">
-                <input type="text" class="form-control" name="subject"
+        <div class="row g-3">
+            <div class="col-12">
+                <label for="template-subject" class="form-label">{{ 'templates.file.label'|trans }} *</label>
+                <input type="text" class="form-control" id="template-subject" name="subject"
                        value="{{ template.name }}" required>
             </div>
-        </div>
-        <div class="row mt-3">
-            <div class="col-sm">
+            <div class="col-12">
                 <textarea name="msg" id="editor1" rows="10" cols="70">{{ templateOutput|raw }}</textarea>
             </div>
         </div>
@@ -21,8 +17,4 @@
 
     <input name="_csrf_token" value="{{ token }}" type="hidden">
     <input name="templateId" value="{{ template.id }}" type="hidden">
-    <div class="float-end">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
-        <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" />
-    </div>
 </form>

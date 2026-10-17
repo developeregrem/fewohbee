@@ -15,16 +15,14 @@ use App\Repository\BankImportFingerprintRepository;
 use App\Repository\BookingEntryRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\TaxRateRepository;
-use App\Service\BookingJournal\BankImport\BankImportDraftSession;
+use App\Repository\BankImportDraftRepository;
+use App\Service\BookingJournal\BankImport\BankImportDraftStore;
 use App\Service\BookingJournal\BankImport\BankStatementCommitter;
 use App\Service\BookingJournal\BookingJournalService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\Session;
-use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Bundle\SecurityBundle\Security;
 
 #[AllowMockObjectsWithoutExpectations]
 final class BankStatementCommitterTest extends TestCase
@@ -437,7 +435,6 @@ final class BankStatementCommitterTest extends TestCase
         self::assertSame($manualEntry, $fingerprint->getBookingEntry());
     }
 
-
     /**
      * @param list<BookingEntry> $existing
      */
@@ -489,7 +486,8 @@ final class BankStatementCommitterTest extends TestCase
             $fingerprintRepo ?? $this->fingerprintRepo(null),
             $invoiceRepo,
             $taxRateRepo ?? $this->taxRateRepo([]),
-            new BankImportDraftSession($this->requestStack()),
+            // No draft stored: discarding after the commit is a no-op.
+            new BankImportDraftStore($em, $this->createStub(BankImportDraftRepository::class), $this->createStub(Security::class)),
         );
     }
 
@@ -588,15 +586,4 @@ final class BankStatementCommitterTest extends TestCase
         return $repo;
     }
 
-    private function requestStack(): RequestStack
-    {
-        $session = new Session(new MockArraySessionStorage());
-        $request = new Request();
-        $request->setSession($session);
-
-        $stack = new RequestStack();
-        $stack->push($request);
-
-        return $stack;
-    }
 }

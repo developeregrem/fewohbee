@@ -56,6 +56,6 @@
 
     <div class="col-12">
         <label class="fhb-label" for="comment">{{ 'online_booking.public.comment'|trans }}</label>
-        <textarea class="form-control" id="comment" name="comment" rows="3">{{ booker.comment }}</textarea>
+        <textarea class="form-control" id="comment" name="comment" rows="3"{% if config.commentPlaceholder %} placeholder="{{ config.commentPlaceholder }}"{% endif %}>{{ booker.comment }}</textarea>
     </div>
 </div>

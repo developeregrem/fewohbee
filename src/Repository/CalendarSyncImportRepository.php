@@ -30,7 +30,7 @@ class CalendarSyncImportRepository extends ServiceEntityRepository
     {
         $queryBuilder = $this->createQueryBuilder('calendarImport')
             ->andWhere('calendarImport.shareSummaryFilters = true')
-            ->orderBy('calendarImport.id', 'ASC');
+            ->orderBy('calendarImport.id', \SortDirection::Ascending);
 
         if (null !== $currentImport?->getId()) {
             $queryBuilder

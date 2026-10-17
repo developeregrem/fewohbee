@@ -50,7 +50,7 @@ class WebauthnService
             new NoneAttestationStatementSupport(),
         ]);
 
-        $this->serializer = (new WebauthnSerializerFactory($attestationManager))->create();
+        $this->serializer = new WebauthnSerializerFactory($attestationManager)->create();
 
         // Ceremony step managers validate all WebAuthn security checks
         // (challenge, origin, signature, counter, …)

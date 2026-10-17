@@ -17,3 +17,7 @@ fewohbee:
     defaults:
         route: 'dashboard.redirect'
         permanent: true
+# MCP endpoint (/mcp) for AI assistants; see config/packages/mcp.yaml
+mcp:
+    resource: .
+    type: mcp

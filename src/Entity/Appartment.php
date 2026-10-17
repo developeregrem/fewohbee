@@ -51,7 +51,7 @@ class Appartment
     {
         $this->uuid = Uuid::v4();
         $this->reservations = new ArrayCollection();
-        $this->calendarSync = (new CalendarSync())->setApartment($this);
+        $this->calendarSync = new CalendarSync()->setApartment($this);
         $this->calendarSyncImports = new ArrayCollection();
     }
 

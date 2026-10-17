@@ -27,8 +27,8 @@ class BookingEntryRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('e')
             ->where('e.bookingBatch = :batch')
             ->setParameter('batch', $batch)
-            ->orderBy('e.date', 'ASC')
-            ->addOrderBy('e.documentNumber', 'ASC')
+            ->orderBy('e.date', \SortDirection::Ascending)
+            ->addOrderBy('e.documentNumber', \SortDirection::Ascending)
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);
 
@@ -71,9 +71,9 @@ class BookingEntryRepository extends ServiceEntityRepository
             ->leftJoin('e.taxRate', 't')
             ->where('b.year = :year')
             ->setParameter('year', $year)
-            ->orderBy('e.date', 'ASC')
-            ->addOrderBy('e.documentNumber', 'ASC')
-            ->addOrderBy('e.id', 'ASC')
+            ->orderBy('e.date', \SortDirection::Ascending)
+            ->addOrderBy('e.documentNumber', \SortDirection::Ascending)
+            ->addOrderBy('e.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -130,8 +130,8 @@ class BookingEntryRepository extends ServiceEntityRepository
             ->where('e.bookingBatch = :batch')
             ->andWhere('da.isCashAccount = true OR ca.isCashAccount = true')
             ->setParameter('batch', $batch)
-            ->orderBy('e.date', 'ASC')
-            ->addOrderBy('e.documentNumber', 'ASC')
+            ->orderBy('e.date', \SortDirection::Ascending)
+            ->addOrderBy('e.documentNumber', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -286,6 +286,42 @@ class BookingEntryRepository extends ServiceEntityRepository
     }
 
     /**
+     * Entries dated within a range, optionally narrowed to an exact amount and to entries that
+     * touch one account on either side. Ordered by date, capped at $limit.
+     *
+     * @return BookingEntry[]
+     */
+    public function findInPeriod(
+        \DateTimeInterface $from,
+        \DateTimeInterface $to,
+        ?string $amount = null,
+        ?AccountingAccount $account = null,
+        int $limit = 100,
+    ): array {
+        $qb = $this->createQueryBuilder('e')
+            ->addSelect('b', 'd', 'c', 't')
+            ->join('e.bookingBatch', 'b')
+            ->leftJoin('e.debitAccount', 'd')
+            ->leftJoin('e.creditAccount', 'c')
+            ->leftJoin('e.taxRate', 't')
+            ->where('e.date BETWEEN :from AND :to')
+            ->setParameter('from', $from->format('Y-m-d'))
+            ->setParameter('to', $to->format('Y-m-d'))
+            ->orderBy('e.date', \SortDirection::Ascending)
+            ->addOrderBy('e.documentNumber', \SortDirection::Ascending)
+            ->setMaxResults($limit);
+
+        if (null !== $amount) {
+            $qb->andWhere('e.amount = :amount')->setParameter('amount', $amount);
+        }
+        if (null !== $account) {
+            $qb->andWhere('e.debitAccount = :account OR e.creditAccount = :account')->setParameter('account', $account);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * Returns the highest document number used in the given batch's year, or 0 if no entries exist.
      */
     public function getLastDocumentNumber(BookingBatch $batch): int
@@ -316,9 +352,9 @@ class BookingEntryRepository extends ServiceEntityRepository
             ->andWhere('e.sourceType IS NULL OR e.sourceType != :opening')
             ->setParameter('year', $year)
             ->setParameter('opening', BookingEntry::SOURCE_OPENING_BALANCE)
-            ->orderBy('e.date', 'ASC')
-            ->addOrderBy('e.documentNumber', 'ASC')
-            ->addOrderBy('e.id', 'ASC')
+            ->orderBy('e.date', \SortDirection::Ascending)
+            ->addOrderBy('e.documentNumber', \SortDirection::Ascending)
+            ->addOrderBy('e.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }

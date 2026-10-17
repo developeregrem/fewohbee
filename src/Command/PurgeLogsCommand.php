@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Entity\GuestCheckIn;
+use App\Repository\GuestCheckInRepository;
 use App\Repository\LogRepository;
+use App\Repository\McpToolCallLogRepository;
 use App\Repository\NotificationRepository;
 use App\Repository\WorkflowLogRepository;
+use App\Service\BookingJournal\BankImport\BankImportDraftStore;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -16,7 +20,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:purge-logs',
-    description: 'Delete audit log, workflow log and notification entries older than a given number of days (run via daily cron).',
+    description: 'Delete audit log, workflow log and notification entries older than a given number of days, and expired online check-in data and bank import drafts (run via daily cron).',
     aliases: ['workflow:purge-logs'],
 )]
 class PurgeLogsCommand extends Command
@@ -25,13 +29,16 @@ class PurgeLogsCommand extends Command
         private readonly LogRepository $logRepository,
         private readonly WorkflowLogRepository $workflowLogRepository,
         private readonly NotificationRepository $notificationRepository,
+        private readonly McpToolCallLogRepository $mcpToolCallLogRepository,
+        private readonly GuestCheckInRepository $guestCheckInRepository,
+        private readonly BankImportDraftStore $bankImportDrafts,
     ) {
         parent::__construct();
     }
 
     protected function configure(): void
     {
-        $this->addOption('days', null, InputOption::VALUE_REQUIRED, 'Delete audit log, workflow log and notification entries older than this many days.', 90);
+        $this->addOption('days', null, InputOption::VALUE_REQUIRED, 'Delete audit log, workflow log, notification and AI assistant (MCP) call entries older than this many days.', 90);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -55,13 +62,24 @@ class PurgeLogsCommand extends Command
         $workflow = $this->workflowLogRepository->purgeOlderThan($before);
         // Read state is removed with the notification by the FK cascade.
         $notifications = $this->notificationRepository->purgeOlderThan($before);
+        $mcpCalls = $this->mcpToolCallLogRepository->purgeOlderThan($before);
+        // Guest data has its own fixed retention, independent of --days: it is personal data
+        // including ID numbers, and this is the daily job every installation already runs.
+        $checkIns = $this->guestCheckInRepository->purgePayloadsDepartedBefore(
+            new \DateTimeImmutable('today -'.GuestCheckIn::RETENTION_DAYS_AFTER_DEPARTURE.' days')
+        );
+        // Unfinished bank imports hold names, IBANs and purposes of third parties.
+        $drafts = $this->bankImportDrafts->purgeExpired();
 
         $io->success(sprintf(
-            'Deleted %d audit log, %d workflow log and %d notification entries older than %d days.',
+            'Deleted %d audit log, %d workflow log, %d notification and %d AI assistant call entries older than %d days, the guest data of %d online check-ins and %d expired bank import drafts.',
             $audit,
             $workflow,
             $notifications,
+            $mcpCalls,
             $days,
+            $checkIns,
+            $drafts,
         ));
 
         return Command::SUCCESS;

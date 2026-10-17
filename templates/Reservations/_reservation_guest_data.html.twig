@@ -1,0 +1,52 @@
+{# The booker's personal data and addresses, as shown in the details tab and in the preview of a
+   new booking. Expects `booker` (may be null); `addressColumns` sets the address grid's row-cols. #}
+{% if booker %}
+    {% if booker.birthday or booker.nationality or booker.iDNumber or booker.remark %}
+        <dl class="row mb-0">
+            {% if booker.birthday %}
+                <dt class="col-5 col-sm-4 fw-normal text-body-secondary">{{ 'customer.birthday'|trans }}</dt>
+                <dd class="col-7 col-sm-8 mb-1 text-break">{{ booker.birthday|date('d.m.Y') }}</dd>
+            {% endif %}
+            {% if booker.nationality %}
+                <dt class="col-5 col-sm-4 fw-normal text-body-secondary">{{ 'customer.nationality'|trans }}</dt>
+                <dd class="col-7 col-sm-8 mb-1 text-break">{{ booker.nationality }}</dd>
+            {% endif %}
+            {% if booker.iDNumber %}
+                <dt class="col-5 col-sm-4 fw-normal text-body-secondary">{{ 'customer.id.number'|trans }}</dt>
+                <dd class="col-7 col-sm-8 mb-1 text-break">{{ booker.idType.value|trans }}: {{ booker.iDNumber }}</dd>
+            {% endif %}
+            {% if booker.remark %}
+                <dt class="col-5 col-sm-4 fw-normal text-body-secondary">{{ 'customer.remark'|trans }}</dt>
+                <dd class="col-7 col-sm-8 mb-1 text-break">{{ booker.remark|nl2br }}</dd>
+            {% endif %}
+        </dl>
+    {% endif %}
+    <div class="row {{ addressColumns|default('row-cols-1') }} g-3 mt-0">
+    {% for address in booker.customerAddresses %}
+        <div class="col">
+            <div class="small text-body-secondary">
+                {{ address.type|trans|capitalize }}{% if address.company %} · {{ address.company }}{% endif %}
+            </div>
+            {% if address.address or address.zip or address.city %}
+                <div>
+                    {{ address.address }}{% if address.address and (address.zip or address.city) %},{% endif %}
+                    {{ address.zip }} {{ address.city }}{% if address.country %}, {{ address.country }}{% endif %}
+                </div>
+            {% endif %}
+            <div class="d-flex flex-wrap column-gap-3">
+                {% for number in [address.phone, address.mobilephone]|filter(n => n) %}
+                    <a href="tel:{{ number|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) }}"><i class="fas fa-phone fa-sm me-1"></i>{{ number }}</a>
+                {% endfor %}
+                {% if address.fax %}
+                    <span><i class="fas fa-fax fa-sm me-1 text-body-secondary"></i>{{ address.fax }}</span>
+                {% endif %}
+                {% if address.email %}
+                    <a href="mailto:{{ address.email }}" class="text-break"><i class="fas fa-envelope fa-sm me-1"></i>{{ address.email }}</a>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+{% else %}
+    <p class="text-body-secondary mb-0">{{ 'reservation.import.booker.missing'|trans }}</p>
+{% endif %}

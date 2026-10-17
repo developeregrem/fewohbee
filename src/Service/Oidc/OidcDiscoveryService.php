@@ -56,11 +56,7 @@ final class OidcDiscoveryService
         // not break setup. Token validation later uses the document's value
         // verbatim, which is the one that has to match exactly.
         if (rtrim($metadata->issuer, '/') !== $this->config->getIssuer()) {
-            throw new OidcConfigurationException(sprintf(
-                'Discovery document announces issuer "%s" but OIDC_ISSUER is "%s".',
-                $metadata->issuer,
-                $this->config->getIssuer(),
-            ));
+            throw new OidcConfigurationException(sprintf('Discovery document announces issuer "%s" but OIDC_ISSUER is "%s".', $metadata->issuer, $this->config->getIssuer()));
         }
 
         $this->assertEndpointsUseTls($metadata);
@@ -97,11 +93,7 @@ final class OidcDiscoveryService
 
         foreach ($endpoints as $name => $url) {
             if (null !== $url && !str_starts_with($url, 'https://')) {
-                throw new OidcConfigurationException(sprintf(
-                    'The discovery document announces a non-HTTPS %s ("%s"). Check the identity provider\'s public URL configuration.',
-                    $name,
-                    $url,
-                ));
+                throw new OidcConfigurationException(sprintf('The discovery document announces a non-HTTPS %s ("%s"). Check the identity provider\'s public URL configuration.', $name, $url));
             }
         }
     }

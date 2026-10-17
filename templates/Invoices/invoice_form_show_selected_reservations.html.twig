@@ -1,15 +1,16 @@
 <div data-controller="invoices reservations" data-delete-url="{{ path('invoices.remove.reservation.from.selection') }}">
 {% include 'Reservations/reservation_form_selected_reservations_fields.html.twig' %}
 <div class="modal-footer">
-    <ul class="pagination ms-auto">
-        <li class="page-item" data-action="click->reservations#showAddReservationToSelectionAction" data-url="{{ path('invoices.new.invoice') }}" data-create-new="false" data-title="{{ 'invoice.select.open.reservation'|trans }}">
-            <a class="page-link" href="#">&larr; {{ 'invoice.add.another.reservation'|trans }}</a>
-        </li>
-        {% if arrayContainsReservations %}
-        <li class="page-item" data-action="click->invoices#showCreateInvoicePositionsAction" data-url="{{ path('invoices.create.invoice.positions') }}" data-create-positions="true">
-            <a class="page-link" href="#">{{ 'button.continue'|trans }} &rarr;</a>
-        </li>
-        {% endif %}
-    </ul>
+    <a href="#" class="btn btn-link px-0 me-auto text-decoration-none"
+       data-action="click->reservations#showAddReservationToSelectionAction"
+       data-url="{{ path('invoices.new.invoice') }}"
+       data-create-new="false" data-title="{{ 'invoice.select.open.reservation'|trans }}">
+        <i class="fas fa-plus me-1"></i><span class="d-none d-sm-inline">{{ 'invoice.add.another.reservation'|trans }}</span><span class="d-sm-none">{{ 'button.add'|trans }}</span></a>
+    {% if arrayContainsReservations %}
+        <button type="button" class="btn btn-primary"
+                data-action="click->invoices#showCreateInvoicePositionsAction"
+                data-url="{{ path('invoices.create.invoice.positions') }}"
+                data-create-positions="true">{{ 'button.continue'|trans }} &rarr;</button>
+    {% endif %}
 </div>
 </div>

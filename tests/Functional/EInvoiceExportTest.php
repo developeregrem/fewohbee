@@ -335,18 +335,27 @@ final class EInvoiceExportTest extends KernelTestCase
     #[DataProvider('currencySettingsProvider')]
     public function testCurrencyFromAppSettingsIsMappedForZugferd(string $currency, string $currencySymbol, string $expectedIsoCode): void
     {
-        $this->updateAppSettingsCurrency($currency, $currencySymbol);
+        $originalSettings = $this->getAppSettingsService()->getSettings();
+        $originalCurrency = $originalSettings->getCurrency();
+        $originalCurrencySymbol = $originalSettings->getCurrencySymbol();
 
-        $settings = $this->createSettingsEntity('xrechnung');
-        $invoice = $this->createValidInvoice(PaymentMeansCode::CASH);
-        $xml = $this->getExportService()->generateInvoiceData($invoice, $settings);
+        try {
+            $this->updateAppSettingsCurrency($currency, $currencySymbol);
 
-        self::assertMatchesRegularExpression(
-            '/<[^>]*InvoiceCurrencyCode[^>]*>'.preg_quote($expectedIsoCode, '/').'<\/[^>]*InvoiceCurrencyCode>/',
-            $xml
-        );
+            $settings = $this->createSettingsEntity('xrechnung');
+            $invoice = $this->createValidInvoice(PaymentMeansCode::CASH);
+            $xml = $this->getExportService()->generateInvoiceData($invoice, $settings);
+
+            self::assertMatchesRegularExpression(
+                '/<[^>]*InvoiceCurrencyCode[^>]*>'.preg_quote($expectedIsoCode, '/').'<\/[^>]*InvoiceCurrencyCode>/',
+                $xml
+            );
+        } finally {
+            $this->updateAppSettingsCurrency($originalCurrency, $originalCurrencySymbol);
+        }
     }
 
+    /** @return array<string, array{string, string, string}> */
     public static function currencySettingsProvider(): array
     {
         return [

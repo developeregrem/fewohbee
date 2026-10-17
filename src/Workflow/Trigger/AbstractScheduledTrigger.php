@@ -64,6 +64,6 @@ abstract class AbstractScheduledTrigger implements WorkflowTriggerInterface
      */
     protected function previewDate(int $dayOffset): \DateTimeImmutable
     {
-        return (new \DateTimeImmutable('today'))->modify(sprintf('%+d days', $dayOffset));
+        return new \DateTimeImmutable('today')->modify(sprintf('%+d days', $dayOffset));
     }
 }

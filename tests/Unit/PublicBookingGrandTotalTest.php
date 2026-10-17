@@ -4,26 +4,27 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Dto\PublicBooking\RoomTotal;
 use App\Dto\TouristTaxBreakdown;
 use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\Enum\GuestStatisticalGroup;
-use App\Event\OnlineBookingCreatedEvent;
 use App\Entity\GuestCategory;
+use App\Entity\InvoicePosition;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
+use App\Event\OnlineBookingCreatedEvent;
+use App\Exception\PublicBookingException;
 use App\Repository\AppartmentRepository;
 use App\Repository\CustomerRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Service\OnlineBooking\OnlineBookingConfigService;
 use App\Service\OnlineBooking\PublicAvailabilityService;
 use App\Service\OnlineBooking\PublicBookingService;
-use App\Dto\PublicBooking\RoomTotal;
-use App\Entity\InvoicePosition;
 use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -55,6 +56,25 @@ final class PublicBookingGrandTotalTest extends TestCase
         self::assertSame($preview['grandTotalFormatted'], $booking['grandTotalFormatted']);
         self::assertSame(12.0, $booking['grandTotal']);
         self::assertSame('12,00', $booking['grandTotalFormatted']);
+    }
+
+    /**
+     * Price rules follow occupancy and lead time, so the total can move between the summary
+     * and the click on "book". The guest must never be booked at a price they did not see.
+     */
+    public function testABookingIsRefusedWhenTheTotalDiffersFromTheSummary(): void
+    {
+        $service = $this->makeService();
+        $dateFrom = new \DateTimeImmutable('2026-06-01');
+        $dateTo = new \DateTimeImmutable('2026-06-03');
+        $selection = ['category:1' => [2 => 1]];
+
+        $booking = $service->createBooking($dateFrom, $dateTo, 2, 1, $selection, $this->booker(), [], [1 => 2], quotedTotal: 1200);
+        self::assertSame(12.0, $booking['grandTotal']);
+
+        $this->expectException(PublicBookingException::class);
+        $this->expectExceptionMessage('online_booking.error.price_changed');
+        $service->createBooking($dateFrom, $dateTo, 2, 1, $selection, $this->booker(), [], [1 => 2], quotedTotal: 1100);
     }
 
     /**

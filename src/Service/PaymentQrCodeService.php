@@ -16,10 +16,10 @@ namespace App\Service;
 use App\Entity\Invoice;
 use App\Entity\InvoiceSettingsData;
 use App\Service\EInvoice\EInvoiceReadinessService;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\Writer\PngWriter;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Builds an EPC069-12 payment QR code ("GiroCode") for an invoice.
@@ -105,14 +105,14 @@ final class PaymentQrCodeService
             return $this->rendered[$cacheKey] = null;
         }
 
-        return $this->rendered[$cacheKey] = (new Builder(
+        return $this->rendered[$cacheKey] = new Builder(
             writer: new PngWriter(),
             data: $payload,
             // Medium leaves the code readable on a printed invoice that got folded.
             errorCorrectionLevel: ErrorCorrectionLevel::Medium,
             size: $size,
             margin: 0,
-        ))->build()->getDataUri();
+        )->build()->getDataUri();
     }
 
     /**

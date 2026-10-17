@@ -1,40 +1,43 @@
+{# Finds further reservations by period or by guest (shared by documents and invoices); the ids
+   are used by the reservations controller to switch between the two filters #}
 <div class="modal-body">
-    <div class="ps-5 pe-5">
-        <div class="row">
-            <div class="col"> 
-                <div class="btn-group">
-                        <button type="button" id="button-filter-time" class="btn btn-primary"
-                                data-action="click->reservations#showTimeFilterAction">{{ 'invoice.open.reservations.filter.time'|trans }}</button>
-                        <button type="button" id="button-filter-customer" class="btn btn-secondary"
-                                data-action="click->reservations#showCustomerFilterAction">{{ 'invoice.open.reservations.filter.customer'|trans }}</button>
-                </div>
-            </div>
+    <div class="px-lg-5">
+        <div class="btn-group w-100" role="group">
+            <button type="button" id="button-filter-time" class="btn btn-primary"
+                    data-action="click->reservations#showTimeFilterAction">{{ 'reservation.filter.by_period'|trans }}</button>
+            <button type="button" id="button-filter-customer" class="btn btn-secondary"
+                    data-action="click->reservations#showCustomerFilterAction">{{ 'reservation.filter.by_guest'|trans }}</button>
         </div>
-        <div id="container-filter-reservations-period" class="mt-4">
+        <div id="container-filter-reservations-period" class="mt-3">
             <form id="filter-reservations-period" role="form">
-                <div class="row">
-                    <div class="col">
-                            <input type="date" class="form-control" id="from" name="from" 
-                                   placeholder="{{ 'invoice.startdate'|trans }}" data-action="change->reservations#getReservationsInPeriodAction" data-url="{{ path('reservations.get.reservations.in.period') }}">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label for="from" class="form-label">{{ 'invoice.startdate'|trans }}</label>
+                        <input type="date" class="form-control" id="from" name="from"
+                               data-action="change->reservations#getReservationsInPeriodAction" data-url="{{ path('reservations.get.reservations.in.period') }}">
                     </div>
-                    <div class="col">
-                        <input type="date" class="form-control" id="end" name="end" 
-                               placeholder="{{ 'invoice.enddate'|trans }}" data-action="change->reservations#getReservationsInPeriodAction" data-url="{{ path('reservations.get.reservations.in.period') }}">
+                    <div class="col-6">
+                        <label for="end" class="form-label">{{ 'invoice.enddate'|trans }}</label>
+                        <input type="date" class="form-control" id="end" name="end"
+                               data-action="change->reservations#getReservationsInPeriodAction" data-url="{{ path('reservations.get.reservations.in.period') }}">
                     </div>
                 </div>
             </form>
         </div>
-        <div class="row">
-            <div id="container-filter-reservations-customer" class="col d-none mt-4">
-               <form id="filter-reservations-customer-name" role="form" data-action="submit->reservations#getReservationsByCustomerNameAction" data-url="{{ path('reservations.get.reservations.for.customer') }}">
-                    <input type="input" class="form-control" id="lastname" name="lastname"
-                           placeholder="{{ 'invoice.select.customer.search.input.placeholder'|trans }}">
-                </form>
-            </div>
+        <div id="container-filter-reservations-customer" class="d-none mt-3">
+            <form id="filter-reservations-customer-name" role="form" data-action="submit->reservations#getReservationsByCustomerNameAction" data-url="{{ path('reservations.get.reservations.for.customer') }}">
+                <div class="row g-2 align-items-end">
+                    <div class="col">
+                        <input type="text" class="form-control" id="lastname" name="lastname"
+                               placeholder="{{ 'invoice.select.customer.search.input.placeholder'|trans }}">
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary" title="{{ 'nav.customer.search'|trans }}" aria-label="{{ 'nav.customer.search'|trans }}">
+                            <i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+            </form>
         </div>
-        <div class="row mt-4">
-            <div id="container-filter-reservations-result" class="col">
-            </div>
-        </div>
+        <div id="container-filter-reservations-result" class="mt-3"></div>
     </div>
 </div>

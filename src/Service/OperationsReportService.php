@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Customer;
+use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Reservation;
 use App\Entity\RoomDayStatus;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
-use App\Entity\Enum\InvoiceStatus;
 use Symfony\Component\Intl\Countries;
 
 /**
@@ -111,10 +111,6 @@ class OperationsReportService
         return str_contains($template->getText(), 'touristTax');
     }
 
-
-
-
-
     /**
      * Build statistics payload using monthly snapshot metrics for the date range.
      */
@@ -163,7 +159,7 @@ class OperationsReportService
      * Build simplified read-only structures so template authors can use easy
      * data-repeat snippets instead of complex set/if logic.
      *
-     * @param string[] $occupancyTypes
+     * @param string[]             $occupancyTypes
      * @param array<string, mixed> $rangeView
      *
      * @return array<string, mixed>
@@ -190,7 +186,7 @@ class OperationsReportService
         return [
             'meta' => [
                 'periodLabel' => $this->buildPeriodLabel($start, $end),
-                'generatedAt' => (new \DateTimeImmutable('now'))->format('d.m.Y H:i'),
+                'generatedAt' => new \DateTimeImmutable('now')->format('d.m.Y H:i'),
                 'subsidiaryName' => $subsidiary?->getName(),
                 'subsidiaryAllLabelKey' => 'housekeeping.subsidiary.all',
                 'occupancyTypeLabelKeys' => $occupancyTypes,
@@ -233,6 +229,7 @@ class OperationsReportService
      * Build reusable day metadata for the selected date range.
      *
      * @param array<string, mixed> $rangeView
+     *
      * @return array<int, array<string, mixed>>
      */
     private function buildWeekDays(array $rangeView): array
@@ -256,8 +253,9 @@ class OperationsReportService
     /**
      * Build normalized reservation rows used by multiple simple report views.
      *
-     * @param array<string, mixed> $rangeView
+     * @param array<string, mixed>  $rangeView
      * @param array<string, string> $invoiceStatusLabels
+     *
      * @return array<int, array<string, mixed>>
      */
     private function buildSimpleReservationRows(array $rangeView, string $dayKey, array $invoiceStatusLabels): array
@@ -315,9 +313,10 @@ class OperationsReportService
     /**
      * Build simple housekeeping day rows from the selected day view.
      *
-     * @param array<string, mixed> $dayView
+     * @param array<string, mixed>  $dayView
      * @param array<string, string> $occupancyLabelKeys
      * @param array<string, string> $statusLabelKeys
+     *
      * @return array<int, array<string, mixed>>
      */
     private function buildSimpleHousekeepingDayRows(
@@ -356,10 +355,11 @@ class OperationsReportService
     /**
      * Build simple housekeeping week matrix grouped by apartment.
      *
-     * @param array<string, mixed> $rangeView
+     * @param array<string, mixed>             $rangeView
      * @param array<int, array<string, mixed>> $weekDays
-     * @param array<string, string> $occupancyLabelKeys
-     * @param array<string, string> $statusLabelKeys
+     * @param array<string, string>            $occupancyLabelKeys
+     * @param array<string, string>            $statusLabelKeys
+     *
      * @return array<int, array<string, mixed>>
      */
     private function buildSimpleHousekeepingWeekRows(
@@ -431,6 +431,7 @@ class OperationsReportService
      * Group normalized reservations into frontdesk sections.
      *
      * @param array<int, array<string, mixed>> $reservationRows
+     *
      * @return array<int, array<string, mixed>>
      */
     private function buildSimpleFrontdeskSections(array $reservationRows): array
@@ -475,8 +476,9 @@ class OperationsReportService
     /**
      * Build a simplified meals checklist matrix (rooms x visible days).
      *
-     * @param array<string, mixed> $rangeView
+     * @param array<string, mixed>             $rangeView
      * @param array<int, array<string, mixed>> $weekDays
+     *
      * @return array<int, array<string, mixed>>
      */
     private function buildSimpleMealsRows(array $rangeView, array $weekDays): array

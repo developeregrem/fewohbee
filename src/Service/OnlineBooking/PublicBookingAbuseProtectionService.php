@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\OnlineBooking;
 
 use App\Exception\PublicBookingException;
+use App\Security\ClientFingerprint;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
@@ -189,14 +190,6 @@ class PublicBookingAbuseProtectionService
     /** Build a stable limiter key based on client IP and the current public-booking flow step. */
     private function buildLimiterKey(Request $request, string $scope): string
     {
-        $ip = (string) ($request->getClientIp() ?? 'unknown');
-        $userAgent = mb_strtolower(trim((string) $request->headers->get('User-Agent', 'unknown')));
-        $language = mb_strtolower(trim((string) $request->headers->get('Accept-Language', 'unknown')));
-
-        return sprintf(
-            '%s:%s',
-            $scope,
-            hash('sha256', $ip.'|'.$userAgent.'|'.$language)
-        );
+        return ClientFingerprint::limiterKey($request, $scope);
     }
 }

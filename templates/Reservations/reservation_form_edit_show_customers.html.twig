@@ -1,22 +1,20 @@
-<table class="table table-hover">
-    <tr>
-        <th>{{ 'customer.firstname'|trans }}</th>
-        <th>{{ 'customer.lastname'|trans }}</th>
-        <th>{{ 'customer.birthday'|trans }}</th>
-    </tr>
+{# Search hits; tapping one assigns that guest #}
+<div class="list-group">
     {% for customer in customers %}
         {% if customer.id != 0 %}
-            <tr class="mouse-pointer" data-action="click->{{ selectAction|default('reservations#editCustomerChangeAction') }}"
-                data-customer-id="{{ customer.id }}" data-tab="{{ tab }}" data-appartment-id="{{ appartmentId }}"
-                {% if changeUrl is defined and changeUrl %}data-url="{{ changeUrl }}"{% endif %}
-                title="{{ 'button.accept'|trans }}">
-                <td>{{ customer.firstname }}</td>
-                <td>{{ customer.lastname }}</td>
-                <td>{% if customer.birthday %} {{ customer.birthday|date('d.m.Y') }} {% endif %}</td>
-            </tr>
+            <a href="#" class="list-group-item list-group-item-action"
+               data-action="click->{{ selectAction|default('reservations#editCustomerChangeAction') }}"
+               data-customer-id="{{ customer.id }}" data-tab="{{ tab }}" data-appartment-id="{{ appartmentId }}"
+               {% if changeUrl is defined and changeUrl %}data-url="{{ changeUrl }}"{% endif %}
+               title="{{ 'button.accept'|trans }}">
+                <div class="fw-semibold">{{ customer.firstname }} {{ customer.lastname }}</div>
+                {% if customer.birthday %}
+                    <div class="small text-body-secondary">{{ 'customer.birthday'|trans }}: {{ customer.birthday|date('d.m.Y') }}</div>
+                {% endif %}
+            </a>
         {% endif %}
     {% endfor %}
-</table>
+</div>
 
 <div data-reservations-pagination="customers"
      data-reservations-pagination-mode="edit"

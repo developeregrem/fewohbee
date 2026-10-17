@@ -10,6 +10,7 @@ use App\Form\GuestCategoryModifierType;
 use App\Form\GuestCategoryType;
 use App\Repository\GuestCategoryModifierRepository;
 use App\Repository\GuestCategoryRepository;
+use App\Service\Pricing\PricePromiseService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -52,8 +53,9 @@ class GuestCategoryController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'guest_category_edit', methods: ['GET', 'POST'])]
-    public function edit(ManagerRegistry $doctrine, Request $request, GuestCategory $category): Response
+    public function edit(ManagerRegistry $doctrine, PricePromiseService $pricePromises, Request $request, GuestCategory $category): Response
     {
+        $this->promiseOpenBookings($request, $pricePromises);
         $form = $this->createForm(GuestCategoryType::class, $category);
         $form->handleRequest($request);
 
@@ -71,11 +73,12 @@ class GuestCategoryController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'guest_category_delete', methods: ['DELETE'])]
-    public function delete(ManagerRegistry $doctrine, Request $request, GuestCategory $category): Response
+    public function delete(ManagerRegistry $doctrine, PricePromiseService $pricePromises, Request $request, GuestCategory $category): Response
     {
         if ($this->isCsrfTokenValid('delete'.$category->getId(), $request->request->get('_token'))) {
+            $this->promiseOpenBookings($request, $pricePromises);
             // prevent deletion of default adult category
-            if ($category->isSystem() && $category->getSystemCode() === 'default_adult') {
+            if ($category->isSystem() && 'default_adult' === $category->getSystemCode()) {
                 $this->addFlash('warning', 'status.flash.delete.error.system');
 
                 return new Response('', Response::HTTP_NO_CONTENT);
@@ -90,8 +93,9 @@ class GuestCategoryController extends AbstractController
     }
 
     #[Route('/modifiers/new', name: 'guest_category_modifier_new', methods: ['GET', 'POST'])]
-    public function newModifier(ManagerRegistry $doctrine, Request $request): Response
+    public function newModifier(ManagerRegistry $doctrine, PricePromiseService $pricePromises, Request $request): Response
     {
+        $this->promiseOpenBookings($request, $pricePromises);
         $modifier = new GuestCategoryModifier();
         $form = $this->createForm(GuestCategoryModifierType::class, $modifier);
         $form->handleRequest($request);
@@ -113,8 +117,9 @@ class GuestCategoryController extends AbstractController
     }
 
     #[Route('/modifiers/{id}/edit', name: 'guest_category_modifier_edit', methods: ['GET', 'POST'])]
-    public function editModifier(ManagerRegistry $doctrine, Request $request, GuestCategoryModifier $modifier): Response
+    public function editModifier(ManagerRegistry $doctrine, PricePromiseService $pricePromises, Request $request, GuestCategoryModifier $modifier): Response
     {
+        $this->promiseOpenBookings($request, $pricePromises);
         $form = $this->createForm(GuestCategoryModifierType::class, $modifier);
         $form->handleRequest($request);
 
@@ -132,9 +137,10 @@ class GuestCategoryController extends AbstractController
     }
 
     #[Route('/modifiers/{id}/delete', name: 'guest_category_modifier_delete', methods: ['DELETE'])]
-    public function deleteModifier(ManagerRegistry $doctrine, Request $request, GuestCategoryModifier $modifier): Response
+    public function deleteModifier(ManagerRegistry $doctrine, PricePromiseService $pricePromises, Request $request, GuestCategoryModifier $modifier): Response
     {
         if ($this->isCsrfTokenValid('delete'.$modifier->getId(), $request->request->get('_token'))) {
+            $this->promiseOpenBookings($request, $pricePromises);
             $em = $doctrine->getManager();
             $em->remove($modifier);
             $em->flush();
@@ -142,5 +148,17 @@ class GuestCategoryController extends AbstractController
         }
 
         return new Response('', Response::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * Guest categories and their modifiers shape room prices. Open bookings without a promise
+     * are promised today's price before a change can reach them; the form changes the entity in
+     * memory right away, so this runs first.
+     */
+    private function promiseOpenBookings(Request $request, PricePromiseService $pricePromises): void
+    {
+        if (!$request->isMethod('GET')) {
+            $pricePromises->promiseOpenReservations();
+        }
     }
 }

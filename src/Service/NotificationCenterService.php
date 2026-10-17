@@ -89,7 +89,7 @@ class NotificationCenterService
         }
 
         uasort($groups, static function (array $a, array $b): int {
-            return ($b[0]->severity->weight() <=> $a[0]->severity->weight());
+            return $b[0]->severity->weight() <=> $a[0]->severity->weight();
         });
 
         return $groups;
@@ -114,7 +114,7 @@ class NotificationCenterService
         ?string $entityId = null,
         ?string $note = null,
     ): Notification {
-        $notification = (new Notification())
+        $notification = new Notification()
             ->setType($type)
             ->setTitleKey($titleKey)
             ->setSeverity($severity)
@@ -146,7 +146,7 @@ class NotificationCenterService
             return;
         }
 
-        $this->em->persist((new NotificationRead())->setNotification($notification)->setUser($user));
+        $this->em->persist(new NotificationRead()->setNotification($notification)->setUser($user));
         $this->em->flush();
         $this->summaryCache = [];
     }
@@ -159,7 +159,7 @@ class NotificationCenterService
     public function markAllRead(User $user, array $roles): void
     {
         foreach ($this->notificationRepository->findUnreadFor($user, $roles, 500) as $notification) {
-            $this->em->persist((new NotificationRead())->setNotification($notification)->setUser($user));
+            $this->em->persist(new NotificationRead()->setNotification($notification)->setUser($user));
         }
 
         $this->em->flush();

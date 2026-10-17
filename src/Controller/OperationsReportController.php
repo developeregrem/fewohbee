@@ -176,5 +176,4 @@ class OperationsReportController extends AbstractController
             'message' => null,
         ]);
     }
-
 }

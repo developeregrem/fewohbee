@@ -56,9 +56,9 @@ class PublicPricingService
      *
      * Tourist tax is intentionally **not** applied here — it is shown as a separate line at
      * the end of the booking flow, not bundled into the room rate.
+     * Results are indexed by person count and exclude options without a price.
      *
      * @return array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>
-     *         Indexed by persons count. Only entries with a non-zero price are returned.
      */
     public function getOccupancyPrices(
         // Not used for the calculation — kept so callers stay explicit about the
@@ -100,9 +100,9 @@ class PublicPricingService
      *
      * An extra bound to several room categories is listed once; categoryIds/categoryName name
      * every offered category it serves (categoryIds is empty for global extras).
+     * Each sample is one representative room per available type and category.
      *
      * @param array<int, array{categoryId: ?int, categoryName: ?string, sampleRoom: Appartment}> $samples
-     *        One representative room per available type/category
      *
      * @return array<int, array{id: int, description: string, categoryIds: list<int>, categoryName: ?string, calculationType: string, unitPrice: float, unitPriceFormatted: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int, isMandatory: bool, autoQuantity: bool}>
      */
@@ -187,13 +187,14 @@ class PublicPricingService
      * actually booked (locked); an extra bound to several categories counts the rooms and persons
      * of all booked ones. Global extras keep the guest-selected quantity. Mandatory extras are
      * forced on. Each entry carries its Price for downstream reservation attachment.
+     * Buckets group booked rooms by category; a null category ID means the rooms
+     * have no category. Result category IDs list the categories an extra serves;
+     * an empty list means the extra is global.
      *
      * @param array<int, array{categoryId: ?int, categoryName: ?string, sampleRoom: Appartment, roomCount: int, persons: int}> $buckets
-     *        Booked rooms grouped by category (categoryId null = rooms without a category)
-     * @param array<int, int> $selectedExtras Price ID => quantity/flag from the guest
+     * @param array<int, int> $selectedExtras Price ID => quantity or flag from the guest
      *
      * @return array<int, array{id: int, description: string, categoryIds: list<int>, categoryName: ?string, calculationType: string, isMandatory: bool, autoQuantity: bool, quantity: int, pricePerUnit: float, lineTotal: float, lineTotalFormatted: string, price: Price}>
-     *         categoryIds lists the booked categories the extra applies to; empty for global extras
      */
     public function resolveExtras(
         array $buckets,
@@ -407,16 +408,16 @@ class PublicPricingService
         $origin = $this->configService->getReservationOrigin();
         $reservation = $this->buildSampleReservation($room, 1, $dateFrom, $dateTo, $origin);
 
-        foreach ($this->priceService->getPricesForReservationDays($reservation, 2) as $pricesOfDay) {
-            $price = is_array($pricesOfDay) ? ($pricesOfDay[0] ?? null) : null;
-            if (!$price instanceof Price) {
+        // Night rates, so the comparison uses the price after price rules.
+        foreach ($this->priceService->getNightRates($reservation) as $rate) {
+            if (null === $rate) {
                 continue;
             }
-            if ($price->getIsFlatPrice() || $price->getIsPerRoom()) {
+            if ($rate->isFlatPrice || $rate->isPerRoom) {
                 return null;
             }
 
-            return (float) $price->getPrice();
+            return (float) $rate->unit;
         }
 
         return null;

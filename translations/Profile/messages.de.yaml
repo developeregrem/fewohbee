@@ -44,13 +44,97 @@ profile:
     scopes:
       label: Berechtigungen
       min: Wähle mindestens eine Berechtigung aus.
-      reservations_read: Reservierungen lesen
-      calendar_read: Kalender lesen (iCal-Export, Feiertage, eigene Kalender)
-      statistics_read: Statistiken lesen
-      invoices_read: Rechnungen lesen
-      prices_read: Preise lesen (Preisliste, Preisauskunft, Ratenkalender)
-      tourist_tax_read: Kurtaxe lesen (Einstellungen und Monatsabrechnung)
-      subsidiaries_read: Niederlassungen lesen (Stammdaten und Öffnungszeiten)
+      reservations_read: Reservierungen und Verfügbarkeit
+      calendar_read: Kalender (iCal-Export, Feiertage, eigene Kalender)
+      statistics_read: Statistik und Prognose
+      invoices_read: Rechnungen
+      prices_read: Preise
+      tourist_tax_read: Kurtaxe
+      subsidiaries_read: Niederlassungen (Stammdaten und Öffnungszeiten)
+      availability_read: Verfügbarkeit (freie und belegte Zimmer, ohne Reservierungsdaten)
+      mcp_access: KI-Assistent (MCP)
+      guests_read: Gästedaten (Namen, Kontaktdaten, Bemerkungen)
+      operations_read: Betrieb (Zimmerplan, Housekeeping)
+      reservations_write: Reservierungen anlegen
+      prices_write: Preise anpassen
+      bank_import_write: Kontoauszüge vorbereiten
+      receipts_submit: Belege einreichen
+    groups:
+      see:
+        rest: Was darf dieser Zugang lesen?
+        mcp: Was darf die KI sehen?
+      personal_data:
+        rest: Welche persönlichen Daten erhält dieser Zugang?
+        mcp: Welche persönlichen Daten gehen an die KI?
+      change:
+        rest: Was darf dieser Zugang ändern?
+        mcp: Was darf die KI ändern?
+    hints:
+      reservations_write: Nur nach Vorschau und deiner Zustimmung.
+      prices_write: Bestehende Buchungen behalten ihren Preis. Eine KI ändert Preise nur nach Vorschau und deiner Zustimmung.
+      bank_import_write: Gibt Namen, Verwendungszwecke und gekürzte IBANs der Umsätze an die KI weiter. Übernehmen musst du selbst.
+      receipts_submit: Die KI sieht nur Konten und Steuersätze. Vorschläge buchst du erst nach deiner Prüfung selbst.
+    unavailable:
+      role: Braucht die Rolle „%role%“.
+    tools: 'Schaltet diese Werkzeuge frei: %tools%'
+    summary:
+      and: und
+      scope:
+        reservations_read: Reservierungen
+        calendar_read: Kalender
+        statistics_read: Statistik
+        invoices_read: Rechnungen
+        prices_read: Preise
+        tourist_tax_read: Kurtaxe
+        subsidiaries_read: Niederlassungen
+        availability_read: Verfügbarkeit
+        operations_read: Betrieb
+        guests_read: Gästedaten
+        reservations_write: Reservierungen anlegen
+        prices_write: Preise anpassen
+        bank_import_write: Kontoauszüge vorbereiten
+        receipts_submit: Belege einreichen
+      see:
+        rest: Dieser Zugang darf %list% lesen.
+        mcp: Diese KI darf %list% lesen.
+        mcp_none: Diese KI hat keine zusätzlichen Leserechte.
+      personal:
+        none: Sie erhält keine Gästedaten.
+        guests: Sie erhält Gästedaten.
+        bank: Sie erhält Namen und Verwendungszwecke aus Kontoauszügen.
+        both: Sie erhält Gästedaten sowie Namen und Verwendungszwecke aus Kontoauszügen.
+      change:
+        some: Sie darf %list%.
+        none: Sie kann nichts ändern.
+        rest: Dieser Zugang darf %list%.
+    kind:
+      label: Verwendung
+      api: REST-API und Kalender-Programme
+      mcp: KI-Assistent (MCP)
+      mcp_badge: KI-Assistent
+      help: >-
+        Ein Zugang für einen KI-Assistenten funktioniert nur mit KI-Programmen, nicht mit der REST-API, und
+        läuft nach der gewählten Gültigkeit ab. Die KI darf nur, was du unten auswählst.
+    mcp:
+      privacy_hint: >-
+        Alles, was der KI-Assistent abruft, wird an den Anbieter der KI übertragen (z. B. Anthropic oder
+        OpenAI, ggf. außerhalb der EU). Ohne „Gästedaten“ erhält die KI keine Namen, Kontaktdaten
+        oder Bemerkungen deiner Gäste. Mit „Kontoauszüge vorbereiten“ sieht sie aber Namen, Verwendungszwecke
+        und gekürzte IBANs deiner Kontoumsätze, darunter oft auch Zahlungen von Gästen. Für die Weitergabe
+        solcher Daten brauchst du in der Regel einen Auftragsverarbeitungsvertrag mit dem Anbieter.
+      write_disabled: „Reservierungen anlegen“ ist in den Einstellungen für alle Benutzer abgeschaltet.
+      write_disabled_link: Zu den Einstellungen
+      expiry_required: Zugänge für KI-Assistenten brauchen eine begrenzte Gültigkeit.
+      connect_hint: >-
+        KI-Assistenten verbinden: Trage diese Adresse in deinem KI-Programm als MCP-Server (Typ HTTP) ein und gib
+        das Token eines KI-Zugangs als Header „Authorization: Bearer <Token>“ mit.
+      endpoint: Adresse
+      example: 'Beispiel für Claude Code:'
+      more: Weitere Programme und Details im
+      more_link: Wiki
+      usage_hint: >-
+        Verwendung: Trage in deinem KI-Programm die Adresse der Schnittstelle (unter der Tabelle) ein und gib das
+        Token als Header „Authorization: Bearer <Token>“ mit. Mit der REST-API funktioniert dieser Zugang nicht.
   passkeys:
     title: Passwortlose Anmeldung (Passkeys)
     create: Passkey anlegen

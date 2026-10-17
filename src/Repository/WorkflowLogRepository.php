@@ -21,7 +21,7 @@ class WorkflowLogRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('l')
             ->where('l.workflow = :workflowId')
             ->setParameter('workflowId', $workflowId)
-            ->orderBy('l.executedAt', 'DESC')
+            ->orderBy('l.executedAt', \SortDirection::Descending)
             ->setFirstResult(($page - 1) * $perPage)
             ->setMaxResults($perPage)
             ->getQuery()
@@ -54,6 +54,34 @@ class WorkflowLogRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
 
         return $count > 0;
+    }
+
+    /**
+     * When one of the workflows last ran successfully for the entity, e.g. when an invitation mail
+     * went out; null if none did.
+     *
+     * @param list<int> $workflowIds
+     */
+    public function findLastSuccessfulExecutionAt(array $workflowIds, string $entityClass, int $entityId): ?\DateTimeImmutable
+    {
+        if ([] === $workflowIds) {
+            return null;
+        }
+
+        $executedAt = $this->createQueryBuilder('l')
+            ->select('MAX(l.executedAt)')
+            ->where('l.workflow IN (:workflowIds)')
+            ->andWhere('l.entityClass = :entityClass')
+            ->andWhere('l.entityId = :entityId')
+            ->andWhere('l.status = :status')
+            ->setParameter('workflowIds', $workflowIds)
+            ->setParameter('entityClass', $entityClass)
+            ->setParameter('entityId', $entityId)
+            ->setParameter('status', 'success')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return \is_string($executedAt) ? new \DateTimeImmutable($executedAt) : null;
     }
 
     /**
