@@ -73,7 +73,7 @@ class GuestCheckInCompanionType extends AbstractType
                 ->add('street', TextType::class, ['label' => 'guest_checkin.public.field.street', 'required' => false, 'attr' => ['autocomplete' => 'off', 'maxlength' => 150]])
                 ->add('zip', TextType::class, ['label' => 'guest_checkin.public.field.zip', 'required' => false, 'attr' => ['autocomplete' => 'off', 'maxlength' => 10]])
                 ->add('city', TextType::class, ['label' => 'guest_checkin.public.field.city', 'required' => false, 'attr' => ['autocomplete' => 'off', 'maxlength' => 45]])
-                ->add('country', CountryType::class, ['label' => 'guest_checkin.public.field.country', 'placeholder' => '', 'required' => false]);
+                ->add('country', CountryType::class, ['label' => 'guest_checkin.public.field.country', 'placeholder' => '', 'required' => false, 'attr' => ['autocomplete' => 'off']]);
         }
     }
 
@@ -103,7 +103,11 @@ class GuestCheckInCompanionType extends AbstractType
                 }
                 foreach ($required as $field => $isRequired) {
                     if ($isRequired && null === $companion->{$field}) {
-                        $context->buildViolation('guest_checkin.companion_field_missing')->atPath($field)->addViolation();
+                        // A half-filled address can also be meant as "same as the main guest": say so.
+                        $message = \in_array($field, ['street', 'zip', 'city', 'country'], true)
+                            ? 'guest_checkin.companion_address_incomplete'
+                            : 'guest_checkin.companion_field_missing';
+                        $context->buildViolation($message)->atPath($field)->addViolation();
                     }
                 }
             })];

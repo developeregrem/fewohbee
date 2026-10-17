@@ -206,7 +206,7 @@
                     data-popover="delete" data-delete-target="#modal-content-ajax" data-bs-content='{{ block('deletePopoverContent') }}'>
                 <i class="fas fa-trash me-1"></i>{{ 'guest_checkin.discard.title'|trans }}
             </button>
-            <button type="submit" class="btn btn-primary"><i class="fas fa-check me-1"></i>{{ 'guest_checkin.apply.submit'|trans }}</button>
+            <button type="submit" class="btn btn-primary" data-guest-checkin-target="confirm"><i class="fas fa-check me-1"></i>{{ 'guest_checkin.apply.submit'|trans }}</button>
         </div>
         <p class="small text-body-secondary text-end mt-2 mb-0">{{ 'guest_checkin.apply.hint'|trans }}</p>
     {% endif %}

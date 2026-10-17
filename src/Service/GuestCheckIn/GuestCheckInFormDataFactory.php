@@ -184,9 +184,11 @@ class GuestCheckInFormDataFactory
             $companion->birthday = self::immutable($customer->getBirthday());
             $companion->nationality = self::stringOrNull($customer->getNationality());
 
-            // Only an address that differs from the main guest's counts as "own address".
+            // Only a postal address that differs from the main guest's counts as "own address". A
+            // record holding just contact details or a country would open the address fields
+            // half filled and make the guest complete an address they never meant to give.
             $address = GuestCheckInApplyService::preferredAddress($customer);
-            if (null !== $address && !self::sameAddress($address, $mainAddress)) {
+            if (null !== $address && self::isPostalAddress($address) && !self::sameAddress($address, $mainAddress)) {
                 $companion->street = self::stringOrNull($address->getAddress());
                 $companion->zip = self::matching($address->getZip(), '/^[A-Za-z0-9 \-]{2,10}$/');
                 $companion->city = self::stringOrNull($address->getCity());
@@ -223,6 +225,13 @@ class GuestCheckInFormDataFactory
         $guest->email = null !== $email && false !== filter_var($email, \FILTER_VALIDATE_EMAIL) ? $email : null;
         $guest->phone = self::matching($address->getPhone(), '/^[0-9+()\/ .\-]{5,30}$/')
             ?? self::matching($address->getMobilePhone(), '/^[0-9+()\/ .\-]{5,30}$/');
+    }
+
+    private static function isPostalAddress(CustomerAddresses $address): bool
+    {
+        return null !== self::stringOrNull($address->getAddress())
+            || null !== self::stringOrNull($address->getZip())
+            || null !== self::stringOrNull($address->getCity());
     }
 
     private static function sameAddress(CustomerAddresses $address, ?CustomerAddresses $other): bool

@@ -220,7 +220,7 @@ guest_checkin:
     room_added: "wird eingetragen"
     room_not_travelling: "reist nicht mit"
     room_no_place: "kein Platz mehr"
-    room_overflow: "Es sind mehr Personen als gebucht. Markiere, wer nicht mitreist, oder erhöhe die Gästezahl der Reservierung – sonst werden nicht alle im Zimmer eingetragen."
+    room_overflow: "Es sind mehr Personen als gebucht. Markiere, wer nicht mitreist, wähle bei einzelnen Personen „Nicht übernehmen“ oder erhöhe die Gästezahl der Reservierung. Erst dann lässt sich der Check-in bestätigen."
     room_now: "Im Zimmer"
     registration_print: "Meldeschein drucken"
   apply:
@@ -231,13 +231,12 @@ guest_checkin:
     extras_defer_hint: "Ohne Haken bleiben die angefragten Leistungen mit dem angezeigten Preis als offener Wunsch in der Reservierungsbemerkung."
     extras_changed: "Eine angefragte Leistung oder ihr Preis hat sich inzwischen geändert. Lade die Reservierung neu und bestätige den Check-in ohne Zusatzleistungen."
     warning_extras_deferred: "Die Zusatzleistungen wurden nicht gebucht. Bitte prüfe den offenen Wunsch in der Reservierungsbemerkung."
-    no_main_guest_slot: "Der Hauptgast konnte nicht ins Zimmer eingetragen werden, weil alle Plätze belegt sind. Markiere unter „Danach im Zimmer“, wer nicht mitreist, oder erhöhe die Gästezahl. Der Check-in ist noch nicht bestätigt."
+    no_guest_slot: "Nicht alle Personen haben im Zimmer Platz. Markiere unter „Danach im Zimmer“, wer nicht mitreist, wähle bei einzelnen Personen „Nicht übernehmen“ oder erhöhe die Gästezahl. Der Check-in ist noch nicht bestätigt."
     submit: "Check-in bestätigen"
     hint: "Nur ausgefüllte Angaben werden übernommen, nichts wird gelöscht."
     success: "Check-in bestätigt. Die Angaben stehen jetzt in den Gästedaten."
     failed: "Der Check-in konnte nicht bestätigt werden. Bitte lade die Reservierung neu und versuche es erneut."
     nothing: "Es liegen keine Angaben zum Bestätigen vor."
-    warning_guest_count: "Nicht alle Personen konnten ins Zimmer eingetragen werden, weil die gebuchte Gästezahl erreicht ist."
   discard:
     title: "Verwerfen"
     hint: "Die Angaben werden gelöscht. Der Gast kann das Formular mit demselben Link erneut ausfüllen."

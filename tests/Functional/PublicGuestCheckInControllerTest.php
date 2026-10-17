@@ -211,6 +211,60 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertSelectorExists('.fhb-actions a[href*="edit=1"]');
     }
 
+    public function testCompanionWithOnlyACountryOnFileNeedsNoAddress(): void
+    {
+        $reservation = $this->createReservation();
+        $companion = new Customer();
+        $companion->setSalutation('');
+        $companion->setFirstname('Swetlana');
+        $companion->setLastname('Müller');
+        $contact = (new CustomerAddresses())->setType('CUSTOMER_ADDRESS_TYPE_BUSINESS')->setCountry('KZ')->setEmail('swetlana@example.com');
+        $this->em()->persist($contact);
+        $companion->addCustomerAddress($contact);
+        $this->em()->persist($companion);
+        $reservation->addCustomer($companion);
+        $this->em()->flush();
+        $this->extraCustomerIds[] = (int) $companion->getId();
+        $path = $this->linkPath($reservation);
+        $this->verify($path, 'Müller');
+        $crawler = $this->client->followRedirect();
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        self::assertSame('', $form['guest_check_in[companions][0][country]']->getValue(), 'No half address prefilled.');
+        $form['guest_check_in[mainGuest][birthday]'] = '1980-05-01';
+        $form['guest_check_in[mainGuest][nationality]'] = 'KZ';
+        $form['guest_check_in[mainGuest][street]'] = 'Hauptstraße 1';
+        $form['guest_check_in[mainGuest][zip]'] = '1010';
+        $form['guest_check_in[mainGuest][city]'] = 'Wien';
+        $form['guest_check_in[mainGuest][country]'] = 'AT';
+        $form['guest_check_in[companions][0][nationality]'] = 'KZ';
+        $form['guest_check_in[companions][0][birthday]'] = '1982-02-02';
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(303);
+        $this->em()->clear();
+        $payload = $this->checkIn()->getPayload();
+        self::assertSame('Swetlana', $payload['companions'][0]['firstname'] ?? null);
+        self::assertNull($payload['companions'][0]['address'] ?? null, 'Lives with the main guest.');
+    }
+
+    public function testHalfFilledCompanionAddressExplainsHowToResolveIt(): void
+    {
+        $reservation = $this->createReservation();
+        $path = $this->linkPath($reservation);
+        $this->verify($path, 'Müller');
+        $crawler = $this->client->followRedirect();
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $form['guest_check_in[companions][0][firstname]'] = 'Max';
+        $form['guest_check_in[companions][0][lastname]'] = 'Müller';
+        $form['guest_check_in[companions][0][city]'] = 'Graz';
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('or clear all address fields if this person lives with the main guest', (string) $this->client->getResponse()->getContent());
+    }
+
     public function testMainGuestNeedsNoSalutationAndTheLanguageSwitchKeepsEditing(): void
     {
         $reservation = $this->createReservation();

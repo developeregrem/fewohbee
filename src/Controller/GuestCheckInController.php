@@ -88,7 +88,7 @@ final class GuestCheckInController extends AbstractController
             } catch (GuestCheckInExtrasConflictException) {
                 $this->addFlash('warning', 'guest_checkin.apply.extras_changed');
             } catch (GuestCheckInNoGuestSlotException) {
-                $this->addFlash('warning', 'guest_checkin.apply.no_main_guest_slot');
+                $this->addFlash('warning', 'guest_checkin.apply.no_guest_slot');
             } catch (\InvalidArgumentException) {
                 $this->addFlash('warning', 'guest_checkin.apply.failed');
             }

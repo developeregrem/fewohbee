@@ -82,6 +82,10 @@
                 <source>guest_checkin.phone_invalid</source>
                 <target>Bitte geben Sie eine gültige Telefonnummer an.</target>
             </trans-unit>
+            <trans-unit id="guest_checkin.companion_address_incomplete">
+                <source>guest_checkin.companion_address_incomplete</source>
+                <target>Bitte vervollständigen Sie die Anschrift oder leeren Sie alle Anschriftsfelder, wenn diese Person beim Hauptgast wohnt.</target>
+            </trans-unit>
             <trans-unit id="guest_checkin.companion_field_missing">
                 <source>guest_checkin.companion_field_missing</source>
                 <target>Bitte ausfüllen.</target>

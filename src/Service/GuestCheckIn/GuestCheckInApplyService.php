@@ -27,8 +27,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * - Linked guests are always available; a customer outside the reservation can only be selected
  *   with customer access and a fresh identity suggestion that the hotelier confirms.
  * - An address shared with other customers is left alone; the guest gets an own copy.
- * - Everyone taken over ends up among the reservation's guests, up to the number of guests booked;
- *   linked guests the hotelier marks as not travelling make room first.
+ * - Everyone taken over ends up among the reservation's guests. If they do not all fit the number
+ *   of guests booked, nothing is taken over; linked guests marked as not travelling make room.
  * - Afterwards the submission itself is dropped; the audit log records who took it over.
  */
 class GuestCheckInApplyService
@@ -50,9 +50,10 @@ class GuestCheckInApplyService
     }
 
     /**
-     * @return list<string> translation keys of warnings (e.g. guests beyond the occupancy)
+     * @return list<string> translation keys of warnings (services kept as an open request)
      *
-     * @throws \InvalidArgumentException for invalid or unverified targets, or without data to apply
+     * @throws \InvalidArgumentException       for invalid or unverified targets, or without data to apply
+     * @throws GuestCheckInNoGuestSlotException when not everyone taken over fits the booked guests
      */
     public function apply(GuestCheckIn $checkIn, GuestCheckInApplyRequest $request): array
     {
@@ -99,15 +100,28 @@ class GuestCheckInApplyService
             ? null
             : $this->resolveTarget($reservation, $request->mainTarget, false, $main, $request->allowGlobalMatch);
         $companions = \is_array($payload['companions'] ?? null) ? array_values($payload['companions']) : [];
+        // Records of fellow travellers by index, resolved before anything is written; "new" ones
+        // are created later, "skip" ones not at all.
+        $existingCompanions = [];
+        $arriving = null !== $existingMainCustomer && $reservation->getCustomers()->contains($existingMainCustomer) ? 0 : 1;
         foreach ($companions as $index => $companion) {
             $target = $request->companionTargets[$index] ?? GuestCheckInApplyRequest::TARGET_SKIP;
-            if (\is_array($companion) && GuestCheckInApplyRequest::TARGET_NEW !== $target) {
-                $this->resolveTarget($reservation, $target, true, $companion, $request->allowGlobalMatch);
+            if (!\is_array($companion) || GuestCheckInApplyRequest::TARGET_SKIP === $target) {
+                continue;
             }
+            if (GuestCheckInApplyRequest::TARGET_NEW !== $target) {
+                $existingCompanions[$index] = $this->resolveTarget($reservation, $target, false, $companion, $request->allowGlobalMatch)
+                    ?? throw new \InvalidArgumentException('A fellow traveller needs a target.');
+                if ($reservation->getCustomers()->contains($existingCompanions[$index])) {
+                    continue;
+                }
+            }
+            ++$arriving;
         }
-        $mainAlreadyInRoom = null !== $existingMainCustomer && $reservation->getCustomers()->contains($existingMainCustomer);
-        if (!$mainAlreadyInRoom && \count($reservation->getCustomers()) - \count($guestsToRemove) >= $reservation->getTotalGuests()) {
-            throw new GuestCheckInNoGuestSlotException('No room for the arriving main guest.');
+        // Everyone taken over must fit, or nothing is written: a guest record created or updated
+        // but left out of the room would outlive the deleted submission unnoticed.
+        if (\count($reservation->getCustomers()) - \count($guestsToRemove) + $arriving > $reservation->getTotalGuests()) {
+            throw new GuestCheckInNoGuestSlotException('Not everyone taken over fits the booked number of guests.');
         }
 
         $requestedExtras = \is_array($payload['extras'] ?? null) ? $payload['extras'] : [];
@@ -132,13 +146,14 @@ class GuestCheckInApplyService
         if ($request->setAsBooker || null === $reservation->getBooker()) {
             $reservation->setBooker($mainCustomer);
         }
-        $warnings = [...$warnings, ...$this->addGuest($reservation, $mainCustomer)];
+        $this->addGuest($reservation, $mainCustomer);
 
         foreach ($companions as $index => $companion) {
             if (!\is_array($companion)) {
                 continue;
             }
-            $customer = $this->resolveTarget($reservation, $request->companionTargets[$index] ?? GuestCheckInApplyRequest::TARGET_SKIP, true, $companion, $request->allowGlobalMatch);
+            $customer = $existingCompanions[$index]
+                ?? $this->resolveTarget($reservation, $request->companionTargets[$index] ?? GuestCheckInApplyRequest::TARGET_SKIP, true, $companion, $request->allowGlobalMatch);
             if (null === $customer) {
                 continue;
             }
@@ -152,7 +167,7 @@ class GuestCheckInApplyService
                 // address on file keeps it.
                 $this->applyAddress($customer, $mainAddress, null, null);
             }
-            $warnings = [...$warnings, ...$this->addGuest($reservation, $customer)];
+            $this->addGuest($reservation, $customer);
         }
 
         $message = self::nullableString($payload['message'] ?? null);
@@ -310,20 +325,12 @@ class GuestCheckInApplyService
         return $first;
     }
 
-    /** @return list<string> */
-    private function addGuest(Reservation $reservation, Customer $customer): array
+    /** Room for everyone was checked up front, see apply(). */
+    private function addGuest(Reservation $reservation, Customer $customer): void
     {
-        if ($reservation->getCustomers()->contains($customer)) {
-            return [];
+        if (!$reservation->getCustomers()->contains($customer)) {
+            $reservation->addCustomer($customer);
         }
-
-        if (\count($reservation->getCustomers()) >= $reservation->getTotalGuests()) {
-            return ['guest_checkin.apply.warning_guest_count'];
-        }
-
-        $reservation->addCustomer($customer);
-
-        return [];
     }
 
     private static function nullableString(mixed $value): ?string
