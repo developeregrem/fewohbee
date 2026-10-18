@@ -10,6 +10,7 @@ use App\Service\DisplayNameResolver;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -23,6 +24,15 @@ class CalendarSyncExportType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+            ->add('exportPastEntries', ChoiceType::class, [
+                'label' => 'calendar.sync.export.option.period.label',
+                'help' => 'calendar.sync.export.option.period.hint',
+                'choices' => [
+                    'calendar.sync.export.option.period.current_future' => false,
+                    'calendar.sync.export.option.period.all' => true,
+                ],
+                'placeholder' => false,
+            ])
             ->add('isPublic', CheckboxType::class, [
                 'label' => 'calendar.sync.export.access.public.label',
                 'help' => 'calendar.sync.export.access.public.hint',

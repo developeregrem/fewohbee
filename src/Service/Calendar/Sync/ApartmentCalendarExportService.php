@@ -14,6 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VEvent;
 use Sabre\VObject\Node;
+use Symfony\Component\Clock\ClockInterface;
 
 /**
  * Exports an apartment's blocking reservations and room blocks as an RFC 5545 calendar.
@@ -24,12 +25,16 @@ final class ApartmentCalendarExportService
         private readonly EntityManagerInterface $entityManager,
         private readonly RoomBlockRepository $roomBlockRepository,
         private readonly DisplayNameResolver $displayNameResolver,
+        private readonly ClockInterface $clock,
     ) {
     }
 
     /**
      * Build the apartment feed and record the successful export timestamp.
      *
+     * Unless past entries are enabled, keep entries whose end date is today or later,
+     * including today's departures regardless of the exported time. Dates are compared
+     * in the application timezone. The original start date of ongoing entries is kept.
      * The timestamp is updated only after Sabre has serialized the complete calendar.
      */
     public function export(CalendarSync $sync): string
@@ -46,8 +51,13 @@ final class ApartmentCalendarExportService
             'X-WR-TIMEZONE' => date_default_timezone_get(),
         ]);
 
+        $today = $this->clock->now()->setTimezone(new \DateTimeZone(date_default_timezone_get()))->format('Y-m-d');
+
         foreach ($apartment->getReservations() as $reservation) {
             if ($reservation->isConflict() || $reservation->isConflictIgnored()) {
+                continue;
+            }
+            if (!$sync->getExportPastEntries() && $reservation->getEndDate()->format('Y-m-d') < $today) {
                 continue;
             }
             if ($sync->getReservationStatus()->contains($reservation->getReservationStatus())) {
@@ -57,6 +67,9 @@ final class ApartmentCalendarExportService
 
         // A room block always makes the physical room unavailable, independent of status filters.
         foreach ($this->roomBlockRepository->findBy(['appartment' => $apartment]) as $block) {
+            if (!$sync->getExportPastEntries() && $block->getEndDate()->format('Y-m-d') < $today) {
+                continue;
+            }
             $this->addRoomBlockEvent($calendar, $block);
         }
 

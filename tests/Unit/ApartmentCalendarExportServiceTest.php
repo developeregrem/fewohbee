@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Sabre\VObject\Component\VEvent;
 use Sabre\VObject\Property\ICalendar\DateTime;
 use Sabre\VObject\Reader;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -69,6 +70,7 @@ final class ApartmentCalendarExportServiceTest extends TestCase
             $entityManager,
             $blockRepository,
             new DisplayNameResolver($this->createStub(TranslatorInterface::class)),
+            new MockClock('2030-01-05T12:00:00+01:00'),
         );
 
         $content = $service->export($apartment->getCalendarSync());
@@ -182,8 +184,71 @@ final class ApartmentCalendarExportServiceTest extends TestCase
         self::assertStringNotContainsString('Internal note', $content);
     }
 
+    #[DataProvider('exportPeriodCases')]
+    public function testExportPeriodFiltersReservationsAndRoomBlocksByTheirLocalEndDate(
+        ?bool $exportPastEntries,
+        bool $exportTimes,
+        string $startDate,
+        string $endDate,
+        string $now,
+        bool $included,
+    ): void {
+        $apartment = new Appartment();
+        $apartment->setNumber('A1');
+        $sync = $apartment->getCalendarSync();
+        if (null !== $exportPastEntries) {
+            $sync->setExportPastEntries($exportPastEntries);
+        }
+        $sync->setExportReservationTimes($exportTimes);
+        $status = (new ReservationStatus())->setName('Booked');
+        $sync->addReservationStatus($status);
+        $reservation = new Reservation();
+        $reservation->setStartDate(new \DateTime($startDate));
+        $reservation->setEndDate(new \DateTime($endDate));
+        $reservation->setArrivalTime(new \DateTime('15:30'));
+        $reservation->setDepartureTime(new \DateTime('09:00'));
+        $reservation->setReservationStatus($status);
+        $reservation->setUuid(Uuid::v4());
+        $apartment->addReservation($reservation);
+        $block = (new RoomBlock())
+            ->setAppartment($apartment)
+            ->setStartDate(new \DateTimeImmutable($startDate))
+            ->setEndDate(new \DateTimeImmutable($endDate))
+            ->setReason('Maintenance');
+
+        $events = Reader::read($this->export($apartment, [$block], $now))->select('VEVENT');
+
+        self::assertCount($included ? 2 : 0, $events);
+        self::assertNotNull($sync->getLastExport());
+        if ($included) {
+            $reservationEvent = $events[0];
+            $blockEvent = $events[1];
+            self::assertInstanceOf(VEvent::class, $reservationEvent);
+            self::assertInstanceOf(VEvent::class, $blockEvent);
+            $date = str_replace('-', '', $startDate);
+            self::assertSame($date.($exportTimes ? 'T143000Z' : ''), (string) $reservationEvent->select('DTSTART')[0]);
+            self::assertSame($date, (string) $blockEvent->select('DTSTART')[0]);
+            self::assertSame($reservation->getUuid()->toBase32().'@fewohbee', (string) $reservationEvent->select('UID')[0]);
+            self::assertSame($block->getUuid()->toBase32().'@fewohbee', (string) $blockEvent->select('UID')[0]);
+        }
+    }
+
+    /** @return iterable<string, array{?bool, bool, string, string, string, bool}> */
+    public static function exportPeriodCases(): iterable
+    {
+        yield 'past excluded by default' => [null, false, '2030-01-01', '2030-01-09', '2030-01-10T15:00:00+01:00', false];
+        yield 'past excluded after selecting current and future' => [false, false, '2030-01-01', '2030-01-09', '2030-01-10T15:00:00+01:00', false];
+        yield 'departure today included for all-day entries' => [null, false, '2030-01-01', '2030-01-10', '2030-01-10T15:00:00+01:00', true];
+        yield 'departure today included after departure time' => [null, true, '2030-01-01', '2030-01-10', '2030-01-10T15:00:00+01:00', true];
+        yield 'ongoing entries keep their original start' => [null, false, '2030-01-08', '2030-01-12', '2030-01-10T15:00:00+01:00', true];
+        yield 'future entries included' => [null, true, '2030-01-11', '2030-01-15', '2030-01-10T15:00:00+01:00', true];
+        yield 'entire calendar includes past all-day entries' => [true, false, '2030-01-01', '2030-01-09', '2030-01-10T15:00:00+01:00', true];
+        yield 'entire calendar includes past timed entries' => [true, true, '2030-01-01', '2030-01-09', '2030-01-10T15:00:00+01:00', true];
+        yield 'cutoff uses application date when UTC is still yesterday' => [null, false, '2030-01-01', '2030-01-09', '2030-01-09T23:30:00+00:00', false];
+    }
+
     /** @param list<RoomBlock> $blocks */
-    private function export(Appartment $apartment, array $blocks = []): string
+    private function export(Appartment $apartment, array $blocks = [], string $now = '2030-01-05T12:00:00+01:00'): string
     {
         $blockRepository = $this->createStub(RoomBlockRepository::class);
         $blockRepository->method('findBy')->willReturn($blocks);
@@ -191,6 +256,7 @@ final class ApartmentCalendarExportServiceTest extends TestCase
             $this->createStub(EntityManagerInterface::class),
             $blockRepository,
             new DisplayNameResolver($this->createStub(TranslatorInterface::class)),
+            new MockClock($now),
         );
 
         return $service->export($apartment->getCalendarSync());

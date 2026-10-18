@@ -222,6 +222,12 @@ paths:
         applications such as Thunderbird can subscribe to it using HTTP Basic
         auth with the username and an API token as the password.
 
+        By default, only current and future reservations and room blocks are exported:
+        entries whose end date is today or later in the application's timezone,
+        including today's departures regardless of the exported time. Ongoing entries
+        keep their original start date. Selecting the entire calendar in the room's
+        export settings also includes past entries. Reservation status filters still apply.
+
         Events are all-day by default. If arrival and departure time export is
         enabled in the room's calendar export settings, reservations with at least
         one time recorded use date-time values in UTC, interpreted in the application's

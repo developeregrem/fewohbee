@@ -6,6 +6,7 @@ namespace App\Tests\Functional;
 
 use App\Entity\CalendarSync;
 use App\Entity\Role;
+use App\Entity\RoomBlock;
 use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -106,12 +107,67 @@ final class ApartmentCalendarControllerTest extends WebTestCase
         $sync = $this->getCalendarSync();
 
         $client->request('POST', '/settings/apartments/sync/'.$sync->getId().'/edit', [
-            'calendar_sync_export' => ['exportReservationTimes' => '1'],
+            'calendar_sync_export' => ['exportReservationTimes' => '1', 'exportPastEntries' => '1'],
         ]);
 
         self::assertResponseStatusCodeSame(403);
         static::getContainer()->get(ManagerRegistry::class)->getManager()->clear();
         self::assertFalse($this->getCalendarSync()->getExportReservationTimes());
+        self::assertFalse($this->getCalendarSync()->getExportPastEntries());
+    }
+
+    public function testExportPeriodCanBeSavedAndAppliesToThePublicFeed(): void
+    {
+        $client = static::createClient();
+        $em = static::getContainer()->get(ManagerRegistry::class)->getManager();
+        $admin = $em->getRepository(User::class)->findOneBy(['username' => 'test-admin']);
+        self::assertNotNull($admin);
+        $client->loginUser($admin, 'main');
+        $sync = $this->getCalendarSync();
+        self::assertFalse($sync->getExportPastEntries());
+        $sync->setIsPublic(true);
+        $block = (new RoomBlock())
+            ->setAppartment($sync->getApartment())
+            ->setStartDate(new \DateTimeImmutable('2000-01-01'))
+            ->setEndDate(new \DateTimeImmutable('2000-01-02'))
+            ->setReason('Past maintenance');
+        $em->persist($block);
+        $em->flush();
+        $uid = $block->getUuid()->toBase32().'@fewohbee';
+        $calendarPath = $this->generateCalendarPath((string) $sync->getUuid());
+        $settingsPath = '/settings/apartments/sync/'.$sync->getId().'/edit';
+
+        $client->request('GET', $calendarPath);
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString($uid, (string) $client->getResponse()->getContent());
+
+        $crawler = $client->request('GET', $settingsPath);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('#calendar_sync_export_exportPastEntries option[value="0"][selected]');
+        $form = $crawler->filter('form[name="calendar_sync_export"]')->form();
+        $form['calendar_sync_export[exportPastEntries]'] = '1';
+        $client->submit($form);
+        self::assertResponseStatusCodeSame(204);
+        static::getContainer()->get(ManagerRegistry::class)->getManager()->clear();
+        self::assertTrue($this->getCalendarSync()->getExportPastEntries());
+
+        $client->request('GET', $calendarPath);
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString($uid, (string) $client->getResponse()->getContent());
+
+        $crawler = $client->request('GET', $settingsPath);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('#calendar_sync_export_exportPastEntries option[value="1"][selected]');
+        $form = $crawler->filter('form[name="calendar_sync_export"]')->form();
+        $form['calendar_sync_export[exportPastEntries]'] = '0';
+        $client->submit($form);
+        self::assertResponseStatusCodeSame(204);
+        static::getContainer()->get(ManagerRegistry::class)->getManager()->clear();
+        self::assertFalse($this->getCalendarSync()->getExportPastEntries());
+
+        $client->request('GET', $calendarPath);
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString($uid, (string) $client->getResponse()->getContent());
     }
 
     private function getCalendarSync(): CalendarSync
