@@ -486,6 +486,18 @@
                 <source>calendar_entry.form.end_time</source>
                 <target>Endzeit</target>
             </trans-unit>
+            <trans-unit id="calendar_entry.form.end_time_until">
+                <source>calendar_entry.form.end_time_until</source>
+                <target>Bis-Uhrzeit (optional)</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.on_date">
+                <source>calendar_entry.form.on_date</source>
+                <target>Am %date%</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.change_date">
+                <source>calendar_entry.form.change_date</source>
+                <target>anderes Datum oder mehrere Tage</target>
+            </trans-unit>
             <trans-unit id="calendar_entry.form.end_time_before_start">
                 <source>calendar_entry.form.end_time_before_start</source>
                 <target>Die Endzeit muss nach der Startzeit liegen. 00:00 ist als Tagesende erlaubt.</target>
