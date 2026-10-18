@@ -133,6 +133,14 @@ export default class extends Controller {
                 if(target.matches('select[name="object"]')) {
                     this.setLocalTableSetting('object', 'reservation-settings-show-object');
                 }
+                if (target.matches('#holidaySubdivision')) {
+                    this.setLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
+                }
+                // A new country first reloads its subdivisions (listener on the
+                // settings modal below), which then reloads the table
+                if (target.matches('#holidayCountry')) {
+                    return;
+                }
                 this.getNewTable();
             }
         });
@@ -1218,7 +1226,16 @@ export default class extends Controller {
         }
 
         this.setLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
-        this.setLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
+        // On page load the subdivision field still holds the server default and
+        // the stored one is restored once the fields are loaded. A changed
+        // country starts over with all of its subdivisions.
+        if (!initial) {
+            const subdivisionField = document.getElementById('holidaySubdivision');
+            if (subdivisionField) {
+                subdivisionField.value = 'all';
+            }
+            localStorage.setItem('reservations-table-holidaysubdivision', 'all');
+        }
 
         httpRequest({
             url,
@@ -1229,10 +1246,15 @@ export default class extends Controller {
             onComplete: () => { 
                 if (initial) {
                     this.getLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
+                    // A stored subdivision the country doesn't offer leaves the select empty
+                    const subdivisionField = document.getElementById('holidaySubdivision');
+                    if (subdivisionField && subdivisionField.value === '') {
+                        subdivisionField.value = 'all';
+                    }
                     this.getLocalTableSetting('object', 'reservation-settings-show-object');
                     this.getLocalTableSetting('showCalendarEntries', 'reservation-settings-show-calendar-entries', 'checkbox');
-                    this.getNewTable();
                 }
+                this.getNewTable();
                 this.updateDisplaySettingsOnChange();
             }
         });
