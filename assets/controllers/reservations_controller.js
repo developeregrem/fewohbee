@@ -2149,9 +2149,10 @@ export default class extends Controller {
         // Reservation bars of the table (.reservation-inner) and days of the
         // annual view (.reservation-popover): with a mouse the popover stays
         // while the pointer moves onto it, so its phone and e-mail links can be
-        // clicked; on touch screens a first tap shows it (openReservationAction)
+        // clicked; on touch screens a first tap shows it (openReservationAction).
+        // The width follows the longest line, see "Reservation popover" in app.css
         const bars = '.reservation-inner, .reservation-popover';
-        $(bars).popover({ placement: 'top', html: true, trigger: 'manual' });
+        $(bars).popover({ placement: 'top', html: true, trigger: 'manual', customClass: 'reservation-bar-popover' });
         if (this.isDesktopWeekMode()) {
             this.initHoverPopovers(this.tableContainer?.querySelectorAll(bars) ?? []);
         }
