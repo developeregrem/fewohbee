@@ -209,6 +209,30 @@ paths:
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /apartments/{id}/calendar.ics:
+    # OpenAPI 3.1 has no PROPFIND operation; document this authentication-only probe as an extension.
+    x-propfind:
+      tags: [Calendars]
+      operationId: probeApartmentCalendarAuthentication
+      summary: Authentication probe used by calendar subscription discovery
+      description: |
+        Routes discovery probes through API authentication so clients such as Thunderbird
+        can prompt for credentials. Requires the `calendar:read` scope after authentication.
+        Authenticated requests receive 405 because this resource supports GET and HEAD.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Room (apartment) ID.
+          schema: { type: integer }
+      responses:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '405':
+          description: Authentication succeeded; retrieve the feed using GET or HEAD.
+          headers:
+            Allow:
+              schema: { type: string, const: 'GET, HEAD' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
     get:
       tags: [Calendars]
       operationId: getApartmentCalendar
@@ -221,6 +245,11 @@ paths:
         any active room with calendar synchronisation configured. Calendar
         applications such as Thunderbird can subscribe to it using HTTP Basic
         auth with the username and an API token as the password.
+
+        HEAD supports calendar detection with the same authentication and content
+        type as GET, without a response body. PROPFIND discovery probes pass through
+        authentication so clients can request credentials; authenticated PROPFIND
+        requests receive 405 with `Allow: GET, HEAD`. This endpoint is an iCal feed.
 
         By default, only current and future reservations and room blocks are exported:
         entries whose end date is today or later in the application's timezone,
@@ -1096,7 +1125,7 @@ components:
         WWW-Authenticate:
           schema:
             type: string
-            examples: ['Bearer realm="fewohbee-api", Basic realm="fewohbee-api"']
+            examples: ['Basic realm="fewohbee-api", Bearer realm="fewohbee-api"']
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }

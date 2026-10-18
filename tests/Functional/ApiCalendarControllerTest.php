@@ -12,6 +12,7 @@ use App\Entity\Role;
 use App\Entity\User;
 use App\Service\ApiTokenService;
 use Doctrine\Persistence\ManagerRegistry;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -21,6 +22,82 @@ final class ApiCalendarControllerTest extends WebTestCase
     {
         parent::setUp();
         self::ensureKernelShutdown();
+    }
+
+    #[DataProvider('unauthenticatedDiscoveryRequests')]
+    public function testCalendarDiscoveryChallengesForCredentials(string $method, bool $invalidToken): void
+    {
+        $client = static::createClient();
+        $headers = ['HTTP_ACCEPT' => 'text/calendar, application/ics, text/plain;q=0.9'];
+        if ($invalidToken) {
+            $headers['PHP_AUTH_USER'] = 'calendar-reader';
+            $headers['PHP_AUTH_PW'] = ApiTokenService::TOKEN_PREFIX.str_repeat('0', 64);
+        }
+
+        $client->request($method, '/api/v1/apartments/'.$this->getSyncedApartmentId().'/calendar.ics', [], [], $headers);
+
+        self::assertResponseStatusCodeSame(401);
+        $challenge = (string) $client->getResponse()->headers->get('WWW-Authenticate');
+        self::assertStringStartsWith('Basic realm="fewohbee-api"', $challenge);
+        self::assertStringContainsString('Bearer realm="fewohbee-api"', $challenge);
+        self::assertFalse($client->getResponse()->headers->has('Location'));
+    }
+
+    /** @return iterable<string, array{string, bool}> */
+    public static function unauthenticatedDiscoveryRequests(): iterable
+    {
+        foreach (['HEAD', 'GET', 'PROPFIND'] as $method) {
+            yield $method.' without credentials' => [$method, false];
+            yield $method.' with an invalid token' => [$method, true];
+        }
+    }
+
+    public function testCalendarCanBeDetectedAfterTheAuthenticationProbe(): void
+    {
+        $client = static::createClient();
+        [$user, $plainToken] = $this->createUserWithToken(['ROLE_RESERVATIONS_RO'], [ApiScope::CALENDAR_READ->value]);
+        $path = '/api/v1/apartments/'.$this->getSyncedApartmentId().'/calendar.ics';
+
+        $client->request('PROPFIND', $path);
+        self::assertResponseStatusCodeSame(401);
+
+        // After its password dialog, Thunderbird retries detection using HEAD with the API token.
+        $client->request('HEAD', $path, [], [], [
+            'PHP_AUTH_USER' => $user->getUsername(),
+            'PHP_AUTH_PW' => $plainToken,
+            'HTTP_ACCEPT' => 'text/calendar, application/ics, text/plain;q=0.9',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('text/calendar; charset=utf-8', $client->getResponse()->headers->get('content-type'));
+        self::assertSame('', (string) $client->getResponse()->getContent());
+    }
+
+    public function testAuthenticatedDiscoveryProbeKeepsTheFeedLimitedToGetAndHead(): void
+    {
+        $client = static::createClient();
+        [$user, $plainToken] = $this->createUserWithToken(['ROLE_RESERVATIONS_RO'], [ApiScope::CALENDAR_READ->value]);
+
+        $client->request('PROPFIND', '/api/v1/apartments/'.$this->getSyncedApartmentId().'/calendar.ics', [], [], [
+            'PHP_AUTH_USER' => $user->getUsername(),
+            'PHP_AUTH_PW' => $plainToken,
+        ]);
+
+        self::assertResponseStatusCodeSame(405);
+        self::assertResponseHeaderSame('Allow', 'GET, HEAD');
+    }
+
+    public function testDiscoveryProbeRequiresCalendarScope(): void
+    {
+        $client = static::createClient();
+        [$user, $plainToken] = $this->createUserWithToken(['ROLE_RESERVATIONS_RO'], [ApiScope::RESERVATIONS_READ->value]);
+
+        $client->request('PROPFIND', '/api/v1/apartments/'.$this->getSyncedApartmentId().'/calendar.ics', [], [], [
+            'PHP_AUTH_USER' => $user->getUsername(),
+            'PHP_AUTH_PW' => $plainToken,
+        ]);
+
+        self::assertResponseStatusCodeSame(403);
     }
 
     public function testIcsViaBasicAuthWithToken(): void
