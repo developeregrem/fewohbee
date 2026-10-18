@@ -68,7 +68,9 @@ final class ApartmentCalendarExportService
     }
 
     /**
-     * Add a booking as an opaque, all-day interval whose DTEND is exclusive.
+     * Add a booking as an opaque interval whose DTEND is exclusive.
+     * When enabled, at least one recorded time makes this a timed interval, with missing times
+     * defaulting to local midnight for the export only. Otherwise the interval is all-day.
      *
      * @param VCalendar<Node> $calendar
      */
@@ -93,8 +95,27 @@ final class ApartmentCalendarExportService
             throw new \LogicException('Sabre did not create a VEVENT component.');
         }
 
-        $event->add('DTSTART', $reservation->getStartDate()->format('Ymd'), ['VALUE' => 'DATE']);
-        $event->add('DTEND', $reservation->getEndDate()->format('Ymd'), ['VALUE' => 'DATE']);
+        $arrivalTime = $reservation->getArrivalTime();
+        $departureTime = $reservation->getDepartureTime();
+        if ($sync->getExportReservationTimes() && (null !== $arrivalTime || null !== $departureTime)) {
+            // DATE and TIME columns describe local wall time. Combine them before converting
+            // to UTC so each stay date uses its own daylight-saving offset.
+            $timezone = new \DateTimeZone(date_default_timezone_get());
+            $utc = new \DateTimeZone('UTC');
+            $start = new \DateTimeImmutable(
+                $reservation->getStartDate()->format('Y-m-d').' '.($arrivalTime?->format('H:i:s') ?? '00:00:00'),
+                $timezone,
+            );
+            $end = new \DateTimeImmutable(
+                $reservation->getEndDate()->format('Y-m-d').' '.($departureTime?->format('H:i:s') ?? '00:00:00'),
+                $timezone,
+            );
+            $event->add('DTSTART', $start->setTimezone($utc));
+            $event->add('DTEND', $end->setTimezone($utc));
+        } else {
+            $event->add('DTSTART', $reservation->getStartDate()->format('Ymd'), ['VALUE' => 'DATE']);
+            $event->add('DTEND', $reservation->getEndDate()->format('Ymd'), ['VALUE' => 'DATE']);
+        }
     }
 
     /**

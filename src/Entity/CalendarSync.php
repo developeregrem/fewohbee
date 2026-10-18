@@ -32,6 +32,8 @@ class CalendarSync
     private $apartment;
     #[ORM\Column(type: 'boolean')]
     private $exportGuestName;
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $exportReservationTimes = false;
 
     public function __construct()
     {
@@ -127,6 +129,18 @@ class CalendarSync
     public function setExportGuestName(bool $exportGuestName): self
     {
         $this->exportGuestName = $exportGuestName;
+
+        return $this;
+    }
+
+    public function getExportReservationTimes(): bool
+    {
+        return $this->exportReservationTimes;
+    }
+
+    public function setExportReservationTimes(bool $exportReservationTimes): self
+    {
+        $this->exportReservationTimes = $exportReservationTimes;
 
         return $this;
     }

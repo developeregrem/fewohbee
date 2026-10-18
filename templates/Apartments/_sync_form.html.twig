@@ -20,6 +20,12 @@
             {{ form_help(exportForm.exportGuestName) }}
         </div>
     </div>
+    <div class="row mb-4">
+        <div class="col">
+            {{ form_widget(exportForm.exportReservationTimes) }}
+            {{ form_help(exportForm.exportReservationTimes) }}
+        </div>
+    </div>
     <h6>{{ 'calendar.sync.export.access.title'|trans }}</h6>
     <div class="row mb-3">
         <div class="col">

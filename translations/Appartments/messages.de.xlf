@@ -106,6 +106,14 @@
                 <source>calendar.sync.export.option.guestname.hint</source>
                 <target>Der Titel des exportierten Kalendereintrages enthält den Namen des Gastes.</target>
             </trans-unit>
+            <trans-unit id="calendar.sync.export.option.times.label">
+                <source>calendar.sync.export.option.times.label</source>
+                <target>An- und Abreisezeit exportieren</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.option.times.hint">
+                <source>calendar.sync.export.option.times.hint</source>
+                <target>Wenn mindestens eine An- oder Abreisezeit in der Reservierung hinterlegt ist, erhält der Kalendereintrag eine Start- und Endzeit. Eine fehlende Uhrzeit wird nur im Export mit 00:00 Uhr am jeweiligen Tag ergänzt. Ohne Uhrzeiten bleibt der Eintrag ganztägig. Lass die Option für Buchungsportale ausgeschaltet, wenn diese ganztägige Einträge erwarten.</target>
+            </trans-unit>
             <trans-unit id="calendar.sync.export.access.title">
                 <source>calendar.sync.export.access.title</source>
                 <target>Zugriff</target>

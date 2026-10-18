@@ -35,6 +35,12 @@ class CalendarSyncExportType extends AbstractType
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
                 'required' => false,
             ])
+            ->add('exportReservationTimes', CheckboxType::class, [
+                'label' => 'calendar.sync.export.option.times.label',
+                'help' => 'calendar.sync.export.option.times.hint',
+                'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
+                'required' => false,
+            ])
             ->add('reservationStatus', EntityType::class, [
                 // looks for choices from this entity
                 'class' => ReservationStatus::class,

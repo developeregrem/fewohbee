@@ -60,6 +60,14 @@ calendar:
             The title of the exported calendar entry contains the name of the
             guest.
           label: Export name of the guest
+        times:
+          label: Export arrival and departure times
+          hint: >-
+            If at least one arrival or departure time is recorded in the reservation,
+            the calendar entry receives a start and end time. A missing time is
+            replaced with 00:00 on the respective date in the export only.
+            Without recorded times, the entry remains an all-day event.
+            Leave this option disabled for booking portals that expect all-day entries.
         status:
           hint: Only reservations of the specified status will be exported.
         title: Export options
