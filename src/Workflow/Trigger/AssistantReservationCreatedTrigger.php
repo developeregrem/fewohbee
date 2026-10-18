@@ -63,7 +63,7 @@ class AssistantReservationCreatedTrigger implements ConditionalWorkflowTriggerIn
         // are a sufficient preview of what the trigger works on.
         /** @var list<Reservation> $reservations */
         $reservations = $em->getRepository(Reservation::class)->createQueryBuilder('r')
-            ->orderBy('r.reservationDate', 'DESC')
+            ->orderBy('r.reservationDate', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

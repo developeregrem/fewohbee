@@ -42,7 +42,7 @@ class BookingBatch
 
     /** @var Collection<int, BookingEntry> */
     #[ORM\OneToMany(targetEntity: BookingEntry::class, mappedBy: 'bookingBatch', cascade: ['remove'])]
-    #[ORM\OrderBy(['date' => 'ASC', 'documentNumber' => 'ASC'])]
+    #[ORM\OrderBy(['date' => \SortDirection::Ascending, 'documentNumber' => \SortDirection::Ascending])]
     private Collection $entries;
 
     public function __construct()

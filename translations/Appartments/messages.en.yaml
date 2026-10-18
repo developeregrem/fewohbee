@@ -34,33 +34,44 @@ calendar:
     export:
       tab: Export
       access:
-        last: last access
+        last: Last retrieved
+        never: Not retrieved yet
         public:
-          hint: Enables/disables public access to this calendar.
-          label: public
-        title: Access
+          hint: Allow other applications to access this calendar without signing in.
+          label: Share calendar publicly
+        title: Subscribe to the calendar
         url:
           hint: >-
-            With this address you can access this calendar from other
-            applications.
-          title: Public address in iCal format
+            Subscribe using your calendar app or booking portal.
+          title: Public calendar address
         private_url:
           hint: >-
-            This address works even without public sharing. Access requires an
-            API token (permission "Read calendars") which can be created in
-            your profile — e.g. in calendar applications as the password
-            together with your username.
-          title: Private address in iCal format
+            Works without public sharing. Use your username and an API token
+            with the "Read calendars" permission as the password. Create the
+            token in your profile.
+          title: Private calendar address
       hint: >-
-        Share the booking plan for this room with other applications that
-        support the so-called iCal import (synchronize calendar).
+        Share this room's occupancy with calendar apps or booking portals via iCal.
       option:
+        period:
+          label: Period
+          hint: >-
+            Applies to reservations and room blocks. Current entries include departures today.
+          current_future: Current and future entries
+          all: Entire calendar
         guestname:
           hint: >-
             The title of the exported calendar entry contains the name of the
             guest.
           label: Export name of the guest
+        times:
+          label: Export arrival and departure times
+          hint: >-
+            Uses recorded arrival and departure times. A missing time is replaced
+            with 00:00 in the export only; without recorded times, the entry remains
+            an all-day event. Leave this option disabled for portals that expect all-day entries.
         status:
+          label: Reservation status
           hint: Only reservations of the specified status will be exported.
         title: Export options
     import:

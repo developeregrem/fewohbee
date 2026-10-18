@@ -77,8 +77,8 @@ class SubsidiaryRepository extends ServiceEntityRepository
     public function findAllOrdered(): array
     {
         return $this->createQueryBuilder('s')
-            ->orderBy('s.name', 'ASC')
-            ->addOrderBy('s.id', 'ASC')
+            ->orderBy('s.name', \SortDirection::Ascending)
+            ->addOrderBy('s.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -94,7 +94,7 @@ class SubsidiaryRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('s')
             ->where('s.invoiceNumberPattern IS NOT NULL')
             ->andWhere("s.invoiceNumberPattern <> ''")
-            ->orderBy('s.name', 'ASC')
+            ->orderBy('s.name', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }

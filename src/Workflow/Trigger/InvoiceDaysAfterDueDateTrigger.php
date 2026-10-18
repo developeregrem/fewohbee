@@ -64,7 +64,7 @@ class InvoiceDaysAfterDueDateTrigger extends AbstractScheduledTrigger
         return $em->getRepository(Invoice::class)->createQueryBuilder('i')
             ->where('i.paymentDueDate = :dueDate')
             ->setParameter('dueDate', $dueDate)
-            ->orderBy('i.date', 'DESC')
+            ->orderBy('i.date', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

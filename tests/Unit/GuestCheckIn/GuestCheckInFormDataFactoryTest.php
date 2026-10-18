@@ -42,6 +42,23 @@ final class GuestCheckInFormDataFactoryTest extends TestCase
         self::assertTrue($data->companions[1]->isEmpty());
     }
 
+    public function testContactDetailsOrACountryAloneAreNoOwnAddress(): void
+    {
+        $reservation = $this->reservation();
+        $companion = $reservation->getCustomers()->filter(static fn (Customer $c): bool => 'Max' === $c->getFirstname())->first();
+        self::assertInstanceOf(Customer::class, $companion);
+        foreach ($companion->getCustomerAddresses()->toArray() as $address) {
+            $companion->removeCustomerAddress($address);
+        }
+        $companion->addCustomerAddress((new CustomerAddresses())->setType('CUSTOMER_ADDRESS_TYPE_BUSINESS')
+            ->setCountry('KZ')->setEmail('max@example.com'));
+
+        $data = $this->factory()->create(new GuestCheckIn($reservation, 'selector'), 1, ['Ms', 'Mr']);
+
+        self::assertFalse($data->companions[0]->hasOwnAddress(), 'Lives with the main guest; nothing to complete.');
+        self::assertNull($data->companions[0]->country);
+    }
+
     public function testTheGuestsOwnSubmissionWins(): void
     {
         $checkIn = new GuestCheckIn($this->reservation(), 'selector');

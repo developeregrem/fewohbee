@@ -30,7 +30,7 @@ class BookingRestrictionRuleRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('r')->addSelect('c')
             ->leftJoin('r.categories', 'c')
-            ->orderBy('r.startDate', 'ASC')->addOrderBy('r.id', 'ASC')
+            ->orderBy('r.startDate', \SortDirection::Ascending)->addOrderBy('r.id', \SortDirection::Ascending)
             ->getQuery()->getResult();
     }
 
@@ -48,6 +48,6 @@ class BookingRestrictionRuleRepository extends ServiceEntityRepository
             ->andWhere('r.startDate IS NULL OR r.startDate < :end')
             ->andWhere('r.endDate IS NULL OR r.endDate > :start')
             ->setParameter('start', $start)->setParameter('end', $end)
-            ->orderBy('r.id', 'ASC')->getQuery()->getResult();
+            ->orderBy('r.id', \SortDirection::Ascending)->getQuery()->getResult();
     }
 }

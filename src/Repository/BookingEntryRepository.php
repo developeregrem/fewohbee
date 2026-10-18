@@ -27,8 +27,8 @@ class BookingEntryRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('e')
             ->where('e.bookingBatch = :batch')
             ->setParameter('batch', $batch)
-            ->orderBy('e.date', 'ASC')
-            ->addOrderBy('e.documentNumber', 'ASC')
+            ->orderBy('e.date', \SortDirection::Ascending)
+            ->addOrderBy('e.documentNumber', \SortDirection::Ascending)
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);
 
@@ -71,9 +71,9 @@ class BookingEntryRepository extends ServiceEntityRepository
             ->leftJoin('e.taxRate', 't')
             ->where('b.year = :year')
             ->setParameter('year', $year)
-            ->orderBy('e.date', 'ASC')
-            ->addOrderBy('e.documentNumber', 'ASC')
-            ->addOrderBy('e.id', 'ASC')
+            ->orderBy('e.date', \SortDirection::Ascending)
+            ->addOrderBy('e.documentNumber', \SortDirection::Ascending)
+            ->addOrderBy('e.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -130,8 +130,8 @@ class BookingEntryRepository extends ServiceEntityRepository
             ->where('e.bookingBatch = :batch')
             ->andWhere('da.isCashAccount = true OR ca.isCashAccount = true')
             ->setParameter('batch', $batch)
-            ->orderBy('e.date', 'ASC')
-            ->addOrderBy('e.documentNumber', 'ASC')
+            ->orderBy('e.date', \SortDirection::Ascending)
+            ->addOrderBy('e.documentNumber', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -307,8 +307,8 @@ class BookingEntryRepository extends ServiceEntityRepository
             ->where('e.date BETWEEN :from AND :to')
             ->setParameter('from', $from->format('Y-m-d'))
             ->setParameter('to', $to->format('Y-m-d'))
-            ->orderBy('e.date', 'ASC')
-            ->addOrderBy('e.documentNumber', 'ASC')
+            ->orderBy('e.date', \SortDirection::Ascending)
+            ->addOrderBy('e.documentNumber', \SortDirection::Ascending)
             ->setMaxResults($limit);
 
         if (null !== $amount) {
@@ -352,9 +352,9 @@ class BookingEntryRepository extends ServiceEntityRepository
             ->andWhere('e.sourceType IS NULL OR e.sourceType != :opening')
             ->setParameter('year', $year)
             ->setParameter('opening', BookingEntry::SOURCE_OPENING_BALANCE)
-            ->orderBy('e.date', 'ASC')
-            ->addOrderBy('e.documentNumber', 'ASC')
-            ->addOrderBy('e.id', 'ASC')
+            ->orderBy('e.date', \SortDirection::Ascending)
+            ->addOrderBy('e.documentNumber', \SortDirection::Ascending)
+            ->addOrderBy('e.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }

@@ -15,6 +15,9 @@ use Doctrine\Migrations\AbstractMigration;
  * one, as EInvoiceReadinessService::resolveSettingsFor() resolves it. From then on the
  * date is kept, so changing the period in the settings no longer rewrites invoices
  * already sent. Invoices whose issuer states no period stay without a date.
+ *
+ * Invoice templates can also be bound to a payment means, so e.g. cash invoices are printed
+ * with their own template without switching the selection by hand.
  */
 final class Version20260929120000 extends AbstractMigration
 {
@@ -27,7 +30,7 @@ final class Version20260929120000 extends AbstractMigration
 
     public function getDescription(): string
     {
-        return 'Add the per-invoice payment due date and fix it for existing invoices';
+        return 'Add the per-invoice payment due date, fix it for existing invoices and add the payment means an invoice template is used for';
     }
 
     public function up(Schema $schema): void
@@ -36,6 +39,8 @@ final class Version20260929120000 extends AbstractMigration
         $this->addSql('UPDATE invoices i '.self::SETTINGS_JOINS.'
             SET i.payment_due_date = DATE_ADD(i.date, INTERVAL '.self::PERIOD.' DAY)
             WHERE i.payment_due_date IS NULL AND '.self::PERIOD.' IS NOT NULL');
+
+        $this->addSql('ALTER TABLE templates ADD payment_means INT DEFAULT NULL');
     }
 
     /**
@@ -50,6 +55,12 @@ final class Version20260929120000 extends AbstractMigration
               AND (('.self::PERIOD.') IS NULL OR i.payment_due_date <> DATE_ADD(i.date, INTERVAL '.self::PERIOD.' DAY))');
         $this->abortIf($deviating > 0, sprintf('%d invoice(s) have a due date other than their settings give; align them before rolling back.', $deviating));
 
+        $this->addSql('ALTER TABLE templates DROP payment_means');
         $this->addSql('ALTER TABLE invoices DROP payment_due_date');
+    }
+
+    public function isTransactional(): bool
+    {
+        return false;
     }
 }

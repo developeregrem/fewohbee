@@ -24,7 +24,7 @@ class BankStatementImportRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('i')
             ->andWhere('i.bankAccount = :account')
             ->setParameter('account', $bankAccount)
-            ->orderBy('i.createdAt', 'DESC')
+            ->orderBy('i.createdAt', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
@@ -46,7 +46,7 @@ class BankStatementImportRepository extends ServiceEntityRepository
             ->setParameter('committed', BankStatementImport::STATUS_COMMITTED)
             ->setParameter('from', $from)
             ->setParameter('to', $to)
-            ->orderBy('i.committedAt', 'DESC')
+            ->orderBy('i.committedAt', \SortDirection::Descending)
             ->getQuery()
             ->getResult();
     }

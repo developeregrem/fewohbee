@@ -516,7 +516,7 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         $request = ['_token' => $token, 'submissionVersion' => $version, 'mainTarget' => 'new'];
 
         $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', $request);
-        self::assertStringContainsString('alle Plätze belegt sind', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('Nicht alle Personen haben im Zimmer Platz', (string) $this->client->getResponse()->getContent());
         self::assertSame(GuestCheckInStatus::SUBMITTED, $this->checkIn($reservation)->getStatus());
 
         $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/apply', $request + ['removeGuests' => [(string) $booker->getId()]]);

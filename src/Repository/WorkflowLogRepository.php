@@ -21,7 +21,7 @@ class WorkflowLogRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('l')
             ->where('l.workflow = :workflowId')
             ->setParameter('workflowId', $workflowId)
-            ->orderBy('l.executedAt', 'DESC')
+            ->orderBy('l.executedAt', \SortDirection::Descending)
             ->setFirstResult(($page - 1) * $perPage)
             ->setMaxResults($perPage)
             ->getQuery()

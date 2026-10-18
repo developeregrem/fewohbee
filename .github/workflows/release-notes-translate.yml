@@ -47,6 +47,23 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: '/translate-release-notes'
           claude_args: '--max-turns 20'
-        # github_token is deliberately not passed: the action then commits as the
-        # Claude GitHub App, and CI still runs on its commits. With the default
-        # GITHUB_TOKEN, GitHub suppresses those workflow runs.
+
+      # Claude only writes the file and gets no rights to commit or push; this step
+      # commits nothing but the English notes. The action points origin at its own
+      # token and revokes it when done, so origin is reset to GITHUB_TOKEN here.
+      # GitHub starts no workflow runs for commits pushed with GITHUB_TOKEN.
+      - name: Commit the English release notes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          git add -- 'docs/release-notes/*.en.md'
+          if git diff --cached --quiet; then
+            echo "The English release notes are up to date."
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m 'docs: translate release notes'
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push origin "HEAD:${BRANCH}"

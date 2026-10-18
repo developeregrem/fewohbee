@@ -57,15 +57,15 @@
           data-reservations-table-settings-url="{{ path('reservations.table.settings') }}"
                     data-reservations-explicit-yearly-apartment-requested="{{ hasExplicitYearlyApartmentRequested ? 'true' : 'false' }}"
           data-action="submit->reservations#getNewTableAction">
-        <div class="row">
+        {# Vertically centred: the icons are shorter than the date and day fields #}
+        <div class="row align-items-center">
             {% if show == 'table' %}
                 {% include 'Reservations/_index_table_form.html.twig' %}
             {% else %}
                 {% include 'Reservations/_index_yearly_form.html.twig' %}
             {% endif %}
-            <div class="col-md-auto">
+            <div class="col-auto">
                 {% if is_granted('ROLE_RESERVATIONS') %}
-                <a href="#" class="me-3" data-action="click->reservations#getNewTableAction" title="{{ 'reservation.table.reload'|trans }}" data-url="{{ path('reservations.get.table') }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
                 {% if conflictCount > 0 %}
                     {% set alertClass = hasConflicts ? 'btn-outline-danger' : 'btn-outline-warning' %}
                     {% set alertBadge = hasConflicts ? 'bg-danger' : 'bg-warning' %}
@@ -82,7 +82,8 @@
                 {% endif %}
                 {% endif %}
                 {% if is_granted('ROLE_RESERVATIONS') %}
-                <button type="button" class="btn btn-secondary mb-2 me-sm-2"
+                {# On touch screens the round button at the bottom right takes its place #}
+                <button type="button" class="btn btn-secondary mb-2 me-sm-2 reservations-add-inline"
                         data-action="click->reservations#selectAppartmentAction"
                         data-reservations-create-new="true"
                         data-url="{{ path('reservations.select.appartment') }}"
@@ -91,32 +92,68 @@
                 </button>
                 {% endif %}
             </div>
-            <div class="col-auto text-end ms-auto">
+            {# Phones upright: centred line of its own below date and day count #}
+            <div class="col-12 col-sm-auto text-center text-sm-end ms-sm-auto mb-2">
                 {% if is_granted('ROLE_RESERVATIONS') %}
-                <a href="#" class="fs-5 text-secondary me-2" role="button"
+                <a href="#" class="fs-5 text-body-secondary me-2" role="button"
                    data-action="click->reservations#openBlockFormAction"
                    data-url="{{ path('reservations.blocks.form') }}"
                    title="{{ 'roomblock.title'|trans }}">
                     <i class="fas fa-ban"></i></a>
                 {% endif %}
-                <a href="#" class="fs-5 text-secondary" role="button"
+                <a href="#" class="fs-5 text-body-secondary" role="button"
                    data-action="click->reservations#openBlockListAction"
                    data-url="{{ path('reservations.blocks.list') }}"
                    title="{{ 'roomblock.list.title'|trans }}">
                     <i class="fas fa-lock"></i></a>
                 <span class="vr mx-3 align-middle"></span>
-                <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 {% if show == 'table' %}text-primary{% else %}text-secondary{% endif %}" title="{{ 'reservation.table.view.table'|trans }}">
+                <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 {% if show == 'table' %}text-primary{% else %}text-body-secondary{% endif %}" title="{{ 'reservation.table.view.table'|trans }}" data-reservations-table-view-link
+                   {% if show != 'table' %}data-action="click->reservations#leaveWeekViewFromYearlyAction"{% endif %}>
                     <i class="fas fa-list"></i></a>
-                <a href="{{ path('start.toggle.view', {show: 'yearly'}) }}" class="fs-5 me-4 ms-2 {% if show == 'yearly' %}text-primary{% else %}text-secondary{% endif %}" title="{{ 'reservation.table.view.yearly'|trans }}">
+                {# Week view: full screen on touch screens, fitted whole weeks with a mouse
+                   (see initWeekView in reservations_controller.js); from the annual
+                   view it opens the table view first #}
+                <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 ms-2 text-body-secondary" role="button" aria-pressed="false"
+                   {% if show == 'table' %}data-reservations-week-toggle{% else %}data-action="click->reservations#openWeekViewFromYearlyAction"{% endif %}
+                   title="{{ 'reservation.table.view.week'|trans }}" aria-label="{{ 'reservation.table.view.week'|trans }}">
+                    <i class="fas fa-calendar-week"></i></a>
+                <a href="{{ path('start.toggle.view', {show: 'yearly'}) }}" class="fs-5 me-4 ms-2 {% if show == 'yearly' %}text-primary{% else %}text-body-secondary{% endif %}" title="{{ 'reservation.table.view.yearly'|trans }}">
                     <i class="far fa-calendar-alt"></i></a>
 
                 {% include 'Reservations/reservation_table_settings.html.twig' %}
             </div>
         </div>
     </form>
+    {% if is_granted('ROLE_RESERVATIONS') %}
+    {# Touch screens: new reservation as a floating button, see "New reservation button" in app.css #}
+    <button type="button" class="btn reservations-fab"
+            data-action="click->reservations#selectAppartmentAction"
+            data-reservations-create-new="true"
+            data-url="{{ path('reservations.select.appartment') }}"
+            data-bs-toggle="modal" data-bs-target="#modalCenter"
+            title="{{ 'nav.reservation.add'|trans }}" aria-label="{{ 'nav.reservation.add'|trans }}">
+        <i class="fas fa-plus"></i>
+    </button>
+    {% endif %}
     <div class="row mt-2" >
-        <div class="col" id="table-ajax" data-reservations-add-appartment-selectable-url="{{ path('reservations.add.appartment.to.reservation.selectable') }}">
+        <div class="col" id="table-ajax" data-reservations-add-appartment-selectable-url="{{ path('reservations.add.appartment.to.reservation.selectable') }}"
+             style="--week-watermark: url('{{ app.request.basepath }}/img/logo-fewohbee.png');">
         </div>
     </div>
+    {% if show == 'table' %}
+    {# Desktop week view: navbar and filter row are hidden, these controls
+       appear while the mouse moves (see initWeekView) #}
+    <div class="reservations-week-controls" data-reservations-week-controls>
+        <button type="button" class="btn btn-light shadow-sm reservations-week-prev" data-reservations-week-page="backward"
+                title="{{ 'reservation.table.week.previous'|trans }}" aria-label="{{ 'reservation.table.week.previous'|trans }}">
+            <i class="fas fa-chevron-left"></i></button>
+        <button type="button" class="btn btn-light shadow-sm reservations-week-next" data-reservations-week-page="forward"
+                title="{{ 'reservation.table.week.next'|trans }}" aria-label="{{ 'reservation.table.week.next'|trans }}">
+            <i class="fas fa-chevron-right"></i></button>
+        <button type="button" class="btn btn-light shadow-sm reservations-week-close" data-reservations-week-close
+                title="{{ 'button.close'|trans }}" aria-label="{{ 'button.close'|trans }}">
+            <i class="fas fa-xmark"></i></button>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

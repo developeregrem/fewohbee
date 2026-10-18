@@ -31,3 +31,19 @@
         {% endfor %}
     </form>
 {%- endmacro %}
+
+{# A phone number as a tel: URL, without the separators people type into it. #}
+{% macro tel_href(number) -%}
+    tel:{{ number|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) }}
+{%- endmacro %}
+
+{# Phone numbers and e-mail addresses as tel: and mailto: links, escaped for concatenation
+   into popBody. Single quotes, because the month table puts popBody into a double-quoted
+   attribute unescaped. #}
+{% macro tel_link(number) -%}
+    <a href='{{ _self.tel_href(number) }}'>{{ number }}</a>
+{%- endmacro %}
+
+{% macro mail_link(address) -%}
+    <a href='mailto:{{ address }}'>{{ address }}</a>
+{%- endmacro %}

@@ -49,12 +49,12 @@ class RoomCategory
     /** Assigned amenities (e.g. WiFi, parking) — displayed as icons on the public booking page */
     #[ORM\ManyToMany(targetEntity: Amenity::class, inversedBy: 'roomCategories')]
     #[ORM\JoinTable(name: 'room_category_amenity')]
-    #[ORM\OrderBy(['category' => 'ASC', 'sortOrder' => 'ASC'])]
+    #[ORM\OrderBy(['category' => \SortDirection::Ascending, 'sortOrder' => \SortDirection::Ascending])]
     private Collection $amenities;
 
     /** Uploaded images for this category — shown as gallery/hero on the public booking page */
     #[ORM\OneToMany(targetEntity: RoomCategoryImage::class, mappedBy: 'roomCategory', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[ORM\OrderBy(['sortOrder' => 'ASC'])]
+    #[ORM\OrderBy(['sortOrder' => \SortDirection::Ascending])]
     private Collection $images;
 
     public function __construct()

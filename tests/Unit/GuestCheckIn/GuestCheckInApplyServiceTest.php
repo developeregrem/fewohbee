@@ -115,16 +115,52 @@ final class GuestCheckInApplyServiceTest extends TestCase
         self::assertSame('Linz', $partner->getCustomerAddresses()->first()?->getCity());
     }
 
-    public function testGuestsBeyondTheOccupancyAreNotAdded(): void
+    public function testGuestsBeyondTheOccupancyRefuseTheWholeConfirmationWithoutWritingAnything(): void
+    {
+        $booker = $this->customer(1, 'Anna', 'Müller');
+        $reservation = $this->reservation($booker, 1);
+        $checkIn = $this->submitted($reservation, ['firstname' => 'Anna', 'lastname' => 'Müller', 'nationality' => 'AT'], [['firstname' => 'Max', 'lastname' => 'Müller']]);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::never())->method('persist');
+        $em->expects(self::never())->method('flush');
+
+        try {
+            $this->service(em: $em)->apply($checkIn, new GuestCheckInApplyRequest('booker', false, ['new']));
+            self::fail('A fellow traveller without a place must not be created outside the room.');
+        } catch (GuestCheckInNoGuestSlotException) {
+            self::assertNull($booker->getNationality(), 'Nothing is taken over, not even the main guest.');
+            self::assertTrue($checkIn->hasPayload());
+            self::assertSame(GuestCheckInStatus::SUBMITTED, $checkIn->getStatus());
+        }
+    }
+
+    public function testExistingGuestBeyondTheOccupancyIsNotUpdatedEither(): void
+    {
+        // The booker travels along but is not entered in the room yet, and only one place is booked.
+        $booker = $this->customer(1, 'Anna', 'Müller');
+        $reservation = $this->reservation($booker, 1);
+        $checkIn = $this->submitted($reservation, ['firstname' => 'Lea', 'lastname' => 'Novak'], [['firstname' => 'Anna', 'lastname' => 'Müller', 'birthday' => '1980-05-01']]);
+
+        try {
+            $this->service()->apply($checkIn, new GuestCheckInApplyRequest('new', false, ['booker']));
+            self::fail('Two arriving people do not fit one booked place.');
+        } catch (GuestCheckInNoGuestSlotException) {
+            self::assertNull($booker->getBirthday(), 'A record left out of the room is not changed either.');
+            self::assertCount(0, $reservation->getCustomers());
+        }
+    }
+
+    public function testSkippingAFellowTravellerMakesTheRestFit(): void
     {
         $booker = $this->customer(1, 'Anna', 'Müller');
         $reservation = $this->reservation($booker, 1);
         $checkIn = $this->submitted($reservation, ['firstname' => 'Anna', 'lastname' => 'Müller'], [['firstname' => 'Max', 'lastname' => 'Müller']]);
 
-        $warnings = $this->service()->apply($checkIn, new GuestCheckInApplyRequest('booker', false, ['new']));
+        $warnings = $this->service()->apply($checkIn, new GuestCheckInApplyRequest('booker', false, ['skip']));
 
-        self::assertSame(['guest_checkin.apply.warning_guest_count'], $warnings);
-        self::assertCount(1, $reservation->getCustomers());
+        self::assertSame([], $warnings);
+        self::assertSame([$booker], array_values($reservation->getCustomers()->toArray()));
+        self::assertSame(GuestCheckInStatus::APPLIED, $checkIn->getStatus());
     }
 
     public function testMainGuestBecomesBookerOfAnImportedReservation(): void
@@ -258,7 +294,7 @@ final class GuestCheckInApplyServiceTest extends TestCase
         self::assertSame(GuestCheckInStatus::APPLIED, $checkIn->getStatus());
     }
 
-    private function service(?EventDispatcherInterface $dispatcher = null): GuestCheckInApplyService
+    private function service(?EventDispatcherInterface $dispatcher = null, ?EntityManagerInterface $em = null): GuestCheckInApplyService
     {
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $parameters = []): string => strtr([
@@ -269,7 +305,7 @@ final class GuestCheckInApplyServiceTest extends TestCase
         $settingsRepository = $this->createStub(AppSettingsRepository::class);
         $settingsRepository->method('findSingleton')->willReturn($settings);
 
-        $em = $this->createStub(EntityManagerInterface::class);
+        $em ??= $this->createStub(EntityManagerInterface::class);
 
         return new GuestCheckInApplyService($em, $translator, new MockClock(), 'de', $this->createStub(GuestCheckInExtrasService::class), $settingsRepository, new GuestCheckInExistingGuestMatcher($em), $this->createStub(\App\Service\Pricing\PricePromiseService::class), $dispatcher ?? $this->createStub(EventDispatcherInterface::class));
     }

@@ -84,11 +84,27 @@
             </trans-unit>
             <trans-unit id="calendar.sync.export.hint">
                 <source>calendar.sync.export.hint</source>
-                <target>Geben Sie den Belegungsplan für dieses Zimmer für andere Anwendungen frei, die den sog. iCal Import (Kalender synchronisieren) unterstützen.</target>
+                <target>Teile die Belegung dieses Zimmers mit Kalender-Apps oder Buchungsportalen über iCal.</target>
             </trans-unit>
             <trans-unit id="calendar.sync.export.option.title">
                 <source>calendar.sync.export.option.title</source>
                 <target>Exportoptionen</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.option.period.label">
+                <source>calendar.sync.export.option.period.label</source>
+                <target>Zeitraum</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.option.period.hint">
+                <source>calendar.sync.export.option.period.hint</source>
+                <target>Gilt für Reservierungen und Zimmersperren. Aktuelle Einträge schließen heutige Abreisen ein.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.option.period.current_future">
+                <source>calendar.sync.export.option.period.current_future</source>
+                <target>Aktuelle und zukünftige Einträge</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.option.period.all">
+                <source>calendar.sync.export.option.period.all</source>
+                <target>Gesamter Kalender</target>
             </trans-unit>
             <trans-unit id="calendar.sync.export.tab">
                 <source>calendar.sync.export.tab</source>
@@ -98,6 +114,10 @@
                 <source>calendar.sync.export.option.status.hint</source>
                 <target>Nur Reservierungen des angegebenen Status werden exportiert.</target>
             </trans-unit>
+            <trans-unit id="calendar.sync.export.option.status.label">
+                <source>calendar.sync.export.option.status.label</source>
+                <target>Reservierungsstatus</target>
+            </trans-unit>
             <trans-unit id="calendar.sync.export.option.guestname.label">
                 <source>calendar.sync.export.option.guestname.label</source>
                 <target>Name des Gastes exportieren</target>
@@ -106,37 +126,49 @@
                 <source>calendar.sync.export.option.guestname.hint</source>
                 <target>Der Titel des exportierten Kalendereintrages enthält den Namen des Gastes.</target>
             </trans-unit>
+            <trans-unit id="calendar.sync.export.option.times.label">
+                <source>calendar.sync.export.option.times.label</source>
+                <target>An- und Abreisezeit exportieren</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.option.times.hint">
+                <source>calendar.sync.export.option.times.hint</source>
+                <target>Übernimmt hinterlegte An- und Abreisezeiten. Eine fehlende Uhrzeit wird nur im Export durch 00:00 Uhr ergänzt; ohne Uhrzeiten bleibt der Eintrag ganztägig. Lass die Option für Portale ausgeschaltet, wenn sie ganztägige Einträge erwarten.</target>
+            </trans-unit>
             <trans-unit id="calendar.sync.export.access.title">
                 <source>calendar.sync.export.access.title</source>
-                <target>Zugriff</target>
+                <target>Kalender abonnieren</target>
             </trans-unit>
             <trans-unit id="calendar.sync.export.access.public.label">
                 <source>calendar.sync.export.access.public.label</source>
-                <target>öffentlich</target>
+                <target>Kalender öffentlich freigeben</target>
             </trans-unit>
             <trans-unit id="calendar.sync.export.access.public.hint">
                 <source>calendar.sync.export.access.public.hint</source>
-                <target>Aktiviert/Deaktiviert den öffentlichen Zugriff auf diesen Kalender.</target>
+                <target>Erlaube anderen Anwendungen den Zugriff ohne Anmeldung.</target>
             </trans-unit>
             <trans-unit id="calendar.sync.export.access.url.title">
                 <source>calendar.sync.export.access.url.title</source>
-                <target>Öffentliche Adresse im iCal-Format</target>
+                <target>Öffentliche Kalenderadresse</target>
             </trans-unit>
             <trans-unit id="calendar.sync.export.access.url.hint">
                 <source>calendar.sync.export.access.url.hint</source>
-                <target>Mit dieser Adresse können Sie von anderen Anwendungen aus auf diesen Kalender zugreifen.</target>
+                <target>Zum Abonnieren in deiner Kalender-App oder deinem Buchungsportal.</target>
             </trans-unit>
             <trans-unit id="calendar.sync.export.access.private_url.title">
                 <source>calendar.sync.export.access.private_url.title</source>
-                <target>Private Adresse im iCal-Format</target>
+                <target>Private Kalenderadresse</target>
             </trans-unit>
             <trans-unit id="calendar.sync.export.access.private_url.hint">
                 <source>calendar.sync.export.access.private_url.hint</source>
-                <target>Diese Adresse funktioniert auch ohne öffentliche Freigabe. Der Zugriff erfolgt mit einem API-Token (Berechtigung „Kalender lesen“), das im Profil erstellt werden kann – z. B. in Kalender-Programmen als Passwort zusammen mit dem Benutzernamen.</target>
+                <target>Funktioniert auch ohne öffentliche Freigabe. Verwende deinen Benutzernamen und ein API-Token mit der Berechtigung „Kalender lesen“ als Passwort. Das Token erstellst du in deinem Profil.</target>
             </trans-unit>
             <trans-unit id="calendar.sync.export.access.last">
                 <source>calendar.sync.export.access.last</source>
-                <target>letzter Aufruf</target>
+                <target>Zuletzt abgerufen</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.access.never">
+                <source>calendar.sync.export.access.never</source>
+                <target>Noch nicht abgerufen</target>
             </trans-unit>
             <trans-unit id="calendar.sync.import.tab">
                 <source>calendar.sync.import.tab</source>

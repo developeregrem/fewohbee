@@ -22,7 +22,9 @@ final class OpenApiSpecTest extends KernelTestCase
         $documented = [];
         foreach ($spec['paths'] as $path => $operations) {
             foreach (array_keys($operations) as $method) {
-                $documented[strtoupper($method).' '.self::BASE_PATH.$path] = true;
+                // OpenAPI 3.1 needs an extension for the authentication-only PROPFIND probe.
+                $httpMethod = 'x-propfind' === $method ? 'PROPFIND' : strtoupper($method);
+                $documented[$httpMethod.' '.self::BASE_PATH.$path] = true;
             }
         }
 
@@ -82,7 +84,8 @@ final class OpenApiSpecTest extends KernelTestCase
                 $operationIds[] = $operation['operationId'];
 
                 self::assertArrayHasKey('summary', $operation, $label.' needs a summary.');
-                self::assertArrayHasKey('200', $operation['responses'], $label.' needs a 200 response.');
+                $expectedStatus = 'x-propfind' === $method ? '405' : '200';
+                self::assertArrayHasKey($expectedStatus, $operation['responses'], $label.' needs a '.$expectedStatus.' response.');
                 self::assertArrayHasKey('401', $operation['responses'], $label.' must document 401.');
             }
         }

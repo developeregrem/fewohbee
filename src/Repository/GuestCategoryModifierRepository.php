@@ -34,8 +34,8 @@ class GuestCategoryModifierRepository extends ServiceEntityRepository
             ->andWhere('m.validTo IS NULL OR m.validTo >= :date')
             ->setParameter('active', true)
             ->setParameter('date', $date->format('Y-m-d'))
-            ->orderBy('m.sortOrder', 'ASC')
-            ->addOrderBy('m.id', 'ASC')
+            ->orderBy('m.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('m.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }
@@ -59,9 +59,9 @@ class GuestCategoryModifierRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('m')
             ->leftJoin('m.category', 'c')->addSelect('c')
-            ->orderBy('c.sortOrder', 'ASC')
-            ->addOrderBy('m.sortOrder', 'ASC')
-            ->addOrderBy('m.id', 'ASC')
+            ->orderBy('c.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('m.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('m.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult();
     }

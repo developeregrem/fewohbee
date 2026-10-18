@@ -46,8 +46,8 @@ class InvoiceRepository extends ServiceEntityRepository
             ->select('i')
             ->where('i.number LIKE :search or i.firstname LIKE :search or i.lastname LIKE :search or i.company LIKE :search')
             ->setParameter('search', '%'.$search.'%')
-            ->addOrderBy('i.date', 'DESC')
-            ->addOrderBy('i.id', 'DESC')
+            ->addOrderBy('i.date', \SortDirection::Descending)
+            ->addOrderBy('i.id', \SortDirection::Descending)
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
             ->getQuery();
@@ -98,8 +98,8 @@ class InvoiceRepository extends ServiceEntityRepository
             ->andWhere('i.date <= :end')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
-            ->orderBy('i.date', 'ASC')
-            ->addOrderBy('i.id', 'ASC')
+            ->orderBy('i.date', \SortDirection::Ascending)
+            ->addOrderBy('i.id', \SortDirection::Ascending)
         ;
 
         if ([] !== $status) {
@@ -130,8 +130,8 @@ class InvoiceRepository extends ServiceEntityRepository
             ->join('i.reservations', 'r')
             ->andWhere('r.id IN (:ids)')
             ->setParameter('ids', $reservationIds, ArrayParameterType::INTEGER)
-            ->orderBy('i.date', 'ASC')
-            ->addOrderBy('i.id', 'ASC')
+            ->orderBy('i.date', \SortDirection::Ascending)
+            ->addOrderBy('i.id', \SortDirection::Ascending)
             ->getQuery()
             ->getResult()
         ;
@@ -168,8 +168,8 @@ class InvoiceRepository extends ServiceEntityRepository
             ->select('i.number')
             ->andWhere('i.number LIKE :likePattern')
             ->setParameter('likePattern', $likePattern)
-            ->orderBy('LENGTH(i.number)', 'DESC')
-            ->addOrderBy('i.number', 'DESC')
+            ->orderBy('LENGTH(i.number)', \SortDirection::Descending)
+            ->addOrderBy('i.number', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getScalarResult();
@@ -192,7 +192,7 @@ class InvoiceRepository extends ServiceEntityRepository
         $rows = $this->createQueryBuilder('i')
             ->select('i.number')
             ->andWhere("i.number <> ''")
-            ->orderBy('i.id', 'DESC')
+            ->orderBy('i.id', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getScalarResult();

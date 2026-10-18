@@ -55,7 +55,7 @@ class ReservationDaysAfterEndTrigger extends AbstractScheduledTrigger
         return $em->getRepository(Reservation::class)->createQueryBuilder('r')
             ->where('r.endDate = :targetDate')
             ->setParameter('targetDate', $targetDate)
-            ->orderBy('r.endDate', 'DESC')
+            ->orderBy('r.endDate', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

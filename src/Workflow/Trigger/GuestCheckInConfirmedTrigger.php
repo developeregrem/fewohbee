@@ -64,7 +64,7 @@ class GuestCheckInConfirmedTrigger implements ConditionalWorkflowTriggerInterfac
         /** @var list<GuestCheckIn> $checkIns */
         $checkIns = $em->getRepository(GuestCheckIn::class)->createQueryBuilder('g')
             ->where('g.appliedAt IS NOT NULL')
-            ->orderBy('g.appliedAt', 'DESC')
+            ->orderBy('g.appliedAt', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

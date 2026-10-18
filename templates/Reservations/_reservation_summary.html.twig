@@ -5,7 +5,7 @@
 {% set status = reservation.reservationStatus %}
 {% set canEdit = is_granted('ROLE_RESERVATIONS') %}
 {% set company = null %}
-{% set phone = null %}
+{% set phones = [] %}
 {% set email = null %}
 {% if booker %}
     {# Business addresses first: the company shown on top is the one to call or mail #}
@@ -15,7 +15,12 @@
             {% if company is null and business and address.company is not empty %}
                 {% set company = address.company %}
             {% endif %}
-            {% set phone = phone ?: address.mobilephone ?: address.phone %}
+            {# Every number once, mobile before landline, for the call button #}
+            {% for number in [{kind: 'customer.mobilephone', icon: 'fa-mobile-alt', value: address.mobilephone}, {kind: 'customer.phone', icon: 'fa-phone', value: address.phone}] %}
+                {% if number.value is not empty and number.value|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) not in phones|map(p => p.value|replace({' ': '', '-': '', '/': '', '(': '', ')': ''})) %}
+                    {% set phones = phones|merge([number|merge({type: address.type})]) %}
+                {% endif %}
+            {% endfor %}
             {% set email = email ?: address.email %}
         {% endfor %}
     {% endfor %}
@@ -42,14 +47,31 @@
         {{ reservationMacros.guest_counts(reservation, guestCategoriesById|default({})) }}
     </div>
 
-    {% if phone or email or canEdit %}
+    {% if phones is not empty or email or canEdit %}
         {# Phones: one row of equal tiles, the icon above a short label; wider screens: a row of buttons #}
         <div class="row g-2 mt-1">
-            {% if phone %}
+            {% if phones|length == 1 %}
                 <div class="col col-lg-auto">
-                    <a class="btn btn-outline-primary w-100 h-100 d-flex flex-column flex-lg-row align-items-center justify-content-center gap-1 px-1 px-lg-3 small" href="tel:{{ phone|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) }}">
+                    <a class="btn btn-outline-primary w-100 h-100 d-flex flex-column flex-lg-row align-items-center justify-content-center gap-1 px-1 px-lg-3 small" href="{{ reservationMacros.tel_href((phones|first).value) }}">
                         <i class="fas fa-phone"></i> {{ 'reservation.summary.call'|trans }}
                     </a>
+                </div>
+            {% elseif phones is not empty %}
+                {# Several numbers: ask which one to call #}
+                <div class="col col-lg-auto dropdown">
+                    <button class="btn btn-outline-primary w-100 h-100 d-flex flex-column flex-lg-row align-items-center justify-content-center gap-1 px-1 px-lg-3 small dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-phone"></i> {{ 'reservation.summary.call'|trans }}
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for number in phones %}
+                            <li>
+                                <a class="dropdown-item" href="{{ reservationMacros.tel_href(number.value) }}">
+                                    <i class="fas {{ number.icon }} fa-fw me-2"></i>{{ number.value }}
+                                    <span class="small text-body-secondary ms-1">{{ number.kind|trans }} · {{ number.type|trans }}</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
                 </div>
             {% endif %}
             {% if email %}

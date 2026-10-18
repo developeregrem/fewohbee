@@ -131,7 +131,7 @@ class DynamicRateResolver implements ResetInterface
     public function apply(string $unit, NightAdjustment $adjustment): string
     {
         $changed = (float) $unit * (1 + $adjustment->percent / 100);
-        $rounding = null !== $adjustment->dayPrice ? PriceRounding::CENT : $this->settings->getSettings()->getPriceChangeRounding();
+        $rounding = null !== $adjustment->dayPrice ? PriceRounding::NONE : $this->settings->getSettings()->getPriceChangeRounding();
 
         return PricePromise::money(max(0.0, $rounding->round($changed)));
     }

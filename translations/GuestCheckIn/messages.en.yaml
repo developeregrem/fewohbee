@@ -220,7 +220,7 @@ guest_checkin:
     room_added: "will be added"
     room_not_travelling: "not travelling"
     room_no_place: "no place left"
-    room_overflow: "There are more people than booked. Mark who is not travelling or increase the reservation's number of guests – otherwise not everyone is added to the room."
+    room_overflow: "There are more people than booked. Mark who is not travelling, choose \"Do not take over\" for single people or increase the reservation's number of guests. Only then can the check-in be confirmed."
     room_now: "In the room"
     registration_print: "Print registration form"
   apply:
@@ -231,13 +231,12 @@ guest_checkin:
     extras_defer_hint: "If unticked, the requested services and the price shown to the guest remain as an open request in the reservation remarks."
     extras_changed: "A requested service or its price has changed in the meantime. Reload the reservation and confirm the check-in without additional services."
     warning_extras_deferred: "The additional services were not booked. Please review the open request in the reservation remarks."
-    no_main_guest_slot: "The main guest could not be added to the room because all places are occupied. Mark under \"In the room afterwards\" who is not travelling or increase the number of guests. The check-in has not been confirmed yet."
+    no_guest_slot: "Not everyone fits into the room. Mark under \"In the room afterwards\" who is not travelling, choose \"Do not take over\" for single people or increase the number of guests. The check-in has not been confirmed yet."
     submit: "Confirm check-in"
     hint: "Only filled-in details are taken over, nothing is deleted."
     success: "Check-in confirmed. The details are now in the guest records."
     failed: "The check-in could not be confirmed. Please reload the reservation and try again."
     nothing: "There are no details to confirm."
-    warning_guest_count: "Not everyone could be added to the room because the booked number of guests has been reached."
   discard:
     title: "Discard"
     hint: "The details are deleted. The guest can fill in the form again with the same link."

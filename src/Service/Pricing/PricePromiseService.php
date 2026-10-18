@@ -148,14 +148,14 @@ class PricePromiseService
     }
 
     /**
-     * How many bookings without an active invoice were promised a price from this row. Checked in
-     * PHP: the promise is JSON and DQL has no JSON functions; it is only asked when a price is
-     * deleted.
+     * How many bookings were promised a price from this row. Invoiced ones count as well: a
+     * canceled invoice is issued anew from the promise. Checked in PHP: the promise is JSON and DQL
+     * has no JSON functions; it is only asked when a price is deleted.
      */
-    public function countOpenPromisesUsing(int $priceId): int
+    public function countPromisesUsing(int $priceId): int
     {
         return count(array_filter(
-            $this->reservations->findOpenPricePromises(),
+            $this->reservations->findPricePromises(),
             static fn (array $stored): bool => in_array($priceId, PricePromise::fromArray($stored)?->priceIds() ?? [], true),
         ));
     }

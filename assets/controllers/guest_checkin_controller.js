@@ -13,7 +13,7 @@ import { enableDeletePopover } from '../js/utils.js';
  */
 /* stimulusFetch: 'lazy' */
 export default class extends Controller {
-    static targets = ['linkBox', 'url', 'qrBox', 'qr', 'qrDownload', 'error', 'regenerateBox', 'person', 'room', 'overflow', 'moreOptions'];
+    static targets = ['linkBox', 'url', 'qrBox', 'qr', 'qrDownload', 'error', 'regenerateBox', 'person', 'room', 'overflow', 'moreOptions', 'confirm'];
     static values = {
         linkUrl: String,
         regenerateUrl: String,
@@ -82,7 +82,7 @@ export default class extends Controller {
 
     /**
      * Mirrors GuestCheckInApplyService: linked guests matched by a person stay (checked in), the
-     * others stay unless marked as not travelling, everybody else is added while places last.
+     * others stay unless marked as not travelling, everybody else is added.
      */
     updateRoom(selects) {
         if (!this.hasRoomTarget) {
@@ -130,6 +130,10 @@ export default class extends Controller {
             item.querySelector('[data-no-place]').classList.toggle('d-none', !noPlace);
         });
         this.overflowTarget.classList.toggle('d-none', !overflow);
+        // The server refuses a confirmation that leaves someone out of the room.
+        if (this.hasConfirmTarget) {
+            this.confirmTarget.disabled = overflow;
+        }
     }
 
     showLink(event) {

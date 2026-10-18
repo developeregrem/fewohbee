@@ -28,7 +28,7 @@ class PriceRuleRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('r')->addSelect('s', 'c')
             ->leftJoin('r.subsidiaries', 's')
             ->leftJoin('r.categories', 'c')
-            ->orderBy('r.name', 'ASC')->addOrderBy('r.id', 'ASC')
+            ->orderBy('r.name', \SortDirection::Ascending)->addOrderBy('r.id', \SortDirection::Ascending)
             ->getQuery()->getResult();
     }
 
@@ -43,7 +43,7 @@ class PriceRuleRepository extends ServiceEntityRepository
             ->leftJoin('r.subsidiaries', 's')
             ->leftJoin('r.categories', 'c')
             ->where('r.enabled = true')
-            ->orderBy('r.id', 'ASC')
+            ->orderBy('r.id', \SortDirection::Ascending)
             ->getQuery()->getResult();
     }
 }

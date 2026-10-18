@@ -130,8 +130,8 @@ class GuestCheckInRepository extends ServiceEntityRepository
             ->where('g.status = :status')
             ->andWhere('g.payload IS NOT NULL')
             ->setParameter('status', GuestCheckInStatus::SUBMITTED)
-            ->orderBy('r.startDate', 'ASC')
-            ->addOrderBy('g.lastSubmittedAt', 'ASC')
+            ->orderBy('r.startDate', \SortDirection::Ascending)
+            ->addOrderBy('g.lastSubmittedAt', \SortDirection::Ascending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();

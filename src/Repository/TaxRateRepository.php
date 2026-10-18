@@ -34,8 +34,8 @@ class TaxRateRepository extends ServiceEntityRepository
     public function findAllOrdered(?string $preset = null): array
     {
         $qb = $this->createQueryBuilder('t')
-            ->orderBy('t.sortOrder', 'ASC')
-            ->addOrderBy('t.rate', 'ASC');
+            ->orderBy('t.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('t.rate', \SortDirection::Ascending);
 
         if (null !== $preset) {
             $this->applyPresetScope($qb, $preset);
@@ -68,7 +68,7 @@ class TaxRateRepository extends ServiceEntityRepository
 
         if (null !== $preset) {
             $this->applyPresetScope($qb, $preset);
-            $qb->orderBy('t.chartPreset', 'DESC');
+            $qb->orderBy('t.chartPreset', \SortDirection::Descending);
         }
 
         return $qb
@@ -85,7 +85,7 @@ class TaxRateRepository extends ServiceEntityRepository
 
         if (null !== $preset) {
             $this->applyPresetScope($qb, $preset);
-            $qb->orderBy('t.chartPreset', 'DESC');
+            $qb->orderBy('t.chartPreset', \SortDirection::Descending);
         }
 
         return $qb->getQuery()->getOneOrNullResult();
@@ -97,8 +97,8 @@ class TaxRateRepository extends ServiceEntityRepository
             ->andWhere('t.validFrom IS NULL OR t.validFrom <= :date')
             ->andWhere('t.validTo IS NULL OR t.validTo >= :date')
             ->setParameter('date', $date)
-            ->orderBy('t.sortOrder', 'ASC')
-            ->addOrderBy('t.rate', 'ASC');
+            ->orderBy('t.sortOrder', \SortDirection::Ascending)
+            ->addOrderBy('t.rate', \SortDirection::Ascending);
 
         if (null !== $preset) {
             $this->applyPresetScope($qb, $preset);
