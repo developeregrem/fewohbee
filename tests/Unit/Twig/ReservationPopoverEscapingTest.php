@@ -11,9 +11,48 @@ use Twig\TwigFilter;
 
 final class ReservationPopoverEscapingTest extends TestCase
 {
+    private const PAYLOAD = '<img src=x onerror=alert(1)>';
+
     public function testUserValuesRemainEscapedWhenBootstrapReadsPopoverHtml(): void
     {
-        $payload = '<img src=x onerror=alert(1)>';
+        $popoverHtml = $this->renderPopover(['invoices' => [['number' => self::PAYLOAD, 'status' => 1]]]);
+
+        // The e-mail address appears twice, as mailto: target and as link text
+        self::assertSame(11, substr_count($popoverHtml, '&lt;img src=x onerror=alert(1)&gt;'));
+        // The tel: target drops spaces and brackets, but stays escaped as well
+        self::assertStringContainsString("href='tel:&lt;imgsrc=xonerror=alert1&gt;'", $popoverHtml);
+        self::assertStringNotContainsString(self::PAYLOAD, $popoverHtml);
+    }
+
+    public function testReservationStatusRemainsEscapedWithoutInvoice(): void
+    {
+        $popoverHtml = $this->renderPopover(['invoices' => []]);
+
+        self::assertStringContainsString('<i>(&lt;img src=x onerror=alert(1)&gt;)</i>', $popoverHtml);
+        self::assertStringNotContainsString(self::PAYLOAD, $popoverHtml);
+    }
+
+    public function testInvoiceStatusReplacesTheReservationStatus(): void
+    {
+        $popoverHtml = $this->renderPopover([
+            'invoices' => [['number' => 'R-1001', 'status' => 2]],
+            'reservationStatus' => ['name' => 'Bezahlt'],
+        ]);
+
+        self::assertStringContainsString('R-1001 (invoice.status.paid)', $popoverHtml);
+        self::assertStringNotContainsString('<i>(Bezahlt)</i>', $popoverHtml);
+    }
+
+    /**
+     * Renders the popover body the way Bootstrap reads it from data-bs-content: the
+     * attribute is decoded exactly once, so the trusted formatting is HTML while every
+     * user value must still be an entity that becomes text via innerHTML.
+     *
+     * @param array<string, mixed> $overrides
+     */
+    private function renderPopover(array $overrides): string
+    {
+        $payload = self::PAYLOAD;
         $twig = new Environment(
             new FilesystemLoader(dirname(__DIR__, 3).'/templates'),
             ['autoescape' => 'name'],
@@ -24,7 +63,7 @@ final class ReservationPopoverEscapingTest extends TestCase
         $twig->addFilter(new TwigFilter('display_name', static fn (array $status): string => $status['name']));
 
         $rendered = $twig->render('Reservations/_resevation_popover.html.twig', [
-            'reservation' => [
+            'reservation' => $overrides + [
                 'booker' => [
                     'salutation' => $payload,
                     'firstname' => $payload,
@@ -41,7 +80,6 @@ final class ReservationPopoverEscapingTest extends TestCase
                 'appartment' => ['bedsMax' => 4],
                 'startdate' => new \DateTimeImmutable('2026-07-01'),
                 'enddate' => new \DateTimeImmutable('2026-07-02'),
-                'invoices' => [['number' => $payload]],
                 'reservationStatus' => ['name' => $payload],
                 'arrivalTime' => null,
                 'departureTime' => null,
@@ -50,16 +88,6 @@ final class ReservationPopoverEscapingTest extends TestCase
             ],
         ]);
 
-        // Reading data-bs-content decodes the attribute exactly once. The
-        // trusted formatting is then HTML, while every payload is still an
-        // entity and becomes text when Bootstrap assigns it via innerHTML.
-        $popoverHtml = htmlspecialchars_decode($rendered, \ENT_QUOTES | \ENT_HTML5);
-
-        // The e-mail address appears twice, as mailto: target and as link text
-        self::assertSame(12, substr_count($popoverHtml, '&lt;img src=x onerror=alert(1)&gt;'));
-        // The tel: target drops spaces and brackets, but stays escaped as well
-        self::assertStringContainsString("href='tel:&lt;imgsrc=xonerror=alert1&gt;'", $popoverHtml);
-        self::assertStringContainsString('<i>', $popoverHtml);
-        self::assertStringNotContainsString($payload, $popoverHtml);
+        return htmlspecialchars_decode($rendered, \ENT_QUOTES | \ENT_HTML5);
     }
 }
