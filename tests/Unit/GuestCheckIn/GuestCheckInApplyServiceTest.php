@@ -43,6 +43,31 @@ final class GuestCheckInApplyServiceTest extends TestCase
         self::assertFalse($checkIn->hasPayload());
     }
 
+    public function testMainGuestKeepsTheLanguageTheFormWasFilledIn(): void
+    {
+        $booker = $this->customer(1, 'Anna', 'Müller');
+        $reservation = $this->reservation($booker, 1);
+        $checkIn = new GuestCheckIn($reservation, 'selector');
+        $checkIn->recordSubmission(['v' => 1, 'locale' => 'en', 'mainGuest' => ['firstname' => 'Anna', 'lastname' => 'Müller'], 'companions' => []], new \DateTimeImmutable());
+
+        $this->service()->apply($checkIn, new GuestCheckInApplyRequest('booker', false, []));
+
+        self::assertSame('en', $booker->getLocale());
+    }
+
+    public function testALanguageOnFileIsNotReplacedByTheCheckIn(): void
+    {
+        $booker = $this->customer(1, 'Anna', 'Müller');
+        $booker->setLocale('fr');
+        $reservation = $this->reservation($booker, 1);
+        $checkIn = new GuestCheckIn($reservation, 'selector');
+        $checkIn->recordSubmission(['v' => 1, 'locale' => 'en', 'mainGuest' => ['firstname' => 'Anna', 'lastname' => 'Müller'], 'companions' => []], new \DateTimeImmutable());
+
+        $this->service()->apply($checkIn, new GuestCheckInApplyRequest('booker', false, []));
+
+        self::assertSame('fr', $booker->getLocale());
+    }
+
     public function testSharedAddressIsNotChangedForTheOtherCustomer(): void
     {
         $booker = $this->customer(1, 'Anna', 'Müller');

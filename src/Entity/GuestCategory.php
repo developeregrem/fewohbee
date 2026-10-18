@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Entity\Enum\GuestStatisticalGroup;
+use App\Entity\Translation\ContentTranslatable;
+use App\Entity\Translation\ContentTranslationsTrait;
 use App\Repository\GuestCategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -13,8 +15,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: GuestCategoryRepository::class)]
 #[ORM\Table(name: 'guest_categories')]
-class GuestCategory
+class GuestCategory implements ContentTranslatable
 {
+    use ContentTranslationsTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -56,6 +60,11 @@ class GuestCategory
     public function __construct()
     {
         $this->subsidiaries = new ArrayCollection();
+    }
+
+    public static function translatableFields(): array
+    {
+        return ['name'];
     }
 
     public function getId(): ?int

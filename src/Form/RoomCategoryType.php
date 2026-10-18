@@ -34,6 +34,12 @@ class RoomCategoryType extends AbstractType
                 'label' => 'category.details',
                 'required' => false,
             ])
+            ->add('translations', ContentTranslationsType::class, [
+                'fields' => [
+                    'name' => ['max_length' => 255],
+                    'details' => ['type' => TextareaType::class],
+                ],
+            ])
             ->add('minFullPayers', IntegerType::class, [
                 'label' => 'category.min_full_payers',
                 'help' => 'category.min_full_payers.help',

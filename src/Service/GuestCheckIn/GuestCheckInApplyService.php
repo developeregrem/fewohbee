@@ -141,6 +141,11 @@ class GuestCheckInApplyService
         $mainCustomer = $existingMainCustomer ?? $this->resolveTarget($reservation, $request->mainTarget, false, $main, $request->allowGlobalMatch)
             ?? throw new \InvalidArgumentException('The main guest needs a target.');
         $this->fillPerson($mainCustomer, $main, true);
+        // The main guest filled the form in this language; mails follow it unless one is on file.
+        $guestLocale = self::nullableString($payload['locale'] ?? null);
+        if (null === $mainCustomer->getLocale() && null !== $guestLocale) {
+            $mainCustomer->setLocale($guestLocale);
+        }
         $mainAddress = \is_array($main['address'] ?? null) ? $main['address'] : [];
         $this->applyAddress($mainCustomer, $mainAddress, self::nullableString($main['email'] ?? null), self::nullableString($main['phone'] ?? null));
         if ($request->setAsBooker || null === $reservation->getBooker()) {
@@ -242,8 +247,8 @@ class GuestCheckInApplyService
     private function fillPerson(Customer $customer, array $person, bool $isMainGuest): void
     {
         if (null !== ($salutation = self::nullableString($person['salutation'] ?? null))) {
-            // The form offers the configured salutations untranslated; the record keeps the
-            // wording of the installation, whatever language the guest used.
+            // The form submits the stored salutation; a submission from before may hold a built-in
+            // key ("Ms"), which the translation turns into the installation's wording.
             $customer->setSalutation(mb_substr($this->translator->trans($salutation, [], null, $this->installationLocale), 0, 20));
         }
         if (null !== ($value = self::nullableString($person['firstname'] ?? null))) {

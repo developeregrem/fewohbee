@@ -49,6 +49,15 @@ class AppSettings
     #[ORM\Column(type: Types::JSON)]
     private array $customerSalutations = ['Ms', 'Mr', 'Family'];
 
+    /**
+     * Wording of the salutations in further guest languages, keyed by the stored salutation:
+     * {"Frau": {"en": "Ms"}}. See GuestSalutations.
+     *
+     * @var array<string, array<string, string>>|null
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $customerSalutationTranslations = null;
+
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     #[Assert\Email]
     private ?string $notificationEmail = null;
@@ -120,6 +129,17 @@ class AppSettings
      */
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     private ?string $publicBaseUrl = null;
+
+    /**
+     * Languages guests may choose on the public pages (online booking, online check-in), as
+     * locale codes out of framework.enabled_locales. Null offers every enabled language, so a
+     * language added to the application later shows up without touching the settings.
+     * GuestLocaleService resolves the effective list.
+     *
+     * @var list<string>|null
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $guestLocales = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
@@ -194,6 +214,20 @@ class AppSettings
         return $this;
     }
 
+    /** @return list<string>|null */
+    public function getGuestLocales(): ?array
+    {
+        return $this->guestLocales;
+    }
+
+    /** @param list<string>|null $guestLocales */
+    public function setGuestLocales(?array $guestLocales): self
+    {
+        $this->guestLocales = null === $guestLocales ? null : array_values($guestLocales);
+
+        return $this;
+    }
+
     /** @return string[] */
     public function getCustomerSalutations(): array
     {
@@ -204,6 +238,20 @@ class AppSettings
     public function setCustomerSalutations(array $customerSalutations): self
     {
         $this->customerSalutations = array_values(array_map('trim', $customerSalutations));
+
+        return $this;
+    }
+
+    /** @return array<string, array<string, string>> */
+    public function getCustomerSalutationTranslations(): array
+    {
+        return $this->customerSalutationTranslations ?? [];
+    }
+
+    /** @param array<string, array<string, string>>|null $translations */
+    public function setCustomerSalutationTranslations(?array $translations): self
+    {
+        $this->customerSalutationTranslations = [] === $translations ? null : $translations;
 
         return $this;
     }

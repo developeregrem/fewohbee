@@ -130,6 +130,34 @@
                 <source>templates.flash.edit.success</source>
                 <target>Vorlage erfolgreich bearbeitet.</target>
             </trans-unit>
+            <trans-unit id="templates.flash.delete.has_variants">
+                <source>templates.flash.delete.has_variants</source>
+                <target>Die Vorlage hat Sprachvarianten. Lösche zuerst die Sprachvarianten.</target>
+            </trans-unit>
+            <trans-unit id="templates.flash.variant.created">
+                <source>templates.flash.variant.created</source>
+                <target>Sprachvariante angelegt. Übersetze jetzt Text und Betreff.</target>
+            </trans-unit>
+            <trans-unit id="templates.flash.variant.invalid">
+                <source>templates.flash.variant.invalid</source>
+                <target>Für diese Sprache kann keine Sprachvariante angelegt werden.</target>
+            </trans-unit>
+            <trans-unit id="templates.variant.add">
+                <source>templates.variant.add</source>
+                <target>Sprachvariante anlegen</target>
+            </trans-unit>
+            <trans-unit id="templates.variant.badge">
+                <source>templates.variant.badge</source>
+                <target>Sprachvariante</target>
+            </trans-unit>
+            <trans-unit id="templates.variant.of">
+                <source>templates.variant.of</source>
+                <target>Sprachvariante von „%name%“. Automatische Mails an Gäste in dieser Sprache nutzen sie statt der Vorlage.</target>
+            </trans-unit>
+            <trans-unit id="templates.variant.delete_hint">
+                <source>templates.variant.delete_hint</source>
+                <target>Lösche zuerst die Sprachvarianten dieser Vorlage.</target>
+            </trans-unit>
             <trans-unit id="templates.flash.delete.success">
                 <source>templates.flash.delete.success</source>
                 <target>Vorlage erfolgreich gelöscht.</target>

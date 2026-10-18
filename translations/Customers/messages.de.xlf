@@ -34,6 +34,14 @@
                 <source>customer.nationality_unknown</source>
                 <target>Keine Angabe</target>
             </trans-unit>
+            <trans-unit id="customer.locale">
+                <source>customer.locale</source>
+                <target>Sprache für Mails</target>
+            </trans-unit>
+            <trans-unit id="customer.locale_help">
+                <source>customer.locale_help</source>
+                <target>Automatische Mails an diesen Gast nutzen die Sprachvariante der Vorlage, wenn es eine gibt.</target>
+            </trans-unit>
             <trans-unit id="customer.birthday">
                 <source>customer.birthday</source>
                 <target>Geburtsdatum</target>

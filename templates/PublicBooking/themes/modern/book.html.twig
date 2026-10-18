@@ -34,6 +34,7 @@
 <div class="fhb-booking-root{{ embed ? ' fhb-embed' : '' }}">
     <div class="fhb-shell">
         <div class="fhb-booking-card">
+            {{ include('PublicBooking/_language_switcher.html.twig', {formId: 'fhb-booking-form'}) }}
             {% if not embed %}
                 <h1 class="fhb-title">{{ config.bookingMode == 'BOOKING' ? 'online_booking.public.page_title'|trans : 'online_booking.public.page_title_inquiry'|trans }}</h1>
             {% endif %}
@@ -52,16 +53,17 @@
 
             {% if successMessage %}
                 <div class="alert alert-success fhb-scroll-target" id="fhb-success" tabindex="-1">{{ successMessage|trans }}</div>
-                {% if config.successMessageText %}
-                    <div class="fhb-section">{{ config.successMessageText|raw }}</div>
+                {% set successMessageText = config|localized('successMessageText') %}
+                {% if successMessageText %}
+                    <div class="fhb-section">{{ successMessageText|raw }}</div>
                 {% endif %}
                 <div class="fhb-actions">
-                    <a class="btn btn-outline-primary" href="{{ path('public.booking', {'embed': embed ? 1 : 0}) }}">
+                    <a class="btn btn-outline-primary" href="{{ path('public.booking', bookingUrlParameters) }}">
                         {{ 'online_booking.public.start_new'|trans }}
                     </a>
                 </div>
             {% else %}
-            <form method="post" action="{{ path('public.booking', {'embed': embed ? 1 : 0}) }}">
+            <form method="post" id="fhb-booking-form" action="{{ path('public.booking', bookingUrlParameters) }}">
                 <input type="hidden" name="embed" value="{{ embed ? 1 : 0 }}">
                 <input type="hidden" name="form_started_at" value="{{ formState.formStartedAt }}">
                 {% if formState.submitToken %}

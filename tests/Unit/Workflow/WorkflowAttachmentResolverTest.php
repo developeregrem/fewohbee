@@ -158,6 +158,49 @@ final class WorkflowAttachmentResolverTest extends TestCase
         self::assertNull($set->attachments[0]->binaryPayload);
     }
 
+    public function testGuestGetsTheAttachmentInTheirLanguage(): void
+    {
+        $base = $this->registerTemplate('AGB', 'TEMPLATE_FILE_PDF', 36);
+        $variant = $this->registerTemplate('Terms and conditions', 'TEMPLATE_FILE_PDF', 60);
+        $variant->setLocale('en')->setBaseTemplate($base);
+        $base->getVariants()->add($variant);
+
+        $this->templatesService = $this->createMock(TemplatesService::class);
+        $this->templatesService->expects(self::once())->method('renderTemplate')->with(60, null)->willReturn('<html>terms</html>');
+        $this->templatesService->method('getPDFOutput')->willReturn('PDF_BYTES');
+
+        $set = $this->buildResolver()->resolve([['type' => 'pdf_template', 'templateId' => 36]], null, [], locale: 'en');
+
+        self::assertSame($variant, $set->attachments[0]->template);
+        self::assertSame('Terms_and_conditions.pdf', $set->mailAttachments()[0]->getName());
+    }
+
+    public function testAttachmentWithoutAVariantInTheGuestLanguageStaysAsConfigured(): void
+    {
+        $base = $this->registerTemplate('AGB', 'TEMPLATE_FILE_PDF', 36);
+
+        $set = $this->buildResolver()->resolve([['type' => 'pdf_template', 'templateId' => 36]], null, [], locale: 'fr');
+
+        self::assertSame($base, $set->attachments[0]->template);
+    }
+
+    public function testInvoiceLayoutFollowsTheGuestLanguage(): void
+    {
+        $standard = $this->registerTemplate('Standardrechnung', 'TEMPLATE_INVOICE_PDF', 7);
+        $english = $this->registerTemplate('Invoice', 'TEMPLATE_INVOICE_PDF', 9);
+        $english->setLocale('en')->setBaseTemplate($standard);
+        $standard->getVariants()->add($english);
+        $this->invoicePdfTemplates = [$standard];
+        $readiness = $this->createStub(EInvoiceReadinessService::class);
+        $readiness->method('check')->willReturn($this->readiness(false));
+        $readiness->method('resolveSettingsFor')->willReturn($this->settings);
+        $this->readinessService = $readiness;
+
+        $set = $this->buildResolver()->resolve([['type' => 'invoice_pdf']], $this->buildInvoice('1001'), [], locale: 'en');
+
+        self::assertSame($english, $set->attachments[0]->template);
+    }
+
     public function testReservationPdfTemplateReceivesTheWholeReservationGroup(): void
     {
         $this->registerTemplate('Buchungsbestaetigung', 'TEMPLATE_RESERVATION_PDF', 20);

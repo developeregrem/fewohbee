@@ -39,7 +39,7 @@ class GuestCheckInFormDataFactory
 
     /**
      * @param int          $companionCount number of fellow-traveller blocks on the form
-     * @param list<string> $salutations    the configured salutations the form offers
+     * @param array<string, string> $salutations wording => stored salutation, as the form offers them
      */
     public function create(GuestCheckIn $checkIn, int $companionCount, array $salutations, ?GuestCheckInConfig $config = null): GuestCheckInSubmission
     {
@@ -200,7 +200,7 @@ class GuestCheckInFormDataFactory
         return $submission;
     }
 
-    /** @param list<string> $salutations */
+    /** @param array<string, string> $salutations */
     private function fillGuest(GuestCheckInGuest $guest, Customer $customer, array $salutations): void
     {
         $guest->salutation = $this->salutationChoice((string) $customer->getSalutation(), $salutations);
@@ -256,15 +256,16 @@ class GuestCheckInFormDataFactory
     }
 
     /**
-     * Records keep the salutation in the installation's wording ("Frau"), the form offers the
-     * configured entries ("Ms"); map back, or leave it for the guest to choose.
+     * The form submits the stored salutations ("Frau"). A record may still hold a built-in key
+     * ("Ms", from bookings made through the API before), which maps to its wording; anything
+     * else is left for the guest to choose.
      *
-     * @param list<string> $salutations
+     * @param array<string, string> $salutations wording => stored salutation
      */
     private function salutationChoice(string $stored, array $salutations): ?string
     {
         foreach ($salutations as $choice) {
-            if ($choice === $stored || $this->translator->trans($choice, [], null, $this->installationLocale) === $stored) {
+            if ($choice === $stored || $this->translator->trans($stored, [], null, $this->installationLocale) === $choice) {
                 return $choice;
             }
         }

@@ -1,3 +1,7 @@
 <fieldset id="entry-form-fieldset-{{ category.id }}" {% if category.id != null %} disabled {% endif %}>
-    {{ form_widget(form) }}
+    {% import 'common/content_translations.html.twig' as contentTranslations %}
+    {{ form_errors(form) }}
+    {{ form_row(form.name) }}
+    {{ contentTranslations.inputs(form.translations, 'name') }}
+    {{ form_rest(form) }}
 </fieldset>

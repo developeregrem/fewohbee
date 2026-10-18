@@ -41,11 +41,32 @@ class Template
     private $correspondences;
 
     /**
+     * Language of a language variant (a guest locale such as "en"); null for a template in the
+     * installation language. A template is always rendered in its language (TemplatesService).
+     */
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $locale = null;
+
+    /**
+     * The template this one translates. Mails to a guest pick the variant in the guest's
+     * language (SendTemplateEmailAction); elsewhere a variant is an ordinary template.
+     */
+    #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'variants')]
+    #[ORM\JoinColumn(name: 'base_template_id', nullable: true)]
+    private ?Template $baseTemplate = null;
+
+    /** @var Collection<int, Template> */
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'baseTemplate')]
+    #[ORM\OrderBy(['locale' => \SortDirection::Ascending])]
+    private Collection $variants;
+
+    /**
      * Constructor.
      */
     public function __construct()
     {
         $this->correspondences = new ArrayCollection();
+        $this->variants = new ArrayCollection();
         $this->isDefault = false;
     }
 
@@ -245,5 +266,59 @@ class Template
         $this->paymentMeans = $paymentMeans;
 
         return $this;
+    }
+
+    public function getLocale(): ?string
+    {
+        return $this->locale;
+    }
+
+    public function setLocale(?string $locale): static
+    {
+        $this->locale = $locale;
+
+        return $this;
+    }
+
+    public function getBaseTemplate(): ?Template
+    {
+        return $this->baseTemplate;
+    }
+
+    public function setBaseTemplate(?Template $baseTemplate): static
+    {
+        $this->baseTemplate = $baseTemplate;
+
+        return $this;
+    }
+
+    /** @return Collection<int, Template> */
+    public function getVariants(): Collection
+    {
+        return $this->variants;
+    }
+
+    /** The variant of this template in $locale, or null when there is none. */
+    public function getVariant(string $locale): ?Template
+    {
+        return $this->variants->findFirst(static fn (int $key, Template $variant): bool => $variant->getLocale() === $locale);
+    }
+
+    /**
+     * The template to use for a guest speaking $locale: the variant in that language of this
+     * template (or of the template it translates), else this template itself.
+     */
+    public function variantFor(?string $locale): Template
+    {
+        if (null === $locale) {
+            return $this;
+        }
+
+        return ($this->baseTemplate ?? $this)->getVariant($locale) ?? $this;
+    }
+
+    public function isVariant(): bool
+    {
+        return null !== $this->baseTemplate;
     }
 }

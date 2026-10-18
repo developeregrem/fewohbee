@@ -21,10 +21,10 @@ final class GuestCheckInFormDataFactoryTest extends TestCase
     public function testReturningGuestFindsTheFormFilledFromTheRecords(): void
     {
         $reservation = $this->reservation();
-        $data = $this->factory()->create(new GuestCheckIn($reservation, 'selector'), 2, ['Ms', 'Mr']);
+        $data = $this->factory()->create(new GuestCheckIn($reservation, 'selector'), 2, ['Ms' => 'Frau', 'Mr' => 'Herr']);
 
         $guest = $data->mainGuest;
-        self::assertSame('Ms', $guest->salutation, 'Stored "Frau" maps back to the configured entry.');
+        self::assertSame('Frau', $guest->salutation, 'The form submits the stored salutation.');
         self::assertSame('Anna', $guest->firstname);
         self::assertSame('1980-05-01', $guest->birthday?->format('Y-m-d'));
         self::assertSame('AT', $guest->nationality);
@@ -37,9 +37,19 @@ final class GuestCheckInFormDataFactoryTest extends TestCase
 
         self::assertCount(2, $data->companions);
         self::assertSame('Max', $data->companions[0]->firstname);
-        self::assertSame('Mr', $data->companions[0]->salutation);
+        self::assertSame('Herr', $data->companions[0]->salutation);
         self::assertSame('Graz', $data->companions[0]->city, 'A different address on file is the companion\'s own.');
         self::assertTrue($data->companions[1]->isEmpty());
+    }
+
+    public function testABuiltInKeyOnFileMapsToTheStoredSalutation(): void
+    {
+        $reservation = $this->reservation();
+        $reservation->getBooker()?->setSalutation('Ms');
+
+        $data = $this->factory()->create(new GuestCheckIn($reservation, 'selector'), 0, ['Ms' => 'Frau', 'Mr' => 'Herr']);
+
+        self::assertSame('Frau', $data->mainGuest->salutation);
     }
 
     public function testContactDetailsOrACountryAloneAreNoOwnAddress(): void
@@ -53,7 +63,7 @@ final class GuestCheckInFormDataFactoryTest extends TestCase
         $companion->addCustomerAddress((new CustomerAddresses())->setType('CUSTOMER_ADDRESS_TYPE_BUSINESS')
             ->setCountry('KZ')->setEmail('max@example.com'));
 
-        $data = $this->factory()->create(new GuestCheckIn($reservation, 'selector'), 1, ['Ms', 'Mr']);
+        $data = $this->factory()->create(new GuestCheckIn($reservation, 'selector'), 1, ['Ms' => 'Frau', 'Mr' => 'Herr']);
 
         self::assertFalse($data->companions[0]->hasOwnAddress(), 'Lives with the main guest; nothing to complete.');
         self::assertNull($data->companions[0]->country);
@@ -64,7 +74,7 @@ final class GuestCheckInFormDataFactoryTest extends TestCase
         $checkIn = new GuestCheckIn($this->reservation(), 'selector');
         $checkIn->recordSubmission(['v' => 1, 'arrivalTime' => '20:00', 'mainGuest' => ['firstname' => 'Annemarie', 'idNumber' => 'P7654321']], new \DateTimeImmutable());
 
-        $data = $this->factory()->create($checkIn, 1, ['Ms']);
+        $data = $this->factory()->create($checkIn, 1, ['Ms' => 'Frau']);
 
         self::assertSame('Annemarie', $data->mainGuest->firstname);
         self::assertSame('20:00', $data->arrivalTime);
@@ -79,7 +89,7 @@ final class GuestCheckInFormDataFactoryTest extends TestCase
         self::assertInstanceOf(Customer::class, $booker);
         $reservation->removeCustomer($booker);
 
-        $data = $this->factory()->create(new GuestCheckIn($reservation, 'selector'), 0, ['Ms']);
+        $data = $this->factory()->create(new GuestCheckIn($reservation, 'selector'), 0, ['Ms' => 'Frau']);
 
         self::assertSame('Max', $data->mainGuest->firstname);
         self::assertNull($this->factory()->storedIdNumberHint(new GuestCheckIn($reservation, 'selector')));
@@ -114,7 +124,7 @@ final class GuestCheckInFormDataFactoryTest extends TestCase
             ->setIdDocumentMode(GuestCheckInFieldMode::HIDDEN)
             ->setContactMode(GuestCheckInFieldMode::HIDDEN)
             ->setCompanionsMode(GuestCheckInFieldMode::HIDDEN);
-        $data = $this->factory()->create(new GuestCheckIn($this->reservation(), 'selector'), 1, ['Ms'], $config);
+        $data = $this->factory()->create(new GuestCheckIn($this->reservation(), 'selector'), 1, ['Ms' => 'Frau'], $config);
 
         self::assertSame('Anna', $data->mainGuest->firstname);
         self::assertNull($data->mainGuest->birthday);

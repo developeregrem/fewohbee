@@ -106,6 +106,9 @@ online_booking:
     section_embed_desc: "So kann die Onlinebuchung per Link oder iFrame auf einer Website eingebunden werden."
     embed_url_label: "Direkte Embed-URL"
     embed_iframe_label: "iFrame-Code"
+    embed_language_label: "Sprache"
+    embed_language_help: "Die eingebettete Buchung hat keine eigene Sprachauswahl. Deine Website legt die Sprache fest, indem sie an die Adresse im iFrame (src) den Parameter lang anhängt. Ohne Parameter erscheint die Buchung auf %language%. Erlaubte Werte:"
+    embed_language_example: "Beispiel:"
     payment_terms: "Zahlungsbedingungen"
     cancellation_terms: "Stornierungsbedingungen / AGB"
     success_message_text: "Zusätzlicher Erfolgstext"
@@ -135,6 +138,8 @@ online_booking:
     form_invalid_title: "Speichern nicht möglich"
     form_invalid_hint: "Beim Aktivieren der Onlinebuchung müssen Anfrage-Status, Buchungs-Status und Reservierungsherkunft gesetzt sein."
   public:
+    language: "Sprache"
+    room_fallback: "Zimmer"
     page_title: "Online-Buchung"
     page_title_inquiry: "Online-Anfrage"
     group_label: "Gruppe:"

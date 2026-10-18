@@ -33,7 +33,7 @@
           data-url="{{ isNew|default(false) ? path('settings.templates.create') : path('settings.templates.edit', {'id': template.id}) }}"
           data-success-url="{{ isNew|default(false) ? path('settings.templates.overview') : path('settings.templates.edit.page', {'id': template.id}) }}"
           data-templates-upload-url="{{ path('templates.upload') }}"
-          data-templates-snippets-url="{{ path('settings.templates.preview.snippets', {'id': 'placeholder'}) }}"
+          data-templates-snippets-url="{{ path('settings.templates.preview.snippets', {'id': 'placeholder'} + (template.locale ? {'locale': template.locale} : {})) }}"
           data-templates-schema-url="{{ path('settings.templates.schema', {'id': 'placeholder'}) }}"
           data-templates-preview-render-url="{{ isNew|default(false) ? '' : path('settings.templates.preview.render', {'id': template.id}) }}"
           data-templates-preview-pdf-url="{{ isNew|default(false) ? '' : path('settings.templates.preview.pdf', {'id': template.id}) }}"
@@ -48,15 +48,25 @@
             <div class="card-body py-2 px-3">
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <input type="text" class="form-control form-control-sm" style="max-width:300px" name="name-{{ template.id }}" id="name-{{ template.id }}" value="{{ template.name }}" required placeholder="{{ 'templates.name'|trans }}">
-                    <select name="type-{{ template.id }}" class="form-select form-select-sm w-auto pe-5" id="template-type" data-action="change->template-editor#onTemplateTypeChange">
+                    {% if template.isVariant() %}
+                        {# A variant keeps the type of the template it translates (TemplatesService). #}
+                        <span class="badge text-bg-info" title="{{ 'templates.variant.of'|trans({'%name%': template.baseTemplate.name}) }}">
+                            <i class="fas fa-language me-1" aria-hidden="true"></i>{{ language_name(template.locale, false) }}
+                        </span>
+                    {% endif %}
+                    <select name="type-{{ template.id }}" class="form-select form-select-sm w-auto pe-5" id="template-type" data-action="change->template-editor#onTemplateTypeChange"{% if template.isVariant() %} disabled{% endif %}>
                         {% for type in types %}
                             <option value="{{ type.id }}" data-template-type-name="{{ type.name }}"{% if template.templateType and template.templateType.id == type.id %} selected{% endif %}>{{ type.name|trans }}</option>
                         {% endfor %}
                     </select>
+                    {% if template.isVariant() %}
+                        <input type="hidden" name="type-{{ template.id }}" value="{{ template.templateType.id }}">
+                    {% else %}
                     <div class="form-check form-switch form-check-inline m-0">
                         <input type="checkbox" class="form-check-input" name="default-{{ template.id }}" id="default-{{ template.id }}" {% if template.isDefault %}checked{% endif %}>
                         <label for="default-{{ template.id }}" class="form-check-label small">{{ 'templates.default'|trans }}</label>
                     </div>
+                    {% endif %}
                     <div class="form-check form-switch form-check-inline m-0 ms-2">
                     <input type="checkbox" class="form-check-input" name="hidden-{{ template.id }}" id="hidden-{{ template.id }}" data-template-editor-target="hiddenSwitch" data-action="change->template-editor#updatePaymentMeansVisibility" {% if not isNew|default(false) and template.isHidden %}checked{% endif %}>
                     <label for="hidden-{{ template.id }}" class="form-check-label small" data-bs-toggle="tooltip" title="{{ 'templates.hidden.tooltip'|trans }}">{{ 'templates.hidden'|trans }}</label>
@@ -71,7 +81,9 @@
                         <button type="submit" class="btn btn-primary btn-sm">{{ 'button.save'|trans }}</button>
                     </div>
                 </div>
-                {# Own row like the subject of mail templates: in the bar above it pushed the buttons onto a second line #}
+                {# Own row like the subject of mail templates: in the bar above it pushed the buttons onto a second line.
+                   A language variant follows the binding of the template it translates. #}
+                {% if not template.isVariant() %}
                 <div class="mt-3 d-none" data-template-editor-target="paymentMeansField">
                     {# The help icon sits outside the label: on touch screens a tap on a label focuses the select instead #}
                     <div class="mb-1">
@@ -87,6 +99,7 @@
                         {% endfor %}
                     </select>
                 </div>
+                {% endif %}
                 <div class="mt-3 d-none" data-template-editor-target="subjectRow">
                     <label for="subject-{{ template.id }}" class="form-label small mb-1">{{ 'templates.subject'|trans }}</label>
                     <div class="input-group input-group-sm" style="max-width:600px" data-template-editor-target="subjectInputGroup">

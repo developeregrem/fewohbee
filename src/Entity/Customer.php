@@ -47,6 +47,13 @@ class Customer
     #[ORM\Column(length: 2, nullable: true)]
     private ?string $nationality = null;
 
+    /**
+     * Language for mails to this guest, a guest locale such as "en"; null means the installation
+     * language. Taken from the language of an online booking or check-in, editable in the backend.
+     */
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $locale = null;
+
     public function __construct()
     {
         $this->reservations = new ArrayCollection();
@@ -251,5 +258,16 @@ class Customer
     {
         $nationality = null === $nationality ? '' : strtoupper(trim($nationality));
         $this->nationality = '' === $nationality ? null : $nationality;
+    }
+
+    public function getLocale(): ?string
+    {
+        return $this->locale;
+    }
+
+    public function setLocale(?string $locale): void
+    {
+        $locale = null === $locale ? '' : trim($locale);
+        $this->locale = '' === $locale ? null : $locale;
     }
 }

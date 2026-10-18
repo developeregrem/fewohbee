@@ -29,6 +29,7 @@ use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 use Twig\Error\Error as TwigError;
@@ -84,7 +85,8 @@ class TemplatesService
         private MpdfService $mpdfs,
         private TranslatorInterface $translator,
         private TemplateRenderParamsResolver $renderParamsResolver,
-        private readonly FilesystemOperator $exportStorage
+        private readonly FilesystemOperator $exportStorage,
+        private readonly ?LocaleSwitcher $localeSwitcher = null,
     ) {
     }
 
@@ -106,13 +108,15 @@ class TemplatesService
         if (!$type instanceof TemplateType) {
             // throw ""
         }
+        // A language variant keeps the type of the template it translates.
+        $type = $template->getBaseTemplate()?->getTemplateType() ?? $type;
         $template->setTemplateType($type);
         $template->setName(trim($request->request->get('name-'.$id)));
         $subject = trim((string) $request->request->get('subject-'.$id));
         $template->setSubject('' !== $subject ? $subject : null);
         $template->setText($request->request->get('text-'.$id));
         $template->setParams($this->buildTemplateParamsFromRequest($request, (string) $id));
-        if ($request->request->has('default-'.$id)) {
+        if ($request->request->has('default-'.$id) && !$template->isVariant()) {
             $template->setIsDefault(true);
         } else {
             $template->setIsDefault(false);
@@ -121,12 +125,62 @@ class TemplatesService
         $paymentMeans = (string) $request->request->get('paymentMeans-'.$id, '');
         // Only invoice templates can be bound; embedded ones are never picked, so they are not either.
         $template->setPaymentMeans(
-            'TEMPLATE_INVOICE_PDF' === $type?->getName() && !$template->isHidden() && '' !== $paymentMeans
+            'TEMPLATE_INVOICE_PDF' === $type?->getName() && !$template->isHidden() && !$template->isVariant() && '' !== $paymentMeans
                 ? PaymentMeansCode::tryFrom((int) $paymentMeans)
                 : null
         );
 
         return $template;
+    }
+
+    /**
+     * New language variant of a template: a copy of its text in $locale, to be translated by the
+     * operator. Never the default and never bound to a payment means; the template it
+     * translates stays in charge of both.
+     */
+    public function createVariant(Template $template, string $locale, string $name): Template
+    {
+        if ($template->isVariant() || null !== $template->getVariant($locale)) {
+            throw new \InvalidArgumentException('Only one variant per language of a template of its own.');
+        }
+
+        $variant = new Template();
+        $variant->setName(mb_substr($name, 0, 100))
+            ->setSubject($template->getSubject())
+            ->setText((string) $template->getText())
+            ->setTemplateType($template->getTemplateType())
+            ->setHidden($template->isHidden())
+            ->setLocale($locale)
+            ->setBaseTemplate($template);
+        if (null !== $template->getParams()) {
+            $variant->setParams($template->getParams());
+        }
+        $template->getVariants()->add($variant);
+
+        $this->em->persist($variant);
+        $this->em->flush();
+
+        return $variant;
+    }
+
+    /**
+     * Runs $render in the language of the template, so application texts (`|trans`), dates and
+     * operator texts (`|localized`) match the wording of a language variant.
+     *
+     * @template T
+     *
+     * @param callable(): T $render
+     *
+     * @return T
+     */
+    public function inTemplateLanguage(Template $template, callable $render): mixed
+    {
+        $locale = $template->getLocale();
+        if (null === $locale || null === $this->localeSwitcher) {
+            return $render();
+        }
+
+        return $this->localeSwitcher->runWithLocale($locale, $render);
     }
 
     /**
@@ -166,14 +220,16 @@ class TemplatesService
             throw new \InvalidArgumentException($this->translator->trans('templates.notfound'));
         }
 
-        $params = $this->renderParamsResolver->resolve($template, $param);
+        return $this->inTemplateLanguage($template, function () use ($template, $param): string {
+            $params = $this->renderParamsResolver->resolve($template, $param);
 
-        $hostTypeName = $template->getTemplateType()?->getName();
-        $text = $this->resolveTemplateIncludes($template->getText(), $hostTypeName);
-        $str = $this->replaceTwigSyntax($text);
-        $templateStr = $this->twig->createTemplate($str);
+            $hostTypeName = $template->getTemplateType()?->getName();
+            $text = $this->resolveTemplateIncludes($template->getText(), $hostTypeName);
+            $str = $this->replaceTwigSyntax($text);
+            $templateStr = $this->twig->createTemplate($str);
 
-        return $templateStr->render($params);
+            return $templateStr->render($params);
+        });
     }
 
     /**
@@ -217,9 +273,11 @@ class TemplatesService
             return (string) $template->getName();
         }
 
-        $params = $this->renderParamsResolver->resolve($template, $param);
+        return $this->inTemplateLanguage($template, function () use ($template, $param, $subject): string {
+            $params = $this->renderParamsResolver->resolve($template, $param);
 
-        return $this->renderSubjectString($subject, $params);
+            return $this->renderSubjectString($subject, $params);
+        });
     }
 
     /**

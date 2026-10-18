@@ -208,6 +208,14 @@ class OnlineBookingConfigType extends AbstractType
                     'placeholder' => ".fhb-booking-root {\n    font-family: 'Georgia', serif;\n}",
                 ],
             ])
+            ->add('translations', ContentTranslationsType::class, [
+                'fields' => [
+                    'commentPlaceholder' => ['max_length' => 255],
+                    'paymentTerms' => ['type' => TextareaType::class, 'options' => ['attr' => ['rows' => 8]]],
+                    'cancellationTerms' => ['type' => TextareaType::class, 'options' => ['attr' => ['rows' => 8]]],
+                    'successMessageText' => ['type' => TextareaType::class, 'options' => ['attr' => ['rows' => 6]]],
+                ],
+            ])
         ;
 
         // Reflect the stored state in the checkbox. POST_SET_DATA, because only then is

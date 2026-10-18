@@ -106,6 +106,9 @@ online_booking:
     section_embed_desc: "Use the following link or iframe snippet to embed online booking on a website."
     embed_url_label: "Direct embed URL"
     embed_iframe_label: "iFrame code"
+    embed_language_label: "Language"
+    embed_language_help: "The embedded booking has no language choice of its own. Your website sets the language by adding the parameter lang to the address in the iframe (src). Without the parameter, the booking appears in %language%. Allowed values:"
+    embed_language_example: "Example:"
     payment_terms: "Payment terms"
     cancellation_terms: "Cancellation terms / terms and conditions"
     success_message_text: "Additional success text"
@@ -135,6 +138,8 @@ online_booking:
     form_invalid_title: "Cannot save settings"
     form_invalid_hint: "When enabling online booking, you must set an inquiry status, booking status, and reservation origin."
   public:
+    language: "Language"
+    room_fallback: "Room"
     page_title: "Online Booking"
     page_title_inquiry: "Online Inquiry"
     group_label: "Group:"

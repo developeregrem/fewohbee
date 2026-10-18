@@ -33,7 +33,9 @@ class GuestCheckInGuestType extends AbstractType
             // form of address is not on the list.
             ->add('salutation', ChoiceType::class, [
                 'label' => 'guest_checkin.public.field.salutation_optional',
-                'choices' => array_combine($options['salutations'], $options['salutations']),
+                // Wording in the guest's language => stored salutation (GuestSalutations).
+                'choices' => $options['salutations'],
+                'choice_translation_domain' => false,
                 'placeholder' => '',
                 'required' => false,
                 'attr' => ['autocomplete' => 'honorific-prefix'],

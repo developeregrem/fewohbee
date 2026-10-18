@@ -294,7 +294,7 @@ final class PublicBookingControllerTest extends WebTestCase
             'dateTo' => $dateFrom->modify('+2 days')->format('Y-m-d'),
             'persons' => 1,
             'roomsCount' => 1,
-        ]);
+        ], server: ['HTTP_ACCEPT_LANGUAGE' => 'de-DE']);
 
         self::assertResponseIsSuccessful();
         $content = (string) $client->getResponse()->getContent();

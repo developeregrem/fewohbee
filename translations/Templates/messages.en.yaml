@@ -163,6 +163,13 @@ templates.editor.zip: Zip code
 templates.flash.create.success: Template is successfully created.
 templates.flash.delete.inuse.reservations: Template cannot be deleted because it is used in existing reservations.
 templates.flash.delete.success: Template successfully deleted.
+templates.flash.delete.has_variants: "The template has language variants. Delete the language variants first."
+templates.flash.variant.created: "Language variant created. Now translate the text and the subject."
+templates.flash.variant.invalid: "No language variant can be created for this language."
+templates.variant.add: "Add language variant"
+templates.variant.badge: "Language variant"
+templates.variant.of: "Language variant of “%name%”. Automatic mails to guests in this language use it instead of the template."
+templates.variant.delete_hint: "Delete the language variants of this template first."
 templates.flash.edit.success: Template successfully updated.
 templates.name: Name
 templates.notfound: No template could be found. Please ensure a template exists for the selected action.
