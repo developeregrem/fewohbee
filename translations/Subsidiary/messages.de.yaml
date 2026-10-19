@@ -4,7 +4,7 @@ object.check_in.from: 'Check-in ab'
 object.check_in.help: 'Hausregeln für An- und Abreise. Sie können mit dem Baustein „Check-in-Zeiten des Betriebs“ in Brief- und E-Mail-Vorlagen eingefügt und über die REST-API abgerufen werden. Leer lassen, wenn nichts veröffentlicht wird.'
 object.check_in.until: 'Check-in bis'
 object.check_in.value.from: 'Check-in ab %from% Uhr'
-object.check_in.value.window: 'Check-in %from%–%until% Uhr'
+object.check_in.value.window: 'Check-in %from% - %until% Uhr'
 object.check_in.window: Check-in
 object.check_in.window.help: 'Das zweite Feld ist die Obergrenze. Leer lassen, wenn die Anreise auch später möglich ist. Eine Endzeit vor der Startzeit bedeutet über Mitternacht hinaus, z. B. 17:00–02:00.'
 object.check_in_note: 'Hinweis zum Check-in'
@@ -29,7 +29,7 @@ object.opening_hours: Öffnungszeiten
 object.opening_hours.from: von
 object.opening_hours.help: 'Leer lassen bedeutet geschlossen. Die Zeiten lassen sich in Vorlagen für Briefe und E-Mails über den Baustein „Öffnungszeiten der Niederlassung" einfügen und über die REST-API abrufen.'
 object.opening_hours_note: 'Hinweis zu den Öffnungszeiten'
-object.opening_hours_note.help: 'Freier Text, der zusammen mit den Zeiten ausgegeben wird — für alles, was ein Wochenraster nicht abbildet.'
+object.opening_hours_note.help: 'Freier Text, der zusammen mit den Zeiten ausgegeben wird - für alles, was ein Wochenraster nicht abbildet.'
 object.opening_hours_note.placeholder: 'z. B. Außerhalb dieser Zeiten nach Vereinbarung, Tel. 0123 456'
 object.opening_hours.period.1: 'Zeitraum 1'
 object.opening_hours.period.2: 'Zeitraum 2'
