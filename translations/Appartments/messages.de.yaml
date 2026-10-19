@@ -1,0 +1,153 @@
+apartment:
+  multiple:
+    occupancy:
+      hint: 'Gäste aus unterschiedlichen Buchungen können sich das Zimmer im selben Zeitraum teilen. Pro Buchung gilt nur die gebuchte Personenzahl als belegt, freie Betten bleiben für weitere Buchungen verfügbar.'
+      text: 'Parallele Buchungen erlauben'
+appartment:
+  active: Aktiv
+  active.hint: 'Inaktive Zimmer werden bei Reservierungen, Online-Buchung und Kalendersynchronisierung nicht angezeigt.'
+  active.yes: Aktiv
+  active.no: Inaktiv
+  action: Aktion
+  bedsmax: 'max. Personen'
+  bedsmin: 'normale Belegung'
+  category: Zimmerkategorie
+  delete:
+    ask: 'Dieses Zimmer wirklich löschen?'
+  description: Beschreibung
+  flash:
+    create:
+      success: 'Zimmer wurde erfolgreich angelegt.'
+    delete:
+      error:
+        still:
+          in:
+            use: 'Zimmer kann nicht gelöscht werden da es bereits reserviert wurde.'
+      success: 'Zimmer wurde erfolgreich gelöscht.'
+    edit:
+      success: 'Zimmer wurde erfolgreich bearbeitet.'
+  number: Zimmernummer
+  number.short: Nr.
+  object: Niederlassung
+calendar:
+  sync:
+    export:
+      tab: Export
+      access:
+        last: 'Zuletzt abgerufen'
+        never: 'Noch nicht abgerufen'
+        public:
+          hint: 'Erlaube anderen Anwendungen den Zugriff ohne Anmeldung.'
+          label: 'Kalender öffentlich freigeben'
+        title: 'Kalender abonnieren'
+        url:
+          hint: 'Zum Abonnieren in deiner Kalender-App oder deinem Buchungsportal.'
+          title: 'Öffentliche Kalenderadresse'
+        private_url:
+          hint: 'Funktioniert auch ohne öffentliche Freigabe. Verwende deinen Benutzernamen und ein API-Token mit der Berechtigung „Kalender lesen“ als Passwort. Das Token erstellst du in deinem Profil.'
+          title: 'Private Kalenderadresse'
+      hint: 'Teile die Belegung dieses Zimmers mit Kalender-Apps oder Buchungsportalen über iCal.'
+      option:
+        period:
+          label: Zeitraum
+          hint: 'Gilt für Reservierungen und Zimmersperren. Aktuelle Einträge schließen heutige Abreisen ein.'
+          current_future: 'Aktuelle und zukünftige Einträge'
+          all: 'Gesamter Kalender'
+        guestname:
+          hint: 'Der Titel des exportierten Kalendereintrages enthält den Namen des Gastes.'
+          label: 'Name des Gastes exportieren'
+        times:
+          label: 'An- und Abreisezeit exportieren'
+          hint: 'Übernimmt hinterlegte An- und Abreisezeiten. Eine fehlende Uhrzeit wird nur im Export durch 00:00 Uhr ergänzt; ohne Uhrzeiten bleibt der Eintrag ganztägig. Lass die Option für Portale ausgeschaltet, wenn sie ganztägige Einträge erwarten.'
+        status:
+          label: Reservierungsstatus
+          hint: 'Nur Reservierungen des angegebenen Status werden exportiert.'
+        title: Exportoptionen
+    import:
+      tab: Import
+      hint: 'Externe iCal-Kalender importieren, die dieses Zimmer belegen.'
+      list:
+        title: 'Vorhandene Importe'
+        empty: 'Noch keine Importe konfiguriert.'
+      create:
+        title: 'Import hinzufügen'
+        button: 'Import hinzufügen'
+      name:
+        label: Bezeichnung
+        hint: 'Anzeigename im Belegungsplan.'
+      url:
+        label: 'URL des Kalenders'
+        hint: 'Sie können einen Kalender im iCal-Format über dessen Adresse hinzufügen.'
+      active:
+        label: aktiv
+        hint: 'Aktiviert/Deaktiviert diesen Import.'
+      conflict:
+        label: Konfliktbehandlung
+        hint: 'Wie sollen Überschneidungen behandelt werden?'
+        option:
+          skip: 'Eintrag bei Konflikt überspringen'
+          overwrite: 'Bestehende Reservierung überschreiben'
+          mark: 'Importieren und als Konflikt markieren'
+      origin:
+        label: Herkunft
+        hint: 'Herkunft für importierte Reservierungen.'
+      status:
+        label: Standardstatus
+        hint: 'Status für importierte Reservierungen.'
+      last_sync:
+        label: 'letzte Synchronisierung'
+      last_error:
+        label: 'letzter Fehler'
+      delete:
+        confirm: 'Diesen Import wirklich löschen?'
+        title: 'Import löschen'
+        hint: 'Diese Import-Konfiguration wird dauerhaft gelöscht.'
+      actions:
+        label: Aktionen
+      edit:
+        title: 'Import bearbeiten'
+      flash:
+        create:
+          success: 'Import wurde angelegt.'
+        edit:
+          success: 'Import wurde aktualisiert.'
+        delete:
+          success: 'Import wurde gelöscht. Importierte Reservierungen wurden nicht gelöscht.'
+      preview:
+        title: 'Kalender vor dem Import prüfen'
+        hint: 'Portale übertragen manchmal neben Buchungen auch eigene Sperr- oder Regelzeiten. Hier lässt sich prüfen, welche Einträge wirklich Buchungen sind.'
+        share:
+          label: 'Für alle Kalenderimporte dieses Portals dieselben Regeln verwenden'
+          hint: 'Wenn aktiviert, übernimmt dieser Kalenderimport bereits vorhandene Regeln dazu, welche Einträge als Buchungen gelten – auch ohne vorherige Kalenderprüfung. Änderungen werden mit bestehenden und später eingerichteten Kalenderimporten desselben Portals geteilt, bei denen diese Option ebenfalls aktiviert ist.'
+        button: 'Kalender prüfen'
+        loading: 'Kalender wird geprüft'
+        configured: 'Gespeicherte Ausschlussregeln: %count%. Nach einer erneuten Kalenderprüfung lassen sie sich mit den aktuellen Einträgen abgleichen.'
+        question: 'Welche Einträge sollen als Buchung übernommen werden?'
+        labels_hint: 'Die angezeigten Bezeichnungen kommen direkt vom Portal. Bei Sperrzeiten oder anderen Einträgen, die keine echte Buchung sind, entfernt man den Haken.'
+        labels_explanation: 'Das Portal gibt jedem Kalender-Eintrag eine Bezeichnung, z. B. „Reserved“ oder „Not available“. FewohBee fasst gleiche Bezeichnungen zusammen. Datum und Anzahl erleichtern die Zuordnung.'
+        default_safety: 'Alle Einträge sind zunächst aktiviert. So wird eine echte Buchung nicht versehentlich übergangen.'
+        count_title: 'Gefundene Zeiträume'
+        similar:
+          title: 'Auch ähnliche Bezeichnungen ausschließen'
+          hint: 'Falls ein Portal die Bezeichnung leicht verändert, kann ein gemeinsamer Textteil eingetragen werden.'
+          placeholder: 'z. B. Not available'
+          add: Hinzufügen
+          remove: 'Regel entfernen'
+        existing_hint: 'Bereits importierte Reservierungen werden nicht automatisch verändert oder gelöscht.'
+        empty_summary: 'Ohne Bezeichnung'
+        error:
+          generic: 'Der Kalender konnte nicht geprüft werden. Die Prüfung muss erneut gestartet werden.'
+          invalid_request: 'Die Anfrage ist abgelaufen. Das Fenster muss erneut geöffnet werden.'
+          invalid_url: 'Zuerst muss eine gültige Kalenderadresse eingetragen werden.'
+        result:
+          empty: 'Der Kalender ist erreichbar, enthält aber keine aktuellen oder zukünftigen Einträge.'
+          success: 'Kalender geprüft: %count% aktuelle oder zukünftige Zeiträume gefunden.'
+          success_with_skipped: 'Kalender geprüft: %count% aktuelle oder zukünftige Zeiträume gefunden; %skipped% unlesbare Einträge wurden ausgelassen.'
+      error:
+        http_status: 'Der Kalender liefert eine ungültige Antwort.'
+        unreachable: 'Die Kalender-URL ist nicht erreichbar.'
+        too_large: 'Der Kalender ist größer als 2 MB.'
+        invalid_ical: 'Der Kalender ist kein gültiges iCal-Format.'
+        skipped:
+          summary: 'Übersprungene Einträge: fehlende Pflichtfelder (%missing%), Konflikte (%conflict%).'
+    title: 'Kalender synchronisieren'

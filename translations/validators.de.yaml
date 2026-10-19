@@ -1,0 +1,41 @@
+calendar:
+  form:
+    ics_file_invalid: 'Bitte eine gültige ICS-Datei (.ics) hochladen.'
+form:
+  email:
+    notblank: 'Bitte geben Sie ihre E-Mail Adresse ein.'
+    invalid: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.'
+  password:
+    min: 'Das Passwort muss mindestes aus {{ limit }} Zeichen bestehen.'
+    nomatch: 'Die Passwörter stimmen nicht überein.'
+    notblank: 'Bitte geben Sie ein Passwort ein.'
+  username:
+    na: 'Der angegebene Anmeldename {{ string }} wird bereits verwendet.'
+  vatid:
+    invalid_country: 'Die USt-IdNr. muss mit einem gültigen Ländercode beginnen.'
+invoice_number_pattern:
+  missing_number: 'Das Muster braucht einen <number>-Platzhalter, sonst bekäme jede Rechnung dieselbe Nummer.'
+  duplicate_number: 'Das Muster darf nur einen <number>-Platzhalter enthalten.'
+  unknown_placeholder: 'Unbekannter Platzhalter %placeholder%. Erlaubt sind <year>, <year2>, <month>, <day> und <number>.'
+  invalid_width: 'Die Stellenzahl der laufenden Nummer muss zwischen 1 und %max% liegen.'
+  width_not_allowed: 'Der Platzhalter %placeholder% hat eine feste Länge und akzeptiert keine Stellenangabe.'
+  month_without_year: 'Ohne Jahresangabe beginnt die Nummerierung jeden Monat von vorn und wiederholt sich in den Folgejahren.'
+  too_long: 'Die erzeugte Rechnungsnummer darf höchstens %max% Zeichen lang sein.'
+  empty: 'Bitte ein Muster angeben.'
+guest_checkin:
+  id_number_invalid: 'Bitte geben Sie die Ausweisnummer ohne Sonderzeichen an (4 bis 30 Zeichen).'
+  zip_invalid: 'Bitte geben Sie eine gültige Postleitzahl an.'
+  phone_invalid: 'Bitte geben Sie eine gültige Telefonnummer an.'
+  companion_address_incomplete: 'Bitte vervollständigen Sie die Anschrift oder leeren Sie alle Anschriftsfelder, wenn diese Person beim Hauptgast wohnt.'
+  companion_field_missing: 'Bitte ausfüllen.'
+  public_address_missing: 'Bitte hinterlege zuerst die öffentliche Adresse in den allgemeinen Einstellungen, aus ihr entstehen die Links für Gäste.'
+public_base_url:
+  invalid: 'Bitte gib eine vollständige Webadresse mit https:// an (ohne ? oder #).'
+accounting:
+  bank_import:
+    upload:
+      file:
+        invalid_type: 'Bitte eine gültige Datei (.csv, .xls, .xlsx, .xml) hochladen.'
+    rules:
+      validation:
+        regex_invalid: 'Das ist kein gültiger regulärer Ausdruck.'

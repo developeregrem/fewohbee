@@ -4,21 +4,29 @@ declare(strict_types=1);
 
 namespace App\Service\OnlineBooking;
 
+use App\Dto\TouristTaxBreakdown;
 use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\GuestCategory;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Entity\RoomCategory;
+use App\Entity\TouristTax;
 use App\Event\OnlineBookingCreatedEvent;
 use App\Exception\PublicBookingException;
 use App\Repository\AppartmentRepository;
 use App\Repository\CustomerRepository;
 use App\Repository\GuestCategoryRepository;
+use App\Service\Localization\ContentTranslator;
+use App\Service\Localization\GuestSalutations;
 use App\Service\Pricing\PricePromiseService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -34,6 +42,11 @@ class PublicBookingService
         private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
         private readonly ?TouristTaxService $touristTaxService = null,
         private readonly ?PricePromiseService $pricePromises = null,
+        private readonly ?ContentTranslator $contentTranslator = null,
+        private readonly ?LocaleSwitcher $localeSwitcher = null,
+        #[Autowire('%kernel.default_locale%')]
+        private readonly ?string $installationLocale = null,
+        private readonly ?GuestSalutations $salutations = null,
     ) {
     }
 
@@ -108,7 +121,7 @@ class PublicBookingService
             'extrasTotalFormatted' => $extrasResult['extrasTotalFormatted'],
             'extrasBreakdown' => $extrasResult['extrasBreakdown'],
             'grandTotal' => $grandTotal,
-            'grandTotalFormatted' => PublicPricingService::formatAmount($grandTotal),
+            'grandTotalFormatted' => $this->money($grandTotal),
         ];
     }
 
@@ -210,7 +223,14 @@ class PublicBookingService
         }
         $this->em->flush();
 
-        $this->eventDispatcher->dispatch(new OnlineBookingCreatedEvent($reservations, $customer));
+        // Workflows answer in the installation language (notification to the host, logs); a guest
+        // mail switches to the guest's language itself. The page goes on in the guest's language.
+        $event = new OnlineBookingCreatedEvent($reservations, $customer);
+        if (null !== $this->localeSwitcher && null !== $this->installationLocale) {
+            $this->localeSwitcher->runWithLocale($this->installationLocale, fn () => $this->eventDispatcher->dispatch($event));
+        } else {
+            $this->eventDispatcher->dispatch($event);
+        }
 
         return [
             'reservations' => $reservations,
@@ -225,7 +245,7 @@ class PublicBookingService
             'extrasTotal' => $extrasResult['extrasTotal'],
             'extrasTotalFormatted' => $extrasResult['extrasTotalFormatted'],
             'grandTotal' => $grandTotal,
-            'grandTotalFormatted' => PublicPricingService::formatAmount($grandTotal),
+            'grandTotalFormatted' => $this->money($grandTotal),
         ];
     }
 
@@ -688,7 +708,7 @@ class PublicBookingService
                     $lineKey = $this->touristTaxPreviewLineKey($row);
                     if (!isset($touristTaxLines[$lineKey])) {
                         $touristTaxLines[$lineKey] = [
-                            'label' => $row->taxName.(strlen($row->categoryName) > 0 ? ' — '.$row->categoryName : ''),
+                            'label' => $this->touristTaxLabel($row),
                             'total' => 0.0,
                         ];
                     }
@@ -697,30 +717,30 @@ class PublicBookingService
             }
         }
 
-        $formattedBreakdown = array_map(static function (array $row): array {
-            $row['totalFormatted'] = PublicPricingService::formatAmount((float) $row['total']);
+        $formattedBreakdown = array_map(function (array $row): array {
+            $row['totalFormatted'] = $this->money((float) $row['total']);
 
             return $row;
         }, array_values($breakdown));
-        $formattedTouristTaxLines = array_map(static function (array $row): array {
-            $row['totalFormatted'] = PublicPricingService::formatAmount((float) $row['total']);
+        $formattedTouristTaxLines = array_map(function (array $row): array {
+            $row['totalFormatted'] = $this->money((float) $row['total']);
 
             return $row;
         }, array_values($touristTaxLines));
-        $formattedModifierLines = array_map(static function (array $row): array {
-            $row['totalFormatted'] = PublicPricingService::formatAmount((float) $row['total']);
+        $formattedModifierLines = array_map(function (array $row): array {
+            $row['totalFormatted'] = $this->money((float) $row['total']);
 
             return $row;
         }, array_values($modifierLines));
 
         return [
             'roomTotal' => $apartmentTotal,
-            'roomTotalFormatted' => PublicPricingService::formatAmount($apartmentTotal),
+            'roomTotalFormatted' => $this->money($apartmentTotal),
             'roomPriceBreakdown' => $formattedBreakdown,
             'modifierTotal' => $modifierTotal,
             'modifierBreakdown' => $formattedModifierLines,
             'touristTaxTotal' => $touristTaxTotal,
-            'touristTaxTotalFormatted' => PublicPricingService::formatAmount($touristTaxTotal),
+            'touristTaxTotalFormatted' => $this->money($touristTaxTotal),
             'touristTaxLines' => $formattedTouristTaxLines,
         ];
     }
@@ -738,17 +758,58 @@ class PublicBookingService
         ]);
     }
 
-    /** Build a readable room type label for price breakdown rows. */
+    /** Build a readable room type label for price breakdown rows, in the guest's language. */
     private function buildReservationTypeLabel(Reservation $reservation): string
     {
         $room = $reservation->getAppartment();
         $category = $room->getRoomCategory();
+        $categoryName = $this->categoryName($category);
 
-        if (null !== $category && null !== $category->getName() && '' !== trim($category->getName())) {
-            return trim($category->getName());
+        if (null !== $categoryName && '' !== trim($categoryName)) {
+            return trim($categoryName);
         }
 
-        return trim(sprintf('%s - %s', (string) $room->getNumber(), (string) $room->getDescription()));
+        $description = $this->contentTranslator?->text($room, 'description') ?? $room->getDescription();
+
+        return trim(sprintf('%s - %s', (string) $room->getNumber(), (string) $description));
+    }
+
+    /** Room category name as the guest reads it. */
+    private function categoryName(?RoomCategory $category): ?string
+    {
+        if (null === $category) {
+            return null;
+        }
+
+        return $this->contentTranslator?->text($category, 'name') ?? $category->getName();
+    }
+
+    /**
+     * Tourist tax line in the guest's language. The breakdown carries the stored names, since it
+     * also feeds invoices; the entities are already loaded, so the lookups hit the identity map.
+     */
+    private function touristTaxLabel(TouristTaxBreakdown $row): string
+    {
+        $taxName = $row->taxName;
+        $categoryName = $row->categoryName;
+        if (null !== $this->contentTranslator) {
+            $tax = $this->em->find(TouristTax::class, $row->taxId);
+            if ($tax instanceof TouristTax) {
+                $taxName = (string) $this->contentTranslator->text($tax, 'name');
+            }
+            $category = $row->categoryId > 0 ? $this->em->find(GuestCategory::class, $row->categoryId) : null;
+            if ($category instanceof GuestCategory) {
+                $categoryName = (string) $this->contentTranslator->text($category, 'name');
+            }
+        }
+
+        return $taxName.('' !== $categoryName ? ' — '.$categoryName : '');
+    }
+
+    /** Money in the language of the page. */
+    private function money(float $amount): string
+    {
+        return PublicPricingService::formatAmount($amount, $this->localeSwitcher?->getLocale());
     }
 
     /**
@@ -759,6 +820,8 @@ class PublicBookingService
     private function findOrCreateBookerCustomer(array $booker): Customer
     {
         $salutation = self::sanitize($booker['salutation'] ?? '', 100);
+        // Stored in the installation's wording, whichever language the guest booked in.
+        $salutation = $this->salutations?->normalize($salutation) ?? $salutation;
         $firstname = self::sanitize($booker['firstname'] ?? '', 100);
         $lastname = self::sanitize($booker['lastname'] ?? '', 100);
         $email = self::sanitize($booker['email'] ?? '', 180);
@@ -784,13 +847,22 @@ class PublicBookingService
         $customerRepository = $this->em->getRepository(Customer::class);
         $customer = $customerRepository->findOneByEmailCaseInsensitive($normalizedEmail);
 
+        // Mails to the guest follow the language the booking was made in; a language already
+        // stored on a known guest is curated data and stays.
+        $locale = $this->localeSwitcher?->getLocale();
+
         if ($customer instanceof Customer) {
             $this->updateExistingCustomerContact($customer, $booker, $normalizedEmail);
+            if (null === $customer->getLocale()) {
+                // Flushed together with the reservations.
+                $customer->setLocale($locale);
+            }
 
             return $customer;
         }
 
         $customer = new Customer();
+        $customer->setLocale($locale);
         $customer->setSalutation($salutation);
         $customer->setFirstname($firstname);
         $customer->setLastname($lastname);
@@ -817,7 +889,8 @@ class PublicBookingService
         $firstAddress = null;
 
         if ((null === $customer->getSalutation() || '' === trim((string) $customer->getSalutation())) && '' !== self::sanitize($booker['salutation'] ?? '', 100)) {
-            $customer->setSalutation(self::sanitize($booker['salutation'] ?? '', 100));
+            $given = self::sanitize($booker['salutation'] ?? '', 100);
+            $customer->setSalutation($this->salutations?->normalize($given) ?? $given);
             $updated = true;
         }
         if ((null === $customer->getFirstname() || '' === trim((string) $customer->getFirstname())) && '' !== self::sanitize($booker['firstname'] ?? '', 100)) {
@@ -950,7 +1023,7 @@ class PublicBookingService
             $category = $sampleRoom->getRoomCategory();
             $samples[] = [
                 'categoryId' => $category?->getId(),
-                'categoryName' => $category?->getName(),
+                'categoryName' => $this->categoryName($category),
                 'sampleRoom' => $sampleRoom,
             ];
         }
@@ -984,7 +1057,7 @@ class PublicBookingService
             if (!isset($buckets[$key])) {
                 $buckets[$key] = [
                     'categoryId' => $category?->getId(),
-                    'categoryName' => $category?->getName(),
+                    'categoryName' => $this->categoryName($category),
                     'sampleRoom' => $room,
                     'roomCount' => 0,
                     'persons' => 0,
@@ -1027,7 +1100,7 @@ class PublicBookingService
 
         return [
             'extrasTotal' => $extrasTotal,
-            'extrasTotalFormatted' => PublicPricingService::formatAmount($extrasTotal),
+            'extrasTotalFormatted' => $this->money($extrasTotal),
             'extrasBreakdown' => $breakdown,
         ];
     }

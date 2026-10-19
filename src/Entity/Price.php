@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Translation\ContentTranslatable;
+use App\Entity\Translation\ContentTranslationsTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\PriceRepository')]
 #[ORM\Table(name: 'prices')]
-class Price
+class Price implements ContentTranslatable
 {
+    use ContentTranslationsTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -115,6 +119,11 @@ class Price
         $this->isDefaultActiveInReservationCreation = true;
         $this->isBookableOnline = false;
         $this->isMandatoryOnline = false;
+    }
+
+    public static function translatableFields(): array
+    {
+        return ['description'];
     }
 
     public function getId()

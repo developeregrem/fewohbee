@@ -20,6 +20,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -29,6 +30,18 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  */
 class ApartmentCalendarApiController extends AbstractController
 {
+    /**
+     * Let the firewall challenge discovery probes before rejecting the unsupported method.
+     * Thunderbird uses a PROPFIND authentication failure to open its password dialog;
+     * a routing-level 405 instead makes it report that no calendar was found.
+     */
+    #[Route('/api/v1/apartments/{id}/calendar.ics', name: 'api.apartments.calendar.probe', requirements: ['id' => '\d+'], methods: ['PROPFIND'])]
+    #[IsGranted('API_SCOPE_CALENDAR_READ')]
+    public function probe(): never
+    {
+        throw new MethodNotAllowedHttpException(['GET', 'HEAD']);
+    }
+
     #[Route('/api/v1/apartments/{id}/calendar.ics', name: 'api.apartments.calendar', requirements: ['id' => '\d+'], methods: ['GET'])]
     #[IsGranted('API_SCOPE_CALENDAR_READ')]
     public function ics(

@@ -81,7 +81,39 @@
                     <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.guests_desc'|trans }}</p>
                 </div>
                 <div class="card-body">
-                    {{ form_row(form.customerSalutations) }}
+                    {% if form.guestLocales.children|length > 1 %}
+                        {{ form_row(form.guestLocales) }}
+                    {% else %}
+                        {% do form.guestLocales.setRendered %}
+                    {% endif %}
+                    {# Salutations: the first column is stored with the guest, the others are how guests read it. #}
+                    {% set salutationPrototype %}{{ include('Settings/AppSettings/_salutation_row.html.twig', {row: form.customerSalutations.vars.prototype}) }}{% endset %}
+                    <div class="mb-3" data-controller="collection"
+                         data-collection-prototype-value="{{ salutationPrototype|e('html_attr') }}"
+                         data-collection-index-value="{{ form.customerSalutations|length }}">
+                        {{ form_label(form.customerSalutations, null, {label_attr: {class: 'form-label'}}) }}
+                        <table class="table table-sm align-middle mb-2">
+                            {% if guest_extra_locales()|length > 0 %}
+                                <thead>
+                                    <tr>
+                                        <th>{{ language_name(base_locale(), false) }}</th>
+                                        {% for locale in guest_extra_locales() %}<th>{{ language_name(locale, false) }}</th>{% endfor %}
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                            {% endif %}
+                            <tbody data-collection-target="entries">
+                                {% for row in form.customerSalutations %}
+                                    {{ include('Settings/AppSettings/_salutation_row.html.twig') }}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="collection#add">
+                            <i class="fas fa-plus"></i> {{ 'app_settings.form.customer_salutations_add'|trans }}
+                        </button>
+                        {{ form_help(form.customerSalutations) }}
+                        {% do form.customerSalutations.setRendered %}
+                    </div>
                 </div>
             </div>
 

@@ -69,6 +69,9 @@ class WorkflowAttachmentResolver
      * @param string            $policy               self::POLICY_*
      * @param int               $invoicePdfTemplateId layout for attached invoices;
      *                                                0 uses the default invoice template
+     * @param string|null       $locale               language of the guest the mail goes to:
+     *                                                every template is replaced by its variant
+     *                                                in that language when there is one
      *
      * @throws WorkflowSkippedException when POLICY_REQUIRE_ALL cannot be satisfied,
      *                                  or when the attachments exceed MAX_TOTAL_BYTES
@@ -79,6 +82,7 @@ class WorkflowAttachmentResolver
         array $reservations,
         string $policy = self::POLICY_SKIP_MISSING,
         int $invoicePdfTemplateId = 0,
+        ?string $locale = null,
     ): ResolvedAttachmentSet {
         $normalized = $this->normalizeItems($items);
         if ([] === $normalized) {
@@ -91,7 +95,7 @@ class WorkflowAttachmentResolver
         foreach ($normalized as $item) {
             switch ($item['type']) {
                 case self::TYPE_PDF_TEMPLATE:
-                    $resolved = $this->resolvePdfTemplate((int) $item['templateId'], $reservations, $warnings);
+                    $resolved = $this->resolvePdfTemplate((int) $item['templateId'], $reservations, $locale, $warnings);
                     if (null !== $resolved) {
                         $attachments[] = $resolved;
                     }
@@ -100,7 +104,7 @@ class WorkflowAttachmentResolver
                 case self::TYPE_INVOICE_PDF:
                 case self::TYPE_INVOICE_PDF_OPEN:
                     $onlyOpen = self::TYPE_INVOICE_PDF_OPEN === $item['type'];
-                    array_push($attachments, ...$this->resolveInvoices($entity, $reservations, $onlyOpen, $invoicePdfTemplateId, $warnings));
+                    array_push($attachments, ...$this->resolveInvoices($entity, $reservations, $onlyOpen, $invoicePdfTemplateId, $locale, $warnings));
                     break;
             }
         }
@@ -189,7 +193,7 @@ class WorkflowAttachmentResolver
      * @param Reservation[] $reservations
      * @param string[]      $warnings
      */
-    private function resolvePdfTemplate(int $templateId, array $reservations, array &$warnings): ?ResolvedAttachment
+    private function resolvePdfTemplate(int $templateId, array $reservations, ?string $locale, array &$warnings): ?ResolvedAttachment
     {
         $template = $this->em->getRepository(Template::class)->find($templateId);
         if (!$template instanceof Template) {
@@ -197,6 +201,7 @@ class WorkflowAttachmentResolver
 
             return null;
         }
+        $template = $template->variantFor($locale);
 
         $typeName = $template->getTemplateType()?->getName();
         if (!in_array($typeName, self::ATTACHABLE_TEMPLATE_TYPES, true)) {
@@ -218,7 +223,7 @@ class WorkflowAttachmentResolver
         $baseName = $this->invoiceService->sanitizeFilename((string) $template->getName());
 
         try {
-            $html = $this->templatesService->renderTemplate($templateId, $renderInput);
+            $html = $this->templatesService->renderTemplate((int) $template->getId(), $renderInput);
             $pdf = $this->templatesService->getPDFOutput($html, $baseName, $template);
         } catch (\Throwable $e) {
             $warnings[] = $this->translator->trans('workflow.log.attachment_render_failed', [
@@ -243,7 +248,7 @@ class WorkflowAttachmentResolver
      *
      * @return ResolvedAttachment[]
      */
-    private function resolveInvoices(mixed $entity, array $reservations, bool $onlyOpen, int $pdfTemplateId, array &$warnings): array
+    private function resolveInvoices(mixed $entity, array $reservations, bool $onlyOpen, int $pdfTemplateId, ?string $locale, array &$warnings): array
     {
         $invoices = $this->collectInvoices($entity, $reservations, $onlyOpen);
         if ([] === $invoices) {
@@ -267,6 +272,7 @@ class WorkflowAttachmentResolver
 
                 return [];
             }
+            $pdfTemplate = $pdfTemplate->variantFor($locale);
 
             // Resolved per invoice: with per-branch issuers the company can differ between
             // the invoices of a single workflow run.

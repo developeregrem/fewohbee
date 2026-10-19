@@ -12,7 +12,7 @@
 {% block content %}
 {% set standAloneUrl = absolute_url(path('public.booking')) %}
 {% set embedUrl = absolute_url(path('public.booking', {'embed': 1})) %}
-{% set iframeCode %}<iframe id="fhb-booking" src="{{ embedUrl }}" style="border:0;width:100%;max-width:960px;min-height:400px;" loading="lazy" title="Online Booking"></iframe>
+{% set iframeCode %}<iframe id="fhb-booking" src="{{ embedUrl }}" style="border:0;width:100%;max-width:960px;min-height:400px;" loading="lazy" title="{{ 'online_booking.public.page_title'|trans }}"></iframe>
 <script>window.addEventListener("message",function(e){if(!e.data)return;var f=document.getElementById("fhb-booking");if(!f)return;if(e.data.type==="fhb-resize"){f.style.height=e.data.height+"px"}else if(e.data.type==="fhb-scroll"){f.scrollIntoView({behavior:"smooth",block:"start"})}});</script>{% endset %}
 <div class="container" data-controller="settings online-booking-settings booking-rules tab-persistence"
      data-booking-rules-calendar-url-value="{{ path('settings.online_booking.rule_calendar') }}">
@@ -334,10 +334,15 @@
                     <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_booking_texts_desc'|trans }}</p>
                 </div>
                 <div class="card-body">
+                    {% import 'common/content_translations.html.twig' as contentTranslations %}
                     {{ form_row(form.commentPlaceholder) }}
+                    {{ contentTranslations.inputs(form.translations, 'commentPlaceholder') }}
                     {{ form_row(form.paymentTerms) }}
+                    {{ contentTranslations.inputs(form.translations, 'paymentTerms', {editorAttr: {'data-online-booking-settings-editor': 'payment'}}) }}
                     {{ form_row(form.cancellationTerms) }}
+                    {{ contentTranslations.inputs(form.translations, 'cancellationTerms', {editorAttr: {'data-online-booking-settings-editor': 'cancellation'}}) }}
                     {{ form_row(form.successMessageText) }}
+                    {{ contentTranslations.inputs(form.translations, 'successMessageText', {editorAttr: {'data-online-booking-settings-editor': 'success-message'}}) }}
                 </div>
             </div>
 
@@ -379,6 +384,20 @@
                             </button>
                         </div>
                     </div>
+
+                    {# Embedded, the page has no language choice: the website sets ?lang= (PublicBookingController). #}
+                    {% if guest_extra_locales()|length > 0 %}
+                        <div class="mt-3">
+                            <label class="form-label small fw-semibold">{{ 'online_booking.settings.embed_language_label'|trans }}</label>
+                            <p class="form-text mt-0 mb-1">{{ 'online_booking.settings.embed_language_help'|trans({'%language%': language_name(base_locale(), false)}) }}</p>
+                            <ul class="small mb-1">
+                                {% for locale in guest_locales() %}
+                                    <li><code>lang={{ locale }}</code> – {{ language_name(locale, false) }}</li>
+                                {% endfor %}
+                            </ul>
+                            <p class="form-text mt-0">{{ 'online_booking.settings.embed_language_example'|trans }} <code>{{ embedUrl }}&amp;lang={{ guest_extra_locales()|first }}</code></p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
             </div>

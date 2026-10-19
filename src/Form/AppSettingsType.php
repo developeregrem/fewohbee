@@ -6,10 +6,12 @@ namespace App\Form;
 
 use App\Entity\AppSettings;
 use App\Service\InvoiceNumberPatternService;
+use App\Service\Localization\GuestLocaleService;
 use App\Service\PublicUrlService;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
@@ -23,6 +25,7 @@ class AppSettingsType extends AbstractType
 {
     public function __construct(
         private readonly InvoiceNumberPatternService $patternService,
+        private readonly GuestLocaleService $guestLocales,
     ) {
     }
 
@@ -61,10 +64,32 @@ class AppSettingsType extends AbstractType
                     }),
                 ],
             ])
-            ->add('customerSalutations', TextType::class, [
+            ->add('customerSalutations', CollectionType::class, [
                 'label' => 'app_settings.form.customer_salutations',
                 'help' => 'app_settings.form.customer_salutations_help',
                 'mapped' => false,
+                'entry_type' => CustomerSalutationType::class,
+                'entry_options' => ['label' => false],
+                'allow_add' => true,
+                'allow_delete' => true,
+                'prototype' => true,
+            ])
+            ->add('guestLocales', ChoiceType::class, [
+                'label' => 'guest_locales.label',
+                'help' => 'guest_locales.help',
+                'mapped' => false,
+                'multiple' => true,
+                'expanded' => true,
+                'required' => false,
+                'choices' => array_combine(
+                    array_map(fn (string $locale): string => $this->guestLocales->languageName($locale, false), $this->guestLocales->enabledLocales()),
+                    $this->guestLocales->enabledLocales(),
+                ),
+                'choice_translation_domain' => false,
+                // The installation language is always offered; the controller adds it back.
+                'choice_attr' => fn (string $locale): array => $locale === $this->guestLocales->baseLocale()
+                    ? ['disabled' => 'disabled']
+                    : [],
             ])
             ->add('notificationEmail', EmailType::class, [
                 'label' => 'app_settings.form.notification_email',

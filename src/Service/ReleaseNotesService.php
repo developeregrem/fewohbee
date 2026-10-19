@@ -29,7 +29,7 @@ class ReleaseNotesService
     private const SUBDIRECTORY = 'docs/release-notes';
 
     /** Locales tried after the requested one, in order. Mirrors the translator fallback. */
-    private const FALLBACK_LOCALES = ['de', 'en'];
+    private const FALLBACK_LOCALES = ['en', 'de'];
 
     /** @var array<string, string[]>|null version => locales, sorted newest version first */
     private ?array $index = null;

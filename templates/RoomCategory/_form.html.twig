@@ -26,9 +26,12 @@
         {# === Tab 1: General fields (name, acronym, description) === #}
         <div class="tab-pane fade show active" id="rc-pane-general" role="tabpanel"
              aria-labelledby="rc-tab-general" tabindex="0">
+            {% import 'common/content_translations.html.twig' as contentTranslations %}
             {{ form_row(form.name) }}
+            {{ contentTranslations.inputs(form.translations, 'name') }}
             {{ form_row(form.acronym) }}
             {{ form_row(form.details) }}
+            {{ contentTranslations.inputs(form.translations, 'details') }}
             {{ form_row(form.minFullPayers) }}
         </div>
 

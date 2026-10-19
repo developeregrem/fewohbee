@@ -14,6 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VEvent;
 use Sabre\VObject\Node;
+use Symfony\Component\Clock\ClockInterface;
 
 /**
  * Exports an apartment's blocking reservations and room blocks as an RFC 5545 calendar.
@@ -24,12 +25,16 @@ final class ApartmentCalendarExportService
         private readonly EntityManagerInterface $entityManager,
         private readonly RoomBlockRepository $roomBlockRepository,
         private readonly DisplayNameResolver $displayNameResolver,
+        private readonly ClockInterface $clock,
     ) {
     }
 
     /**
      * Build the apartment feed and record the successful export timestamp.
      *
+     * Unless past entries are enabled, keep entries whose end date is today or later,
+     * including today's departures regardless of the exported time. Dates are compared
+     * in the application timezone. The original start date of ongoing entries is kept.
      * The timestamp is updated only after Sabre has serialized the complete calendar.
      */
     public function export(CalendarSync $sync): string
@@ -46,8 +51,13 @@ final class ApartmentCalendarExportService
             'X-WR-TIMEZONE' => date_default_timezone_get(),
         ]);
 
+        $today = $this->clock->now()->setTimezone(new \DateTimeZone(date_default_timezone_get()))->format('Y-m-d');
+
         foreach ($apartment->getReservations() as $reservation) {
             if ($reservation->isConflict() || $reservation->isConflictIgnored()) {
+                continue;
+            }
+            if (!$sync->getExportPastEntries() && $reservation->getEndDate()->format('Y-m-d') < $today) {
                 continue;
             }
             if ($sync->getReservationStatus()->contains($reservation->getReservationStatus())) {
@@ -57,6 +67,9 @@ final class ApartmentCalendarExportService
 
         // A room block always makes the physical room unavailable, independent of status filters.
         foreach ($this->roomBlockRepository->findBy(['appartment' => $apartment]) as $block) {
+            if (!$sync->getExportPastEntries() && $block->getEndDate()->format('Y-m-d') < $today) {
+                continue;
+            }
             $this->addRoomBlockEvent($calendar, $block);
         }
 
@@ -68,7 +81,9 @@ final class ApartmentCalendarExportService
     }
 
     /**
-     * Add a booking as an opaque, all-day interval whose DTEND is exclusive.
+     * Add a booking as an opaque interval whose DTEND is exclusive.
+     * When enabled, at least one recorded time makes this a timed interval, with missing times
+     * defaulting to local midnight for the export only. Otherwise the interval is all-day.
      *
      * @param VCalendar<Node> $calendar
      */
@@ -93,8 +108,27 @@ final class ApartmentCalendarExportService
             throw new \LogicException('Sabre did not create a VEVENT component.');
         }
 
-        $event->add('DTSTART', $reservation->getStartDate()->format('Ymd'), ['VALUE' => 'DATE']);
-        $event->add('DTEND', $reservation->getEndDate()->format('Ymd'), ['VALUE' => 'DATE']);
+        $arrivalTime = $reservation->getArrivalTime();
+        $departureTime = $reservation->getDepartureTime();
+        if ($sync->getExportReservationTimes() && (null !== $arrivalTime || null !== $departureTime)) {
+            // DATE and TIME columns describe local wall time. Combine them before converting
+            // to UTC so each stay date uses its own daylight-saving offset.
+            $timezone = new \DateTimeZone(date_default_timezone_get());
+            $utc = new \DateTimeZone('UTC');
+            $start = new \DateTimeImmutable(
+                $reservation->getStartDate()->format('Y-m-d').' '.($arrivalTime?->format('H:i:s') ?? '00:00:00'),
+                $timezone,
+            );
+            $end = new \DateTimeImmutable(
+                $reservation->getEndDate()->format('Y-m-d').' '.($departureTime?->format('H:i:s') ?? '00:00:00'),
+                $timezone,
+            );
+            $event->add('DTSTART', $start->setTimezone($utc));
+            $event->add('DTEND', $end->setTimezone($utc));
+        } else {
+            $event->add('DTSTART', $reservation->getStartDate()->format('Ymd'), ['VALUE' => 'DATE']);
+            $event->add('DTEND', $reservation->getEndDate()->format('Ymd'), ['VALUE' => 'DATE']);
+        }
     }
 
     /**

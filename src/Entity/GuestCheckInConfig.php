@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Entity\Enum\GuestCheckInFieldMode;
+use App\Entity\Translation\ContentTranslatable;
+use App\Entity\Translation\ContentTranslationsTrait;
 use App\Repository\GuestCheckInConfigRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -19,8 +21,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: GuestCheckInConfigRepository::class)]
 #[ORM\Table(name: 'guest_check_in_config')]
 #[ORM\HasLifecycleCallbacks]
-class GuestCheckInConfig
+class GuestCheckInConfig implements ContentTranslatable
 {
+    use ContentTranslationsTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
@@ -79,6 +83,11 @@ class GuestCheckInConfig
     public function __construct()
     {
         $this->updatedAt = new \DateTime('now');
+    }
+
+    public static function translatableFields(): array
+    {
+        return ['introText', 'privacyText', 'privacyUrl'];
     }
 
     #[ORM\PrePersist]

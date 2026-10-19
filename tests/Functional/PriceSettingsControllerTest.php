@@ -114,6 +114,24 @@ final class PriceSettingsControllerTest extends WebTestCase
         self::assertNull($this->findPrice('no-category'));
     }
 
+    public function testExtraNameIsSavedInFurtherGuestLanguagesOnly(): void
+    {
+        $client = $this->authenticatedClient();
+
+        $this->postPrice($client, 'breakfast', 1, [], overrides: [
+            'translations-new' => [
+                'en' => ['description' => 'Breakfast', 'price' => '1,00'],
+                'de' => ['description' => 'Frühstück überschrieben'],
+                'xx' => ['description' => 'ignored'],
+            ],
+        ]);
+
+        $price = $this->findPrice('breakfast');
+        self::assertNotNull($price);
+        // Only offered extra languages and translatable fields are taken over; German is the stored name.
+        self::assertSame(['en' => ['description' => 'Breakfast']], $price->getContentTranslations());
+    }
+
     public function testMiscPriceAppliesOnlyToItsCategories(): void
     {
         $client = $this->authenticatedClient();
@@ -200,7 +218,7 @@ final class PriceSettingsControllerTest extends WebTestCase
      * otherwise the existing one is edited.
      *
      * @param list<int> $categoryIds
-     * @param array<string, string|list<string>> $overrides extra or replaced form fields
+     * @param array<string, mixed> $overrides extra or replaced form fields
      */
     private function postPrice(KernelBrowser $client, string $name, int $type, array $categoryIds, string $id = 'new', array $overrides = []): \Symfony\Component\DomCrawler\Crawler
     {

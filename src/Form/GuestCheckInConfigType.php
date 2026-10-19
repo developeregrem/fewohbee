@@ -81,6 +81,19 @@ class GuestCheckInConfigType extends AbstractType
                 'help' => 'guest_checkin.settings.privacy_text_help',
                 'attr' => ['rows' => 3, 'maxlength' => 2000],
             ])
+            ->add('translations', ContentTranslationsType::class, [
+                'fields' => [
+                    'introText' => ['type' => TextareaType::class, 'max_length' => 2000, 'options' => ['attr' => ['rows' => 4]]],
+                    // A privacy page per language; same rules as the base address.
+                    'privacyUrl' => [
+                        'type' => UrlType::class,
+                        'max_length' => 255,
+                        'constraints' => [new Assert\Url(protocols: ['https', 'http'], requireTld: true)],
+                        'options' => ['default_protocol' => 'https', 'attr' => ['placeholder' => 'https://']],
+                    ],
+                    'privacyText' => ['type' => TextareaType::class, 'max_length' => 2000, 'options' => ['attr' => ['rows' => 3]]],
+                ],
+            ])
         ;
     }
 

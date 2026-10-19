@@ -1,0 +1,107 @@
+base.action: Aktion
+button.accept: Übernehmen
+button.add: Hinzufügen
+button.back: Zurück
+button.next: Nächste
+button.cancel: Abbrechen
+button.close: Schließen
+button.continue: Weiter
+button.continue.with: 'Weiter mit'
+button.delete: Löschen
+button.details: 'Details Anzeigen'
+button.download: Herunterladen
+button.edit: Bearbeiten
+button.export.pdf: 'als PDF exportieren'
+button.export.einvoicepdf: 'als PDF mit eingebetteter E-Rechnung exportieren'
+button.export.xml: 'als XRechnung-XML exportieren (für Behördenportale)'
+button.gdpr: 'DSGVO Übersicht'
+button.hide: Ausblenden
+button.save: Speichern
+copy.sucess: 'Text in die Zwischenablage kopiert!'
+copy.text: Kopieren
+first.apartments: 'Anlegen der Zimmer:'
+first.categories: 'Anlegen der Zimmerkategorien:'
+first.origin: 'Anlegen der Reservierungsherkunft:'
+first.prices: 'Anlegen der Preise:'
+first.status: 'Anlegen des Reservierungsstatus:'
+first.templates: 'Vorlagen hinzufügen:'
+first.txt: 'FewohBee wurde erfolgreich installiert. Es sind nur noch ein paar Schritte notwendig, um die Anwendung zu verwenden.'
+flash.access.denied: 'Zugriff verweigert.'
+flash.invalidtoken: 'Ungültiges Token.'
+flash.mandatory: 'Bitte alle Pflichtfelder ausfüllen.'
+housekeeping.flash.updated: 'Housekeeping-Status aktualisiert.'
+housekeeping.flash.apartment_missing: 'Zimmer nicht gefunden.'
+login.application.title: FewohBee
+nav.appartment: Zimmer
+nav.appartment.add: 'Zimmer anlegen'
+nav.appartment.overview: 'Zimmer Übersicht'
+nav.cashjournal: Kassenbuch
+nav.accounting: Buchhaltung
+nav.journal: Buchungsjournal
+nav.category: Zimmerkategorien
+nav.category.add: 'Zimmerkategorie anlegen'
+nav.customer.add: 'Gast anlegen'
+nav.customer.overview: Gästeübersicht
+nav.customers: Gäste
+nav.housekeeping: Housekeeping
+nav.operations: Betrieb
+nav.operations.frontdesk: 'Rezeption Checkliste'
+nav.operations.reports: Berichte
+operations.reports.title: Betriebsberichte
+operations.reports.date_start: 'Datum Start'
+operations.reports.date_end: 'Datum Ende'
+operations.reports.template: Template
+operations.reports.download: 'PDF herunterladen'
+operations.reports.template.missing: 'Bitte ein Template hinzufügen.'
+operations.reports.preview: Vorschau
+operations.frontdesk.title: 'Rezeption Checkliste'
+operations.frontdesk.filter.date: Datum
+operations.frontdesk.filter.subsidiary: Niederlassung
+operations.frontdesk.filter.sections: Anzeigen
+operations.frontdesk.filter.reservations: Reservierungen
+operations.filter.reservationStatus: Reservierungsstatus
+operations.frontdesk.arrivals: Anreisen
+operations.frontdesk.departures: Abreisen
+operations.frontdesk.inhouse: Inhouse
+operations.frontdesk.room: Zimmer
+operations.frontdesk.guest: Gast
+operations.frontdesk.period: Zeitraum
+operations.frontdesk.category: Kategorie
+operations.frontdesk.actions: Aktionen
+operations.frontdesk.registration.print: 'Meldeschein drucken'
+operations.frontdesk.confirmation.send: 'Bestätigung/Info-Mail senden'
+operations.frontdesk.note.edit: 'Notiz bearbeiten'
+operations.frontdesk.registration.missing: 'Keine Meldeschein-Templates gefunden. Bitte ein Template anlegen oder die Vorlagen importieren.'
+operations.frontdesk.header.registration: Meldeschein
+operations.frontdesk.header.invoice: Rechnung
+operations.frontdesk.header.email: E-Mail
+operations.frontdesk.header.note: Notiz
+nav.invoice.add: 'Neue Rechnung erstellen'
+nav.invoices: Rechnungsübersicht
+nav.logout: Abmelden
+nav.menu: Menü
+nav.object: Niederlassungen
+nav.object.add: 'Niederlassung anlegen'
+nav.object.overview: 'Niederlassungs Übersicht'
+nav.origin: Reservierungsherkunft
+nav.price.add: 'Preis hinzufügen'
+nav.prices: Preisliste
+nav.registrationbook: Meldebuch
+nav.reservation.edit: 'Reservierung bearbeiten'
+nav.reservation.overview: Reservierungsübersicht
+nav.reservationorigin: Reservierungsherkunft
+nav.settings: Einstellungen
+nav.statistics: Statistik
+nav.status: Reservierungsstatus
+nav.guest_category: Gastkategorien
+nav.tourist_tax: Beherbergungsabgaben
+nav.templates: Vorlagen
+nav.turnover: Umsätze
+nav.tourism: Tourismus
+nav.calendars: 'Kalender verwalten'
+nav.user: Benutzer
+nav.user.add: 'Benutzer anlegen'
+nav.user.overview: 'Benutzer Übersicht'
+nav.utilization: Auslastung
+nav.welcome: 'Willkommen, %user%'
+nav.profile: Profil

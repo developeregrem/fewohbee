@@ -25,6 +25,7 @@
                                 scroll-margin-top: 1rem;
                             }
                         </style>
+                        {{ include('PublicBooking/_language_switcher.html.twig', {formId: 'fhb-booking-form'}) }}
                         {% if not embed %}
                             <h2 class="mb-3 fs-4">{{ config.bookingMode == 'BOOKING' ? 'online_booking.public.page_title'|trans : 'online_booking.public.page_title_inquiry'|trans }}</h2>
                         {% endif %}
@@ -36,7 +37,7 @@
                                 'online_booking.public.step_select'|trans,
                                 'online_booking.public.step_details'|trans
                             ] %}
-                            <div class="d-flex align-items-center gap-1 mb-3" aria-label="Progress">
+                            <div class="d-flex align-items-center gap-1 mb-3" aria-label="{{ 'online_booking.public.progress'|trans }}">
                                 {% for label in steps %}
                                     {% set stepNum = loop.index %}
                                     <span class="badge {{ step >= stepNum + 1 ? 'text-bg-primary' : 'text-bg-secondary' }} bg-opacity-{{ step >= stepNum + 1 ? '100' : '25' }}">{{ stepNum }}. {{ label }}</span>
@@ -55,18 +56,19 @@
 
                         {% if successMessage %}
                             <div class="alert alert-success">{{ successMessage|trans }}</div>
-                            {% if config.successMessageText %}
-                                <div class="mb-3">{{ config.successMessageText|raw }}</div>
+                            {% set successMessageText = config|localized('successMessageText') %}
+                            {% if successMessageText %}
+                                <div class="mb-3">{{ successMessageText|raw }}</div>
                             {% endif %}
                             <div class="mb-3">
-                                <a class="btn btn-outline-primary btn-sm" href="{{ path('public.booking', {'embed': embed ? 1 : 0}) }}">
+                                <a class="btn btn-outline-primary btn-sm" href="{{ path('public.booking', bookingUrlParameters) }}">
                                     {{ 'online_booking.public.start_new'|trans }}
                                 </a>
                             </div>
                         {% endif %}
 
                         {% if not successMessage %}
-                        <form method="post" action="{{ path('public.booking', {'embed': embed ? 1 : 0}) }}">
+                        <form method="post" id="fhb-booking-form" action="{{ path('public.booking', bookingUrlParameters) }}">
                             <input type="hidden" name="embed" value="{{ embed ? 1 : 0 }}">
                             <input type="hidden" name="form_started_at" value="{{ formState.formStartedAt }}">
                             {% if formState.submitToken %}
@@ -410,9 +412,8 @@
                                         <label class="form-label small mb-1" for="salutation">{{ 'customer.salutation'|trans }}</label>
                                         <select class="form-select form-select-sm" id="salutation" name="salutation" required>
                                             <option value="">--</option>
-                                            {% for salutation in customer_salutations %}
-                                                {% set translatedSalutation = salutation|trans %}
-                                                <option value="{{ translatedSalutation }}" {% if booker.salutation == translatedSalutation %}selected{% endif %}>{{ translatedSalutation }}</option>
+                                            {% for label, salutation in salutation_choices() %}
+                                                <option value="{{ salutation }}" {% if booker.salutation == salutation %}selected{% endif %}>{{ label }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -470,7 +471,7 @@
                                 <div class="row g-2">
                                     <div class="col-12">
                                         <label class="form-label small mb-1" for="comment">{{ 'online_booking.public.comment'|trans }}</label>
-                                        <textarea class="form-control form-control-sm" id="comment" name="comment" rows="2"{% if config.commentPlaceholder %} placeholder="{{ config.commentPlaceholder }}"{% endif %}>{{ booker.comment }}</textarea>
+                                        <textarea class="form-control form-control-sm" id="comment" name="comment" rows="2"{% set commentPlaceholder = config|localized('commentPlaceholder') %}{% if commentPlaceholder %} placeholder="{{ commentPlaceholder }}"{% endif %}>{{ booker.comment }}</textarea>
                                     </div>
                                 </div>
 
@@ -583,17 +584,19 @@
                                     </div>
                                 {% endif %}
 
-                                {% if config.paymentTerms %}
+                                {% set paymentTerms = config|localized('paymentTerms') %}
+                                {% if paymentTerms %}
                                     <div class="fhb-booking-summary mt-2">
                                         <div class="small text-body-secondary mb-1">{{ 'online_booking.public.payment_terms'|trans }}</div>
-                                        <div class="small">{{ config.paymentTerms|raw }}</div>
+                                        <div class="small">{{ paymentTerms|raw }}</div>
                                     </div>
                                 {% endif %}
 
-                                {% if config.cancellationTerms %}
+                                {% set cancellationTerms = config|localized('cancellationTerms') %}
+                                {% if cancellationTerms %}
                                     <div class="fhb-booking-summary mt-2">
                                         <div class="small text-body-secondary mb-1">{{ 'online_booking.public.cancellation_terms'|trans }}</div>
-                                        <div class="small">{{ config.cancellationTerms|raw }}</div>
+                                        <div class="small">{{ cancellationTerms|raw }}</div>
                                     </div>
                                 {% endif %}
 

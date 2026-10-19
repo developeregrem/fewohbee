@@ -125,9 +125,13 @@
                     <p class="text-body-secondary small mb-0 mt-1">{{ 'guest_checkin.settings.section_texts_desc'|trans }}</p>
                 </div>
                 <div class="card-body">
+                    {% import 'common/content_translations.html.twig' as contentTranslations %}
                     {{ form_row(form.introText) }}
+                    {{ contentTranslations.inputs(form.translations, 'introText') }}
                     {{ form_row(form.privacyUrl) }}
+                    {{ contentTranslations.inputs(form.translations, 'privacyUrl') }}
                     {{ form_row(form.privacyText) }}
+                    {{ contentTranslations.inputs(form.translations, 'privacyText') }}
                 </div>
             </div>
 

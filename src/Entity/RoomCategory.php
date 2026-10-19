@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Translation\ContentTranslatable;
+use App\Entity\Translation\ContentTranslationsTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\RoomCategoryRepository')]
-class RoomCategory
+class RoomCategory implements ContentTranslatable
 {
+    use ContentTranslationsTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -63,6 +67,11 @@ class RoomCategory
         $this->prices = new ArrayCollection();
         $this->amenities = new ArrayCollection();
         $this->images = new ArrayCollection();
+    }
+
+    public static function translatableFields(): array
+    {
+        return ['name', 'details'];
     }
 
     public function getId(): ?int

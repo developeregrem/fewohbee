@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Entity\Attribute\TemplateIgnore;
+use App\Entity\Translation\ContentTranslatable;
+use App\Entity\Translation\ContentTranslationsTrait;
 use App\Repository\SubsidiaryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SubsidiaryRepository::class)]
 #[ORM\Table(name: 'objects')]
-class Subsidiary
+class Subsidiary implements ContentTranslatable
 {
+    use ContentTranslationsTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -90,6 +94,11 @@ class Subsidiary
     public function __construct()
     {
         $this->appartments = new ArrayCollection();
+    }
+
+    public static function translatableFields(): array
+    {
+        return ['checkInNote'];
     }
 
     /**

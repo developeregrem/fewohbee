@@ -1304,7 +1304,7 @@ export default class extends Controller {
             return;
         }
         if (!this.editorInstance.isActive('tableRow')) {
-            window.alert('Bitte zuerst den Cursor in die gewünschte Tabellenzeile setzen.');
+            window.alert(this.i18n.i18nTableRowRequired || 'Bitte zuerst den Cursor in die gewünschte Tabellenzeile setzen.');
             return;
         }
 

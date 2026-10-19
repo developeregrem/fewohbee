@@ -1,0 +1,28 @@
+status:
+  action: Aktionen
+  add: 'Reservierungsstatus anlegen'
+  color: Farbe
+  confirmed: Bestätigt
+  delete:
+    ask: 'Diesen Reservierungsstatus wirklich löschen?'
+  description: 'Statusverwaltung einer Reservierung'
+  flash:
+    create:
+      success: 'Reservierungsstatus wurde erfolgreich angelegt.'
+    delete:
+      error:
+        still:
+          in:
+            use: 'Reservierungsstatus kann nicht gelöscht werden, da ihm noch Reservierungen zugeordnet sind.'
+        system: 'Systemstatus kann nicht gelöscht werden.'
+      success: 'Reservierungsstatus wurde erfolgreich gelöscht.'
+    edit:
+      error:
+        system: 'Systemstatus kann nicht bearbeitet werden.'
+      success: 'Reservierungsstatus wurde erfolgreich bearbeitet.'
+  canceled_noshow: 'Storniert / No-Show'
+  name: Bezeichnung
+  option: Option
+  system:
+    locked: Systemstatus
+  title: Reservierungsstatus

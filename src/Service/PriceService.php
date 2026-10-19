@@ -34,6 +34,7 @@ use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
 use App\Repository\GuestCategoryModifierRepository;
 use App\Repository\GuestCategoryRepository;
+use App\Service\Localization\ContentTranslator;
 use App\Service\Pricing\DynamicRateResolver;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -64,6 +65,7 @@ class PriceService implements ResetInterface
         private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
         private readonly ?GuestCategoryModifierRepository $modifierRepository = null,
         private readonly ?DynamicRateResolver $dynamicRates = null,
+        private readonly ?ContentTranslator $contentTranslator = null,
     ) {
         $this->em = $em;
     }
@@ -118,6 +120,8 @@ class PriceService implements ResetInterface
         }
 
         $price->setDescription($request->request->get('description-'.$id));
+        // Guest-language names of extras; the whitelist and length cut happen in applySubmitted().
+        $this->contentTranslator?->applySubmitted($price, $request->request->all()['translations-'.$id] ?? null, ['description' => 100]);
         $price->setPrice(str_replace(',', '.', $request->request->get('price-'.$id)));
         $price->setVat((float) str_replace(',', '.', $request->request->get('vat-'.$id)));
         $price->setType($request->request->get('type-'.$id));
