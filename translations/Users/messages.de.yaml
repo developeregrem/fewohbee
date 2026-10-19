@@ -1,0 +1,29 @@
+user.action: Aktion
+user.active: Aktiv
+user.delete.ask: 'Diesen Nutzer wirklich löschen?'
+user.email: eMail
+user.firstname: Vorname
+user.flash.create.success: 'Nutzer wurde erfolgreich hinzugefügt.'
+user.flash.delete.success: 'Nutzer wurde erfolgreich gelöscht.'
+user.flash.edit.success: 'Nutzer wurde erfolgreich bearbeitet.'
+user.flash.username.na: 'Der gewählte Anmeldename ist bereits vergeben!'
+user.lastaction: 'Letzte Aktion'
+user.lastname: Nachname
+user.password: Passwort
+user.password.error: 'Dein Passwort ist möglicherweise zu kurz.'
+user.password.hint: 'Das Passwort muss mind. 8 Zeichen lang sein.'
+user.role: Rolle
+user.username: Anmeldename
+ROLE_ADMIN: Admin
+ROLE_RESERVATIONS: Reservierungen
+ROLE_CUSTOMERS: Gäste
+ROLE_INVOICES: Rechnungen
+ROLE_REGISTRATIONBOOK: Meldebuch
+ROLE_STATISTICS: Statistik
+ROLE_CASHJOURNAL: Kassenbuch
+ROLE_RESERVATIONS_RO: 'Reservierungsübersicht lesend'
+ROLE_OPERATIONS: Betrieb
+user.oidc.badge: SSO
+user.oidc.unlink: 'SSO-Verknüpfung aufheben'
+user.oidc.unlink_confirm: 'Die Verknüpfung zum SSO-Konto wird entfernt. Der Benutzer bleibt bestehen und wird bei der nächsten SSO-Anmeldung neu zugeordnet.'
+user.oidc.flash.unlinked: 'Die SSO-Verknüpfung wurde aufgehoben.'

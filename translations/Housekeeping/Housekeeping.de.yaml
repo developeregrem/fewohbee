@@ -1,0 +1,34 @@
+housekeeping.title: Housekeeping
+housekeeping.view.day: Tag
+housekeeping.view.week: Woche
+housekeeping.date: Datum
+housekeeping.subsidiary: Niederlassung
+housekeeping.subsidiary.all: 'Alle Niederlassungen'
+housekeeping.apply: Anwenden
+housekeeping.export.day: 'CSV exportieren (Tag)'
+housekeeping.export.week: 'CSV exportieren (Woche)'
+housekeeping.room: Zimmer
+housekeeping.occupancy: Belegung
+housekeeping.filter.occupancy: 'Belegung filtern'
+housekeeping.guests: Gäste
+housekeeping.guests.short: Gäste
+housekeeping.guest.short: Gast
+housekeeping.reservation: Reservierung
+housekeeping.status: Status
+housekeeping.assigned_to: Zugewiesen
+housekeeping.note: Notiz
+housekeeping.save: Speichern
+housekeeping.unassigned: 'Nicht zugewiesen'
+housekeeping.no_rooms: 'Keine Zimmer gefunden.'
+housekeeping.status.open: Offen
+housekeeping.status.in_progress: 'In Arbeit'
+housekeeping.status.cleaned: Gereinigt
+housekeeping.status.inspected: Kontrolliert
+housekeeping.occupancy.free: Frei
+housekeeping.occupancy.stayover: Bleibt
+housekeeping.occupancy.arrival: Anreise
+housekeeping.occupancy.departure: Abreise
+housekeeping.occupancy.turnover: Wechsel
+housekeeping.occupancy.blocked: Gesperrt
+housekeeping.summary.arrive: Anreise
+housekeeping.summary.depart: Abreise
