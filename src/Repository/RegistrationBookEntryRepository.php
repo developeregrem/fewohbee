@@ -9,6 +9,8 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
 
 /**
  * Description of RegistrationBookRepository.
+ *
+ * @extends EntityRepository<\App\Entity\RegistrationBookEntry>
  */
 class RegistrationBookEntryRepository extends EntityRepository
 {

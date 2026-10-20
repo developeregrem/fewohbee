@@ -10,6 +10,8 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
 
 /**
  * CashJournalRepository.
+ *
+ * @extends EntityRepository<\App\Entity\CashJournal>
  */
 class CashJournalRepository extends EntityRepository
 {

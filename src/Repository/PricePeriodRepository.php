@@ -14,6 +14,8 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method PricePeriod|null findOneBy(array $criteria, array $orderBy = null)
  * @method PricePeriod[]    findAll()
  * @method PricePeriod[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ *
+ * @extends ServiceEntityRepository<PricePeriod>
  */
 class PricePeriodRepository extends ServiceEntityRepository
 {

@@ -8,6 +8,9 @@ use App\Entity\OnlineBookingRoomCategoryLimit;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<OnlineBookingRoomCategoryLimit>
+ */
 class OnlineBookingRoomCategoryLimitRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)

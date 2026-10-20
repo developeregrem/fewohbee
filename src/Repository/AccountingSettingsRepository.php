@@ -8,6 +8,9 @@ use App\Entity\AccountingSettings;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<AccountingSettings>
+ */
 class AccountingSettingsRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)

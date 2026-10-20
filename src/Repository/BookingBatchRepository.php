@@ -9,6 +9,9 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<BookingBatch>
+ */
 class BookingBatchRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
