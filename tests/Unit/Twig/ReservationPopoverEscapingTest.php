@@ -73,6 +73,69 @@ final class ReservationPopoverEscapingTest extends TestCase
         self::assertStringNotContainsString(self::PAYLOAD, $popoverHtml);
     }
 
+    public function testContactValuesAreSeparatedOnlyBetweenValues(): void
+    {
+        $popoverHtml = $this->renderPopover(['booker' => $this->booker([
+            ['phone' => '0351 1', 'mobilePhone' => '', 'email' => 'max@example.org'],
+            ['phone' => '', 'mobilePhone' => '', 'email' => ''],
+        ])]);
+
+        self::assertStringContainsString("customer.phone: <a href='tel:03511'>0351 1</a><br />", $popoverHtml);
+        self::assertStringContainsString("customer.email: <a href='mailto:max@example.org'>max@example.org</a><br />", $popoverHtml);
+    }
+
+    public function testContactValuesSharedByTwoAddressesAppearOnce(): void
+    {
+        $popoverHtml = $this->renderPopover(['booker' => $this->booker([
+            ['phone' => '0351 1', 'mobilePhone' => '0170 2', 'email' => 'max@example.org'],
+            ['phone' => '0351 1 ', 'mobilePhone' => '0170 3', 'email' => 'Max@Example.org'],
+        ])]);
+
+        self::assertSame(1, substr_count($popoverHtml, "href='tel:03511'"));
+        self::assertStringContainsString("customer.mobilephone: <a href='tel:01702'>0170 2</a>, <a href='tel:01703'>0170 3</a><br />", $popoverHtml);
+        self::assertSame(1, substr_count($popoverHtml, 'mailto:'));
+    }
+
+    public function testDepartureTimeWithoutArrivalTimeStartsItsOwnLine(): void
+    {
+        $popoverHtml = $this->renderPopover([
+            'booker' => $this->booker([['phone' => '', 'mobilePhone' => '', 'email' => 'max@example.org']]),
+            'departureTime' => new \DateTimeImmutable('10:00'),
+        ]);
+
+        self::assertStringContainsString("max@example.org</a><br />reservation.departureTime: 10:00", $popoverHtml);
+    }
+
+    public function testArrivalAndDepartureTimeShareOneLine(): void
+    {
+        $popoverHtml = $this->renderPopover([
+            'arrivalTime' => new \DateTimeImmutable('17:00'),
+            'departureTime' => new \DateTimeImmutable('10:00'),
+        ]);
+
+        self::assertStringContainsString('<br />reservation.arrivalTime: 17:00 reservation.departureTime: 10:00', $popoverHtml);
+    }
+
+    /**
+     * A private booker with the given phone numbers and e-mail addresses.
+     *
+     * @param list<array{phone: string, mobilePhone: string, email: string}> $contacts
+     *
+     * @return array<string, mixed>
+     */
+    private function booker(array $contacts): array
+    {
+        return [
+            'salutation' => 'Herr',
+            'firstname' => 'Max',
+            'lastname' => 'Mustermann',
+            'customerAddresses' => array_map(
+                static fn (array $contact): array => $contact + ['type' => 'CUSTOMER_ADDRESS_TYPE_PRIVATE', 'company' => ''],
+                $contacts,
+            ),
+        ];
+    }
+
     /**
      * Renders the popover body the way Bootstrap reads it from data-bs-content: the
      * attribute is decoded exactly once, so the trusted formatting is HTML while every
