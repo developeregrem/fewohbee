@@ -1,1 +1,259 @@
-{}
+nav.customer.search: Αναζήτηση
+nav.reservation.add: Προσθήκη κράτησης
+reservation.add.another.appartment: Προσθήκη δωματίων
+reservation.appartment: Επιλογή δωματίου
+reservation.appartment.available: Διαθέσιμα δωμάτια
+reservation.appartment.name: Δωμάτιο
+reservation.arrivalTime: Ώρα άφιξης
+reservation.button.change.customer: Αλλαγή επισκέπτη
+reservation.button.changeBooker: Αλλαγή κατόχου κράτησης
+reservation.button.create.invoice: Δημιουργία τιμολογίου
+reservation.button.show.invoice: Προβολή τιμολογίου
+reservation.confirm: Επιβεβαιωμένη
+reservation.correspondences: Αλληλογραφία
+reservation.correspondences.available: Διαθέσιμη αλληλογραφία
+reservation.correspondences.reservation: Αλληλογραφία αυτής της κράτησης
+reservation.customer: Επιλογή επισκέπτη
+reservation.custumer.selected: 'Επιλεγμένοι επισκέπτες:'
+reservation.days: Ημέρες
+reservation.departureTime: Ώρα αναχώρησης
+reservation.delete.ask: Θέλετε σίγουρα να διαγράψετε αυτήν την κράτηση;
+reservation.details: Στοιχεία κράτησης
+reservation.tab.details: Λεπτομέρειες
+reservation.tab.guests: Επισκέπτες
+reservation.edit.change.appartment: Ανάθεση νέου δωματίου
+reservation.enddate: Έως
+reservation.flash.create.success: Η κράτηση προστέθηκε με επιτυχία.
+reservation.flash.delete.customer.success: Ο επισκέπτης αφαιρέθηκε με επιτυχία 
+  από το δωμάτιο.
+reservation.flash.delete.not.possible: Η κράτηση δεν μπορεί πλέον να διαγραφεί 
+  (μήπως έχει ήδη τιμολόγιο;).
+reservation.flash.delete.success: Η κράτηση διαγράφηκε με επιτυχία.
+reservation.flash.update.conflict: Προσαρμόστε την περίοδο. Η επιλεγμένη 
+  περίοδος συγκρούεται με άλλη κράτηση αυτού του δωματίου.
+reservation.flash.update.conflict.persons: Προσαρμόστε τον αριθμό ατόμων. Ο 
+  αριθμός ατόμων συγκρούεται με άλλη κράτηση στην επιλεγμένη περίοδο.
+reservation.flash.update.customeralreadyinlist: Ο επισκέπτης έχει ήδη προστεθεί 
+  στο δωμάτιο.
+reservation.flash.update.success: Η κράτηση ενημερώθηκε με επιτυχία.
+reservation.flash.update.toomuchcustomers: Δεν μπορούν να ανατεθούν άλλοι 
+  επισκέπτες!
+reservation.move.success: Η κράτηση μετακινήθηκε με επιτυχία.
+reservation.move.error: Δεν ήταν δυνατή η μετακίνηση της κράτησης.
+reservation.move.capacity: Το επιλεγμένο δωμάτιο δεν έχει αρκετά κρεβάτια για 
+  αυτήν την κράτηση.
+reservation.move.hint: Σύρετε σε ένα ελεύθερο κελί για να μετακινήσετε αυτήν την
+  κράτηση.
+reservation.invoice: Τιμολόγιο
+reservation.invoices: Τιμολόγια
+reservation.new.reservation.appartments.addmore: Προσθήκη δωματίων στην κράτηση
+reservation.new.reservation.appartments.selected.heading: Επιλεγμένα δωμάτια
+reservation.no.selected.appartments: Δεν έχει επιλεγεί κράτηση.
+reservation.objects.all: Όλα τα καταλύματα
+reservation.option: Προκράτηση
+reservation.origin: Προέλευση
+reservation.person: Άτομο
+reservation.persons: Άτομα
+reservation.period.invalid_dates: Εισαγάγετε έγκυρες ημερομηνίες άφιξης και 
+  αναχώρησης.
+reservation.period.end_before_start: Η ημερομηνία αναχώρησης δεν μπορεί να είναι
+  πριν από την ημερομηνία άφιξης.
+reservation.period.too_long: Η επιλεγμένη περίοδος κράτησης είναι πολύ μεγάλη.
+reservation.preview.appartments.selected: Επιλεγμένο δωμάτιο
+reservation.preview.booker: Κράτηση από
+reservation.preview.contact: Επικοινωνία
+reservation.preview.customer: Επισκέπτης
+reservation.preview.customer.address: Διεύθυνση
+reservation.preview.customer.inroom: Επισκέπτες σε αυτό το δωμάτιο
+reservation.preview.customer.name: Όνομα
+reservation.price: Τιμή
+reservation.prices.misc: Πρόσθετες χρεώσεις
+reservation.prices.preliminary: Οι τιμές που εμφανίζονται εδώ είναι προσωρινές 
+  και ενδέχεται να διαφέρουν από εκείνες του τιμολογίου.
+reservation.prices.title: Επιλογές κράτησης
+reservation.select.customer.search.input.placeholder: Επώνυμο
+reservation.startdate: Από
+reservation.status: Κατάσταση
+reservation.table.calendarweek: Εβδ.
+reservation.table.reload: Ανανέωση
+reservation.table.settings.all: όλες
+reservation.table.settings.country: Χώρα
+reservation.table.settings.displayMonth: Εμφάνιση ονομάτων μηνών
+reservation.table.settings.displayWeek: Εμφάνιση αριθμού εβδομάδας
+reservation.table.settings.displayWeekday: Εμφάνιση ονομάτων ημερών
+reservation.table.settings.general: Γενικά
+reservation.table.settings.holidays: Ρυθμίσεις εμφάνισης αργιών
+reservation.table.settings.showCanceledOnly: Εμφάνιση μόνο ακυρωμένων κρατήσεων 
+  / no-show
+reservation.table.settings.showCalendarEntries: Εμφάνιση καταχωρίσεων 
+  ημερολογίου
+reservation.table.settings.subdivision: Περιοχή
+reservation.table.settings.title: Ρυθμίσεις πίνακα
+reservation.table.view.table: Προβολή πίνακα
+reservation.table.view.week: Εβδομαδιαία προβολή
+reservation.table.view.yearly: Ετήσια προβολή
+reservation.table.view.yearly.multiple.hint: Αυτή η προβολή δεν είναι 
+  βελτιστοποιημένη για δωμάτια με πολλές ταυτόχρονες κρατήσεις. Χρησιμοποιήστε 
+  την προβολή πίνακα.
+reservation.table.week.next: Επόμενη
+reservation.table.week.previous: Προηγούμενη
+reservation.table.weekday.monday: Δευ
+reservation.table.weekday.tuesday: Τρί
+reservation.table.weekday.wednesday: Τετ
+reservation.table.weekday.thursday: Πέμ
+reservation.table.weekday.friday: Παρ
+reservation.table.weekday.saturday: Σάβ
+reservation.table.weekday.sunday: Κυρ
+reservation.templates.availableprices: υπάρχοντα τιμολόγια
+reservation.conflict.button: Έλεγχος εισαγωγών
+reservation.conflict.title: Έλεγχος εισαγωγών
+reservation.conflict.section.title: Συγκρούσεις
+reservation.conflict.hint: Οι κρατήσεις σε σύγκρουση πρέπει να επιλυθούν 
+  χειροκίνητα πριν εισαχθούν. Η λίστα εμφανίζει κρατήσεις που επικαλύπτονται με 
+  υπάρχουσες.
+reservation.conflict.empty: Δεν υπάρχουν ανοιχτές συγκρούσεις.
+reservation.conflict.table.room: Δωμάτιο
+reservation.conflict.table.period: Περίοδος
+reservation.conflict.table.source: Πηγή
+reservation.conflict.table.actions: Ενέργειες
+reservation.conflict.action.ignore: Παράβλεψη
+reservation.conflict.action.ignore.title: Παράβλεψη σύγκρουσης
+reservation.conflict.action.resolve: Εισαγωγή
+reservation.conflict.action.resolve.title: Εισαγωγή της κράτησης σε σύγκρουση
+reservation.conflict.ignore.confirm: Αυτή η σύγκρουση θα παραβλέπεται μόνιμα.
+reservation.conflict.resolve.failed: Η κράτηση εξακολουθεί να επικαλύπτεται με 
+  άλλη κράτηση.
+reservation.review.section.title: Προς έλεγχο
+reservation.review.hint: Οι εισαγόμενες κρατήσεις χωρίς επισκέπτη χρειάζονται 
+  έλεγχο.
+reservation.review.empty: Δεν υπάρχουν κρατήσεις προς έλεγχο.
+reservation.review.table.todo: Εκκρεμότητα
+reservation.review.table.actions: Ενέργειες
+reservation.review.todo: Προσθέστε επισκέπτη και επιβεβαιώστε τον αριθμό ατόμων.
+reservation.booker.missing.short: Δεν έχει οριστεί επισκέπτης
+reservation.import.booker.missing: Δεν έχει οριστεί ακόμη επισκέπτης. Προσθέστε 
+  επισκέπτη και, αν χρειάζεται, προσαρμόστε τον αριθμό ατόμων.
+reservation.kurtaxe.waived: Απαλλαγή από φόρο διαμονής
+reservation.kurtaxe.waived.help: Ενεργοποιήστε το, αν αυτή η κράτηση 
+  απαλλάσσεται από τον φόρο διαμονής (π.χ. επαγγελματική διαμονή με απαλλαγή).
+roomblock.title: Αποκλεισμός δωματίων
+roomblock.list.title: Αποκλεισμοί
+roomblock.list.empty: Δεν υπάρχουν αποκλεισμοί στην επιλεγμένη περίοδο.
+roomblock.filter.year: Έτος
+roomblock.filter.month: Μήνας
+roomblock.filter.all_months: Όλο το έτος
+roomblock.filter.subsidiary: Κατάλυμα
+roomblock.filter.all_subsidiaries: Όλα τα καταλύματα
+roomblock.instead: Αποκλεισμός αντί για κράτηση
+roomblock.rooms: Δωμάτια
+roomblock.select_all: Επιλογή όλων
+roomblock.search.placeholder: Αναζήτηση δωματίων…
+roomblock.room: Δωμάτιο
+roomblock.period: Περίοδος
+roomblock.from: Αποκλεισμένο από
+roomblock.to: Αποκλεισμένο έως
+roomblock.to.hint: Από αυτήν την ημέρα το δωμάτιο είναι ξανά διαθέσιμο (όπως μια
+  ημέρα αναχώρησης).
+roomblock.nights: Διανυκτερεύσεις
+roomblock.reason: Λόγος
+roomblock.note: Σημείωση
+roomblock.createdby: Δημιουργήθηκε από
+roomblock.actions: Ενέργειες
+roomblock.submit: Αποκλεισμός
+roomblock.source.manual: Χειροκίνητα
+roomblock.flash.create.success: Ο αποκλεισμός δημιουργήθηκε.
+roomblock.flash.update.success: Ο αποκλεισμός ενημερώθηκε.
+roomblock.flash.delete.success: Ο αποκλεισμός διαγράφηκε.
+roomblock.flash.bulk_delete.success: Οι επιλεγμένοι αποκλεισμοί αφαιρέθηκαν.
+roomblock.bulk.selected: επιλεγμένοι
+roomblock.bulk.delete: Αφαίρεση επιλεγμένων
+roomblock.bulk.confirm: Θέλετε σίγουρα να αφαιρέσετε τους επιλεγμένους 
+  αποκλεισμούς;
+roomblock.bulk.confirm.yes: Ναι, αφαίρεση
+roomblock.delete.ask: Θέλετε σίγουρα να διαγράψετε αυτόν τον αποκλεισμό;
+roomblock.conflict.heading: 'Ο αποκλεισμός δεν είναι δυνατός – υπάρχουν οι εξής συγκρούσεις:'
+roomblock.conflict.reservation.line: 'Δωμάτιο %room%: κράτηση από %from% έως %end%'
+roomblock.conflict.block.line: 'Δωμάτιο %room%: υπάρχων αποκλεισμός «%reason%» από
+  %from% έως %end%'
+roomblock.error.period: Εισαγάγετε έγκυρη περίοδο τουλάχιστον μίας 
+  διανυκτέρευσης.
+roomblock.error.reason: Εισαγάγετε έναν λόγο.
+roomblock.error.rooms: Επιλέξτε τουλάχιστον ένα δωμάτιο.
+reservation.calendar_reminder.button: Υπενθυμίσεις
+reservation.calendar_reminder.title: Υπενθυμίσεις ημερολογίου
+reservation.calendar_reminder.section.title: Επιβεβαίωση καταχωρίσεων
+reservation.calendar_reminder.hint: Οι επιβεβαιωμένες καταχωρίσεις διατηρούνται 
+  μόνιμα.
+reservation.calendar_reminder.today: Σήμερα
+reservation.calendar_reminder.empty: Δεν υπάρχουν ανοιχτές υπενθυμίσεις 
+  ημερολογίου.
+reservation.calendar_reminder.table.date: Ημερομηνία
+reservation.calendar_reminder.table.entry: Καταχώριση
+reservation.calendar_reminder.table.actions: Ενέργειες
+reservation.calendar_reminder.action.confirm.title: Επιβεβαίωση
+calendar_entry.title_edit: Επεξεργασία καταχώρισης ημερολογίου
+calendar_entry.title_new: Προσθήκη καταχώρισης ημερολογίου
+calendar_entry.modal.title: Καταχώριση ημερολογίου
+calendar_entry.calendar: Ημερολόγιο
+calendar_entry.form.calendar: Ημερολόγιο
+calendar_entry.form.date: Ημερομηνία
+calendar_entry.form.date_to: Έως
+calendar_entry.form.date_to_help: Έως – μία καταχώριση ανά ημέρα
+calendar_entry.form.date_to_too_far: Το διάστημα δεν μπορεί να υπερβαίνει τις 
+  %max% ημέρες.
+calendar_entry.form.end_time: Ώρα λήξης
+calendar_entry.form.end_time_before_start: Η ώρα λήξης πρέπει να είναι μετά την 
+  ώρα έναρξης. Το 00:00 επιτρέπεται ως τέλος της ημέρας.
+calendar_entry.form.end_time_midnight_without_start: Ώρα λήξης 00:00 σημαίνει 
+  τέλος της ημέρας και γι' αυτό απαιτεί ώρα έναρξης. Χωρίς ώρα έναρξης, αφήστε 
+  την καταχώριση ολοήμερη.
+calendar_entry.form.end_time_help: Προαιρετικό
+calendar_entry.form.time: Ώρα
+calendar_entry.form.time_help: Κενό = ολοήμερο
+calendar_entry.time.range: '%start% - %end%'
+calendar_entry.time.until: '- %end%'
+calendar_entry.form.title: Τίτλος
+calendar_entry.popover.new: + Νέα καταχώριση
+calendar_entry.confirmed_at: Η υπενθύμιση επιβεβαιώθηκε στις %datetime%
+calendar_entry.sync_warning: Αυτή η καταχώριση προέρχεται από πηγή ICS. Μέχρι να
+  επιβεβαιωθεί, η ημερομηνία και ο τίτλος της επαναφέρονται στην τιμή της πηγής 
+  σε κάθε συγχρονισμό.
+calendar_entry.delete: Διαγραφή
+calendar_entry.unconfirm: Αναίρεση επιβεβαίωσης
+calendar_entry.flash.saved: Η καταχώριση ημερολογίου αποθηκεύτηκε.
+calendar_entry.flash.deleted: Η καταχώριση ημερολογίου διαγράφηκε.
+reservation.price.changed: Η τιμή αυτής της κράτησης αλλάζει από %before% σε 
+  %after%.
+reservation.price.reprice.confirm: Εφαρμογή σημερινών τιμών
+reservation.price.reprice.invoiced: Για αυτήν την κράτηση υπάρχει ήδη τιμολόγιο,
+  στο οποίο αναγράφεται η τιμή της.
+reservation.price.list_changed.title: Οι τιμές άλλαξαν μετά την κράτηση
+reservation.price.list_changed.text: Αυτή η κράτηση διατηρεί τις τιμές που 
+  ίσχυαν στις %date% (%promised%). Με τις σημερινές τιμές θα κόστιζε %current%.
+reservation.price.reprice.done: Εφαρμόστηκαν οι σημερινές τιμές. Η κράτηση 
+  κοστίζει τώρα %total%.
+reservation.prices.invoice_note: Το τιμολόγιο θα χρησιμοποιήσει αυτές τις τιμές.
+  Μπορείτε ακόμη να τις προσαρμόσετε εκεί.
+reservation.price.rules_applied: Προσαρμογή από
+reservation.price.rules_nights: '{1}1 διανυκτέρευση|]1,Inf[%count% διανυκτερεύσεις'
+reservation.price.day_price: Ημερήσια τιμή
+reservation.summary.nights: '{0}0 διανυκτερεύσεις|{1}1 διανυκτέρευση|]1,Inf[%count%
+  διανυκτερεύσεις'
+reservation.summary.persons: '{0}0 άτομα|{1}1 άτομο|]1,Inf[%count% άτομα'
+reservation.summary.call: Κλήση
+reservation.details.stay: Διαμονή
+reservation.details.guest: Στοιχεία επισκέπτη
+reservation.summary.guest_menu: Επισκέπτης
+reservation.summary.guest_edit: Επεξεργασία στοιχείων επισκέπτη
+reservation.summary.guest_change: Ανάθεση άλλου επισκέπτη
+reservation.summary.change_booking: Αλλαγή κράτησης
+reservation.guests.room: Επισκέπτες · Δωμάτιο %number%
+reservation.guests.empty: Δεν έχουν καταχωριστεί ακόμη επισκέπτες.
+reservation.edit.change_room: Αλλαγή δωματίου
+reservation.guests.remove: Αφαίρεση
+reservation.guests.remove_ask: Να αφαιρεθεί ο επισκέπτης από αυτήν την κράτηση;
+reservation.new.create: Δημιουργία κράτησης
+reservation.selected.reservations: Επιλεγμένες κρατήσεις
+reservation.filter.by_period: Κατά περίοδο
+reservation.filter.by_guest: Κατά επισκέπτη
+reservation.correspondences.empty: Δεν υπάρχει ακόμη αλληλογραφία.
