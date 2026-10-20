@@ -189,7 +189,7 @@ class TemplatesServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->clear(Template::class);
+                $em->clear();
             } elseif (null !== $conflict) {
                 $error = true;
                 $this->addFlash('warning', $this->paymentMeansConflictMessage($translator, $template, $conflict));

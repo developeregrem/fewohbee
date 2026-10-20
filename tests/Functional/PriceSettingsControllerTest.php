@@ -13,6 +13,7 @@ use App\Entity\RoomCategory;
 use App\Entity\User;
 use App\Repository\PriceRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -102,6 +103,89 @@ final class PriceSettingsControllerTest extends WebTestCase
 
         $client->request('GET', '/settings/prices/');
         self::assertStringContainsString('01.05.2031 - 03.05.2031 <span class="text-body-secondary small">Stadtfest</span>', (string) $client->getResponse()->getContent());
+    }
+
+    #[DataProvider('rejectedEdits')]
+    public function testRejectedEditsLeaveThePriceAndItsChildrenUnchanged(string $reason): void
+    {
+        $client = $this->authenticatedClient();
+        [$single, $double] = $this->categoryIds();
+        $type = 'components' === $reason ? 1 : 2;
+        $overrides = [
+            'allperiods-new' => '',
+            'period-new' => ['new'],
+            'periodstart-new' => ['2031-05-01'],
+            'periodend-new' => ['2031-05-03'],
+            'perioddescription-new' => ['Original period'],
+        ];
+        if ('components' === $reason) {
+            $overrides += [
+                'is-package-new' => '1',
+                'component-desc-new' => ['Original component'],
+                'component-vat-new' => ['7'],
+                'component-type-new' => ['percent'],
+                'component-value-new' => ['100'],
+            ];
+        }
+        if ('conflict' === $reason) {
+            $this->postPrice($client, 'conflicting', 2, [$single], overrides: [
+                'allperiods-new' => '',
+                'period-new' => ['new'],
+                'periodstart-new' => ['2031-06-01'],
+                'periodend-new' => ['2031-06-03'],
+            ]);
+        }
+        $this->postPrice($client, 'protected', $type, [$double], overrides: $overrides);
+        $price = $this->findPrice('protected');
+        self::assertNotNull($price);
+        $id = (string) $price->getId();
+        $periodIds = $price->getPricePeriods()->map(static fn (PricePeriod $period): int => $period->getId())->getValues();
+
+        $edited = [
+            'price-'.$id => '99,00',
+            'allperiods-'.$id => '',
+            'period-'.$id => ['new'],
+            'periodstart-new' => ['2031-06-01'],
+            'periodend-new' => ['2031-06-03'],
+            'perioddescription-new' => ['Rejected period'],
+        ];
+        if ('components' === $reason) {
+            $edited += [
+                'is-package-'.$id => '1',
+                'component-desc-'.$id => ['Rejected component'],
+                'component-vat-'.$id => ['-1'],
+                'component-type-'.$id => ['percent'],
+                'component-value-'.$id => ['100'],
+            ];
+        }
+
+        $crawler = $this->postPrice($client, 'rejected', $type, 'mandatory' === $reason ? [] : [$single], $id, $edited);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('.alert-warning'));
+        // A later flush must not save the rejected form's mutations or orphan removals.
+        $this->em()->flush();
+        $saved = $this->findPrice('protected');
+        self::assertNotNull($saved);
+        self::assertSame(80.0, (float) $saved->getPrice());
+        self::assertSame([$double], $this->idsOf($saved));
+        self::assertSame($periodIds, $saved->getPricePeriods()->map(static fn (PricePeriod $period): int => $period->getId())->getValues());
+        $period = $saved->getPricePeriods()->first();
+        self::assertInstanceOf(PricePeriod::class, $period);
+        self::assertSame('Original period', $period->getDescription());
+        self::assertSame('2031-05-01', $period->getStart()?->format('Y-m-d'));
+        if ('components' === $reason) {
+            self::assertCount(1, $saved->getComponents());
+            self::assertSame('Original component', $saved->getComponents()->first()->getDescription());
+        }
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function rejectedEdits(): iterable
+    {
+        yield 'missing room category' => ['mandatory'];
+        yield 'invalid package component' => ['components'];
+        yield 'overlapping room price' => ['conflict'];
     }
 
     public function testRoomPriceWithoutCategoryIsRejected(): void

@@ -15,7 +15,6 @@ namespace App\Controller;
 
 use App\Entity\AccountingAccount;
 use App\Entity\Price;
-use App\Entity\PricePeriod;
 use App\Entity\RoomCategory;
 use App\Entity\TaxRate;
 use App\Repository\ReservationOriginRepository;
@@ -173,8 +172,7 @@ class PriceServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->clear(Price::class);
-                $em->clear(PricePeriod::class);
+                $em->clear();
             } else {
                 $componentErrors = $ps->validateComponents($price);
                 if (!empty($componentErrors)) {
@@ -182,8 +180,7 @@ class PriceServiceController extends AbstractController
                     foreach ($componentErrors as $key) {
                         $this->addFlash('warning', $key);
                     }
-                    $em->clear(Price::class);
-                    $em->clear(PricePeriod::class);
+                    $em->clear();
                 } else {
                     $conflicts = $ps->findConflictingPrices($price);
                     // during edit we need to remove the current item from the list
@@ -200,8 +197,7 @@ class PriceServiceController extends AbstractController
                         $error = true;
                         $this->addFlash('warning', 'price.flash.create.conflict');
                         // stop auto commit of doctrine with invalid field values
-                        $em->clear(Price::class);
-                        $em->clear(PricePeriod::class);
+                        $em->clear();
                     }
                 }
             }

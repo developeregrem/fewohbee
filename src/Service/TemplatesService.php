@@ -536,7 +536,10 @@ class TemplatesService
         return $this->translator->trans($typeName);
     }
 
-    public function getReferencedReservationsInSession()
+    /**
+     * @return list<Reservation> Empty when the session has no reservation selection.
+     */
+    public function getReferencedReservationsInSession(): array
     {
         $reservations = [];
         if ($this->requestStack->getSession()->has(ReservationService::SESSION_SELECTED_RESERVATIONS)) {

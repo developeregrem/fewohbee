@@ -177,7 +177,7 @@ class CorrespondenceController extends AbstractController
 
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/file/save', name: 'correspondence.file.save', methods: ['POST'])]
-    public function saveFileAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, Request $request)
+    public function saveFileAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, Request $request): Response
     {
         $em = $doctrine->getManager();
 
@@ -192,15 +192,19 @@ class CorrespondenceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                // todo
+                $reservations = $ts->getReferencedReservationsInSession();
+                // Another tab can reset the shared selection after the preview was opened.
+                if ([] === $reservations) {
+                    $this->addFlash('warning', 'templates.savefile.reservations.required');
+
+                    return $this->render('feedback.html.twig', ['error' => true]);
+                }
+
                 // if this file is an attachment for email,
                 $attachmentForId = $requestStack->getSession()->get('selectedTemplateId', null);
 
                 // now save correspondence to db
                 $template = $em->getReference(Template::class, $templateId);
-
-                // associate with reservations
-                $reservations = $ts->getReferencedReservationsInSession();
 
                 // save correspondence for each reservation
                 foreach ($reservations as $reservation) {

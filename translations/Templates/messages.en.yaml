@@ -293,6 +293,7 @@ templates.editor.tab.edit: Edit
 templates.editor.tab.preview: Preview
 templates.recipient: Recipient
 templates.savefile.success: File was successfully saved .
+templates.savefile.reservations.required: Select at least one reservation before saving the file.
 templates.select.reservations: Select reservation
 templates.select.template: Select template
 templates.sendemail.preview: Send message
