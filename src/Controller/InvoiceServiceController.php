@@ -41,6 +41,7 @@ use App\Service\PriceService;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -759,9 +760,8 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/create/new/invoice', name: 'invoices.create.invoice', methods: ['POST'])]
-    public function createNewInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, EventDispatcherInterface $eventDispatcher, InvoiceRepository $invoiceRepository, Request $request)
+    public function createNewInvoiceAction(EntityManagerInterface $em, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, EventDispatcherInterface $eventDispatcher, InvoiceRepository $invoiceRepository, Request $request)
     {
-        $em = $doctrine->getManager();
         $error = false;
         $invoice = $is->getInvoiceInCreation($requestStack);
 

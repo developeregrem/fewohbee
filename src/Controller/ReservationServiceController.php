@@ -629,7 +629,7 @@ class ReservationServiceController extends AbstractController
 
             $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
         } else {
-            $requestStack->getSession()->getFlashBag()->add('warning', 'reservation.no.selected.appartments');
+            $this->addFlash('warning', 'reservation.no.selected.appartments');
         }
 
         $request2 = $request->duplicate([], []);

@@ -29,6 +29,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class ReservationService
@@ -563,7 +564,7 @@ class ReservationService
             $reservation->setBooker($customer);
             $this->em->persist($reservation);
             $this->em->flush();
-            $this->requestStack->getSession()->getFlashBag()->add('success', 'reservation.flash.update.success');
+            $this->addFlash('success', 'reservation.flash.update.success');
         } elseif ('guest' === $tab && count($reservation->getCustomers()) < $reservation->getTotalGuests()) {
             // check if customer is already in list
             $isAlreadyInList = false;
@@ -580,13 +581,23 @@ class ReservationService
                 $reservation->addCustomer($customer);
                 $this->em->persist($reservation);
                 $this->em->flush();
-                $this->requestStack->getSession()->getFlashBag()->add('success', 'reservation.flash.update.success');
+                $this->addFlash('success', 'reservation.flash.update.success');
             } else {
-                $this->requestStack->getSession()->getFlashBag()->add('warning', 'reservation.flash.update.customeralreadyinlist');
+                $this->addFlash('warning', 'reservation.flash.update.customeralreadyinlist');
             }
         } else {
-            $this->requestStack->getSession()->getFlashBag()->add('warning', 'reservation.flash.update.toomuchcustomers');
+            $this->addFlash('warning', 'reservation.flash.update.toomuchcustomers');
         }
+    }
+
+    private function addFlash(string $type, string $message): void
+    {
+        $session = $this->requestStack->getSession();
+        if (!$session instanceof FlashBagAwareSessionInterface) {
+            throw new \LogicException('Reservation feedback requires a session supporting flash messages.');
+        }
+
+        $session->getFlashBag()->add($type, $message);
     }
 
     /**

@@ -26,6 +26,7 @@ use App\Service\InvoiceService;
 use App\Service\MailService;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\ExpressionLanguage\Expression;
@@ -106,10 +107,8 @@ class CorrespondenceController extends AbstractController
 
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/email/send', name: 'correspondence.email.send', methods: ['POST'])]
-    public function sendEmailAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, MailService $mailer, Request $request)
+    public function sendEmailAction(EntityManagerInterface $em, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, MailService $mailer, Request $request)
     {
-        $em = $doctrine->getManager();
-
         $error = false;
         if ($csrf->validateCSRFToken($request)) {
             $to = $request->request->get('to');
@@ -177,10 +176,8 @@ class CorrespondenceController extends AbstractController
 
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/file/save', name: 'correspondence.file.save', methods: ['POST'])]
-    public function saveFileAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, Request $request): Response
+    public function saveFileAction(EntityManagerInterface $em, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, Request $request): Response
     {
-        $em = $doctrine->getManager();
-
         $error = false;
         $isAttachment = false;
         if ($csrf->validateCSRFToken($request)) {

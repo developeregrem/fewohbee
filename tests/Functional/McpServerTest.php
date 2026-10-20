@@ -956,6 +956,7 @@ final class McpServerTest extends WebTestCase
             (string) static::getContainer()->get('translator')->trans('profile.apitokens.mcp.usage_hint'),
             $crawler->filter('#api-tokens .alert-success')->text()
         );
+        $this->assertTokenIsShownOnce($crawler, $token);
     }
 
     public function testRestTokenIgnoresAiOptions(): void
@@ -974,6 +975,7 @@ final class McpServerTest extends WebTestCase
         $token = $this->em()->getRepository(\App\Entity\ApiToken::class)->findOneBy(['user' => $admin, 'name' => 'Calendar']);
         self::assertNotNull($token);
         self::assertSame([ApiScope::CALENDAR_READ->value], $token->getScopes());
+        $this->assertTokenIsShownOnce($this->client->followRedirect(), $token);
     }
 
     public function testRestApiRejectsAiTokens(): void
@@ -1004,6 +1006,28 @@ final class McpServerTest extends WebTestCase
         ]);
 
         self::assertNull($this->em()->getRepository(\App\Entity\ApiToken::class)->findOneBy(['user' => $admin, 'name' => 'Claude']));
+    }
+
+    private function assertTokenIsShownOnce(Crawler $crawler, \App\Entity\ApiToken $token): void
+    {
+        self::assertResponseIsSuccessful();
+        $input = $crawler->filter('#api-tokens .alert-success input[data-copy-target="input"]');
+        self::assertCount(1, $input);
+        $plainToken = (string) $input->attr('value');
+        self::assertStringStartsWith('fwb_', $plainToken);
+        self::assertSame($token->getTokenHash(), ApiTokenService::hash($plainToken));
+        self::assertSame(1, substr_count((string) $this->client->getResponse()->getContent(), $plainToken));
+        self::assertSelectorNotExists('.alert-api_token_plain');
+        self::assertSelectorTextContains(
+            '#flash-message-container .alert-success',
+            (string) static::getContainer()->get('translator')->trans('profile.apitokens.created'),
+        );
+
+        $this->client->request('GET', '/profile/');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('#api-tokens .alert-success input[data-copy-target="input"]');
+        self::assertStringNotContainsString($plainToken, (string) $this->client->getResponse()->getContent());
     }
 
     /**
