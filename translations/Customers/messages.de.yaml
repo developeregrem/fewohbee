@@ -41,7 +41,7 @@ customer.person: Person
 customer.phone: Festnetz
 customer.remark: Bemerkungen
 customer.salutation: Anrede
-customer.search.addresses: 'Anschriften suchen ...'
+customer.search.addresses: 'Anschriften suchen…'
 customer.template: Vorlage
 customer.zip: PLZ
 customer.buyerVatId: 'USt-IdNr. (Käufer)'

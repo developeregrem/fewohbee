@@ -43,7 +43,7 @@ reservation.move.hint: Drag to a free cell to move this reservation.
 reservation.invoice: Invoice
 reservation.invoices: Invoices
 reservation.new.reservation.appartments.addmore: Add rooms to the reservation
-reservation.new.reservation.appartments.selected.heading: Selected room(s)
+reservation.new.reservation.appartments.selected.heading: Selected rooms
 reservation.no.selected.appartments: No reservation selected.
 reservation.objects.all: All branches
 reservation.option: Option

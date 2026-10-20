@@ -45,7 +45,7 @@ customer.person: Person
 customer.phone: Phone
 customer.remark: Remark
 customer.salutation: Title
-customer.search.addresses: Search addresses ...
+customer.search.addresses: Search addresses…
 customer.template: Template
 customer.zip: Zip code
 customer.buyerVatId: VAT ID (Buyer)

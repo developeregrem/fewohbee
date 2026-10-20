@@ -1,41 +1,8 @@
-journal.action: Aktion
-journal.add: 'Kassenblatt hinzufügen'
-journal.cash.booked: Gebucht
-journal.cash.closed: Geschlossen
-journal.cash.end: 'Bestand Ende'
-journal.cash.end.desc: 'Gibt den Endbestand aus.'
-journal.cash.end.info: 'Der Endbestand wird automatisch berechnet und muss nicht ausgefüllt werden.'
-journal.cash.start: 'Bestand Anfang'
-journal.cash.start.desc: 'Gibt den Anfangsbestand aus.'
-journal.delete.ask: 'Soll das Kassenblatt mit allen Einträgen gelöscht werden?'
-journal.description: Kassenbuch
-journal.edit: 'Eintrag bearbeiten'
 journal.entry.add: 'Eintrag hinzufügen'
-journal.entry.counteraccount: Gegenkto.
 journal.entry.date: Datum
-journal.entry.delete.ask: 'Soll der Eintrag wirklich gelöscht werden?'
-journal.entry.documentnumber: Bel.Nr.
 journal.entry.edit: 'Eintrag bearbeiten'
-journal.entry.expenses: Ausgaben
-journal.entry.flash.create.success: 'Eintrag erfolgreich hinzugfügt.'
-journal.entry.flash.delete.success: 'Eintrag erfolgreich gelöscht.'
-journal.entry.flash.edit.success: 'Eintrag erfolgreich bearbeitet.'
-journal.entry.incomes: Einnahmen
-journal.entry.inventory: Bestand
-journal.entry.invoicenumber: Rg.Nr.
-journal.entry.number: '#'
 journal.entry.remark: Bemerkung
-journal.flash.create.success: 'Kassenblatt erfolgreich hinzugefügt'
-journal.flash.edit.status.success: 'Der Status wurde erfolgreich geändert.'
-journal.flash.edit.status.warning: 'Der Status konnte nicht geändert werden.'
-journal.flash.edit.success: 'Eintrag erfolgreich bearbeitet.'
 journal.month: Monat
-journal.month.desc: 'Monat des Kassenblattes'
 journal.positions: Positionen
 journal.positions.desc: 'Fügt eine Tabelle hinzu mit allen Kassenblattpositionen. Bei einem Export werden alle Zeilen sichtbar, hier in der Vorlage ist nur eine sichtbar.'
-journal.single: Kassenblatt
-journal.template: 'Exportvorlage wählen'
-journal.title: Kassenbuch
 journal.year: Jahr
-journal.year.desc: 'Jahr des Kassenblattes'
-journal.error.journal.closed: 'Kassenblatt %month%/%year% ist geschlossen. Eintrag konnte nicht hinzugefügt werden.'

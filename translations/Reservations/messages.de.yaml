@@ -39,7 +39,7 @@ reservation.move.hint: 'Auf ein freies Feld ziehen, um diese Reservierung zu ver
 reservation.invoice: Rechnung
 reservation.invoices: Rechnungen
 reservation.new.reservation.appartments.addmore: 'Zimmer der Reservierung hinzufügen'
-reservation.new.reservation.appartments.selected.heading: 'Ausgewählte(s) Zimmer'
+reservation.new.reservation.appartments.selected.heading: 'Ausgewählte Zimmer'
 reservation.no.selected.appartments: 'Keine Reservierung ausgewählt.'
 reservation.objects.all: 'Alle Niederlassungen'
 reservation.option: Option
