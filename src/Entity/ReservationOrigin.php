@@ -64,9 +64,9 @@ class ReservationOrigin
     #[ORM\Column(name: 'tourist_tax_collection', type: 'string', length: 16, enumType: PaymentCollection::class, options: ['default' => 'property'])]
     private PaymentCollection $touristTaxCollection = PaymentCollection::PROPERTY;
 
-    #[ORM\ManyToMany(targetEntity: 'Price', mappedBy: 'reservationOrigins')]
+    #[ORM\ManyToMany(targetEntity: Price::class, mappedBy: 'reservationOrigins')]
     private $prices;
-    #[ORM\OneToMany(targetEntity: 'Reservation', mappedBy: 'reservationOrigin')]
+    #[ORM\OneToMany(targetEntity: Reservation::class, mappedBy: 'reservationOrigin')]
     private $reservations;
 
     /**

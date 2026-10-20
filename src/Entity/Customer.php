@@ -27,13 +27,13 @@ class Customer
     private $birthday;
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $remark = null;
-    #[ORM\ManyToMany(targetEntity: 'Reservation', mappedBy: 'customers')]
+    #[ORM\ManyToMany(targetEntity: Reservation::class, mappedBy: 'customers')]
     private Collection $reservations;
-    #[ORM\OneToMany(mappedBy: 'customer', targetEntity: 'RegistrationBookEntry')]
+    #[ORM\OneToMany(mappedBy: 'customer', targetEntity: RegistrationBookEntry::class)]
     private Collection $registrationBookEntries;
-    #[ORM\OneToMany(mappedBy: 'booker', targetEntity: 'Reservation')]
+    #[ORM\OneToMany(mappedBy: 'booker', targetEntity: Reservation::class)]
     private Collection $bookedReservations;
-    #[ORM\ManyToMany(targetEntity: 'CustomerAddresses', inversedBy: 'customers')]
+    #[ORM\ManyToMany(targetEntity: CustomerAddresses::class, inversedBy: 'customers')]
     #[ORM\JoinTable(name: 'customer_has_address')]
     private Collection $customerAddresses;
 

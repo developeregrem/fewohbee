@@ -31,7 +31,7 @@ class CashJournalEntry
     private $date;
     #[ORM\Column(type: 'text', length: 255, nullable: true)]
     private $remark;
-    #[ORM\ManyToOne(targetEntity: 'CashJournal', inversedBy: 'cashJournalEntries')]
+    #[ORM\ManyToOne(targetEntity: CashJournal::class, inversedBy: 'cashJournalEntries')]
     private $cashJournal;
 
     /**

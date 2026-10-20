@@ -19,7 +19,7 @@ class TemplateType
     private $name;
     #[ORM\Column(type: 'string', length: 50)]
     private $icon;
-    #[ORM\OneToMany(mappedBy: 'templateType', targetEntity: 'Template')]
+    #[ORM\OneToMany(mappedBy: 'templateType', targetEntity: Template::class)]
     private $templates;
 
     /**

@@ -35,9 +35,9 @@ class Template
      */
     #[ORM\Column(nullable: true, enumType: PaymentMeansCode::class)]
     private ?PaymentMeansCode $paymentMeans = null;
-    #[ORM\ManyToOne(targetEntity: 'TemplateType', inversedBy: 'templates')]
+    #[ORM\ManyToOne(targetEntity: TemplateType::class, inversedBy: 'templates')]
     private $templateType;
-    #[ORM\OneToMany(targetEntity: 'Correspondence', mappedBy: 'template')]
+    #[ORM\OneToMany(targetEntity: Correspondence::class, mappedBy: 'template')]
     private $correspondences;
 
     /**

@@ -37,19 +37,19 @@ class Reservation
     private $remark;
     #[ORM\Column(name: 'reservation_date', type: 'datetime')]
     private $reservationDate;
-    #[ORM\ManyToMany(targetEntity: 'Invoice', inversedBy: 'reservations')]
+    #[ORM\ManyToMany(targetEntity: Invoice::class, inversedBy: 'reservations')]
     #[ORM\JoinTable(name: 'reservations_has_invoices')]
     private $invoices;
-    #[ORM\ManyToOne(targetEntity: 'Appartment', inversedBy: 'reservations')]
+    #[ORM\ManyToOne(targetEntity: Appartment::class, inversedBy: 'reservations')]
     private $appartment;
-    #[ORM\ManyToMany(targetEntity: 'Customer', inversedBy: 'reservations')]
+    #[ORM\ManyToMany(targetEntity: Customer::class, inversedBy: 'reservations')]
     #[ORM\JoinTable(name: 'reservations_has_customers')]
     private $customers;
-    #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'bookedReservations')]
+    #[ORM\ManyToOne(targetEntity: Customer::class, inversedBy: 'bookedReservations')]
     private $booker;
-    #[ORM\OneToMany(targetEntity: 'RegistrationBookEntry', mappedBy: 'reservation')]
+    #[ORM\OneToMany(targetEntity: RegistrationBookEntry::class, mappedBy: 'reservation')]
     private $registrationBookEntries;
-    #[ORM\ManyToOne(targetEntity: 'ReservationOrigin', inversedBy: 'reservations')]
+    #[ORM\ManyToOne(targetEntity: ReservationOrigin::class, inversedBy: 'reservations')]
     private $reservationOrigin;
 
     /**
@@ -94,7 +94,7 @@ class Reservation
      */
     #[ORM\Column(name: 'tourist_tax_collection', type: 'string', length: 16, enumType: PaymentCollection::class, nullable: true)]
     private ?PaymentCollection $touristTaxCollection = null;
-    #[ORM\OneToMany(targetEntity: 'Correspondence', mappedBy: 'reservation', cascade: ['remove'])]
+    #[ORM\OneToMany(targetEntity: Correspondence::class, mappedBy: 'reservation', cascade: ['remove'])]
     private $correspondences;
     #[ORM\ManyToMany(targetEntity: Price::class)]
     private $prices;

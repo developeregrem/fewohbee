@@ -24,6 +24,7 @@ use App\Workflow\Attachment\ResolvedAttachmentSet;
 use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -31,6 +32,7 @@ final class SendTemplateEmailActionTest extends TestCase
 {
     private TemplatesService $templatesService;
     private MailService $mailService;
+    /** @var AppSettingsService&Stub */
     private AppSettingsService $settingsService;
     private WorkflowAttachmentResolver $attachmentResolver;
     private EntityManagerInterface $em;

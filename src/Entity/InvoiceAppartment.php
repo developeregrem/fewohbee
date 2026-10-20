@@ -36,10 +36,11 @@ class InvoiceAppartment
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\PositiveOrZero]
     private $price;
+    /** @var float|numeric-string Keep DBAL strings intact to avoid false updates after hydration. */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\PositiveOrZero]
-    private float $vat;
-    #[ORM\ManyToOne(targetEntity: 'Invoice', inversedBy: 'appartments')]
+    private float|string $vat;
+    #[ORM\ManyToOne(targetEntity: Invoice::class, inversedBy: 'appartments')]
     private $invoice;
     #[ORM\Column(type: 'boolean', nullable: true)]
     private $includesVat;
@@ -95,7 +96,7 @@ class InvoiceAppartment
 
     public function getVat(): float
     {
-        return $this->vat;
+        return (float) $this->vat;
     }
 
     public function getInvoice()

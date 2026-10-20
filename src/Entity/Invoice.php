@@ -42,11 +42,11 @@ class Invoice
     private $payment;
     #[ORM\Column(type: 'smallint')]
     private $status;
-    #[ORM\OneToMany(targetEntity: 'InvoicePosition', mappedBy: 'invoice')]
+    #[ORM\OneToMany(targetEntity: InvoicePosition::class, mappedBy: 'invoice')]
     private $positions;
-    #[ORM\OneToMany(targetEntity: 'InvoiceAppartment', mappedBy: 'invoice')]
+    #[ORM\OneToMany(targetEntity: InvoiceAppartment::class, mappedBy: 'invoice')]
     private $appartments;
-    #[ORM\ManyToMany(targetEntity: 'Reservation', mappedBy: 'invoices')]
+    #[ORM\ManyToMany(targetEntity: Reservation::class, mappedBy: 'invoices')]
     private $reservations;
 
     #[ORM\Column(length: 50, nullable: true)]

@@ -39,9 +39,9 @@ class RegistrationBookEntry
     private $country;
     #[ORM\Column(type: 'string', length: 4, nullable: false)]
     private $year;
-    #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'registrationBookEntries')]
+    #[ORM\ManyToOne(targetEntity: Customer::class, inversedBy: 'registrationBookEntries')]
     private $customer;
-    #[ORM\ManyToOne(targetEntity: 'Reservation', inversedBy: 'registrationBookEntries')]
+    #[ORM\ManyToOne(targetEntity: Reservation::class, inversedBy: 'registrationBookEntries')]
     private $reservation;
 
     #[ORM\Column(type: 'string', nullable: true, enumType: IDCardType::class)]

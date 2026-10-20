@@ -88,7 +88,7 @@ class Subsidiary implements ContentTranslatable
      */
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $checkInNote = null;
-    #[ORM\OneToMany(targetEntity: 'Appartment', mappedBy: 'object')]
+    #[ORM\OneToMany(targetEntity: Appartment::class, mappedBy: 'object')]
     private $appartments;
 
     public function __construct()

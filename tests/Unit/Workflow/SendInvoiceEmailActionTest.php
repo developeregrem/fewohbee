@@ -26,17 +26,24 @@ use App\Workflow\Attachment\ResolvedAttachmentSet;
 use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class SendInvoiceEmailActionTest extends TestCase
 {
     private TemplatesService $templatesService;
+    /** @var MailService&Stub */
     private MailService $mailService;
+    /** @var InvoiceService&Stub */
     private InvoiceService $invoiceService;
+    /** @var EInvoiceReadinessService&Stub */
     private EInvoiceReadinessService $readinessService;
+    /** @var EInvoiceExportService&Stub */
     private EInvoiceExportService $exportService;
     private WorkflowAttachmentResolver $attachmentResolver;
+    /** @var EntityManagerInterface&Stub */
     private EntityManagerInterface $em;
     private TranslatorInterface $translator;
     private InvoiceSettingsData $settings;
@@ -45,11 +52,13 @@ final class SendInvoiceEmailActionTest extends TestCase
     private TemplateRepository $repository;
 
     // Replaces the default stubs with mocks for tests that verify expectations.
+    /** @phpstan-assert MailService&MockObject $this->mailService */
     private function useMailServiceMock(): void
     {
         $this->mailService = $this->createMock(MailService::class);
     }
 
+    /** @phpstan-assert EntityManagerInterface&MockObject $this->em */
     private function useEntityManagerMock(): void
     {
         $this->em = $this->createMock(EntityManagerInterface::class);

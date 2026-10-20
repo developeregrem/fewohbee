@@ -45,7 +45,7 @@ class CustomerAddresses
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $customerIBAN = null;
 
-    #[ORM\ManyToMany(targetEntity: 'Customer', mappedBy: 'customerAddresses')]
+    #[ORM\ManyToMany(targetEntity: Customer::class, mappedBy: 'customerAddresses')]
     private $customers;
 
     /**

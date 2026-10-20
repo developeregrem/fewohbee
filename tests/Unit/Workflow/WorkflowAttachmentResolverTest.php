@@ -24,13 +24,16 @@ use App\Workflow\Attachment\ResolvedAttachment;
 use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class WorkflowAttachmentResolverTest extends TestCase
 {
     private TemplatesService $templatesService;
+    /** @var InvoiceService&Stub */
     private InvoiceService $invoiceService;
+    /** @var EInvoiceReadinessService&Stub */
     private EInvoiceReadinessService $readinessService;
     private EInvoiceExportService $exportService;
     private EntityManagerInterface $em;

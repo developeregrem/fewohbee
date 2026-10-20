@@ -32,9 +32,9 @@ class Appartment implements ContentTranslatable
     private int $beds_max;
     #[ORM\Column(type: 'string', length: 255)]
     private string $description;
-    #[ORM\ManyToOne(targetEntity: 'Subsidiary', inversedBy: 'appartments')]
+    #[ORM\ManyToOne(targetEntity: Subsidiary::class, inversedBy: 'appartments')]
     private Subsidiary $object;
-    #[ORM\OneToMany(mappedBy: 'appartment', targetEntity: 'Reservation')]
+    #[ORM\OneToMany(mappedBy: 'appartment', targetEntity: Reservation::class)]
     private Collection $reservations;
     #[ORM\ManyToOne(targetEntity: 'App\Entity\RoomCategory', inversedBy: 'apartments')]
     #[ORM\JoinColumn(nullable: true)]

@@ -27,7 +27,7 @@ class CashJournal
     private $isClosed;
     #[ORM\Column(type: 'boolean')]
     private $isBooked;
-    #[ORM\OneToMany(targetEntity: 'CashJournalEntry', mappedBy: 'cashJournal', cascade: ['remove'])]
+    #[ORM\OneToMany(targetEntity: CashJournalEntry::class, mappedBy: 'cashJournal', cascade: ['remove'])]
     #[ORM\OrderBy(['date' => \SortDirection::Ascending])]
     private $cashJournalEntries;
 

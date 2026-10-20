@@ -22,8 +22,9 @@ class Price implements ContentTranslatable
     private $id;
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     private $price;
+    /** @var float|numeric-string|null Keep DBAL strings intact to avoid false updates after hydration. */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?float $vat = null;
+    private float|string|null $vat = null;
     #[ORM\Column(type: 'string', length: 100)]
     private $description;
     #[ORM\Column(type: 'smallint', nullable: true)]
@@ -54,7 +55,7 @@ class Price implements ContentTranslatable
     private $allDays;
     #[ORM\Column(type: 'smallint')]
     private $type;
-    #[ORM\ManyToMany(targetEntity: 'ReservationOrigin', inversedBy: 'prices')]
+    #[ORM\ManyToMany(targetEntity: ReservationOrigin::class, inversedBy: 'prices')]
     #[ORM\JoinTable(name: 'prices_has_reservation_origins')]
     private $reservationOrigins;
     #[ORM\OneToMany(targetEntity: 'App\Entity\PricePeriod', mappedBy: 'price', orphanRemoval: true, cascade: ['persist'])]
@@ -136,9 +137,9 @@ class Price implements ContentTranslatable
         return $this->price;
     }
 
-    public function getVat()
+    public function getVat(): ?float
     {
-        return $this->vat;
+        return null === $this->vat ? null : (float) $this->vat;
     }
 
     public function getDescription()

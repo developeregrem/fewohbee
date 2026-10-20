@@ -23,13 +23,13 @@ class Correspondence
     protected $text;
     #[ORM\Column(name: 'created', type: 'datetime')]
     protected $created;
-    #[ORM\ManyToOne(targetEntity: 'Template', inversedBy: 'correspondences')]
+    #[ORM\ManyToOne(targetEntity: Template::class, inversedBy: 'correspondences')]
     protected $template;
-    #[ORM\ManyToOne(targetEntity: 'Reservation', inversedBy: 'correspondences')]
+    #[ORM\ManyToOne(targetEntity: Reservation::class, inversedBy: 'correspondences')]
     protected $reservation;
-    #[ORM\ManyToMany(targetEntity: 'Correspondence', inversedBy: 'parents')]
+    #[ORM\ManyToMany(targetEntity: Correspondence::class, inversedBy: 'parents')]
     protected $children;
-    #[ORM\ManyToMany(targetEntity: 'Correspondence', mappedBy: 'children')]
+    #[ORM\ManyToMany(targetEntity: Correspondence::class, mappedBy: 'children')]
     protected $parents;
 
     public function __construct()
@@ -54,7 +54,7 @@ class Correspondence
      *
      * @param string $name
      *
-     * @return Correspondence
+     * @return $this
      */
     public function setName($name)
     {
@@ -78,7 +78,7 @@ class Correspondence
      *
      * @param string $text
      *
-     * @return Correspondence
+     * @return $this
      */
     public function setText($text)
     {
@@ -102,7 +102,7 @@ class Correspondence
      *
      * @param \DateTime $created
      *
-     * @return Correspondence
+     * @return $this
      */
     public function setCreated($created)
     {
@@ -122,7 +122,7 @@ class Correspondence
     /**
      * Set template.
      *
-     * @return Correspondence
+     * @return $this
      */
     public function setTemplate(?Template $template = null)
     {
@@ -144,7 +144,7 @@ class Correspondence
     /**
      * Set reservation.
      *
-     * @return Correspondence
+     * @return $this
      */
     public function setReservation(?Reservation $reservation = null)
     {
@@ -166,7 +166,7 @@ class Correspondence
     /**
      * Add child.
      *
-     * @return Correspondence
+     * @return $this
      */
     public function addChild(Correspondence $child)
     {
@@ -196,7 +196,7 @@ class Correspondence
     /**
      * Add parent.
      *
-     * @return Correspondence
+     * @return $this
      */
     public function addParent(Correspondence $parent)
     {
