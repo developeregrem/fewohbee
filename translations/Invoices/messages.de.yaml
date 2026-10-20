@@ -62,6 +62,7 @@ invoice.price.single: Einzelpreis
 invoice.price.total: Gesamt
 invoice.remark: Bemerkungen
 invoice.reservation: Reservierung
+invoice.reservations.unavailable: 'Mindestens eine ausgewählte Reservierung ist nicht mehr vorhanden. Starte die Rechnungserstellung erneut und wähle die Reservierungen neu aus.'
 invoice.select.customer.search.input.placeholder: 'Nachname Kunde'
 invoice.select.open.reservation: 'Reservierung ohne Rechnung auswählen'
 invoice.startdate: Von

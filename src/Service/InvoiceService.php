@@ -31,6 +31,7 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
+use App\Exception\InvoiceReservationSelectionException;
 use App\Service\EInvoice\EInvoiceExportService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -1075,9 +1076,11 @@ class InvoiceService
     }
 
     /**
-     * Returns a list of reservations that a connected with the current invoice creation process.
+     * Resolves the complete draft selection without silently dropping missing reservations.
      *
-     * @return Resrvation[]
+     * @return list<Reservation> Empty for manual invoices without selected reservations.
+     *
+     * @throws InvoiceReservationSelectionException when a selected reservation no longer exists
      */
     public function getInvoiceReservationsInCreation(RequestStack $requestStack): array
     {
@@ -1089,7 +1092,11 @@ class InvoiceService
         }
         $reservations = [];
         foreach ($reservationIds as $reservationId) {
-            $reservations[] = $this->em->getRepository(Reservation::class)->find($reservationId);
+            $reservation = $this->em->getRepository(Reservation::class)->find($reservationId);
+            if (!$reservation instanceof Reservation) {
+                throw new InvoiceReservationSelectionException('invoice.reservations.unavailable');
+            }
+            $reservations[] = $reservation;
         }
 
         return $reservations;
@@ -1098,7 +1105,7 @@ class InvoiceService
     /**
      * Collect all unique bookers and customers for recommendation list.
      *
-     * @param Reservation[] $reservations
+     * @param array<int, Reservation>|Collection<int, Reservation> $reservations
      *
      * @return Customer[]
      */

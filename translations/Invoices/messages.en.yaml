@@ -62,6 +62,7 @@ invoice.price.single: Unit Price
 invoice.price.total: Total
 invoice.remark: Remarks
 invoice.reservation: Reservation
+invoice.reservations.unavailable: At least one selected reservation is no longer available. Restart invoice creation and select the reservations again.
 invoice.select.customer.search.input.placeholder: Customer Last Name
 invoice.select.open.reservation: Select reservation without invoice
 invoice.startdate: From

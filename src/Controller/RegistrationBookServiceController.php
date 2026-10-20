@@ -93,7 +93,7 @@ class RegistrationBookServiceController extends AbstractController
         if ('' !== $start) {
             try {
                 $startDate = new \DateTime($start);
-            } catch (Exception $ex) {
+            } catch (\Exception $ex) {
                 $startDate = new \DateTime();
                 $startDate->sub(new \DateInterval('P30D'));
             }
