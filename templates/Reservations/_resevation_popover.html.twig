@@ -62,22 +62,32 @@
         {% if businessCompany %}
             {% set popBody = businessCompany ~ "<br />" ~ popBody %}
         {% endif %}
-        {% if invoiceNumbers|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'invoice.number.short'|trans~": " ~ invoiceNumbers %}{% endif %}
-        {% if phones|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.phone'|trans~": " ~ phones %}{% endif %}
-        {% if mobiles|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.mobilephone'|trans~": " ~ mobiles %}{% endif %}
-        {% if mails|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.email'|trans~": " ~ mails %}{% endif %}
-        {# Arrival and departure share one line, also when only one of them is set #}
-        {% set times = [] %}
+        {# Label/value pairs, the values already escaped. Arrival and departure share a row:
+           the first time set gives the label, a departure after an arrival follows in the value. #}
+        {% set details = [] %}
+        {% if invoiceNumbers|length > 0 %}{% set details = details|merge([['invoice.number.short'|trans, invoiceNumbers]]) %}{% endif %}
+        {% if phones|length > 0 %}{% set details = details|merge([['customer.phone'|trans, phones]]) %}{% endif %}
+        {% if mobiles|length > 0 %}{% set details = details|merge([['customer.mobilephone'|trans, mobiles]]) %}{% endif %}
+        {% if mails|length > 0 %}{% set details = details|merge([['customer.email'|trans, mails]]) %}{% endif %}
         {% if reservation.arrivalTime %}
-            {% set times = times|merge(['reservation.arrivalTime'|trans ~ ": " ~ reservation.arrivalTime|date('H:i')]) %}
+            {% set times = reservation.arrivalTime|date('H:i') %}
+            {% if reservation.departureTime %}
+                {% set times = times ~ " <span class='text-body-secondary ms-2'>" ~ ('reservation.departureTime'|trans)|e ~ "</span> " ~ reservation.departureTime|date('H:i') %}
+            {% endif %}
+            {% set details = details|merge([['reservation.arrivalTime'|trans, times]]) %}
+        {% elseif reservation.departureTime %}
+            {% set details = details|merge([['reservation.departureTime'|trans, reservation.departureTime|date('H:i')]]) %}
         {% endif %}
-        {% if reservation.departureTime %}
-            {% set times = times|merge(['reservation.departureTime'|trans ~ ": " ~ reservation.departureTime|date('H:i')]) %}
+        {% if details is not empty %}
+            {% set popBody = popBody ~ "<div class='reservation-popover-details'>" %}
+            {% for detail in details %}
+                {% set popBody = popBody ~ "<span class='text-body-secondary'>" ~ detail[0]|e ~ "</span><span>" ~ detail[1] ~ "</span>" %}
+            {% endfor %}
+            {% set popBody = popBody ~ "</div>" %}
         {% endif %}
-        {% if times is not empty %}{% set popBody = popBody ~ "<br />" ~ times|join(" ") %}{% endif %}
-        {% if reservation.remark|length > 0 %}{% set popBody = popBody ~ "<br />" ~ reservation.remark|e|nl2br %}{% endif %}
+        {% if reservation.remark|length > 0 %}{% set popBody = popBody ~ "<div class='mt-1'>" ~ reservation.remark|e|nl2br ~ "</div>" %}{% endif %}
         {% if reservation.calendarSyncImport is defined and reservation.calendarSyncImport is not null %}
-            {% set popBody = popBody ~ "<br /><i class='fas fa-cloud-download-alt'></i> " ~ reservation.calendarSyncImport.name|e %}
+            {% set popBody = popBody ~ "<div class='mt-1'><i class='fas fa-cloud-download-alt'></i> " ~ reservation.calendarSyncImport.name|e ~ "</div>" %}
         {% endif %}
         {{ popBody }}
     {% endif %}

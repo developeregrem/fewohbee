@@ -80,8 +80,8 @@ final class ReservationPopoverEscapingTest extends TestCase
             ['phone' => '', 'mobilePhone' => '', 'email' => ''],
         ])]);
 
-        self::assertStringContainsString("customer.phone: <a href='tel:03511'>0351 1</a><br />", $popoverHtml);
-        self::assertStringContainsString("customer.email: <a href='mailto:max@example.org'>max@example.org</a><br />", $popoverHtml);
+        self::assertStringContainsString("customer.phone</span><span><a href='tel:03511'>0351 1</a></span>", $popoverHtml);
+        self::assertStringContainsString("customer.email</span><span><a href='mailto:max@example.org'>max@example.org</a></span>", $popoverHtml);
     }
 
     public function testContactValuesSharedByTwoAddressesAppearOnce(): void
@@ -92,28 +92,31 @@ final class ReservationPopoverEscapingTest extends TestCase
         ])]);
 
         self::assertSame(1, substr_count($popoverHtml, "href='tel:03511'"));
-        self::assertStringContainsString("customer.mobilephone: <a href='tel:01702'>0170 2</a>, <a href='tel:01703'>0170 3</a><br />", $popoverHtml);
+        self::assertStringContainsString("customer.mobilephone</span><span><a href='tel:01702'>0170 2</a>, <a href='tel:01703'>0170 3</a></span>", $popoverHtml);
         self::assertSame(1, substr_count($popoverHtml, 'mailto:'));
     }
 
-    public function testDepartureTimeWithoutArrivalTimeStartsItsOwnLine(): void
+    public function testDepartureTimeWithoutArrivalTimeGetsItsOwnRow(): void
     {
         $popoverHtml = $this->renderPopover([
             'booker' => $this->booker([['phone' => '', 'mobilePhone' => '', 'email' => 'max@example.org']]),
             'departureTime' => new \DateTimeImmutable('10:00'),
         ]);
 
-        self::assertStringContainsString("max@example.org</a><br />reservation.departureTime: 10:00", $popoverHtml);
+        self::assertStringContainsString("max@example.org</a></span><span class='text-body-secondary'>reservation.departureTime</span><span>10:00</span>", $popoverHtml);
     }
 
-    public function testArrivalAndDepartureTimeShareOneLine(): void
+    public function testArrivalAndDepartureTimeShareOneRow(): void
     {
         $popoverHtml = $this->renderPopover([
             'arrivalTime' => new \DateTimeImmutable('17:00'),
             'departureTime' => new \DateTimeImmutable('10:00'),
         ]);
 
-        self::assertStringContainsString('<br />reservation.arrivalTime: 17:00 reservation.departureTime: 10:00', $popoverHtml);
+        self::assertStringContainsString(
+            "<span class='text-body-secondary'>reservation.arrivalTime</span><span>17:00 <span class='text-body-secondary ms-2'>reservation.departureTime</span> 10:00</span>",
+            $popoverHtml,
+        );
     }
 
     /**
