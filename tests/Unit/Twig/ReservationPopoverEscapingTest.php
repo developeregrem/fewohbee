@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 use Twig\TwigFilter;
+use Twig\TwigFunction;
 
 final class ReservationPopoverEscapingTest extends TestCase
 {
@@ -43,6 +44,35 @@ final class ReservationPopoverEscapingTest extends TestCase
         self::assertStringNotContainsString('<i>(Bezahlt)</i>', $popoverHtml);
     }
 
+    public function testInvoiceNumberLinksToTheInvoiceWithInvoiceRights(): void
+    {
+        $popoverHtml = $this->renderPopover(['invoices' => [['id' => 7, 'number' => 'R-1001', 'status' => 2]]], true);
+
+        self::assertStringContainsString(
+            "<a href='/invoices/get/7/' class='js-invoice-link' title='reservation.invoice R-1001'>R-1001</a> (invoice.status.paid)",
+            $popoverHtml,
+        );
+    }
+
+    public function testInvoiceNumberStaysPlainTextWithoutInvoiceRights(): void
+    {
+        $popoverHtml = $this->renderPopover(['invoices' => [['id' => 7, 'number' => 'R-1001', 'status' => 2]]]);
+
+        self::assertStringContainsString('R-1001 (invoice.status.paid)', $popoverHtml);
+        self::assertStringNotContainsString('js-invoice-link', $popoverHtml);
+    }
+
+    public function testInvoiceLinkKeepsTheInvoiceNumberEscaped(): void
+    {
+        $popoverHtml = $this->renderPopover(['invoices' => [['id' => 7, 'number' => self::PAYLOAD, 'status' => 1]]], true);
+
+        self::assertStringContainsString(
+            "title='reservation.invoice &lt;img src=x onerror=alert(1)&gt;'>&lt;img src=x onerror=alert(1)&gt;</a>",
+            $popoverHtml,
+        );
+        self::assertStringNotContainsString(self::PAYLOAD, $popoverHtml);
+    }
+
     /**
      * Renders the popover body the way Bootstrap reads it from data-bs-content: the
      * attribute is decoded exactly once, so the trusted formatting is HTML while every
@@ -50,7 +80,7 @@ final class ReservationPopoverEscapingTest extends TestCase
      *
      * @param array<string, mixed> $overrides
      */
-    private function renderPopover(array $overrides): string
+    private function renderPopover(array $overrides, bool $invoiceRights = false): string
     {
         $payload = self::PAYLOAD;
         $twig = new Environment(
@@ -61,6 +91,11 @@ final class ReservationPopoverEscapingTest extends TestCase
         // This test drives the template with plain arrays and only asserts
         // escaping, so display_name is stubbed down to the raw name.
         $twig->addFilter(new TwigFilter('display_name', static fn (array $status): string => $status['name']));
+        $twig->addFunction(new TwigFunction('is_granted', static fn (string $role): bool => $invoiceRights && 'ROLE_INVOICES' === $role));
+        $twig->addFunction(new TwigFunction(
+            'path',
+            static fn (string $route, array $parameters): string => 'invoices.get.invoice' === $route ? '/invoices/get/'.$parameters['id'].'/' : '/'.$route,
+        ));
 
         $rendered = $twig->render('Reservations/_resevation_popover.html.twig', [
             'reservation' => $overrides + [

@@ -42,7 +42,7 @@
         {% endif %}
         {% for invoice in reservation.invoices %}
             {% set invoiceStatus = {1: 'invoice.status.unpaid', 2: 'invoice.status.paid', 3: 'invoice.status.prepaid', 4: 'invoice.status.canceled'}[invoice.status]|default(null) %}
-            {% set invoiceNumbers = invoiceNumbers ~ invoice.number|e %}
+            {% set invoiceNumbers = invoiceNumbers ~ (is_granted('ROLE_INVOICES') ? popoverMacros.invoice_link(invoice) : invoice.number|e) %}
             {% if invoiceStatus %}{% set invoiceNumbers = invoiceNumbers ~ " (" ~ (invoiceStatus|trans)|e ~ ")" %}{% endif %}
             {% if not loop.last %}{% set invoiceNumbers = invoiceNumbers ~ ", " %}{% endif %}
         {% endfor %}

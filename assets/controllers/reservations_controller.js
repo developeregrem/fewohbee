@@ -2162,6 +2162,7 @@ export default class extends Controller {
 
         this.initClickPopoverDismissal();
         this.initCalendarEntryModal();
+        this.initInvoiceLinkModal();
     }
 
     /**
@@ -2245,6 +2246,38 @@ export default class extends Controller {
                 return;
             }
             setModalTitle(this.translate('calendar_entry.modal.title'));
+            httpRequest({
+                url: trigger.getAttribute('href'),
+                method: 'GET',
+                target: modalContent,
+            });
+            $('#modalCenter').modal('show');
+        });
+    }
+
+    // The invoice numbers in a reservation's popover open the invoice in the
+    // dialog, as the invoice menu of the reservation dialog does. Same plain
+    // click interceptor and live modal lookup as initCalendarEntryModal; the
+    // dialog title comes from the link's title attribute, which the popover
+    // sanitizer keeps. Opening the dialog hides the popover
+    // (setTablePopoversEnabled).
+    initInvoiceLinkModal() {
+        if (document._invoiceLinkModalBound) {
+            return;
+        }
+        document._invoiceLinkModalBound = true;
+
+        document.addEventListener('click', (event) => {
+            const trigger = event.target.closest('.js-invoice-link');
+            if (!trigger) {
+                return;
+            }
+            event.preventDefault();
+            const modalContent = document.getElementById('modal-content-ajax');
+            if (!modalContent) {
+                return;
+            }
+            setModalTitle(trigger.getAttribute('title') || '');
             httpRequest({
                 url: trigger.getAttribute('href'),
                 method: 'GET',
