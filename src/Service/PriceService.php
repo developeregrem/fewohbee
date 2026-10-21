@@ -1042,9 +1042,9 @@ class PriceService implements ResetInterface
     }
 
     /**
-     * Helper funtion to set posted reservation origins.
+     * Synchronizes the submitted reservation origins for a price.
      *
-     * @param type $id
+     * @param int|string $id Price identifier or 'new' for an unsaved price
      */
     private function setOrigins(Request $request, Price $price, $id): void
     {
@@ -1095,7 +1095,7 @@ class PriceService implements ResetInterface
     /**
      * Helper function to set posted periods, if a period exists the existing one is used otherwise a new one is created.
      *
-     * @param type $id
+     * @param int|string $id Price identifier or 'new' for an unsaved price
      */
     private function setPeriods(Request $request, Price $price, $id): void
     {

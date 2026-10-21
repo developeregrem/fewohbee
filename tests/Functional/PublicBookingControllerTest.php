@@ -17,6 +17,7 @@ use App\Service\OnlineBooking\PublicBookingService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Field\ChoiceFormField;
 use Symfony\Component\Uid\Uuid;
 
 final class PublicBookingControllerTest extends WebTestCase
@@ -355,7 +356,9 @@ final class PublicBookingControllerTest extends WebTestCase
         // Switch it on with a colour …
         $crawler = $client->request('GET', '/settings/online-booking');
         $form = $crawler->filter('form[name="online_booking_config"]')->form();
-        $form['online_booking_config[useBackgroundColor]']->tick();
+        $useBackgroundColor = $form['online_booking_config[useBackgroundColor]'];
+        self::assertInstanceOf(ChoiceFormField::class, $useBackgroundColor);
+        $useBackgroundColor->tick();
         $form['online_booking_config[themeBackgroundColor]']->setValue('#123456');
         $client->submit($form);
 
@@ -372,7 +375,9 @@ final class PublicBookingControllerTest extends WebTestCase
         // … and off again, which must clear it despite the colour still being submitted.
         $crawler = $client->request('GET', '/settings/online-booking');
         $form = $crawler->filter('form[name="online_booking_config"]')->form();
-        $form['online_booking_config[useBackgroundColor]']->untick();
+        $useBackgroundColor = $form['online_booking_config[useBackgroundColor]'];
+        self::assertInstanceOf(ChoiceFormField::class, $useBackgroundColor);
+        $useBackgroundColor->untick();
         $client->submit($form);
 
         self::assertNull($this->readConfig()->getThemeBackgroundColor());

@@ -136,9 +136,11 @@ class InvoiceService
     }
 
     /**
-     * Delets Invoice and all dependencies.
+     * Deletes an invoice and its positions, detaching it from its reservations.
      *
-     * @param type $id The ID of the invoice
+     * The request value is forwarded unchanged to Doctrine; lookup errors are not handled here.
+     *
+     * @param scalar|null $id Raw identifier from the delete request
      *
      * @return bool
      */

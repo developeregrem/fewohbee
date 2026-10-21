@@ -619,9 +619,10 @@ class TemplatesService
     }
 
     /**
-     * Returns a MailAttachment entity which can be passed to Mailer.
+     * Builds a mail attachment from a stored file correspondence.
+     * Returns null when the record does not exist or is not a file correspondence.
      *
-     * @param type $attachmentId
+     * @param int|string $attachmentId Stored correspondence identifier
      */
     public function getMailAttachment($attachmentId): ?MailAttachment
     {

@@ -625,9 +625,12 @@ class ReservationService
     }
 
     /**
-     * Returns an array of prices for reservations in creation.
+     * Rebuilds and returns the miscellaneous invoice positions for reservations in creation.
+     * The session list is replaced on each call and also includes any tourist-tax positions.
      *
-     * @return type
+     * @param array<Reservation> $reservations
+     *
+     * @return list<\App\Entity\InvoicePosition>
      */
     public function getMiscPricesInCreation(InvoiceService $is, array $reservations, PriceService $ps, RequestStack $requestStack): array
     {
