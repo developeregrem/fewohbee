@@ -132,10 +132,6 @@ jobs:
         with:
           context: src
           file: src/docker/app/Dockerfile
-          # Override the release Dockerfile too: fetch the same Redis release
-          # from its official source instead of PECL's archive endpoint.
-          build-args: |
-            PHP_EXTS=phpredis/phpredis@refs/tags/6.3.0 intl gd pdo_mysql exif zip
           target: ${{ matrix.target }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
