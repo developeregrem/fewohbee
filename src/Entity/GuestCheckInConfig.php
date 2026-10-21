@@ -61,6 +61,13 @@ class GuestCheckInConfig implements ContentTranslatable
     #[ORM\Column(type: Types::STRING, length: 10, enumType: GuestCheckInFieldMode::class, options: ['default' => 'optional'])]
     private GuestCheckInFieldMode $companionsMode = GuestCheckInFieldMode::OPTIONAL;
 
+    /**
+     * Company, VAT ID and invoice address of the main guest, for invoices to a company. Never
+     * required: most guests travel privately. Off until the hotelier offers it.
+     */
+    #[ORM\Column(type: Types::STRING, length: 10, enumType: GuestCheckInFieldMode::class, options: ['default' => 'hidden'])]
+    private GuestCheckInFieldMode $companyMode = GuestCheckInFieldMode::HIDDEN;
+
     /** Shown above the form, e.g. a greeting or what the data is needed for. Plain text. */
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\Length(max: 2000)]
@@ -182,6 +189,19 @@ class GuestCheckInConfig implements ContentTranslatable
     public function setContactMode(GuestCheckInFieldMode $contactMode): self
     {
         $this->contactMode = $contactMode;
+
+        return $this;
+    }
+
+    public function getCompanyMode(): GuestCheckInFieldMode
+    {
+        return $this->companyMode;
+    }
+
+    /** A required company would turn away every private guest, so it is offered at most. */
+    public function setCompanyMode(GuestCheckInFieldMode $companyMode): self
+    {
+        $this->companyMode = GuestCheckInFieldMode::REQUIRED === $companyMode ? GuestCheckInFieldMode::OPTIONAL : $companyMode;
 
         return $this;
     }

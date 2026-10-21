@@ -74,11 +74,30 @@
                         <i class="fas fa-chevron-down fhb-gci-chevron" aria-hidden="true"></i>
                     </summary>
                     <div class="fhb-gci-person-body">
+                        {% set companyFieldNames = ['company', 'vatId', 'companyStreet', 'companyZip', 'companyCity', 'companyCountry'] %}
                         <div class="row">
-                            {% for child in form.mainGuest %}
+                            {% for child in form.mainGuest|filter(child => child.vars.name not in companyFieldNames) %}
                                 <div class="col-sm-6">{{ form_row(child) }}</div>
                             {% endfor %}
                         </div>
+                        {# Collapsed: most guests travel privately. Open once anything is in it. #}
+                        {% if form.mainGuest.company is defined %}
+                            {% set companyFields = companyFieldNames|map(name => attribute(form.mainGuest, name)) %}
+                            {% set companyOpen = companyFields|filter(field => field.vars.value or field.vars.errors|length > 0)|length > 0 %}
+                            <details class="fhb-gci-address"{% if companyOpen %} open{% endif %}>
+                                <summary>{{ 'guest_checkin.public.company.toggle'|trans }}</summary>
+                                <div class="row mt-2">
+                                    <div class="col-sm-6">{{ form_row(form.mainGuest.company) }}</div>
+                                    <div class="col-sm-6">{{ form_row(form.mainGuest.vatId) }}</div>
+                                </div>
+                                <p class="fhb-hint mb-2">{{ (form.mainGuest.street is defined ? 'guest_checkin.public.company.address_hint' : 'guest_checkin.public.company.address_required_hint')|trans }}</p>
+                                <div class="row">
+                                    {% for name in ['companyStreet', 'companyZip', 'companyCity', 'companyCountry'] %}
+                                        <div class="col-sm-6">{{ form_row(attribute(form.mainGuest, name)) }}</div>
+                                    {% endfor %}
+                                </div>
+                            </details>
+                        {% endif %}
                     </div>
                 </details>
 
@@ -207,6 +226,12 @@
                         {{ reservation.arrivalTime ? reservation.arrivalTime|date('H:i') : 'guest_checkin.public.stay.arrival_time_open'|trans }}
                     </div>
                 </li>
+                {% if payload.mainGuest.company.name ?? null %}
+                    <li>
+                        <i class="fas fa-check text-success" aria-hidden="true"></i>
+                        <div><span class="fhb-gci-checklist-label">{{ 'guest_checkin.public.stay.invoice_to'|trans }}</span>{{ payload.mainGuest.company.name }}</div>
+                    </li>
+                {% endif %}
                 {% if bookedExtras is not empty or requestedExtras is not empty %}
                     <li>
                         <i class="fas fa-check text-success" aria-hidden="true"></i>

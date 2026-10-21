@@ -68,6 +68,43 @@ final class GuestCheckInApplyServiceTest extends TestCase
         self::assertSame('fr', $booker->getLocale());
     }
 
+    public function testCompanyGoesIntoABusinessAddressWithTheGuestsAddressByDefault(): void
+    {
+        $booker = $this->customer(1, 'Anna', 'Müller');
+        $checkIn = $this->submitted($this->reservation($booker, 2), [
+            'firstname' => 'Anna', 'lastname' => 'Müller',
+            'address' => ['street' => 'Ring 1', 'zip' => '1010', 'city' => 'Wien', 'country' => 'AT'],
+            'company' => ['name' => 'Muster GmbH', 'vatId' => 'ATU12345678', 'address' => null],
+        ]);
+
+        $this->service()->apply($checkIn, new GuestCheckInApplyRequest('booker', false, []));
+
+        $business = GuestCheckInApplyService::companyAddress($booker, 'muster gmbh');
+        self::assertInstanceOf(CustomerAddresses::class, $business);
+        self::assertSame(GuestCheckInApplyService::ADDRESS_TYPE_BUSINESS, $business->getType());
+        self::assertSame('ATU12345678', $business->getBuyerVatId());
+        self::assertSame('Wien', $business->getCity(), 'Same address as the guest unless an own one was given.');
+        self::assertCount(2, $booker->getCustomerAddresses(), 'The private address stays separate.');
+    }
+
+    public function testKnownCompanyIsUpdatedInsteadOfAddedTwice(): void
+    {
+        $booker = $this->customer(1, 'Anna', 'Müller');
+        $business = (new CustomerAddresses())->setType(GuestCheckInApplyService::ADDRESS_TYPE_BUSINESS)->setCompany('Muster GmbH')->setCity('Linz');
+        $business->addCustomer($booker);
+        $booker->addCustomerAddress($business);
+        $checkIn = $this->submitted($this->reservation($booker, 2), [
+            'firstname' => 'Anna', 'lastname' => 'Müller',
+            'company' => ['name' => 'MUSTER GMBH', 'vatId' => null, 'address' => ['street' => 'Hafen 3', 'zip' => '4020', 'city' => 'Linz', 'country' => 'AT']],
+        ]);
+
+        $this->service()->apply($checkIn, new GuestCheckInApplyRequest('booker', false, []));
+
+        self::assertCount(1, $booker->getCustomerAddresses());
+        self::assertSame('Hafen 3', $business->getAddress());
+        self::assertSame('MUSTER GMBH', $business->getCompany());
+    }
+
     public function testSharedAddressIsNotChangedForTheOtherCustomer(): void
     {
         $booker = $this->customer(1, 'Anna', 'Müller');

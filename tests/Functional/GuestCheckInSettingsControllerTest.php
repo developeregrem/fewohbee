@@ -99,6 +99,19 @@ final class GuestCheckInSettingsControllerTest extends WebTestCase
         self::assertSelectorTextContains('.fhb-gci-checklist', '16:00');
     }
 
+    public function testCompanyDetailsCanBeOfferedButNeverRequired(): void
+    {
+        $client = $this->authenticatedClient();
+        $crawler = $client->request('GET', '/settings/guest-checkin');
+        $options = $crawler->filter('select[name="guest_check_in_config[companyMode]"] option')->each(static fn ($option): string => (string) $option->attr('value'));
+        self::assertSame(['hidden', 'optional'], $options);
+
+        $this->submitSettings($client, ['guest_check_in_config[companyMode]' => 'optional']);
+
+        self::assertResponseRedirects('/settings/guest-checkin');
+        self::assertSame('optional', $this->config()->getCompanyMode()->value);
+    }
+
     public function testAdminCanTurnOptionalServicesOnAndOff(): void
     {
         $client = $this->authenticatedClient();
@@ -153,7 +166,8 @@ final class GuestCheckInSettingsControllerTest extends WebTestCase
                     ->setContentTranslations([])
                     ->setExtrasEnabled(true)
                     ->setIdDocumentMode(GuestCheckInFieldMode::OPTIONAL)
-                    ->setCompanionsMode(GuestCheckInFieldMode::OPTIONAL);
+                    ->setCompanionsMode(GuestCheckInFieldMode::OPTIONAL)
+                    ->setCompanyMode(GuestCheckInFieldMode::HIDDEN);
                 $em->getConnection()->executeStatement("DELETE FROM workflows WHERE system_code IN ('notify_guest_checkin', 'example_guest_checkin_invitation')");
                 $this->appSettings()->setPublicBaseUrl(null);
                 $em->flush();

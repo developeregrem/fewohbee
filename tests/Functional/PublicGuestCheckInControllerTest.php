@@ -27,6 +27,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\BrowserKit\Cookie as BrowserKitCookie;
 use Symfony\Component\DomCrawler\Field\ChoiceFormField;
+use Symfony\Component\DomCrawler\Form;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\Uid\Uuid;
 
@@ -61,7 +62,8 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
             ->setNationalityMode(GuestCheckInFieldMode::REQUIRED)
             ->setIdDocumentMode(GuestCheckInFieldMode::OPTIONAL)
             ->setContactMode(GuestCheckInFieldMode::OPTIONAL)
-            ->setCompanionsMode(GuestCheckInFieldMode::OPTIONAL);
+            ->setCompanionsMode(GuestCheckInFieldMode::OPTIONAL)
+            ->setCompanyMode(GuestCheckInFieldMode::HIDDEN);
         $this->em()->getRepository(AppSettings::class)->findOneBy([])?->setPublicBaseUrl('https://fewohbee.example.com');
         $this->em()->flush();
     }
@@ -88,7 +90,7 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
             }
             $connection->executeStatement('DELETE FROM customers WHERE id = ?', [$customerId]);
         }
-        $connection->executeStatement('UPDATE guest_check_in_config SET enabled = 0, extras_enabled = 1, translations = NULL');
+        $connection->executeStatement("UPDATE guest_check_in_config SET enabled = 0, extras_enabled = 1, translations = NULL, company_mode = 'hidden'");
         $connection->executeStatement('UPDATE app_settings SET public_base_url = NULL, guest_locales = NULL');
         parent::tearDown();
     }
@@ -210,6 +212,37 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertStringNotContainsString('P1234567', $crawler->html());
         self::assertSelectorNotExists('form[name="guest_check_in"]');
         self::assertSelectorExists('.fhb-actions a[href*="edit=1"]');
+    }
+
+    public function testCompanyDetailsAreOnlyAskedWhenOfferedAndNeedAName(): void
+    {
+        $reservation = $this->createReservation();
+        $path = $this->linkPath($reservation);
+        $this->verify($path, 'Müller');
+        $crawler = $this->client->followRedirect();
+        self::assertCount(0, $crawler->filter('[name="guest_check_in[mainGuest][company]"]'), 'Off by default.');
+
+        $config = $this->em()->getRepository(GuestCheckInConfig::class)->findOneBy([]) ?? throw new \RuntimeException('Config row missing.');
+        $config->setCompanyMode(GuestCheckInFieldMode::OPTIONAL);
+        $this->em()->flush();
+        $crawler = $this->client->request('GET', $path);
+        self::assertSelectorExists('details.fhb-gci-address:not([open]) [name="guest_check_in[mainGuest][company]"]');
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $this->fillMainGuest($form);
+        $form['guest_check_in[mainGuest][vatId]'] = 'DE123456789';
+        $crawler = $this->client->submit($form);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorExists('details.fhb-gci-address[open] [name="guest_check_in[mainGuest][company]"].is-invalid');
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $form['guest_check_in[mainGuest][company]'] = 'Muster GmbH';
+        $this->client->submit($form);
+        self::assertResponseStatusCodeSame(303);
+        $this->em()->clear();
+        self::assertSame(['name' => 'Muster GmbH', 'vatId' => 'DE123456789', 'address' => null], $this->checkIn()->getPayload()['mainGuest']['company'] ?? null);
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.fhb-gci-checklist', 'Muster GmbH');
     }
 
     public function testCompanionWithOnlyACountryOnFileNeedsNoAddress(): void
@@ -662,6 +695,19 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(429);
         self::assertSame([], $this->client->getResponse()->headers->getCookies());
+    }
+
+    /** The fields the setup of this test makes required for the main guest. */
+    private function fillMainGuest(Form $form): void
+    {
+        $form['guest_check_in[mainGuest][firstname]'] = 'Anna';
+        $form['guest_check_in[mainGuest][lastname]'] = 'Müller';
+        $form['guest_check_in[mainGuest][birthday]'] = '1980-05-01';
+        $form['guest_check_in[mainGuest][nationality]'] = 'AT';
+        $form['guest_check_in[mainGuest][street]'] = 'Hauptstraße 1';
+        $form['guest_check_in[mainGuest][zip]'] = '1010';
+        $form['guest_check_in[mainGuest][city]'] = 'Wien';
+        $form['guest_check_in[mainGuest][country]'] = 'AT';
     }
 
     private function verify(string $path, string $lastname): void

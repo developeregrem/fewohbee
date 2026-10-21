@@ -20,7 +20,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 class GuestCheckInConfigType extends AbstractType
 {
     /** Field groups that can be hidden, offered or required, in the order they appear on the form. */
-    public const FIELD_GROUPS = ['addressMode', 'birthdayMode', 'nationalityMode', 'idDocumentMode', 'contactMode', 'companionsMode'];
+    public const FIELD_GROUPS = ['addressMode', 'birthdayMode', 'nationalityMode', 'idDocumentMode', 'contactMode', 'companyMode', 'companionsMode'];
 
     public function __construct(
         private readonly PublicUrlService $publicUrlService,
@@ -53,6 +53,10 @@ class GuestCheckInConfigType extends AbstractType
         foreach (self::FIELD_GROUPS as $field) {
             $builder->add($field, EnumType::class, [
                 'class' => GuestCheckInFieldMode::class,
+                // Company details are offered at most, see GuestCheckInConfig::setCompanyMode().
+                'choices' => 'companyMode' === $field
+                    ? [GuestCheckInFieldMode::HIDDEN, GuestCheckInFieldMode::OPTIONAL]
+                    : GuestCheckInFieldMode::cases(),
                 // For fellow travellers the mode says who is asked, not how a field behaves.
                 'choice_label' => 'companionsMode' === $field
                     ? static fn (GuestCheckInFieldMode $mode): string => 'guest_checkin.companions_mode.'.$mode->value

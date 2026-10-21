@@ -53,4 +53,37 @@ final class GuestCheckInGuest
 
     #[Assert\Regex(pattern: '/^[0-9+()\/ .\-]{5,30}$/', message: 'guest_checkin.phone_invalid')]
     public ?string $phone = null;
+
+    /** Invoice to a company; the other company fields only make sense together with a name. */
+    #[Assert\Length(max: 255)]
+    public ?string $company = null;
+
+    /** Starts with the country code, e.g. DE123456789 or CHE-123.456.789 MWST. */
+    #[Assert\Length(max: 50)]
+    #[Assert\Regex(pattern: '/^[A-Za-z]{2}[A-Za-z0-9 +*.\-]{2,20}$/', message: 'guest_checkin.vat_id_invalid')]
+    public ?string $vatId = null;
+
+    /** Invoice address of the company; all empty means the address of the main guest. */
+    #[Assert\Length(max: 150)]
+    public ?string $companyStreet = null;
+
+    #[Assert\Length(max: 10)]
+    #[Assert\Regex(pattern: '/^[A-Za-z0-9 \-]{2,10}$/', message: 'guest_checkin.zip_invalid')]
+    public ?string $companyZip = null;
+
+    #[Assert\Length(max: 45)]
+    public ?string $companyCity = null;
+
+    #[Assert\Country]
+    public ?string $companyCountry = null;
+
+    public function hasCompanyAddress(): bool
+    {
+        return null !== $this->companyStreet || null !== $this->companyZip || null !== $this->companyCity || null !== $this->companyCountry;
+    }
+
+    public function hasCompanyDetails(): bool
+    {
+        return null !== $this->company || null !== $this->vatId || $this->hasCompanyAddress();
+    }
 }

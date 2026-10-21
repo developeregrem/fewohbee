@@ -27,6 +27,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * - Linked guests are always available; a customer outside the reservation can only be selected
  *   with customer access and a fresh identity suggestion that the hotelier confirms.
  * - An address shared with other customers is left alone; the guest gets an own copy.
+ * - Company details go into a business address of the main guest, used for invoices.
  * - Everyone taken over ends up among the reservation's guests. If they do not all fit the number
  *   of guests booked, nothing is taken over; linked guests marked as not travelling make room.
  * - Afterwards the submission itself is dropped; the audit log records who took it over.
@@ -34,6 +35,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class GuestCheckInApplyService
 {
     public const ADDRESS_TYPE_PRIVATE = 'CUSTOMER_ADDRESS_TYPE_PRIVATE';
+    public const ADDRESS_TYPE_BUSINESS = 'CUSTOMER_ADDRESS_TYPE_BUSINESS';
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -148,6 +150,9 @@ class GuestCheckInApplyService
         }
         $mainAddress = \is_array($main['address'] ?? null) ? $main['address'] : [];
         $this->applyAddress($mainCustomer, $mainAddress, self::nullableString($main['email'] ?? null), self::nullableString($main['phone'] ?? null));
+        if (\is_array($main['company'] ?? null)) {
+            $this->applyCompany($mainCustomer, $main['company'], $mainAddress);
+        }
         if ($request->setAsBooker || null === $reservation->getBooker()) {
             $reservation->setBooker($mainCustomer);
         }
@@ -314,6 +319,61 @@ class GuestCheckInApplyService
                 $target->{'set'.ucfirst($field)}($value);
             }
         }
+    }
+
+    /**
+     * Writes the company into the customer's business address for it, or a new one, so that the
+     * next invoice to this customer goes to the company (InvoiceService prefers business
+     * addresses). Without an own invoice address the guest's address is used. A business
+     * address shared with other customers is left alone.
+     *
+     * @param array<string, mixed> $company
+     * @param array<string, mixed> $guestAddress
+     */
+    private function applyCompany(Customer $customer, array $company, array $guestAddress): void
+    {
+        $name = self::nullableString($company['name'] ?? null);
+        if (null === $name) {
+            return;
+        }
+        $address = \is_array($company['address'] ?? null) ? $company['address'] : $guestAddress;
+
+        $target = self::companyAddress($customer, $name);
+        if (null === $target || \count($target->getCustomers()) > 1) {
+            $target = new CustomerAddresses();
+            $target->setType(self::ADDRESS_TYPE_BUSINESS);
+            $this->em->persist($target);
+            $customer->addCustomerAddress($target);
+        }
+
+        $target->setCompany($name);
+        if (null !== ($vatId = self::nullableString($company['vatId'] ?? null))) {
+            $target->setBuyerVatId($vatId);
+        }
+        foreach (['address' => 'street', 'zip' => 'zip', 'city' => 'city', 'country' => 'country'] as $field => $key) {
+            if (null !== ($value = self::nullableString($address[$key] ?? null))) {
+                $target->{'set'.ucfirst($field)}($value);
+            }
+        }
+    }
+
+    /**
+     * The customer's business address of a company, the name compared ignoring case; with a
+     * null name the first business address that names a company.
+     */
+    public static function companyAddress(Customer $customer, ?string $companyName): ?CustomerAddresses
+    {
+        foreach ($customer->getCustomerAddresses() as $address) {
+            $company = trim((string) $address->getCompany());
+            if (self::ADDRESS_TYPE_BUSINESS !== $address->getType() || '' === $company) {
+                continue;
+            }
+            if (null === $companyName || mb_strtolower($company) === mb_strtolower(trim($companyName))) {
+                return $address;
+            }
+        }
+
+        return null;
     }
 
     /** The customer's private address, or their first one if none is marked private. */

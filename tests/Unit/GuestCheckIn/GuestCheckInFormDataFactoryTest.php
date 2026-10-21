@@ -69,6 +69,25 @@ final class GuestCheckInFormDataFactoryTest extends TestCase
         self::assertNull($data->companions[0]->country);
     }
 
+    public function testKnownCompanyIsPrefilledOnlyWhenOffered(): void
+    {
+        $reservation = $this->reservation();
+        $booker = $reservation->getBooker();
+        self::assertInstanceOf(Customer::class, $booker);
+        $booker->addCustomerAddress((new CustomerAddresses())->setType(GuestCheckInApplyService::ADDRESS_TYPE_BUSINESS)
+            ->setCompany('Muster GmbH')->setBuyerVatId('ATU12345678')->setAddress('Hafen 3')->setZip('4020')->setCity('Linz')->setCountry('AT'));
+        $checkIn = new GuestCheckIn($reservation, 'selector');
+
+        $offered = $this->factory()->create($checkIn, 1, ['Ms' => 'Frau'], (new GuestCheckInConfig())->setCompanyMode(GuestCheckInFieldMode::OPTIONAL));
+        self::assertSame('Muster GmbH', $offered->mainGuest->company);
+        self::assertSame('ATU12345678', $offered->mainGuest->vatId);
+        self::assertSame('Linz', $offered->mainGuest->companyCity, 'Differs from the private address, so it is the invoice address.');
+        self::assertSame('Wien', $offered->mainGuest->city);
+
+        $hidden = $this->factory()->create($checkIn, 1, ['Ms' => 'Frau'], new GuestCheckInConfig());
+        self::assertFalse($hidden->mainGuest->hasCompanyDetails(), 'Off by default.');
+    }
+
     public function testTheGuestsOwnSubmissionWins(): void
     {
         $checkIn = new GuestCheckIn($this->reservation(), 'selector');
