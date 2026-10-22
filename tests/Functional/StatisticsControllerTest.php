@@ -14,7 +14,9 @@ use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\Role;
 use App\Entity\Subsidiary;
+use App\Repository\ReservationRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Uid\Uuid;
@@ -27,6 +29,48 @@ final class StatisticsControllerTest extends WebTestCase
     {
         parent::setUp();
         self::ensureKernelShutdown();
+    }
+
+    #[DataProvider('statisticsIndexBounds')]
+    public function testStatisticsIndexesUseReservationYearsOrCurrentYear(
+        string $path,
+        ?string $minDate,
+        ?string $maxDate,
+        int $minYear,
+        int $maxYear,
+    ): void {
+        $client = static::createClient();
+        $client->catchExceptions(false);
+
+        $container = static::getContainer();
+        $repository = $this->getMockBuilder(ReservationRepository::class)
+            ->setConstructorArgs([$container->get(ManagerRegistry::class)])
+            ->onlyMethods(['getMinEndDate', 'getMaxStartDate'])
+            ->getMock();
+        $repository->expects(self::once())->method('getMinEndDate')->willReturn($minDate);
+        $repository->expects(self::once())->method('getMaxStartDate')->willReturn($maxDate);
+        $container->set(ReservationRepository::class, $repository);
+
+        $user = $this->createUserWithRoles(['ROLE_STATISTICS']);
+        $client->loginUser($user);
+        $client->request('GET', $path);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists(sprintf(
+            '[data-statistics-min-year-param="%d"][data-statistics-max-year-param="%d"]',
+            $minYear,
+            $maxYear,
+        ));
+    }
+
+    /** @return iterable<string, array{string, string|null, string|null, int, int}> */
+    public static function statisticsIndexBounds(): iterable
+    {
+        $currentYear = (int) date('Y');
+        foreach (['utilization', 'origin', 'tourism', 'turnover'] as $page) {
+            yield $page.' without reservations' => ['/statistics/'.$page, null, null, $currentYear, $currentYear];
+            yield $page.' with reservations' => ['/statistics/'.$page, '2019-02-03', '2023-04-05', 2019, 2023];
+        }
     }
 
     public function testUtilizationMonthlyUsesLiveData(): void

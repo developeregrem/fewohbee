@@ -37,6 +37,7 @@ class Template
     private ?PaymentMeansCode $paymentMeans = null;
     #[ORM\ManyToOne(targetEntity: TemplateType::class, inversedBy: 'templates')]
     private $templateType;
+    /** @var Collection<int, Correspondence> */
     #[ORM\OneToMany(targetEntity: Correspondence::class, mappedBy: 'template')]
     private $correspondences;
 
@@ -73,9 +74,9 @@ class Template
     /**
      * Set id.
      *
-     * @param int $id
+     * @param int|'new' $id Database ID, or the UI marker for an unpersisted create form
      *
-     * @return Template
+     * @return $this
      */
     public function setId($id): static
     {
@@ -95,7 +96,7 @@ class Template
     /**
      * Set name.
      *
-     * @return Template
+     * @return $this
      */
     public function setName(string $name): static
     {
@@ -115,7 +116,7 @@ class Template
     /**
      * Set subject.
      *
-     * @return Template
+     * @return $this
      */
     public function setSubject(?string $subject): static
     {
@@ -135,7 +136,7 @@ class Template
     /**
      * Set text.
      *
-     * @return Template
+     * @return $this
      */
     public function setText(string $text): static
     {
@@ -155,7 +156,7 @@ class Template
     /**
      * Set templateType.
      *
-     * @return Template
+     * @return $this
      */
     public function setTemplateType(?TemplateType $templateType = null): static
     {
@@ -175,7 +176,7 @@ class Template
     /**
      * Add correspondence.
      *
-     * @return Template
+     * @return $this
      */
     public function addCorrespondence(Correspondence $correspondence): static
     {
@@ -195,7 +196,7 @@ class Template
     /**
      * Get correspondences.
      *
-     * @return Collection
+     * @return Collection<int, Correspondence>
      */
     public function getCorrespondences(): ArrayCollection|Collection
     {
@@ -205,7 +206,7 @@ class Template
     /**
      * Set params.
      *
-     * @return Template
+     * @return $this
      */
     public function setParams(string $params): static
     {
@@ -227,7 +228,7 @@ class Template
      *
      * @param bool $isDefault
      *
-     * @return Template
+     * @return $this
      */
     public function setIsDefault($isDefault): static
     {

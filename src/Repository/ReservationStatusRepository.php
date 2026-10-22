@@ -9,11 +9,6 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method ReservationStatus|null find($id, $lockMode = null, $lockVersion = null)
- * @method ReservationStatus|null findOneBy(array $criteria, array $orderBy = null)
- * @method ReservationStatus[]    findAll()
- * @method ReservationStatus[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- *
  * @extends ServiceEntityRepository<ReservationStatus>
  */
 class ReservationStatusRepository extends ServiceEntityRepository

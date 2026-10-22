@@ -19,6 +19,7 @@ class TemplateType
     private $name;
     #[ORM\Column(type: 'string', length: 50)]
     private $icon;
+    /** @var \Doctrine\Common\Collections\Collection<int, Template> */
     #[ORM\OneToMany(mappedBy: 'templateType', targetEntity: Template::class)]
     private $templates;
 
@@ -111,7 +112,7 @@ class TemplateType
     /**
      * Get templates.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return \Doctrine\Common\Collections\Collection<int, Template>
      */
     public function getTemplates()
     {

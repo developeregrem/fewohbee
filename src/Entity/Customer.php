@@ -27,12 +27,16 @@ class Customer
     private $birthday;
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $remark = null;
+    /** @var Collection<int, Reservation> */
     #[ORM\ManyToMany(targetEntity: Reservation::class, mappedBy: 'customers')]
     private Collection $reservations;
+    /** @var Collection<int, RegistrationBookEntry> */
     #[ORM\OneToMany(mappedBy: 'customer', targetEntity: RegistrationBookEntry::class)]
     private Collection $registrationBookEntries;
+    /** @var Collection<int, Reservation> */
     #[ORM\OneToMany(mappedBy: 'booker', targetEntity: Reservation::class)]
     private Collection $bookedReservations;
+    /** @var Collection<int, CustomerAddresses> */
     #[ORM\ManyToMany(targetEntity: CustomerAddresses::class, inversedBy: 'customers')]
     #[ORM\JoinTable(name: 'customer_has_address')]
     private Collection $customerAddresses;
@@ -87,6 +91,7 @@ class Customer
         return $this->birthday;
     }
 
+    /** @return Collection<int, Reservation> */
     public function getReservations(): ArrayCollection|Collection
     {
         return $this->reservations;
@@ -117,6 +122,7 @@ class Customer
         $this->birthday = $birthday;
     }
 
+    /** @param Collection<int, Reservation> $reservations */
     public function setReservations($reservations): void
     {
         $this->reservations = $reservations;
@@ -149,11 +155,13 @@ class Customer
         $this->remark = $remark;
     }
 
+    /** @return Collection<int, RegistrationBookEntry> */
     public function getRegistrationBookEntries(): ArrayCollection|Collection
     {
         return $this->registrationBookEntries;
     }
 
+    /** @param Collection<int, RegistrationBookEntry> $registrationBookEntries */
     public function setRegistrationBookEntries($registrationBookEntries): void
     {
         $this->registrationBookEntries = $registrationBookEntries;
@@ -174,7 +182,7 @@ class Customer
     /**
      * Add bookedReservations.
      *
-     * @return Customer
+     * @return $this
      */
     public function addBookedReservation(Reservation $bookedReservations): static
     {
@@ -193,6 +201,8 @@ class Customer
 
     /**
      * Get bookedReservations.
+     *
+     * @return Collection<int, Reservation>
      */
     public function getBookedReservations(): ArrayCollection|Collection
     {
@@ -202,7 +212,7 @@ class Customer
     /**
      * Add customerAddress.
      *
-     * @return Customer
+     * @return $this
      */
     public function addCustomerAddress(CustomerAddresses $customerAddress): static
     {
@@ -221,6 +231,8 @@ class Customer
 
     /**
      * Get customerAddresses.
+     *
+     * @return Collection<int, CustomerAddresses>
      */
     public function getCustomerAddresses(): ArrayCollection|Collection
     {

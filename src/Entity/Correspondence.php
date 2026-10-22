@@ -27,8 +27,10 @@ class Correspondence
     protected $template;
     #[ORM\ManyToOne(targetEntity: Reservation::class, inversedBy: 'correspondences')]
     protected $reservation;
+    /** @var \Doctrine\Common\Collections\Collection<int, Correspondence> */
     #[ORM\ManyToMany(targetEntity: Correspondence::class, inversedBy: 'parents')]
     protected $children;
+    /** @var \Doctrine\Common\Collections\Collection<int, Correspondence> */
     #[ORM\ManyToMany(targetEntity: Correspondence::class, mappedBy: 'children')]
     protected $parents;
 
@@ -186,7 +188,7 @@ class Correspondence
     /**
      * Get children.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return \Doctrine\Common\Collections\Collection<int, Correspondence>
      */
     public function getChildren()
     {
@@ -216,7 +218,7 @@ class Correspondence
     /**
      * Get parents.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return \Doctrine\Common\Collections\Collection<int, Correspondence>
      */
     public function getParents()
     {

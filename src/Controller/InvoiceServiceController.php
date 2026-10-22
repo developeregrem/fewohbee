@@ -57,8 +57,12 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/invoices')]
 class InvoiceServiceController extends AbstractController
 {
+    /** @var int */
     private $perPage = 20;
 
+    /**
+     * @return Response
+     */
     #[Route('/', name: 'invoices.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, EInvoiceReadinessService $readinessService, Request $request)
     {
@@ -87,6 +91,9 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/search', name: 'invoices.search', methods: ['POST'])]
     public function searchInvoicesAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, EInvoiceReadinessService $readinessService, Request $request)
     {
@@ -113,6 +120,11 @@ class InvoiceServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/get/{id}/', name: 'invoices.get.invoice', methods: ['GET'], defaults: ['id' => '0'])]
     public function getInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, EInvoiceReadinessService $readinessService, $id)
     {
@@ -161,6 +173,9 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/new', name: 'invoices.new.invoice', methods: ['GET'])]
     public function newInvoiceAction(InvoiceService $is, ReservationService $reservationService, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
@@ -184,6 +199,9 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/select/reservation', name: 'invoices.select.reservation', methods: ['POST'])]
     public function selectReservationAction(InvoiceService $is, ReservationService $reservationService, RequestStack $requestStack, Request $request)
     {
@@ -209,6 +227,9 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/remove/reservation/from/selection', name: 'invoices.remove.reservation.from.selection', methods: ['POST'])]
     public function removeReservationFromSelectionAction(ReservationService $reservationService, Request $request)
     {
@@ -228,6 +249,9 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/create/positions/create', name: 'invoices.create.invoice.positions', methods: ['GET', 'POST'])]
     public function showCreateInvoicePositionsFormAction(ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, EInvoiceReadinessService $readinessService, InvoiceNumberGenerator $numberGenerator, Request $request)
     {
@@ -339,6 +363,9 @@ class InvoiceServiceController extends AbstractController
         return new Response('', Response::HTTP_NO_CONTENT);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/create/invoice/customer/change', name: 'invoices.show.change.customer', methods: ['GET', 'POST'])]
     public function showChangeCustomerInvoiceFormAction(ManagerRegistry $doctrine, InvoiceService $is, EInvoiceReadinessService $readinessService, Request $request, RequestStack $requestStack)
     {
@@ -369,6 +396,9 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
+    /**
+     * @param int|string $invoiceId Invoice ID, or 'new' during invoice creation
+     */
     #[Route('/{invoiceId}/position/apartment/new', name: 'invoices.new.apartment.position', methods: ['GET', 'POST'])]
     public function newApartmentPosition(ManagerRegistry $doctrine, $invoiceId, RequestStack $requestStack, InvoiceService $is, Request $request): Response
     {
@@ -427,6 +457,10 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
+    /**
+     * @param int|string $invoiceId Invoice ID, or 'new' during invoice creation
+     * @param int|string $id Position ID or session index during invoice creation
+     */
     #[Route('/{invoiceId}/edit/position/apartment/{id}/edit', name: 'invoices.edit.apartment.position', methods: ['GET', 'POST'])]
     public function editApartmentPosition(ManagerRegistry $doctrine, $invoiceId, $id, Request $request, RequestStack $requestStack, InvoiceService $is): Response
     {
@@ -483,6 +517,9 @@ class InvoiceServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/delete/invoice/appartment/position', name: 'invoices.delete.appartment.invoice.position', methods: ['POST'])]
     public function deleteAppartmentInvoicePositionAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
@@ -509,6 +546,9 @@ class InvoiceServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $invoiceId Invoice ID, or 'new' during invoice creation
+     */
     #[Route('/{invoiceId}/new/miscellaneous', name: 'invoices.new.miscellaneous.position', methods: ['GET', 'POST'])]
     public function newMiscellaneousPosition($invoiceId, ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, PriceService $ps, ReservationOriginRepository $originRepository, Request $request): Response
     {
@@ -616,6 +656,10 @@ class InvoiceServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $invoiceId Invoice ID, or 'new' during invoice creation
+     * @param int|string $id Position ID or session index during invoice creation
+     */
     #[Route('/{invoiceId}/edit/miscellaneous/{id}/edit', name: 'invoices.edit.miscellaneous.position', methods: ['GET', 'POST'])]
     public function editMiscellaneousPosition($invoiceId, $id, ManagerRegistry $doctrine, Request $request, RequestStack $requestStack, InvoiceService $is, ReservationOriginRepository $originRepository): Response
     {
@@ -674,6 +718,9 @@ class InvoiceServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/delete/invoice/miscellaneous/position', name: 'invoices.delete.miscellaneous.invoice.position', methods: ['POST'])]
     public function deleteMiscellaneousInvoicePositionAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
@@ -701,6 +748,9 @@ class InvoiceServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/new/invoice/preview', name: 'invoices.show.new.invoice.preview', methods: ['GET'])]
     public function showNewInvoicePreviewAction(ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, InvoiceRepository $invoiceRepository)
     {
@@ -759,6 +809,9 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/create/new/invoice', name: 'invoices.create.invoice', methods: ['POST'])]
     public function createNewInvoiceAction(EntityManagerInterface $em, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, EventDispatcherInterface $eventDispatcher, InvoiceRepository $invoiceRepository, Request $request)
     {
@@ -838,6 +891,11 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/update/{id}/status', name: 'invoices.update.status', methods: ['POST'])]
     public function updateStatusAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, EventDispatcherInterface $eventDispatcher, Request $request, $id)
     {
@@ -894,6 +952,11 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/{id}/edit/number/show', name: 'invoices.edit.invoice.number.show', methods: ['GET'], defaults: ['id' => '0'])]
     public function showChangeNumberInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, EInvoiceReadinessService $readinessService, $id)
     {
@@ -918,6 +981,9 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/edit/number/save', name: 'invoices.edit.invoice.number.save', methods: ['POST'])]
     public function saveChangeNumberInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, InvoiceRepository $invoiceRepository, EInvoiceReadinessService $readinessService, Request $request)
     {
@@ -966,6 +1032,9 @@ class InvoiceServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/{id}/edit/remark', name: 'invoices.edit.invoice.remark.show', methods: ['GET', 'POST'], defaults: ['id' => '0'])]
     public function showChangeRemarkInvoiceEditAction(ManagerRegistry $doctrine, Request $request, Invoice $invoice)
     {
@@ -1191,7 +1260,7 @@ class InvoiceServiceController extends AbstractController
     /**
      * Will be called when clicking on the delete button in the show/edit modal.
      *
-     * @return string
+     * @return Response
      */
     #[Route('/invoice/delete', name: 'invoices.dodelete.invoice', methods: ['DELETE'])]
     public function deleteInvoiceAction(CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, InvoiceService $is, Request $request)

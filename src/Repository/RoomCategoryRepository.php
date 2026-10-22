@@ -9,11 +9,6 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method RoomCategory|null find($id, $lockMode = null, $lockVersion = null)
- * @method RoomCategory|null findOneBy(array $criteria, array $orderBy = null)
- * @method RoomCategory[]    findAll()
- * @method RoomCategory[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- *
  * @extends ServiceEntityRepository<RoomCategory>
  */
 class RoomCategoryRepository extends ServiceEntityRepository

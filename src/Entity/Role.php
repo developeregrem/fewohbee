@@ -20,6 +20,7 @@ class Role
     private $name;
     #[ORM\Column(name: 'role', type: 'string', length: 30, unique: true)]
     private $role;
+    /** @var Collection<int, User> */
     #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'roleEntities')]
     private Collection $users;
 

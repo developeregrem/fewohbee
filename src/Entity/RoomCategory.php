@@ -23,8 +23,10 @@ class RoomCategory implements ContentTranslatable
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
     private $name;
+    /** @var Collection<int, Appartment> */
     #[ORM\OneToMany(targetEntity: 'App\Entity\Appartment', mappedBy: 'roomCategory')]
     private $apartments;
+    /** @var Collection<int, Price> */
     #[ORM\ManyToMany(targetEntity: 'App\Entity\Price', mappedBy: 'roomCategories')]
     private $prices;
     #[ORM\Column(type: 'string', length: 5, nullable: true)]
@@ -50,13 +52,21 @@ class RoomCategory implements ContentTranslatable
     #[Assert\GreaterThanOrEqual(0)]
     private int $minFullPayers = 0;
 
-    /** Assigned amenities (e.g. WiFi, parking) — displayed as icons on the public booking page */
+    /**
+     * Assigned amenities (e.g. WiFi, parking) — displayed as icons on the public booking page
+     *
+     * @var Collection<int, Amenity>
+     */
     #[ORM\ManyToMany(targetEntity: Amenity::class, inversedBy: 'roomCategories')]
     #[ORM\JoinTable(name: 'room_category_amenity')]
     #[ORM\OrderBy(['category' => \SortDirection::Ascending, 'sortOrder' => \SortDirection::Ascending])]
     private Collection $amenities;
 
-    /** Uploaded images for this category — shown as gallery/hero on the public booking page */
+    /**
+     * Uploaded images for this category — shown as gallery/hero on the public booking page
+     *
+     * @var Collection<int, RoomCategoryImage>
+     */
     #[ORM\OneToMany(targetEntity: RoomCategoryImage::class, mappedBy: 'roomCategory', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['sortOrder' => \SortDirection::Ascending])]
     private Collection $images;
@@ -104,7 +114,7 @@ class RoomCategory implements ContentTranslatable
     }
 
     /**
-     * @return Collection|Appartment[]
+     * @return Collection<int, Appartment>
      */
     public function getApartments(): Collection
     {
@@ -135,7 +145,7 @@ class RoomCategory implements ContentTranslatable
     }
 
     /**
-     * @return Collection|Price[]
+     * @return Collection<int, Price>
      */
     public function getPrices(): Collection
     {
@@ -199,7 +209,11 @@ class RoomCategory implements ContentTranslatable
         return $this;
     }
 
-    /** Returns all amenities assigned to this category, ordered by group and sortOrder */
+    /**
+     * Returns all amenities assigned to this category, ordered by group and sortOrder
+     *
+     * @return Collection<int, Amenity>
+     */
     public function getAmenities(): Collection
     {
         return $this->amenities;
@@ -223,7 +237,11 @@ class RoomCategory implements ContentTranslatable
         return $this;
     }
 
-    /** Returns all images for this category, ordered by sortOrder */
+    /**
+     * Returns all images for this category, ordered by sortOrder
+     *
+     * @return Collection<int, RoomCategoryImage>
+     */
     public function getImages(): Collection
     {
         return $this->images;

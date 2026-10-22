@@ -47,7 +47,11 @@ class AppartmentRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /** Return all rooms, including inactive ones, for room settings. */
+    /**
+     * Return all rooms, including inactive ones, for room settings.
+     *
+     * @return list<Appartment>
+     */
     public function findAllIncludingInactive(): array
     {
         return $this->addDefaultSorting($this->createBaseQueryBuilder())
@@ -94,6 +98,11 @@ class AppartmentRepository extends ServiceEntityRepository
         return array_map(static fn (array $row): int => (int) $row['id'], $rows);
     }
 
+    /**
+     * @param int|string|null $objectId Subsidiary ID, or 'all' for every subsidiary
+     *
+     * @return int|string|null Raw SUM of maximum beds; null for no rooms, 0 on NoResultException
+     */
     public function loadSumBedsMinForObject($objectId)
     {
         if ('all' === $objectId) {
@@ -117,6 +126,11 @@ class AppartmentRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * @param int|string|null $propertyId Subsidiary ID, or 'all' for every subsidiary
+     *
+     * @return list<Appartment> Active rooms in the default subsidiary/room order
+     */
     public function findAllByProperty($propertyId = 'all'): array
     {
         if ('all' === $propertyId) {
@@ -135,6 +149,8 @@ class AppartmentRepository extends ServiceEntityRepository
 
     /**
      * Count apartments (rooms) for a specific subsidiary or across all.
+     *
+     * @param int|string|null $objectId Subsidiary ID, or 'all' for every subsidiary
      */
     public function loadRoomCountForObject($objectId): int
     {

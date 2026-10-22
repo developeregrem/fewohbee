@@ -26,6 +26,7 @@ class InvoiceRepository extends ServiceEntityRepository
         parent::__construct($registry, Invoice::class);
     }
 
+    /** @return string Last invoice number, or an empty string when no invoice exists */
     public function getLastInvoiceId()
     {
         $q = $this
@@ -41,6 +42,13 @@ class InvoiceRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * @param string $search
+     * @param int|string $page Integer page number, including query-string values
+     * @param int $limit
+     *
+     * @return Paginator<Invoice>
+     */
     public function findByFilter($search, $page = 1, $limit = 20)
     {
         $q = $this
@@ -59,6 +67,8 @@ class InvoiceRepository extends ServiceEntityRepository
     }
 
     /**
+     * @param array<int|string> $status Invoice status values, including query-string values; empty matches none
+     *
      * @return Invoice[]
      */
     public function getInvoicesForYear(\DateTimeInterface $start, \DateTimeInterface $end, array $status): array
@@ -244,6 +254,11 @@ class InvoiceRepository extends ServiceEntityRepository
         return $q->getResult();
     }
 
+    /**
+     * @param string $class Class name; unknown names are not supported
+     *
+     * @return bool
+     */
     public function supportsClass($class)
     {
         return $this->getEntityName() === $class

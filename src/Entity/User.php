@@ -22,6 +22,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $id;
     #[ORM\Column(type: 'string', length: 180, unique: true)]
     private $username;
+    /** @var Collection<int, Role> */
     #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: 'users')]
     #[ORM\JoinTable(name: 'user_roles')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]

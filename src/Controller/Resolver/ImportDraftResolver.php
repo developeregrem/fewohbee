@@ -33,6 +33,7 @@ final class ImportDraftResolver implements ValueResolverInterface
     ) {
     }
 
+    /** @return list<ImportState> */
     public function resolve(Request $request, ArgumentMetadata $argument): iterable
     {
         if (ImportState::class !== $argument->getType()) {

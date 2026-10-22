@@ -34,6 +34,7 @@ class Appartment implements ContentTranslatable
     private string $description;
     #[ORM\ManyToOne(targetEntity: Subsidiary::class, inversedBy: 'appartments')]
     private Subsidiary $object;
+    /** @var Collection<int, Reservation> */
     #[ORM\OneToMany(mappedBy: 'appartment', targetEntity: Reservation::class)]
     private Collection $reservations;
     #[ORM\ManyToOne(targetEntity: 'App\Entity\RoomCategory', inversedBy: 'apartments')]
@@ -42,6 +43,7 @@ class Appartment implements ContentTranslatable
     #[ORM\OneToOne(mappedBy: 'apartment', targetEntity: CalendarSync::class, cascade: ['persist', 'remove'])]
     private CalendarSync $calendarSync;
 
+    /** @var Collection<int, CalendarSyncImport> */
     #[ORM\OneToMany(mappedBy: 'apartment', targetEntity: CalendarSyncImport::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $calendarSyncImports;
 
@@ -89,6 +91,7 @@ class Appartment implements ContentTranslatable
         return $this->description;
     }
 
+    /** @return Collection<int, Reservation> */
     public function getReservations()
     {
         return $this->reservations;
@@ -133,6 +136,7 @@ class Appartment implements ContentTranslatable
         $this->object = $object;
     }
 
+    /** @param Collection<int, Reservation> $reservations */
     public function setReservations($reservations): void
     {
         $this->reservations = $reservations;
@@ -179,7 +183,11 @@ class Appartment implements ContentTranslatable
         return $this;
     }
 
-    /** Return all iCal import configurations for this apartment. */
+    /**
+     * Return all iCal import configurations for this apartment.
+     *
+     * @return Collection<int, CalendarSyncImport>
+     */
     public function getCalendarSyncImports(): Collection
     {
         return $this->calendarSyncImports;

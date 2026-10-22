@@ -89,7 +89,9 @@ class ReservationObject
     }
 
     /**
-     * @param array<int, int> $guestCounts
+     * Normalize integer and numeric-string counts, discarding non-positive values.
+     *
+     * @param array<int, int|numeric-string> $guestCounts
      */
     public function setGuestCounts(array $guestCounts): void
     {

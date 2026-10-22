@@ -29,6 +29,11 @@ class TemplateRepository extends EntityRepository
             ->getResult();
     }
 
+    /**
+     * @param list<string> $names Type-name LIKE patterns; empty keeps all visible templates with an assigned type
+     *
+     * @return list<\App\Entity\Template>|null Matching templates, or null on NoResultException
+     */
     public function loadByTypeName($names)
     {
         $q = $this

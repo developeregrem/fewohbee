@@ -25,6 +25,7 @@ class ReservationStatus
     #[ORM\Column(type: 'string', length: 7)]
     #[Assert\Regex('/^#[0-9a-f]{6}$/i')]
     private $color;
+    /** @var Collection<int, Reservation> */
     #[ORM\OneToMany(targetEntity: Reservation::class, mappedBy: 'reservationStatus')]
     private $reservations;
     #[ORM\Column(type: 'string', length: 7)]
@@ -33,6 +34,7 @@ class ReservationStatus
     private $code;
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private $isBlocking = true;
+    /** @var Collection<int, CalendarSync> */
     #[ORM\ManyToMany(targetEntity: CalendarSync::class, mappedBy: 'reservationStatus')]
     private $calendarSyncs;
 
@@ -72,7 +74,7 @@ class ReservationStatus
     }
 
     /**
-     * @return Collection|Reservation[]
+     * @return Collection<int, Reservation>
      */
     public function getReservations(): Collection
     {
@@ -143,7 +145,7 @@ class ReservationStatus
     }
 
     /**
-     * @return Collection|CalendarSync[]
+     * @return Collection<int, CalendarSync>
      */
     public function getCalendarSyncs(): Collection
     {

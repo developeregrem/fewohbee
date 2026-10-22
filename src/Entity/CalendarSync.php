@@ -23,6 +23,7 @@ class CalendarSync
     private $uuid;
     #[ORM\Column(type: 'boolean')]
     private $isPublic;
+    /** @var Collection<int, ReservationStatus> */
     #[ORM\ManyToMany(targetEntity: ReservationStatus::class, inversedBy: 'calendarSyncs', cascade: ['persist'])]
     private $reservationStatus;
     #[ORM\Column(type: 'datetime', nullable: true)]
@@ -75,7 +76,7 @@ class CalendarSync
     }
 
     /**
-     * @return Collection|ReservationStatus[]
+     * @return Collection<int, ReservationStatus>
      */
     public function getReservationStatus(): Collection
     {

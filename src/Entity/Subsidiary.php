@@ -9,6 +9,7 @@ use App\Entity\Translation\ContentTranslatable;
 use App\Entity\Translation\ContentTranslationsTrait;
 use App\Repository\SubsidiaryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SubsidiaryRepository::class)]
@@ -88,6 +89,7 @@ class Subsidiary implements ContentTranslatable
      */
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $checkInNote = null;
+    /** @var Collection<int, Appartment> */
     #[ORM\OneToMany(targetEntity: Appartment::class, mappedBy: 'object')]
     private $appartments;
 
@@ -104,9 +106,9 @@ class Subsidiary implements ContentTranslatable
     /**
      * Set id.
      *
-     * @param int $id
+     * @param int|'new' $id Database ID, or the UI marker for an unpersisted create form
      *
-     * @return Subsidiary
+     * @return $this
      */
     public function setId($id): static
     {
@@ -130,7 +132,12 @@ class Subsidiary implements ContentTranslatable
         return $this->description;
     }
 
-    public function getAppartments(): ArrayCollection
+    /**
+     * Returns the existing collection, including Doctrine's lazy collection after hydration.
+     *
+     * @return Collection<int, Appartment>
+     */
+    public function getAppartments(): Collection
     {
         return $this->appartments;
     }
@@ -276,6 +283,7 @@ class Subsidiary implements ContentTranslatable
         return $this;
     }
 
+    /** @param Collection<int, Appartment> $appartments */
     public function setAppartments($appartments): void
     {
         $this->appartments = $appartments;

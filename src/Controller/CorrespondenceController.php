@@ -67,6 +67,9 @@ class CorrespondenceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/get/reservations', name: 'correspondence.get.reservations', methods: ['GET'])]
     public function getReservationsAction(ReservationService $reservationService, Request $request)
@@ -89,6 +92,9 @@ class CorrespondenceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/remove/reservation/from/selection', name: 'correspondence.remove.reservation.from.selection', methods: ['POST'])]
     public function removeReservationFromSelectionAction(ReservationService $reservationService, Request $request)
@@ -105,6 +111,9 @@ class CorrespondenceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/email/send', name: 'correspondence.email.send', methods: ['POST'])]
     public function sendEmailAction(EntityManagerInterface $em, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, MailService $mailer, Request $request)
@@ -278,6 +287,9 @@ class CorrespondenceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/remove', name: 'correspondence.remove', methods: ['DELETE'])]
     public function deleteCorrespondenceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
@@ -356,6 +368,11 @@ class CorrespondenceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/export/pdf/{id}/', name: 'correspondence.export.pdf', methods: ['GET'], defaults: ['id' => '0'])]
     public function exportPDFCorrespondenceAction(ManagerRegistry $doctrine, TemplatesService $ts, InvoiceService $is, $id)
@@ -384,6 +401,11 @@ class CorrespondenceController extends AbstractController
         return new Response('no file');
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/show/{id}', name: 'correspondence.show', methods: ['POST'], defaults: ['id' => '0'])]
     public function showMailCorrespondenceAction(ManagerRegistry $doctrine, Request $request, $id)

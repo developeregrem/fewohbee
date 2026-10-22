@@ -52,10 +52,10 @@ class RegistrationBookEntryRepository extends EntityRepository
     /**
      * Load all Reservations that are not in the registration book within the given period.
      *
-     * @param type $start
-     * @param type $end
+     * @param \DateTimeInterface $start
+     * @param \DateTimeInterface $end
      *
-     * @return array
+     * @return \App\Entity\Reservation[]
      */
     public function getReservationsNotInBook($start, $end)
     {

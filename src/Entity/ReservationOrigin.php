@@ -64,8 +64,10 @@ class ReservationOrigin
     #[ORM\Column(name: 'tourist_tax_collection', type: 'string', length: 16, enumType: PaymentCollection::class, options: ['default' => 'property'])]
     private PaymentCollection $touristTaxCollection = PaymentCollection::PROPERTY;
 
+    /** @var \Doctrine\Common\Collections\Collection<int, Price> */
     #[ORM\ManyToMany(targetEntity: Price::class, mappedBy: 'reservationOrigins')]
     private $prices;
+    /** @var \Doctrine\Common\Collections\Collection<int, Reservation> */
     #[ORM\OneToMany(targetEntity: Reservation::class, mappedBy: 'reservationOrigin')]
     private $reservations;
 
@@ -81,7 +83,7 @@ class ReservationOrigin
     /**
      * Set id.
      *
-     * @param int $id
+     * @param int|'new' $id Database ID, or the UI marker for an unpersisted create form
      *
      * @return ReservationOrigin
      */
@@ -218,7 +220,7 @@ class ReservationOrigin
     /**
      * Get prices.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return \Doctrine\Common\Collections\Collection<int, Price>
      */
     public function getPrices()
     {
@@ -248,7 +250,7 @@ class ReservationOrigin
     /**
      * Get reservations.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return \Doctrine\Common\Collections\Collection<int, Reservation>
      */
     public function getReservations()
     {

@@ -242,6 +242,8 @@ class SendTemplateEmailAction implements WorkflowActionInterface
     /**
      * All reservations a reservation-triggered workflow covers (a booking may span rooms).
      *
+     * @param array<string, mixed> $context
+     *
      * @return Reservation[]
      */
     private function resolveReservationGroup(mixed $entity, array $context): array
@@ -279,6 +281,7 @@ class SendTemplateEmailAction implements WorkflowActionInterface
         return $entity->getBooker()?->getLocale();
     }
 
+    /** @param array<string, mixed> $config */
     private function resolveRecipient(array $config, mixed $entity): ?string
     {
         $recipientType = $config['recipientType'] ?? 'notification_email';

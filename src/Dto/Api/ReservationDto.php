@@ -13,7 +13,7 @@ use App\Entity\Reservation;
 final readonly class ReservationDto
 {
     /**
-     * @param array<string, int>                        $guestCounts
+     * @param array<int, int>                           $guestCounts guest category id => head count
      * @param array{id: int|null, name: string|null}    $status
      * @param array{id: int|null, number: string|null, description: string|null} $apartment
      * @param array{id: int|null, name: string|null}    $object

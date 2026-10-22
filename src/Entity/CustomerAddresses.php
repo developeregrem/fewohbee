@@ -45,6 +45,7 @@ class CustomerAddresses
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $customerIBAN = null;
 
+    /** @var \Doctrine\Common\Collections\Collection<int, Customer> */
     #[ORM\ManyToMany(targetEntity: Customer::class, mappedBy: 'customerAddresses')]
     private $customers;
 
@@ -365,7 +366,7 @@ class CustomerAddresses
     /**
      * Get customers.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return \Doctrine\Common\Collections\Collection<int, Customer>
      */
     public function getCustomers()
     {

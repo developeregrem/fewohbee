@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Subsidiary;
-use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
@@ -32,8 +32,9 @@ class OperationsFilterService
 
     /**
      * Resolve the requested subsidiary entity, if any.
+     * Only a repository lookup is required, using the manager supplied by ManagerRegistry.
      */
-    public function resolveSubsidiary(EntityManagerInterface $em, string $subsidiaryId): ?Subsidiary
+    public function resolveSubsidiary(ObjectManager $em, string $subsidiaryId): ?Subsidiary
     {
         if ('all' === $subsidiaryId || '' === $subsidiaryId) {
             return null;

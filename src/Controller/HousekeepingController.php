@@ -199,6 +199,8 @@ class HousekeepingController extends AbstractController
 
     /**
      * Define CSS classes for occupancy badges.
+     *
+     * @return array<string, string>
      */
     private function getOccupancyClasses(): array
     {

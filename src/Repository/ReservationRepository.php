@@ -35,6 +35,7 @@ class ReservationRepository extends ServiceEntityRepository
         parent::__construct($registry, Reservation::class);
     }
 
+    /** @param \Doctrine\ORM\QueryBuilder $qb */
     private function applyBlockingStatusFilter($qb, string $reservationAlias = 'u', string $mode = 'blocking', string $statusAlias = 'rs'): void
     {
         if ('all' === $mode) {
@@ -49,6 +50,10 @@ class ReservationRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * @param \Doctrine\ORM\QueryBuilder $qb
+     * @param array<int|string>|null $statusIds Null leaves statuses unfiltered; empty selects blocking statuses
+     */
     private function applyReservationStatusFilter($qb, ?array $statusIds, string $reservationAlias = 'u', string $statusAlias = 'rs'): void
     {
         if (null === $statusIds) {
@@ -66,6 +71,12 @@ class ReservationRepository extends ServiceEntityRepository
             ->setParameter('reservationStatus', $statusIds, ArrayParameterType::INTEGER);
     }
 
+    /**
+     * @param string $startDate Date string accepted by strtotime()
+     * @param string $endDate Date string accepted by strtotime()
+     *
+     * @return list<Reservation>|null Matching blocking reservations, or null on NoResultException
+     */
     public function loadReservationsForPeriod($startDate, $endDate)
     {
         $start = date('Y-m-d', strtotime($startDate));
@@ -113,6 +124,8 @@ class ReservationRepository extends ServiceEntityRepository
 
     /**
      * Load reservations for housekeeping views with required joins and conflict filters.
+     *
+     * @param array<int|string>|null $statusIds Null uses statusMode; empty selects blocking statuses; otherwise explicit IDs
      *
      * @return Reservation[]
      */
@@ -182,6 +195,11 @@ class ReservationRepository extends ServiceEntityRepository
         return $grouped;
     }
 
+    /**
+     * @param string $class Class name; unknown names are not supported
+     *
+     * @return bool
+     */
     public function supportsClass($class)
     {
         return $this->getEntityName() === $class
@@ -191,6 +209,8 @@ class ReservationRepository extends ServiceEntityRepository
     /**
      * Loads reservations that overlap the period, including those that merely touch the boundaries
      * (e.g. endDate = start or startDate = end).
+     *
+     * @return list<Reservation>
      */
     public function loadReservationsForApartment(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, string $statusMode = 'blocking'): array
     {
@@ -221,6 +241,8 @@ class ReservationRepository extends ServiceEntityRepository
     /**
      * Loads reservations that truly overlap the period. Turnovers are excluded:
      * a reservation ending exactly at start or starting exactly at end is ignored.
+     *
+     * @return list<Reservation>
      */
     public function loadReservationsForApartmentWithoutStartEnd(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment): array
     {
@@ -403,6 +425,11 @@ class ReservationRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * Despite the legacy name, this query does not exclude reservations with invoices.
+     *
+     * @return list<Reservation>|null Reservations for the booker, or null on NoResultException
+     */
     public function loadReservationsWithoutInvoiceForCustomer(\App\Entity\Customer $customer)
     {
         $q = $this
@@ -437,6 +464,13 @@ class ReservationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @param string $day Date string bound to the occupancy comparison
+     * @param int|string|null $objectId Subsidiary ID, or 'all' for every subsidiary
+     * @param array<int|string> $reservationStatus Status IDs, including query-string values; empty selects blocking statuses
+     *
+     * @return int|string|null Raw SUM of persons; null for no matching reservations, 0 on NoResultException
+     */
     public function loadUtilizationForDay($day, $objectId, array $reservationStatus = [])
     {
         if ('all' === $objectId) {
@@ -470,6 +504,7 @@ class ReservationRepository extends ServiceEntityRepository
         }
     }
 
+    /** @return string|null Earliest departure date, or null when no reservations exist */
     public function getMinEndDate()
     {
         $q = $this
@@ -480,6 +515,7 @@ class ReservationRepository extends ServiceEntityRepository
         return $q->getSingleScalarResult();
     }
 
+    /** @return string|null Latest arrival date, or null when no reservations exist */
     public function getMaxStartDate()
     {
         $q = $this
@@ -490,6 +526,14 @@ class ReservationRepository extends ServiceEntityRepository
         return $q->getSingleScalarResult();
     }
 
+    /**
+     * @param int|string $month Calendar month, including query-string values
+     * @param int|string $year Calendar year, including query-string values
+     * @param int|string|null $objectId Subsidiary ID, or 'all' for every subsidiary
+     * @param array<int|string>|null $reservationStatus Null leaves statuses unfiltered; empty selects blocking statuses
+     *
+     * @return list<Reservation> Reservations overlapping the month; turnovers at its boundaries are excluded
+     */
     public function loadReservationsForMonth($month, $year, $objectId, ?array $reservationStatus = [])
     {
         $startTs = strtotime($year.'-'.$month.'-01');
@@ -522,6 +566,14 @@ class ReservationRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * @param string $start Inclusive lower date bound
+     * @param string $end Inclusive upper date bound
+     * @param int|string|null $objectId Subsidiary ID, or 'all' for every subsidiary
+     * @param array<int|string>|null $reservationStatus Null leaves statuses unfiltered; empty selects blocking statuses
+     *
+     * @return list<array{id: int, origins: int}>|0 Counts grouped by origin, or 0 on NoResultException
+     */
     public function loadOriginStatisticForPeriod($start, $end, $objectId, ?array $reservationStatus = [])
     {
         if ('all' === $objectId) {

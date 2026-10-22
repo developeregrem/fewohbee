@@ -77,6 +77,7 @@ class ReservationServiceController extends AbstractController
 {
     private const EMAIL_DRAFT_SESSION_KEY = 'reservationEmailDraft';
 
+    /** @var int */
     private $perPage = 15;
 
     public function __construct(
@@ -86,6 +87,8 @@ class ReservationServiceController extends AbstractController
 
     /**
      * Index Action start page.
+     *
+     * @return Response
      */
     #[Route('/', name: 'start', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, PublicHolidayService $cs)
@@ -307,6 +310,9 @@ class ReservationServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/table/settings', name: 'reservations.table.settings', methods: ['POST'])]
     public function tableSettingsAction(ManagerRegistry $doctrine, RequestStack $requestStack, PublicHolidayService $cs)
     {
@@ -342,6 +348,8 @@ class ReservationServiceController extends AbstractController
 
     /**
      * Shows the first form in the create reservation process, where you select a period and an appartment.
+     *
+     * @return Response
      */
     #[Route('/select/appartment', name: 'reservations.select.appartment', methods: ['GET'])]
     public function showSelectAppartmentsFormAction(ManagerRegistry $doctrine, RequestStack $requestStack, ReservationService $rs, Request $request)
@@ -590,6 +598,8 @@ class ReservationServiceController extends AbstractController
 
     /**
      * Deletes an Appartment from the selection.
+     *
+     * @return Response
      */
     #[Route('/appartments/remove/from/reservation', name: 'reservations.remove.appartment.from.reservation', methods: ['POST'])]
     public function removeAppartmentFromReservationAction(HttpKernelInterface $kernel, RequestStack $requestStack, Request $request)
@@ -606,6 +616,8 @@ class ReservationServiceController extends AbstractController
 
     /**
      * Modifys the Appartment options of a selected a Appartment.
+     *
+     * @return Response
      */
     #[Route('/appartments/modify/options', name: 'reservations.modify.appartment.options', methods: ['POST'])]
     public function modifyAppartmentOptionsAction(HttpKernelInterface $kernel, RequestStack $requestStack, Request $request, ReservationService $rs)
@@ -640,6 +652,8 @@ class ReservationServiceController extends AbstractController
 
     /**
      * Shows the form for selecting a booker for the reservation.
+     *
+     * @return Response
      */
     #[Route('/select/customer', name: 'reservations.select.customer', methods: ['POST'])]
     public function selectCustomerAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
@@ -661,6 +675,8 @@ class ReservationServiceController extends AbstractController
 
     /**
      * Gets all Customers which fit the given criteria.
+     *
+     * @return Response
      */
     #[Route('/customers/get', name: 'reservations.get.customers', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
@@ -685,6 +701,8 @@ class ReservationServiceController extends AbstractController
 
     /**
      * Shows the form for creating a new customer.
+     *
+     * @return Response
      */
     #[Route('/customers/new', name: 'reservations.get.customer.new.form', methods: ['POST'])]
     public function getNewCustomerFormAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
@@ -736,6 +754,8 @@ class ReservationServiceController extends AbstractController
 
     /**
      * Creates a preview of the new reservation, where the user can add additional guests to the reservation.
+     *
+     * @return Response
      */
     #[Route('/reservation/new/preview', name: 'reservations.create.preview', methods: ['POST'])]
     public function previewNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $rs, PriceService $ps, TouristTaxService $touristTaxService, Request $request)
@@ -846,6 +866,8 @@ class ReservationServiceController extends AbstractController
 
     /**
      * Creates a new reservation with the information which have been entered in the process before.
+     *
+     * @return Response
      */
     #[Route('/reservation/create', name: 'reservations.create.reservations', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
@@ -1030,6 +1052,10 @@ class ReservationServiceController extends AbstractController
      * Edits an existing reservation.
      *
      * @param bool $error
+     *
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
      */
     #[Route('/edit/{id}', name: 'reservations.edit.reservation', methods: ['GET'])]
     #[IsGranted('ROLE_RESERVATIONS')]
@@ -1086,9 +1112,6 @@ class ReservationServiceController extends AbstractController
         ]);
     }
 
-    /**
-     * @return mixed
-     */
     #[Route('/edit/{id}', name: 'reservations.edit.reservation.change', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
     public function editChangeReservationAction(
@@ -1188,6 +1211,11 @@ class ReservationServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/edit/{id}/customer', name: 'reservations.edit.reservation.customer', methods: ['GET'])]
     #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationCustomerAction(ManagerRegistry $doctrine, Request $request, $id)
@@ -1207,6 +1235,11 @@ class ReservationServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/edit/{id}/customer/create', name: 'reservations.edit.reservation.customer.create', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationCustomerCreateAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, CustomerService $cs, Request $request, $id)
@@ -1246,6 +1279,9 @@ class ReservationServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/edit/customers/get', name: 'reservations.edit.customers.get', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationCustomersGetAction(ManagerRegistry $doctrine, Request $request)
@@ -1274,6 +1310,8 @@ class ReservationServiceController extends AbstractController
     }
 
     /**
+     * @param int|string $id Route ID, including numeric strings
+     *
      * @return Response
      */
     #[Route('/edit/{id}/customer/change', name: 'reservations.edit.customer.change', methods: ['POST'])]
@@ -1401,6 +1439,9 @@ class ReservationServiceController extends AbstractController
         return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/edit/customer/edit', name: 'reservations.edit.customer.edit', methods: ['POST'])]
     public function getEditCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
@@ -1475,6 +1516,8 @@ class ReservationServiceController extends AbstractController
 
     /**
      * Shown in conversations when clicking on next after reservation selection.
+     *
+     * @return Response
      */
     #[Route('/select/template', name: 'reservations.select.template', methods: ['POST'])]
     public function selectTemplateAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, ReservationService $rs, EInvoiceReadinessService $readinessService, Request $request)
@@ -1514,6 +1557,9 @@ class ReservationServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/select/template/{id}', name: 'reservations.select.template.preview', methods: ['POST'])]
     public function previewTemplateAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, TemplatesService $ts, Request $request, ReservationService $rs, int $id)
     {
@@ -1560,6 +1606,9 @@ class ReservationServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $reservationId Reservation ID, or 'new' during reservation creation
+     */
     #[Route(path: '/{reservationId}/edit/kurtaxe-waived/toggle', name: 'reservations.update.kurtaxe.waived', methods: ['POST'])]
     public function toggleKurtaxeWaivedForReservation($reservationId, ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
     {
@@ -1593,6 +1642,9 @@ class ReservationServiceController extends AbstractController
         return new Response('', Response::HTTP_OK);
     }
 
+    /**
+     * @param int|string $reservationId Reservation ID, or 'new' during reservation creation
+     */
     #[Route(path: '/{reservationId}/edit/prices/{id}/update', name: 'reservations.update.misc.price', methods: ['POST'])]
     public function updateMiscPriceForReservation($reservationId, Price $price, ManagerRegistry $doctrine, ReservationService $rs, PricePromiseService $pricePromises, RequestStack $requestStack, Request $request): Response
     {
@@ -1621,6 +1673,9 @@ class ReservationServiceController extends AbstractController
         return new Response('', Response::HTTP_OK);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/get/reservations/in/period', name: 'reservations.get.reservations.in.period', methods: ['POST'])]
     public function getReservationsInPeriodAction(ManagerRegistry $doctrine, ReservationService $reservationService, Request $request)
     {
@@ -1646,6 +1701,9 @@ class ReservationServiceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/get/reservations/for/customer', name: 'reservations.get.reservations.for.customer', methods: ['POST'])]
     public function getReservationsForCustomerAction(ManagerRegistry $doctrine, ReservationService $reservationService, Request $request)
     {

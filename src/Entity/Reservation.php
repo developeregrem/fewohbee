@@ -37,16 +37,19 @@ class Reservation
     private $remark;
     #[ORM\Column(name: 'reservation_date', type: 'datetime')]
     private $reservationDate;
+    /** @var Collection<int, Invoice> */
     #[ORM\ManyToMany(targetEntity: Invoice::class, inversedBy: 'reservations')]
     #[ORM\JoinTable(name: 'reservations_has_invoices')]
     private $invoices;
     #[ORM\ManyToOne(targetEntity: Appartment::class, inversedBy: 'reservations')]
     private $appartment;
+    /** @var Collection<int, Customer> */
     #[ORM\ManyToMany(targetEntity: Customer::class, inversedBy: 'reservations')]
     #[ORM\JoinTable(name: 'reservations_has_customers')]
     private $customers;
     #[ORM\ManyToOne(targetEntity: Customer::class, inversedBy: 'bookedReservations')]
     private $booker;
+    /** @var Collection<int, RegistrationBookEntry> */
     #[ORM\OneToMany(targetEntity: RegistrationBookEntry::class, mappedBy: 'reservation')]
     private $registrationBookEntries;
     #[ORM\ManyToOne(targetEntity: ReservationOrigin::class, inversedBy: 'reservations')]
@@ -94,8 +97,10 @@ class Reservation
      */
     #[ORM\Column(name: 'tourist_tax_collection', type: 'string', length: 16, enumType: PaymentCollection::class, nullable: true)]
     private ?PaymentCollection $touristTaxCollection = null;
+    /** @var Collection<int, Correspondence> */
     #[ORM\OneToMany(targetEntity: Correspondence::class, mappedBy: 'reservation', cascade: ['remove'])]
     private $correspondences;
+    /** @var Collection<int, Price> */
     #[ORM\ManyToMany(targetEntity: Price::class)]
     private $prices;
     #[ORM\ManyToOne(targetEntity: ReservationStatus::class, inversedBy: 'reservations')]
@@ -254,11 +259,13 @@ class Reservation
         $this->appartment = $appartment;
     }
 
+    /** @param Collection<int, Customer> $customers */
     public function setCustomers($customers): void
     {
         $this->customers = $customers;
     }
 
+    /** @param Collection<int, RegistrationBookEntry> $registrationBookEntries */
     public function setRegistrationBookEntries($registrationBookEntries): void
     {
         $this->registrationBookEntries = $registrationBookEntries;
@@ -299,7 +306,7 @@ class Reservation
     /**
      * Get customers.
      *
-     * @return Collection
+     * @return Collection<int, Customer>
      */
     public function getCustomers()
     {
@@ -309,7 +316,7 @@ class Reservation
     /**
      * Get registrationBookEntries.
      *
-     * @return Collection
+     * @return Collection<int, RegistrationBookEntry>
      */
     public function getRegistrationBookEntries()
     {
@@ -487,7 +494,7 @@ class Reservation
     /**
      * Get correspondences.
      *
-     * @return Collection
+     * @return Collection<int, Correspondence>
      */
     public function getCorrespondences()
     {
@@ -529,7 +536,7 @@ class Reservation
     /**
      * Get invoices.
      *
-     * @return Collection
+     * @return Collection<int, Invoice>
      */
     public function getInvoices()
     {
@@ -537,7 +544,7 @@ class Reservation
     }
 
     /**
-     * @return Collection|Price[]
+     * @return Collection<int, Price>
      */
     public function getPrices(): Collection
     {
@@ -682,7 +689,11 @@ class Reservation
         return $this->guestCounts;
     }
 
-    /** @param array<int, int> $guestCounts */
+    /**
+     * Normalize integer and numeric-string counts, discarding non-positive values.
+     *
+     * @param array<int, int|numeric-string> $guestCounts
+     */
     public function setGuestCounts(array $guestCounts): self
     {
         $normalized = [];

@@ -95,6 +95,7 @@ final class ImportState
 
     /**
      * @param list<array<string, mixed>> $lines
+     * @param list<string> $warnings
      */
     public function __construct(
         public string $sessionImportId,

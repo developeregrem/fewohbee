@@ -55,9 +55,11 @@ class Price implements ContentTranslatable
     private $allDays;
     #[ORM\Column(type: 'smallint')]
     private $type;
+    /** @var Collection<int, ReservationOrigin> */
     #[ORM\ManyToMany(targetEntity: ReservationOrigin::class, inversedBy: 'prices')]
     #[ORM\JoinTable(name: 'prices_has_reservation_origins')]
     private $reservationOrigins;
+    /** @var Collection<int, PricePeriod> */
     #[ORM\OneToMany(targetEntity: 'App\Entity\PricePeriod', mappedBy: 'price', orphanRemoval: true, cascade: ['persist'])]
     private $pricePeriods;
     #[ORM\Column(type: 'boolean')]
@@ -97,6 +99,7 @@ class Price implements ContentTranslatable
     private bool $isBookableOnline;
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isMandatoryOnline;
+    /** @var Collection<int, PriceComponent> */
     #[ORM\OneToMany(targetEntity: 'App\Entity\PriceComponent', mappedBy: 'price', orphanRemoval: true, cascade: ['persist'])]
     #[ORM\OrderBy(['sortOrder' => \SortDirection::Ascending, 'id' => \SortDirection::Ascending])]
     private Collection $components;
@@ -336,7 +339,7 @@ class Price implements ContentTranslatable
     /**
      * Get reservationOrigins.
      *
-     * @return Collection
+     * @return Collection<int, ReservationOrigin>
      */
     public function getReservationOrigins()
     {
@@ -344,7 +347,7 @@ class Price implements ContentTranslatable
     }
 
     /**
-     * @return Collection|PricePeriod[]
+     * @return Collection<int, PricePeriod>
      */
     public function getPricePeriods(): Collection
     {
@@ -539,7 +542,7 @@ class Price implements ContentTranslatable
     }
 
     /**
-     * @return Collection|PriceComponent[]
+     * @return Collection<int, PriceComponent>
      */
     public function getComponents(): Collection
     {

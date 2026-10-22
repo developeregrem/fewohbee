@@ -149,6 +149,7 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         return $result;
     }
 
+    /** @param array<int, Reservation> $reservations */
     public function isSingleReservationForDayFilter(int $today, int $period, int $reservationIdx, array $reservations, string $type = 'start'): bool
     {
         /* @var $currentReservation Reservation */
@@ -370,6 +371,11 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         return 'linear-gradient(to right, '.implode(', ', $stops).')';
     }
 
+    /**
+     * @param array<Reservation> $reservations
+     *
+     * @return list<Reservation>
+     */
     public function getReservationsForDay(\DateTimeInterface $day, array $reservations): array
     {
         $result = [];
@@ -391,7 +397,9 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
      * Resolves overlapping reservation conflicts for displaying the reservations
      * Each row of the array returns a list of reservations without conflicts.
      *
-     * @return array[]
+     * @param array<Reservation> $reservations
+     *
+     * @return list<list<Reservation>>
      *
      * @throws \Exception
      */
@@ -437,6 +445,8 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
 
     /**
      * Finds the position (line) of a given reservation in multidimensional array of reservations.
+     *
+     * @param array<int, array<Reservation>> $reservationLines
      */
     private function getPositionOfReservation(array $reservationLines, Reservation $reservation): int|bool
     {

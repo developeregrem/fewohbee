@@ -174,6 +174,8 @@ class TemplatesServiceController extends AbstractController
 
     /**
      * update entity end show update result.
+     *
+     * @param int|string $id Route ID, including numeric strings
      */
     #[Route('/{id}/edit', name: 'settings.templates.edit', methods: ['POST'], defaults: ['id' => '0'])]
     public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, TranslatorInterface $translator, Request $request, $id): Response

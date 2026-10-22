@@ -32,6 +32,7 @@ class GuestCategory implements ContentTranslatable
     #[Assert\NotBlank]
     private string $acronym = '';
 
+    /** @var Collection<int, Subsidiary> */
     #[ORM\ManyToMany(targetEntity: Subsidiary::class)]
     #[ORM\JoinTable(name: 'guest_categories_has_subsidiaries')]
     private Collection $subsidiaries;

@@ -15,11 +15,6 @@ use Doctrine\ORM\Query\Expr;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method Price|null find($id, $lockMode = null, $lockVersion = null)
- * @method Price|null findOneBy(array $criteria, array $orderBy = null)
- * @method Price[]    findAll()
- * @method Price[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- *
  * @extends ServiceEntityRepository<Price>
  */
 class PriceRepository extends ServiceEntityRepository
@@ -29,6 +24,7 @@ class PriceRepository extends ServiceEntityRepository
         parent::__construct($registry, Price::class);
     }
 
+    /** @return list<Price>|null */
     public function getActiveAppartmentPrices()
     {
         $q = $this
@@ -70,6 +66,7 @@ class PriceRepository extends ServiceEntityRepository
         }
     }
 
+    /** @return list<Price>|null */
     public function getActiveMiscellaneousPrices()
     {
         $q = $this

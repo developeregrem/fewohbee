@@ -40,6 +40,10 @@ use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+/**
+ * @phpstan-import-type VatTotals from InvoiceSumCalculator
+ * @phpstan-type MiscPriceAggregate array{price: Price, amount: int, reservationId: int|string|null, unit: string|null, includesVat: bool|null}
+ */
 class InvoiceService
 {
     /**
@@ -67,13 +71,15 @@ class InvoiceService
      * The arithmetic itself lives in InvoiceSumCalculator; this stays as the
      * way every existing caller reaches it.
      *
-     * @param Collection $apps            The invoice positions for apartment prices
-     * @param Collection $poss            The invoice positions for miscellaneous prices
-     * @param array      $vats            Returns array of all vat values
-     * @param float      $brutto          Returns the total price including vat
-     * @param float      $netto           Returns the toal price for all vats
-     * @param float      $appartmentTotal Returns the total sum for all apartment prices
-     * @param float      $miscTotal       Returns the total price for all miscellaneous prices
+     * @param Collection<int, InvoiceAppartment> $apps            The invoice positions for apartment prices
+     * @param Collection<int, InvoicePosition>   $poss            The invoice positions for miscellaneous prices
+     * @param array<array-key, mixed>            $vats            Overwritten with the VAT totals; previous contents are discarded
+     * @param float                             $brutto          Returns the total price including vat
+     * @param float                             $netto           Returns the VAT total
+     * @param float                             $appartmentTotal Returns the total sum for all apartment prices
+     * @param float                             $miscTotal       Returns the total price for all miscellaneous prices
+     *
+     * @param-out VatTotals $vats
      */
     public function calculateSums(Collection $apps, Collection $poss, array &$vats, float &$brutto, float &$netto, float &$appartmentTotal, float &$miscTotal): void
     {
@@ -85,7 +91,7 @@ class InvoiceService
      *
      * @param Invoice $invoice
      *
-     * @return array
+     * @return list<array{startDate: \DateTime, endDate: \DateTime}>
      */
     public function getUniqueReservationPeriods($invoice)
     {
@@ -114,7 +120,7 @@ class InvoiceService
      *
      * @param Invoice $invoice
      *
-     * @return array
+     * @return list<array{number: int|string|null}>
      */
     public function getUniqueAppartmentsNumber($invoice)
     {
@@ -175,6 +181,25 @@ class InvoiceService
 
     /**
      * Build all invoice variables required by template rendering.
+     *
+     * @return array{
+     *     invoice: Invoice,
+     *     vats: VatTotals,
+     *     brutto: float,
+     *     netto: float,
+     *     bruttoFormated: string,
+     *     nettoFormated: string,
+     *     periods: list<array{startDate: \DateTime, endDate: \DateTime}>,
+     *     numbers: list<array{number: int|string|null}>,
+     *     appartmentTotal: string,
+     *     miscTotal: string,
+     *     paymentDueDate: \DateTimeImmutable|null,
+     *     originName: string|null,
+     *     originCommission: float|null,
+     *     originCommissionFormated: string,
+     *     originPaymentFee: float|null,
+     *     originPaymentFeeFormated: string
+     * }
      */
     public function buildTemplateRenderParams(Template $template, Invoice $invoice): array
     {
@@ -479,7 +504,7 @@ class InvoiceService
     /**
      * Build apartment invoice positions for a reservation without session dependency.
      *
-     * @return InvoiceAppartment[]
+     * @return list<InvoiceAppartment>
      */
     public function buildAppartmentPositions(Reservation $reservation): array
     {
@@ -518,8 +543,8 @@ class InvoiceService
      * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
      * each day can have more than one active price category.
      *
-     * @param array $reservations      a list of reservations
-     * @param bool  $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
+     * @param array<Reservation> $reservations      Reservations; input keys are not used
+     * @param bool               $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
      */
     public function prefillMiscPositionsWithReservations(array $reservations, RequestStack $requestStack, bool $useExistingPrices = false): void
     {
@@ -530,8 +555,8 @@ class InvoiceService
      * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
      * each day can have more than one active price category.
      *
-     * @param array $reservationIds    a list of reservation IDs
-     * @param bool  $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
+     * @param array<int|string> $reservationIds    Reservation IDs; gaps in the keys are allowed
+     * @param bool              $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
      */
     public function prefillMiscPositionsWithReservationIds(array $reservationIds, RequestStack $requestStack, bool $useExistingPrices = false): void
     {
@@ -549,6 +574,7 @@ class InvoiceService
      * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
      * each day can have more than one active price category.
      *
+     * @param array<Reservation> $reservations
      * @param bool $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
      */
     private function prefillMiscPositions(array $reservations, RequestStack $requestStack, bool $useExistingPrices = false): void
@@ -569,7 +595,9 @@ class InvoiceService
     /**
      * Build miscellaneous invoice positions without writing to the session.
      *
-     * @return InvoicePosition[]
+     * @param array<Reservation> $reservations
+     *
+     * @return list<InvoicePosition>
      */
     public function buildMiscPositions(array $reservations, bool $useExistingPrices = false): array
     {
@@ -921,6 +949,12 @@ class InvoiceService
 
     /**
      * Aggregates price amounts across all reservations and days into a keyed array, without any session involvement.
+     * The key separates price rows, promised unit prices and gross/net modes. Null promise fields
+     * keep the live price row as the source; a transient reservation may have no ID yet.
+     *
+     * @param array<Reservation> $reservations
+     *
+     * @return array<string, MiscPriceAggregate>
      */
     private function computeMiscPriceAggregates(array $reservations, bool $useExistingPrices = false): array
     {
@@ -1153,6 +1187,7 @@ class InvoiceService
         return $positionAppartment;
     }
 
+    /** @param array<string, MiscPriceAggregate> $tmpPricesArr */
     private function makeMiscPositions(array $tmpPricesArr, RequestStack $requestStack): void
     {
         foreach ($this->createMiscPositionsFromAggregates($tmpPricesArr) as $position) {
@@ -1161,7 +1196,9 @@ class InvoiceService
     }
 
     /**
-     * @return InvoicePosition[]
+     * @param array<string, MiscPriceAggregate> $tmpPricesArr
+     *
+     * @return list<InvoicePosition>
      */
     private function createMiscPositionsFromAggregates(array $tmpPricesArr): array
     {
@@ -1199,7 +1236,9 @@ class InvoiceService
      * Expand a single package-price aggregate into one InvoicePosition per component, preserving
      * quantity + flags. Component unit prices are derived via PriceService::expandPackage().
      *
-     * @return InvoicePosition[]
+     * @param MiscPriceAggregate $tmpPrice
+     *
+     * @return list<InvoicePosition>
      */
     private function expandPackageAggregate(array $tmpPrice): array
     {

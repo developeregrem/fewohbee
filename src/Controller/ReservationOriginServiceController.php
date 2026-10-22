@@ -28,6 +28,8 @@ class ReservationOriginServiceController extends AbstractController
 {
     /**
      * Index-View.
+     *
+     * @return Response
      */
     #[Route('/', name: 'reservationorigin.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine)
@@ -42,6 +44,10 @@ class ReservationOriginServiceController extends AbstractController
 
     /**
      * Show single entity.
+     *
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
      */
     #[Route('/{id}/get', name: 'reservationorigin.get.origin', methods: ['GET'], defaults: ['id' => '0'])]
     public function getAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TouristTaxRepository $touristTaxRepo, $id)
@@ -58,6 +64,8 @@ class ReservationOriginServiceController extends AbstractController
 
     /**
      * Show form for new entity.
+     *
+     * @return Response
      */
     #[Route('/new', name: 'reservationorigin.new.origin', methods: ['GET'])]
     public function newAction(CSRFProtectionService $csrf, TouristTaxRepository $touristTaxRepo)
@@ -74,6 +82,8 @@ class ReservationOriginServiceController extends AbstractController
 
     /**
      * Create new entity.
+     *
+     * @return Response
      */
     #[Route('/create', name: 'reservationorigin.create.origin', methods: ['POST'])]
     public function createAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request)
@@ -107,6 +117,10 @@ class ReservationOriginServiceController extends AbstractController
 
     /**
      * update entity end show update result.
+     *
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
      */
     #[Route('/{id}/edit', name: 'reservationorigin.edit.origin', methods: ['POST'], defaults: ['id' => '0'])]
     public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request, $id)
@@ -149,7 +163,7 @@ class ReservationOriginServiceController extends AbstractController
     /**
      * delete entity.
      *
-     * @return string
+     * @return Response
      */
     #[Route('/{id}/delete', name: 'reservationorigin.delete.origin', methods: ['DELETE'])]
     public function deleteAction(ReservationOriginService $ros, Request $request, ReservationOrigin $entry)

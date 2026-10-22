@@ -183,6 +183,11 @@ class ReservationService
         }
     }
 
+    /**
+     * Returns the stored selection without reindexing its keys or converting ID values.
+     *
+     * @return array<int|string>
+     */
     public function getSelectedReservationIds(): array
     {
         return $this->requestStack->getSession()->get(self::SESSION_SELECTED_RESERVATIONS, []);
@@ -216,6 +221,11 @@ class ReservationService
         return in_array($reservationId, $this->getSelectedReservationIds(), true);
     }
 
+    /**
+     * @param array<ReservationObject> $reservations
+     *
+     * @return bool
+     */
     public function isAppartmentAlreadyBookedInCreationProcess($reservations, Appartment $apartment, \DateTimeInterface $start, \DateTimeInterface $end)
     {
         foreach ($reservations as $reservation) {
@@ -376,6 +386,7 @@ class ReservationService
         return $status instanceof ReservationStatus ? (int) $status->getId() : 1;
     }
 
+    /** @param array<ReservationObject> $newReservationsInformationArray */
     public function setCustomerInReservationInformationArray(&$newReservationsInformationArray, Customer $customer): void
     {
         foreach ($newReservationsInformationArray as $reservationInformation) {
@@ -666,8 +677,12 @@ class ReservationService
 
     /**
      * Adds the given prices to the reservations.
+     * Preserves the reservation array's keys and entity instances.
      *
-     * @return array
+     * @param Collection<int, Price> $prices
+     * @param array<Reservation> $reservations
+     *
+     * @return array<Reservation>
      */
     private function setPricesToReservations(Collection $prices, array $reservations)
     {
@@ -682,8 +697,9 @@ class ReservationService
 
     /**
      * Based on given Reservation IDs the coresponding Invoices will be returned.
+     * Shared invoices may appear more than once, once for each selected reservation.
      *
-     * @return array
+     * @return list<\App\Entity\Invoice>
      */
     public function getInvoicesForReservationsInProgress()
     {
@@ -705,6 +721,20 @@ class ReservationService
 
     /**
      * Collects the sum of all prices for the given reservations, e.g. to be used in templates.
+     * Raw sums stay integer zero when their position list is empty.
+     *
+     * @param array<Reservation> $reservations
+     *
+     * @return array{
+     *     sumApartmentRaw: int|float,
+     *     sumMiscRaw: int|float,
+     *     totalPriceRaw: int|float,
+     *     sumApartment: string,
+     *     sumMisc: string,
+     *     totalPrice: string,
+     *     apartmentPositions: list<\App\Entity\InvoiceAppartment>,
+     *     miscPositions: list<\App\Entity\InvoicePosition>
+     * }
      */
     private function getTotalPricesForTemplate(array $reservations): array
     {

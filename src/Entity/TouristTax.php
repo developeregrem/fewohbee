@@ -29,6 +29,7 @@ class TouristTax implements ContentTranslatable
     #[Assert\NotBlank]
     private string $name = '';
 
+    /** @var Collection<int, Subsidiary> */
     #[ORM\ManyToMany(targetEntity: Subsidiary::class)]
     #[ORM\JoinTable(name: 'tourist_taxes_has_subsidiaries')]
     private Collection $subsidiaries;

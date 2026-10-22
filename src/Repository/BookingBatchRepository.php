@@ -30,6 +30,7 @@ class BookingBatchRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /** @return Paginator<BookingBatch> */
     public function findByFilter(int $year, int $page = 1, int $limit = 20): Paginator
     {
         $q = $this->createQueryBuilder('b')
