@@ -67,7 +67,7 @@ class DayPriceResolver implements ResetInterface
         $subsidiary = $room->getObject();
         $category = $room->getRoomCategory();
         $origin = $this->referenceOrigin();
-        if (null === $subsidiary || null === $category || null === $origin) {
+        if (null === $category || null === $origin) {
             return [];
         }
         $dayPrices = $this->dayPrices->findForWindow($subsidiary, $category, $from, $toExclusive);

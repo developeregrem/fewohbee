@@ -19,19 +19,19 @@ class RoomCategory implements ContentTranslatable
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
-    private $name;
+    private ?string $name = null;
     /** @var Collection<int, Appartment> */
     #[ORM\OneToMany(targetEntity: 'App\Entity\Appartment', mappedBy: 'roomCategory')]
-    private $apartments;
+    private Collection $apartments;
     /** @var Collection<int, Price> */
     #[ORM\ManyToMany(targetEntity: 'App\Entity\Price', mappedBy: 'roomCategories')]
-    private $prices;
+    private Collection $prices;
     #[ORM\Column(type: 'string', length: 5, nullable: true)]
     #[Assert\Length(max: 5)]
-    private $acronym;
+    private ?string $acronym = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $details = null;

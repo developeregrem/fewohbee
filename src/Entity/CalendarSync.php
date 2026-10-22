@@ -18,21 +18,21 @@ class CalendarSync
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     #[ORM\Column(type: 'uuid', unique: true)]
-    private $uuid;
+    private Uuid $uuid;
     #[ORM\Column(type: 'boolean')]
-    private $isPublic;
+    private bool $isPublic;
     /** @var Collection<int, ReservationStatus> */
     #[ORM\ManyToMany(targetEntity: ReservationStatus::class, inversedBy: 'calendarSyncs', cascade: ['persist'])]
-    private $reservationStatus;
+    private Collection $reservationStatus;
     #[ORM\Column(type: 'datetime', nullable: true)]
-    private $lastExport;
+    private ?\DateTimeInterface $lastExport = null;
     #[ORM\OneToOne(targetEntity: Appartment::class, inversedBy: 'calendarSync', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
-    private $apartment;
+    private ?Appartment $apartment = null;
     #[ORM\Column(type: 'boolean')]
-    private $exportGuestName;
+    private bool $exportGuestName;
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $exportReservationTimes = false;
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
@@ -51,12 +51,12 @@ class CalendarSync
         return $this->id;
     }
 
-    public function getUuid()
+    public function getUuid(): Uuid
     {
         return $this->uuid;
     }
 
-    public function setUuid($uuid): self
+    public function setUuid(Uuid $uuid): self
     {
         $this->uuid = $uuid;
 

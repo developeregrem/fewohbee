@@ -332,13 +332,13 @@ final class McpServerTest extends WebTestCase
 
         $result = $this->callTool($token, 'get_rate_calendar', [
             'apartmentId' => (int) $apartment->getId(),
-            'objectId' => (int) $apartment->getObject()?->getId(),
+            'objectId' => (int) $apartment->getObject()->getId(),
             'start' => $start->format('Y-m-d'),
             'end' => $end->format('Y-m-d'),
             'originId' => (int) $origin->getId(),
         ]);
         self::assertFalse($result['isError'] ?? false, (string) json_encode($result));
-        self::assertSame($apartment->getObject()?->getId(), $result['structuredContent']['branch']['id']);
+        self::assertSame($apartment->getObject()->getId(), $result['structuredContent']['branch']['id']);
         $periods = $result['structuredContent']['periods'];
         self::assertSame($start->format('Y-m-d'), $periods[0]['firstNight']);
         self::assertSame($end->format('Y-m-d'), $periods[array_key_last($periods)]['lastNight']);
@@ -378,7 +378,7 @@ final class McpServerTest extends WebTestCase
         [$set, $removed, $byHand] = array_column($args['nights'], 'night');
         $apartment = $this->em()->getRepository(Appartment::class)->findOneBy(['active' => true], ['id' => 'ASC']);
         self::assertInstanceOf(Appartment::class, $apartment);
-        $manual = new DayPrice($apartment->getObject() ?? self::fail('Room without subsidiary.'), $apartment->getRoomCategory() ?? self::fail('Room without category.'), new \DateTimeImmutable($byHand));
+        $manual = new DayPrice($apartment->getObject(), $apartment->getRoomCategory() ?? self::fail('Room without category.'), new \DateTimeImmutable($byHand));
         $manual->set(150.0, $args['persons'], DayPriceSource::MANUAL, null, new \DateTimeImmutable());
         $this->em()->persist($manual);
         $this->em()->flush();
@@ -432,7 +432,7 @@ final class McpServerTest extends WebTestCase
             'firstNight' => (new \DateTimeImmutable('+705 days'))->format('Y-m-d'),
             'lastNight' => (new \DateTimeImmutable('+707 days'))->format('Y-m-d'),
             'percent' => 20,
-            'objectIds' => [(int) $apartment->getObject()?->getId()],
+            'objectIds' => [(int) $apartment->getObject()->getId()],
         ];
         $ruleId = null;
 
@@ -1215,7 +1215,7 @@ final class McpServerTest extends WebTestCase
 
         return [
             'roomCategoryId' => (int) $category->getId(),
-            'objectId' => (int) $apartment->getObject()?->getId(),
+            'objectId' => (int) $apartment->getObject()->getId(),
             'persons' => $occupancies[0],
             'nights' => $nights,
         ];

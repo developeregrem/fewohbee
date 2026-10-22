@@ -21,7 +21,7 @@ class Appartment implements ContentTranslatable
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     /** Stable public identifier, used where a room is addressed from an unauthenticated surface. */
     #[ORM\Column(type: 'uuid', unique: true)]
     private Uuid $uuid;
@@ -66,7 +66,7 @@ class Appartment implements ContentTranslatable
         return ['description'];
     }
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -76,73 +76,67 @@ class Appartment implements ContentTranslatable
         return $this->uuid;
     }
 
-    public function getNumber()
+    public function getNumber(): string
     {
         return $this->number;
     }
 
-    public function getBedsMax()
+    public function getBedsMax(): int
     {
         return $this->beds_max;
     }
 
-    public function getDescription()
+    public function getDescription(): string
     {
         return $this->description;
     }
 
     /** @return Collection<int, Reservation> */
-    public function getReservations()
+    public function getReservations(): Collection
     {
         return $this->reservations;
     }
 
-    /**
-     * Set id.
-     *
-     * @param int $id
-     *
-     * @return Appartment
-     */
-    public function setId($id)
+    public function setId(int $id): static
     {
         $this->id = $id;
 
         return $this;
     }
 
-    public function setNumber($number): void
+    public function setNumber(string $number): void
     {
         $this->number = $number;
     }
 
-    public function setBedsMax($beds_max): void
+    public function setBedsMax(int $beds_max): void
     {
         $this->beds_max = $beds_max;
     }
 
-    public function setDescription($description): void
+    public function setDescription(string $description): void
     {
         $this->description = $description;
     }
 
-    public function getObject()
+    public function getObject(): Subsidiary
     {
         return $this->object;
     }
 
-    public function setObject($object): void
+    public function setObject(Subsidiary $object): void
     {
         $this->object = $object;
     }
 
     /** @param Collection<int, Reservation> $reservations */
-    public function setReservations($reservations): void
+    public function setReservations(Collection $reservations): void
     {
         $this->reservations = $reservations;
     }
 
-    public function addReservation(Reservation $reservation)
+    /** @return $this */
+    public function addReservation(Reservation $reservation): static
     {
         $this->reservations[] = $reservation;
 

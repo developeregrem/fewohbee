@@ -294,7 +294,7 @@ final class PriceTools
             if (!$category instanceof RoomCategory) {
                 throw McpToolException::invalid('This room has no room category and therefore no room prices.');
             }
-            if (null !== $subsidiary && $apartment->getObject()?->getId() !== $subsidiary->getId()) {
+            if (null !== $subsidiary && $apartment->getObject()->getId() !== $subsidiary->getId()) {
                 throw McpToolException::invalid('This room belongs to another branch than objectId.');
             }
 

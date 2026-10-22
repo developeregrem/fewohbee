@@ -13,20 +13,21 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'templates')]
 class Template
 {
+    /** @var int|'new'|null */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private int|string|null $id = null;
     #[ORM\Column(type: 'string', length: 100)]
-    private $name;
+    private ?string $name = null;
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $subject = null;
     #[ORM\Column(type: 'text')]
-    private $text;
+    private ?string $text = null;
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private $params;
+    private ?string $params = null;
     #[ORM\Column(type: 'boolean', nullable: false)]
-    private $isDefault;
+    private bool $isDefault;
     #[ORM\Column(type: 'boolean', nullable: false, options: ['default' => false])]
     private bool $hidden = false;
     /**
@@ -36,10 +37,10 @@ class Template
     #[ORM\Column(nullable: true, enumType: PaymentMeansCode::class)]
     private ?PaymentMeansCode $paymentMeans = null;
     #[ORM\ManyToOne(targetEntity: TemplateType::class, inversedBy: 'templates')]
-    private $templateType;
+    private ?TemplateType $templateType = null;
     /** @var Collection<int, Correspondence> */
     #[ORM\OneToMany(targetEntity: Correspondence::class, mappedBy: 'template')]
-    private $correspondences;
+    private Collection $correspondences;
 
     /**
      * Language of a language variant (a guest locale such as "en"); null for a template in the
@@ -78,7 +79,7 @@ class Template
      *
      * @return $this
      */
-    public function setId($id): static
+    public function setId(int|string $id): static
     {
         $this->id = $id;
 
@@ -87,8 +88,10 @@ class Template
 
     /**
      * Get id.
+     *
+     * @return int|'new'|null
      */
-    public function getId()
+    public function getId(): int|string|null
     {
         return $this->id;
     }
@@ -226,11 +229,10 @@ class Template
     /**
      * Set isDefault.
      *
-     * @param bool $isDefault
      *
      * @return $this
      */
-    public function setIsDefault($isDefault): static
+    public function setIsDefault(bool $isDefault): static
     {
         $this->isDefault = $isDefault;
 

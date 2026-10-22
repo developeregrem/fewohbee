@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\TemplateTypeRepository;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TemplateTypeRepository::class)]
@@ -14,14 +15,14 @@ class TemplateType
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     #[ORM\Column(type: 'string', length: 50)]
-    private $name;
+    private ?string $name = null;
     #[ORM\Column(type: 'string', length: 50)]
-    private $icon;
+    private ?string $icon = null;
     /** @var \Doctrine\Common\Collections\Collection<int, Template> */
     #[ORM\OneToMany(mappedBy: 'templateType', targetEntity: Template::class)]
-    private $templates;
+    private Collection $templates;
 
     /**
      * Constructor.
@@ -31,70 +32,36 @@ class TemplateType
         $this->templates = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
-    /**
-     * Get id.
-     *
-     * @return int
-     */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * Set name.
-     *
-     * @param string $name
-     *
-     * @return TemplateType
-     */
-    public function setName($name)
+    public function setName(string $name): static
     {
         $this->name = $name;
 
         return $this;
     }
 
-    /**
-     * Get name.
-     *
-     * @return string
-     */
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }
 
-    /**
-     * Set icon.
-     *
-     * @param string $icon
-     *
-     * @return TemplateType
-     */
-    public function setIcon($icon)
+    public function setIcon(string $icon): static
     {
         $this->icon = $icon;
 
         return $this;
     }
 
-    /**
-     * Get icon.
-     *
-     * @return string
-     */
-    public function getIcon()
+    public function getIcon(): ?string
     {
         return $this->icon;
     }
 
-    /**
-     * Add template.
-     *
-     * @return TemplateType
-     */
-    public function addTemplate(Template $template)
+    public function addTemplate(Template $template): static
     {
         $this->templates[] = $template;
 
@@ -114,7 +81,7 @@ class TemplateType
      *
      * @return \Doctrine\Common\Collections\Collection<int, Template>
      */
-    public function getTemplates()
+    public function getTemplates(): Collection
     {
         return $this->templates;
     }

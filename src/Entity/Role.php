@@ -15,11 +15,11 @@ class Role
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     #[ORM\Column(name: 'name', type: 'string', length: 30)]
-    private $name;
+    private ?string $name = null;
     #[ORM\Column(name: 'role', type: 'string', length: 30, unique: true)]
-    private $role;
+    private ?string $role = null;
     /** @var Collection<int, User> */
     #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'roleEntities')]
     private Collection $users;
@@ -32,17 +32,17 @@ class Role
         $this->users = new ArrayCollection();
     }
 
-    public function getRole()
+    public function getRole(): ?string
     {
         return $this->role;
     }
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }
@@ -55,17 +55,17 @@ class Role
         return $this->users;
     }
 
-    public function setId($id): void
+    public function setId(int $id): void
     {
         $this->id = $id;
     }
 
-    public function setName($name): void
+    public function setName(string $name): void
     {
         $this->name = $name;
     }
 
-    public function setRole($role): void
+    public function setRole(string $role): void
     {
         $this->role = $role;
     }
@@ -88,7 +88,8 @@ class Role
         }
     }
 
-    public function addUser(User $user)
+    /** @return $this */
+    public function addUser(User $user): static
     {
         if (!$this->users->contains($user)) {
             $this->users->add($user);

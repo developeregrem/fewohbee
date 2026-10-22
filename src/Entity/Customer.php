@@ -13,18 +13,19 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'customers')]
 class Customer
 {
+    /** @var int|'new'|null */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private int|string|null $id = null;
     #[ORM\Column(type: 'string', length: 20)]
-    private $salutation;
+    private ?string $salutation = null;
     #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $firstname;
+    private ?string $firstname = null;
     #[ORM\Column(type: 'string', length: 45)]
-    private $lastname;
+    private ?string $lastname = null;
     #[ORM\Column(type: 'date', nullable: true)]
-    private $birthday;
+    private ?\DateTime $birthday = null;
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $remark = null;
     /** @var Collection<int, Reservation> */
@@ -66,22 +67,23 @@ class Customer
         $this->customerAddresses = new ArrayCollection();
     }
 
-    public function getId()
+    /** @return int|'new'|null */
+    public function getId(): int|string|null
     {
         return $this->id;
     }
 
-    public function getSalutation()
+    public function getSalutation(): ?string
     {
         return $this->salutation;
     }
 
-    public function getFirstname()
+    public function getFirstname(): ?string
     {
         return $this->firstname;
     }
 
-    public function getLastname()
+    public function getLastname(): ?string
     {
         return $this->lastname;
     }
@@ -97,33 +99,34 @@ class Customer
         return $this->reservations;
     }
 
-    public function setId($id): void
+    /** @param int|'new' $id */
+    public function setId(int|string $id): void
     {
         $this->id = $id;
     }
 
-    public function setSalutation($salutation): void
+    public function setSalutation(string $salutation): void
     {
         $this->salutation = $salutation;
     }
 
-    public function setFirstname($firstname): void
+    public function setFirstname(?string $firstname): void
     {
         $this->firstname = $firstname;
     }
 
-    public function setLastname($lastname): void
+    public function setLastname(string $lastname): void
     {
         $this->lastname = $lastname;
     }
 
-    public function setBirthday($birthday): void
+    public function setBirthday(?\DateTime $birthday): void
     {
         $this->birthday = $birthday;
     }
 
     /** @param Collection<int, Reservation> $reservations */
-    public function setReservations($reservations): void
+    public function setReservations(Collection $reservations): void
     {
         $this->reservations = $reservations;
     }
@@ -150,7 +153,7 @@ class Customer
         return nl2br($this->remark ?? '');
     }
 
-    public function setRemark($remark): void
+    public function setRemark(?string $remark): void
     {
         $this->remark = $remark;
     }
@@ -162,7 +165,7 @@ class Customer
     }
 
     /** @param Collection<int, RegistrationBookEntry> $registrationBookEntries */
-    public function setRegistrationBookEntries($registrationBookEntries): void
+    public function setRegistrationBookEntries(Collection $registrationBookEntries): void
     {
         $this->registrationBookEntries = $registrationBookEntries;
     }

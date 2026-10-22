@@ -18,14 +18,15 @@ class Subsidiary implements ContentTranslatable
 {
     use ContentTranslationsTrait;
 
+    /** @var int|'new'|null */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private int|string|null $id = null;
     #[ORM\Column(type: 'string', length: 45)]
-    private $name;
+    private ?string $name = null;
     #[ORM\Column(type: 'string', length: 255)]
-    private $description;
+    private ?string $description = null;
 
     /**
      * Invoice number range of this branch, e.g. 'NORD-<year>-<number:4>'.
@@ -91,7 +92,7 @@ class Subsidiary implements ContentTranslatable
     private ?string $checkInNote = null;
     /** @var Collection<int, Appartment> */
     #[ORM\OneToMany(targetEntity: Appartment::class, mappedBy: 'object')]
-    private $appartments;
+    private Collection $appartments;
 
     public function __construct()
     {
@@ -110,14 +111,15 @@ class Subsidiary implements ContentTranslatable
      *
      * @return $this
      */
-    public function setId($id): static
+    public function setId(int|string $id): static
     {
         $this->id = $id;
 
         return $this;
     }
 
-    public function getId()
+    /** @return int|'new'|null */
+    public function getId(): int|string|null
     {
         return $this->id;
     }
@@ -284,17 +286,12 @@ class Subsidiary implements ContentTranslatable
     }
 
     /** @param Collection<int, Appartment> $appartments */
-    public function setAppartments($appartments): void
+    public function setAppartments(Collection $appartments): void
     {
         $this->appartments = $appartments;
     }
 
-    /**
-     * Add appartments.
-     *
-     * @return Subsidiary
-     */
-    public function addAppartment(Appartment $appartments)
+    public function addAppartment(Appartment $appartments): static
     {
         $this->appartments[] = $appartments;
 
