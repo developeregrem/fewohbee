@@ -224,7 +224,15 @@ online_booking:
       up_to_guests: "{1} bis %count% Gast|]1,Inf] bis %count% Gäste"
     guest_singular: "Gast"
     guest_plural: "Gäste"
-    occupancy_hint: "Bitte wählen Sie insgesamt %rooms% Zimmer für %persons% Personen."
+    selection:
+      hint: "{1} Wählen Sie mit „+“ das gewünschte Zimmer aus.|]1,Inf] Wählen Sie mit „+“ insgesamt %count% Zimmer aus."
+      preselected: "Die zu Ihrer Suche passende Auswahl ist bereits eingetragen. Mit „+“ und „−“ können Sie sie ändern."
+      none: "Bitte wählen Sie oben mit „+“ ein Zimmer aus."
+      rooms_missing: "Bitte wählen Sie noch die übrigen Zimmer aus."
+      rooms_exceeded: "Sie haben mehr Zimmer ausgewählt als gesucht."
+      guests_too_few: "Die gewählten Zimmer bieten Platz für weniger Gäste. Wählen Sie eine größere Belegung oder erhöhen Sie oben die Zimmeranzahl und prüfen Sie die Verfügbarkeit erneut."
+      guests_too_many: "Die gewählte Belegung ist für mehr Gäste als angegeben. Bitte wählen Sie eine kleinere Belegung."
+      search_changed: "Sie haben die Suche geändert. Bitte prüfen Sie oben die Verfügbarkeit erneut."
     view_photos: "Fotos ansehen (%count%)"
     table:
       type: "Typ"

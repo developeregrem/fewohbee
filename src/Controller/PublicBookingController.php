@@ -9,6 +9,7 @@ use App\Entity\OnlineBookingConfig;
 use App\Exception\PublicBookingException;
 use App\Service\Localization\GuestLocaleService;
 use App\Service\OnlineBooking\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OccupancyPreselector;
 use App\Service\OnlineBooking\OnlineBookingRestrictionService;
 use App\Service\OnlineBooking\PublicBookingAbuseProtectionService;
 use App\Service\OnlineBooking\PublicBookingCalendarService;
@@ -35,6 +36,7 @@ class PublicBookingController extends AbstractController
         PublicBookingViewModelFactory $viewFactory,
         PublicBookingCalendarService $calendarService,
         GuestLocaleService $guestLocales,
+        OccupancyPreselector $preselector,
     ): Response {
         $embed = '1' === (string) $request->query->get('embed', $request->request->get('embed', '0'));
         // Embedded, the host website decides the language and passes it as ?lang=; the visitor's
@@ -89,6 +91,12 @@ class PublicBookingController extends AbstractController
             if ('availability' === $intent) {
                 $preview = $publicBookingService->buildSelectionPreview($booking->dateFrom, $booking->dateTo, $booking->persons, $booking->roomsCount, [], [], $booking->guestCounts, $calendarRoom);
                 $view = $viewFactory->applyPreviewResult($view, $preview, 2);
+                if (null === $calendarRoom) {
+                    // A search that leaves a single fitting choice gets it filled in, so the
+                    // guest does not have to discover the quantity steppers first.
+                    $view['selectedQty'] = $preselector->preselect($preview['availability'], $booking->roomsCount, $booking->persons);
+                    $view['preselected'] = [] !== $view['selectedQty'];
+                }
             } elseif ('preview' === $intent) {
                 $preview = $publicBookingService->buildSelectionPreview($booking->dateFrom, $booking->dateTo, $booking->persons, $booking->roomsCount, $booking->occupancySelection, $booking->extrasSelection, $booking->guestCounts, $calendarRoom);
                 $view = $viewFactory->applyPreviewResult($view, $preview, 3);

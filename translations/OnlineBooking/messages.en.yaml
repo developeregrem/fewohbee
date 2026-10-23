@@ -224,7 +224,15 @@ online_booking:
       up_to_guests: "{1} up to %count% guest|]1,Inf] up to %count% guests"
     guest_singular: "guest"
     guest_plural: "guests"
-    occupancy_hint: "Please select a total of %rooms% rooms for %persons% persons."
+    selection:
+      hint: "{1} Use “+” to choose the room you would like to book.|]1,Inf] Use “+” to choose %count% rooms in total."
+      preselected: "The selection matching your search is already filled in. Use “+” and “−” to change it."
+      none: "Please use “+” above to choose a room."
+      rooms_missing: "Please choose the remaining rooms."
+      rooms_exceeded: "You have chosen more rooms than you searched for."
+      guests_too_few: "The chosen rooms hold fewer guests than your party. Choose a larger occupancy, or increase the number of rooms above and check availability again."
+      guests_too_many: "The chosen occupancy is for more guests than you entered. Please choose a smaller occupancy."
+      search_changed: "You have changed your search. Please check availability again above."
     view_photos: "View photos (%count%)"
     table:
       type: "Type"

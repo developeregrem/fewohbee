@@ -327,6 +327,13 @@
     color: var(--fhb-primary);
 }
 
+.fhb-stepper-btn:disabled {
+    border-color: var(--fhb-border);
+    color: var(--fhb-text-muted);
+    cursor: default;
+    opacity: 0.45;
+}
+
 .fhb-children-toggle {
     align-items: center;
     color: var(--fhb-primary);
@@ -813,6 +820,83 @@
 .fhb-qty {
     flex-shrink: 0;
     width: 76px;
+}
+
+.fhb-offer-hint {
+    margin: calc(var(--fhb-space) * -0.4) 0 calc(var(--fhb-space) * 0.75);
+}
+
+.fhb-qty-stepper {
+    flex-shrink: 0;
+}
+
+.fhb-qty-stepper .form-control {
+    flex: 0 0 3rem;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    width: 3rem;
+}
+
+.fhb-qty-stepper .fhb-stepper-btn {
+    width: 32px;
+}
+
+/* "+" is the way forward from the initial zero, so it carries the accent colour. */
+.fhb-qty-stepper .fhb-stepper-btn-add:not(:disabled) {
+    border-color: var(--fhb-primary);
+    color: var(--fhb-primary);
+}
+
+.fhb-occupancy-row.is-selected .form-control {
+    border-color: var(--fhb-primary);
+    color: var(--fhb-primary);
+    font-weight: 600;
+}
+
+/* Played when "continue" was pressed with nothing selected. */
+.fhb-pulse {
+    animation: fhb-pulse 0.9s ease-out 2;
+}
+
+@keyframes fhb-pulse {
+    0% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--fhb-primary) 55%, transparent);
+    }
+    100% {
+        box-shadow: 0 0 0 10px transparent;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fhb-pulse {
+        animation: none;
+        background: color-mix(in srgb, var(--fhb-primary) 14%, var(--fhb-surface));
+    }
+}
+
+/* Hint above the continue button while the room selection does not add up.
+   Empty, it takes no space but stays rendered as live region. */
+.fhb-selection-status {
+    color: var(--fhb-text-muted);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.fhb-selection-status:not(:empty) {
+    margin-top: calc(var(--fhb-space) * 1.25);
+}
+
+.fhb-selection-status:not(:empty) + .fhb-actions {
+    margin-top: 0.6rem;
+}
+
+.fhb-selection-status.is-attention {
+    background: color-mix(in srgb, var(--fhb-danger) 7%, var(--fhb-surface));
+    border: 1px solid color-mix(in srgb, var(--fhb-danger) 30%, transparent);
+    border-radius: var(--fhb-radius-sm);
+    color: var(--fhb-danger);
+    font-weight: 600;
+    padding: 0.5rem 0.75rem;
 }
 
 /* ── Extras ────────────────────────────────────────────────────────────── */

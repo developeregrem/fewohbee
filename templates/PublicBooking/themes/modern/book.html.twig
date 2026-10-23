@@ -109,8 +109,24 @@
                     {{ include('PublicBooking/themes/modern/_offer.html.twig') }}
                     {{ include('PublicBooking/themes/modern/_extras.html.twig') }}
 
+                    {% if not calendarActive|default(false) %}
+                        {# Says what is still missing while the room selection does not add up;
+                           filled in by the script, which also holds back "continue" until then.
+                           Stays in the DOM while empty so screen readers keep it as live region. #}
+                        <p class="fhb-selection-status" data-fhb-selection-status aria-live="polite"
+                           data-fhb-selection-offered-rooms="{{ max(1, search.roomsCount) }}"
+                           data-fhb-selection-offered-guests="{{ mixOccupancyTotal|default(0) }}"
+                           data-fhb-selection-labels="{{ {
+                               'none': 'online_booking.public.selection.none'|trans,
+                               'roomsMissing': 'online_booking.public.selection.rooms_missing'|trans,
+                               'roomsExceeded': 'online_booking.public.selection.rooms_exceeded'|trans,
+                               'guestsTooFew': 'online_booking.public.selection.guests_too_few'|trans,
+                               'guestsTooMany': 'online_booking.public.selection.guests_too_many'|trans,
+                               'searchChanged': 'online_booking.public.selection.search_changed'|trans
+                           }|json_encode }}"></p>
+                    {% endif %}
                     <div class="fhb-actions">
-                        <button type="submit" name="intent" value="preview" class="btn btn-primary">{{ 'online_booking.public.continue'|trans }}</button>
+                        <button type="submit" name="intent" value="preview" class="btn btn-primary" data-fhb-selection-submit>{{ 'online_booking.public.continue'|trans }}</button>
                     </div>
 
                     {{ include('PublicBooking/themes/modern/_gallery_modals.html.twig') }}
