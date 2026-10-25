@@ -223,11 +223,13 @@ class ReservationService
 
     /**
      * @param array<ReservationObject> $reservations
-     *
-     * @return bool
      */
-    public function isAppartmentAlreadyBookedInCreationProcess($reservations, Appartment $apartment, \DateTimeInterface $start, \DateTimeInterface $end)
-    {
+    public function isAppartmentAlreadyBookedInCreationProcess(
+        array $reservations,
+        Appartment $apartment,
+        \DateTimeInterface $start,
+        \DateTimeInterface $end,
+    ): bool {
         foreach ($reservations as $reservation) {
             if ($apartment->getId() == $reservation->getAppartmentId()) {
                 $startReservation = strtotime($reservation->getStart());
@@ -324,14 +326,16 @@ class ReservationService
     /**
      * Rebuilds transient reservation entities from the reservation-creation session.
      *
-     * @param list<ReservationObject> $newReservationsInformationArray
+     * @param array<ReservationObject> $newReservationsInformationArray Selection keys can be sparse after removing a room
      *
      * @return list<Reservation>
      *
      * @throws InvalidReservationPeriodException when a stored period is invalid
      */
-    public function createReservationsFromReservationInformationArray($newReservationsInformationArray, ?Customer $customer = null)
-    {
+    public function createReservationsFromReservationInformationArray(
+        array $newReservationsInformationArray,
+        ?Customer $customer = null,
+    ): array {
         $reservations = [];
 
         foreach ($newReservationsInformationArray as $reservationInformation) {
@@ -387,14 +391,16 @@ class ReservationService
     }
 
     /** @param array<ReservationObject> $newReservationsInformationArray */
-    public function setCustomerInReservationInformationArray(&$newReservationsInformationArray, Customer $customer): void
-    {
+    public function setCustomerInReservationInformationArray(
+        array &$newReservationsInformationArray,
+        Customer $customer,
+    ): void {
         foreach ($newReservationsInformationArray as $reservationInformation) {
             $reservationInformation->setCustomerId($customer->getId());
         }
     }
 
-    public function deleteReservation($id)
+    public function deleteReservation(int|string $id): bool
     {
         $reservation = $this->em->getRepository(Reservation::class)->find($id);
 
@@ -569,7 +575,7 @@ class ReservationService
         );
     }
 
-    public function updateReservationCustomers($reservation, $customer, $tab): void
+    public function updateReservationCustomers(Reservation $reservation, Customer $customer, string $tab): void
     {
         if ('booker' === $tab) {
             $reservation->setBooker($customer);
@@ -684,7 +690,7 @@ class ReservationService
      *
      * @return array<Reservation>
      */
-    private function setPricesToReservations(Collection $prices, array $reservations)
+    private function setPricesToReservations(Collection $prices, array $reservations): array
     {
         foreach ($reservations as $reservation) {
             foreach ($prices as $price) {
@@ -701,7 +707,7 @@ class ReservationService
      *
      * @return list<\App\Entity\Invoice>
      */
-    public function getInvoicesForReservationsInProgress()
+    public function getInvoicesForReservationsInProgress(): array
     {
         $ids = $this->getSelectedReservationIds();
         $totalInvoices = [];
