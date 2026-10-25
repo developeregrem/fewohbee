@@ -14,6 +14,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\NoResultException;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Uuid;
 
@@ -69,6 +70,26 @@ class ReservationRepository extends ServiceEntityRepository
         $qb->join($reservationAlias.'.reservationStatus', $statusAlias)
             ->andWhere($statusAlias.'.id IN (:reservationStatus)')
             ->setParameter('reservationStatus', $statusIds, ArrayParameterType::INTEGER);
+    }
+
+    /** Preload the associations read by the table grid and its popovers during rendering. */
+    private function createTableQueryBuilder(string $statusMode): QueryBuilder
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->addSelect('booker', 'addr', 'invoice', 'origin', 'calImport', 'rs')
+            ->leftJoin('u.booker', 'booker')
+            ->leftJoin('booker.customerAddresses', 'addr')
+            ->leftJoin('u.invoices', 'invoice')
+            ->leftJoin('u.reservationOrigin', 'origin')
+            ->leftJoin('u.calendarSyncImport', 'calImport');
+
+        $this->applyBlockingStatusFilter($qb, 'u', $statusMode);
+        if ('all' === $statusMode) {
+            // The filter skips the status join when every status is requested.
+            $qb->leftJoin('u.reservationStatus', 'rs');
+        }
+
+        return $qb;
     }
 
     /**
@@ -214,18 +235,14 @@ class ReservationRepository extends ServiceEntityRepository
      */
     public function loadReservationsForApartment(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, string $statusMode = 'blocking'): array
     {
-        $qb = $this
-            ->createQueryBuilder('u')
-            ->select('u')
-            ->where('u.appartment = :app ')
+        $qb = $this->createTableQueryBuilder($statusMode)
+            ->andWhere('u.appartment = :app ')
             ->andWhere('u.isConflict = 0')
             ->andWhere('u.startDate <= :end AND u.endDate >= :start')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->setParameter('app', $apartment->getId())
             ->addOrderBy('u.endDate', \SortDirection::Ascending);
-
-        $this->applyBlockingStatusFilter($qb, 'u', $statusMode);
 
         $q = $qb->getQuery();
 
@@ -389,7 +406,7 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * Load all reservations for multiple apartments in a single query.
+     * Load reservations and their table/popover associations for multiple apartments in a single query.
      * Includes boundary touches (for table display where partial reservations must be shown).
      *
      * @param Appartment[] $apartments
@@ -404,14 +421,8 @@ class ReservationRepository extends ServiceEntityRepository
 
         $apartmentIds = array_map(fn ($a) => $a->getId(), $apartments);
 
-        $qb = $this
-            ->createQueryBuilder('u')
-            ->select('u')
-            ->addSelect('booker', 'calImport')
-            ->leftJoin('u.booker', 'booker')
-            ->leftJoin('booker.customerAddresses', 'addr')
-            ->leftJoin('u.calendarSyncImport', 'calImport')
-            ->where('u.appartment IN (:apps)')
+        $qb = $this->createTableQueryBuilder($statusMode)
+            ->andWhere('u.appartment IN (:apps)')
             ->andWhere('u.isConflict = 0')
             ->andWhere('u.startDate <= :end AND u.endDate >= :start')
             ->setParameter('start', $start)
@@ -419,8 +430,6 @@ class ReservationRepository extends ServiceEntityRepository
             ->setParameter('apps', $apartmentIds, ArrayParameterType::INTEGER)
             ->addOrderBy('u.startDate', \SortDirection::Ascending)
             ->addOrderBy('u.endDate', \SortDirection::Ascending);
-
-        $this->applyBlockingStatusFilter($qb, 'u', $statusMode);
 
         return $qb->getQuery()->getResult();
     }
