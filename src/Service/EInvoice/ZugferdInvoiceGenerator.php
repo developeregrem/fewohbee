@@ -121,6 +121,7 @@ class ZugferdInvoiceGenerator
 
         // invoice positions
         $pos = 1;
+        // Match InvoiceSumCalculator: float array keys would truncate fractional VAT rates.
         $netSums = [];
         /* @var $apartmentPosition \App\Entity\InvoiceAppartment */
         foreach ($invoice->getAppartments() as $apartmentPosition) {
@@ -132,7 +133,8 @@ class ZugferdInvoiceGenerator
             $documentBuilder->setDocumentPositionQuantity($apartmentPosition->getAmount(), ZugferdUnitCodes::REC20_PIECE);
             $documentBuilder->addDocumentPositionTax($this->resolveVatCategory($apartmentPosition->getVat()), ZugferdVatTypeCodes::VALUE_ADDED_TAX, $apartmentPosition->getVat());
             $documentBuilder->setDocumentPositionLineSummation($sum);
-            $netSums[$apartmentPosition->getVat()] = ($netSums[$apartmentPosition->getVat()] ?? 0) + $sum;
+            $rate = (string) $apartmentPosition->getVat();
+            $netSums[$rate] = ($netSums[$rate] ?? 0) + $sum;
             ++$pos;
         }
 
@@ -147,15 +149,17 @@ class ZugferdInvoiceGenerator
             $documentBuilder->setDocumentPositionQuantity($miscPosition->getAmount(), ZugferdUnitCodes::REC20_PIECE);
             $documentBuilder->addDocumentPositionTax($this->resolveVatCategory($miscPosition->getVat()), ZugferdVatTypeCodes::VALUE_ADDED_TAX, $miscPosition->getVat());
             $documentBuilder->setDocumentPositionLineSummation($sum);
-            $netSums[$miscPosition->getVat()] = ($netSums[$miscPosition->getVat()] ?? 0) + $sum;
+            $rate = (string) $miscPosition->getVat();
+            $netSums[$rate] = ($netSums[$rate] ?? 0) + $sum;
             ++$pos;
         }
 
         $vatSum = 0;
         $netSum = 0;
         foreach ($netSums as $vat => $sum) {
-            $documentBuilder->addDocumentTax($this->resolveVatCategory((float) $vat), ZugferdVatTypeCodes::VALUE_ADDED_TAX, $sum, $sum * ($vat / 100), $vat);
-            $vatSum += round($sum * ($vat / 100), 2);
+            $rate = (float) $vat;
+            $documentBuilder->addDocumentTax($this->resolveVatCategory($rate), ZugferdVatTypeCodes::VALUE_ADDED_TAX, $sum, $sum * ($rate / 100), $rate);
+            $vatSum += round($sum * ($rate / 100), 2);
             $netSum += $sum;
         }
 

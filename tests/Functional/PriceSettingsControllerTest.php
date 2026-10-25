@@ -39,6 +39,35 @@ final class PriceSettingsControllerTest extends WebTestCase
         self::assertEqualsCanonicalizing([$single, $double], $this->idsOf($price));
     }
 
+    public function testZeroVatPriceCanBeCreatedAndEditedToAZeroAmount(): void
+    {
+        $client = $this->authenticatedClient();
+        $crawler = $this->postPrice($client, 'zero-vat', 1, [], overrides: [
+            'price-new' => '12,34',
+            'vat-new' => '0',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('.alert-warning'));
+        $price = $this->findPrice('zero-vat');
+        self::assertNotNull($price);
+        self::assertSame('12.34', $price->getPrice());
+        self::assertSame(0.0, $price->getVat());
+        $id = (string) $price->getId();
+
+        $crawler = $this->postPrice($client, 'zero-vat', 1, [], $id, [
+            'price-'.$id => '0,00',
+            'vat-'.$id => '0',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('.alert-warning'));
+        $edited = $this->findPrice('zero-vat');
+        self::assertNotNull($edited);
+        self::assertSame('0.00', $edited->getPrice());
+        self::assertSame(0.0, $edited->getVat());
+    }
+
     public function testRoomPriceSharingACategoryIsReportedAsConflict(): void
     {
         $client = $this->authenticatedClient();

@@ -46,6 +46,7 @@ final class DecimalValueCompatibilityTest extends TestCase
         yield 'room VAT' => [InvoiceAppartment::class, 'vat'];
         yield 'miscellaneous VAT' => [InvoicePosition::class, 'vat'];
         yield 'price VAT' => [Price::class, 'vat'];
+        yield 'price amount' => [Price::class, 'price'];
         yield 'component VAT' => [PriceComponent::class, 'vat'];
         yield 'component allocation' => [PriceComponent::class, 'allocationValue'];
     }

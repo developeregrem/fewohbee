@@ -44,8 +44,7 @@ use Symfony\Contracts\Service\ResetInterface;
 
 class PriceService implements ResetInterface
 {
-    /** @var EntityManagerInterface */
-    private $em;
+    private readonly EntityManagerInterface $em;
 
     /**
      * Guest categories and the modifiers valid on a night are configuration: pricing asks for the
@@ -114,12 +113,8 @@ class PriceService implements ResetInterface
 
     /**
      * Populates a price from the submitted fields; missing stored prices are not handled here.
-     *
-     * @param int|string $id Price identifier or 'new' for an unsaved price
-     *
-     * @return Price
      */
-    public function getPriceFromForm(Request $request, $id = 'new')
+    public function getPriceFromForm(Request $request, int|string $id = 'new'): Price
     {
         $price = new Price();
 
@@ -162,9 +157,7 @@ class PriceService implements ResetInterface
             $noDaySelected = true;
 
             if (null != $request->request->get('monday-'.$id)) {
-                if ($noDaySelected) {
-                    $noDaySelected = false;
-                }
+                $noDaySelected = false;
                 $price->setMonday(true);
             } else {
                 $price->setMonday(false);
@@ -298,10 +291,8 @@ class PriceService implements ResetInterface
     /**
      * Sync price components (packages) from the POSTed form fields. When "is-package" is not set,
      * any existing components are removed.
-     *
-     * @param int|string $id Price identifier or 'new' for an unsaved price
      */
-    private function setComponents(Request $request, Price $price, $id): void
+    private function setComponents(Request $request, Price $price, int|string $id): void
     {
         // Packages are currently only supported for misc prices (type=1). Clear otherwise.
         $isPackage = 1 === (int) $price->getType() && null != $request->request->get('is-package-'.$id);
@@ -314,11 +305,11 @@ class PriceService implements ResetInterface
             return;
         }
 
-        $descriptions = $request->request->all('component-desc-'.$id) ?? [];
-        $vats = $request->request->all('component-vat-'.$id) ?? [];
-        $types = $request->request->all('component-type-'.$id) ?? [];
-        $values = $request->request->all('component-value-'.$id) ?? [];
-        $accounts = $request->request->all('component-account-'.$id) ?? [];
+        $descriptions = $request->request->all('component-desc-'.$id);
+        $vats = $request->request->all('component-vat-'.$id);
+        $types = $request->request->all('component-type-'.$id);
+        $values = $request->request->all('component-value-'.$id);
+        $accounts = $request->request->all('component-account-'.$id);
         $remainderIdx = $request->request->get('component-remainder-'.$id, '');
 
         $keys = array_keys($descriptions);
@@ -1023,15 +1014,15 @@ class PriceService implements ResetInterface
     }
 
     /**
-     * Will look for uniqe prices that are valid for the given reservations.
+     * Returns prices in first-seen order, deduplicated by object identity across days and reservations.
      *
      * @param array<Reservation> $reservations
      *
      * @return Collection<int, Price>
      */
-    public function getUniquePricesForReservations(array $reservations, int $type)
+    public function getUniquePricesForReservations(array $reservations, int $type): Collection
     {
-        $uniquePrices = new ArrayCollection();
+        $uniquePrices = [];
         foreach ($reservations as $reservation) {
             $pricesPerDay = $this->getPricesForReservationDays($reservation, $type);
             foreach ($pricesPerDay as $day => $prices) {
@@ -1039,18 +1030,17 @@ class PriceService implements ResetInterface
                     continue;
                 }
                 foreach ($prices as $price) {
-                    if (!$uniquePrices->contains($price)) {
+                    if (!in_array($price, $uniquePrices, true)) {
                         $uniquePrices[] = $price;
                     }
                 }
             }
         }
 
-        return $uniquePrices;
+        return new ArrayCollection($uniquePrices);
     }
 
-    /** @return bool */
-    private function isDateBetween(\DateTimeInterface $cur, \DateTimeInterface $start, \DateTimeInterface $end)
+    private function isDateBetween(\DateTimeInterface $cur, \DateTimeInterface $start, \DateTimeInterface $end): bool
     {
         if (($cur >= $start) && ($cur <= $end)) {
             return true;
@@ -1059,20 +1049,17 @@ class PriceService implements ResetInterface
         return false;
     }
 
-    /** @return bool */
-    private function isWeekDayMatch(Price $price, \DateTime $curr)
+    private function isWeekDayMatch(Price $price, \DateTime $curr): bool
     {
         return $price->coversWeekday($curr);
     }
 
     /**
      * Synchronizes the submitted reservation origins for a price.
-     *
-     * @param int|string $id Price identifier or 'new' for an unsaved price
      */
-    private function setOrigins(Request $request, Price $price, $id): void
+    private function setOrigins(Request $request, Price $price, int|string $id): void
     {
-        $origins = $request->request->all('origin-'.$id) ?? [];
+        $origins = $request->request->all('origin-'.$id);
         $allAddedOrigins = new ArrayCollection();
 
         $originsDb = $this->em->getRepository(ReservationOrigin::class)->findById($origins);
@@ -1118,18 +1105,16 @@ class PriceService implements ResetInterface
 
     /**
      * Helper function to set posted periods, if a period exists the existing one is used otherwise a new one is created.
-     *
-     * @param int|string $id Price identifier or 'new' for an unsaved price
      */
-    private function setPeriods(Request $request, Price $price, $id): void
+    private function setPeriods(Request $request, Price $price, int|string $id): void
     {
         $allAddedPeriods = new ArrayCollection();
-        $periodIds = array_unique($request->request->all('period-'.$id) ?? []);
+        $periodIds = array_unique($request->request->all('period-'.$id));
         // loop over all posted periods (new and existing ones)
         foreach ($periodIds as $id) {
-            $starts = $request->request->all('periodstart-'.$id) ?? [];
-            $ends = $request->request->all('periodend-'.$id) ?? [];
-            $descriptions = $request->request->all('perioddescription-'.$id) ?? [];
+            $starts = $request->request->all('periodstart-'.$id);
+            $ends = $request->request->all('periodend-'.$id);
+            $descriptions = $request->request->all('perioddescription-'.$id);
 
             foreach ($starts as $key => $start) {
                 if ('new' !== $id) {

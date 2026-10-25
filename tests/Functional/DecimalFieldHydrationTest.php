@@ -9,6 +9,7 @@ use App\Entity\InvoicePosition;
 use App\Entity\Price;
 use App\Entity\PriceComponent;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\PersistentCollection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -86,6 +87,45 @@ final class DecimalFieldHydrationTest extends KernelTestCase
         yield 'price VAT' => [Price::class, 'vat', 2];
         yield 'component VAT' => [PriceComponent::class, 'vat', 2];
         yield 'component allocation' => [PriceComponent::class, 'allocationValue', 4];
+    }
+
+    public function testPriceAmountAndLazyAssociationsSurviveHydrationWithoutAnUpdate(): void
+    {
+        $price = $this->em->getRepository(Price::class)->findOneBy([]);
+        self::assertInstanceOf(Price::class, $price);
+        $id = $price->getId();
+        $this->em->clear();
+        $price = $this->em->find(Price::class, $id);
+        self::assertInstanceOf(Price::class, $price);
+        $uow = $this->em->getUnitOfWork();
+        $original = $uow->getOriginalEntityData($price)['price'];
+        self::assertIsString($original);
+        self::assertSame($original, $price->getPrice());
+        $origins = $price->getReservationOrigins();
+        $periods = $price->getPricePeriods();
+        foreach ([$origins, $periods] as $collection) {
+            self::assertInstanceOf(PersistentCollection::class, $collection);
+            self::assertFalse($collection->isInitialized());
+        }
+
+        $uow->computeChangeSets();
+
+        self::assertSame([], $uow->getEntityChangeSet($price));
+        self::assertNotContains($price, $uow->getScheduledEntityUpdates());
+        self::assertSame($origins, $price->getReservationOrigins());
+        self::assertSame($periods, $price->getPricePeriods());
+        $this->em->flush();
+
+        $changed = '123.45' === $original ? '123.46' : '123.45';
+        $price->setPrice($changed);
+        $this->em->flush();
+        $this->em->clear();
+        $reloaded = $this->em->find(Price::class, $id);
+
+        self::assertInstanceOf(Price::class, $reloaded);
+        self::assertSame($changed, $reloaded->getPrice());
+        $this->em->getUnitOfWork()->computeChangeSets();
+        self::assertSame([], $this->em->getUnitOfWork()->getEntityChangeSet($reloaded));
     }
 
     protected function tearDown(): void
