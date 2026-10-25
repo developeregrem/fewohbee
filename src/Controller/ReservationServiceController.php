@@ -15,6 +15,7 @@ namespace App\Controller;
 
 use App\Dto\CalendarEntryViolation;
 use App\Dto\Pricing\PricePromise;
+use App\Dto\Reservation\ReservationConfirmation;
 use App\Entity\Appartment;
 use App\Entity\CalendarEntry;
 use App\Entity\Correspondence;
@@ -48,6 +49,7 @@ use App\Service\PriceService;
 use App\Service\Pricing\PricePromiseService;
 use App\Service\ReservationObject;
 use App\Service\ReservationPeriodService;
+use App\Service\Reservation\ReservationConfirmationService;
 use App\Service\ReservationService;
 use App\Service\ReservationTableDecorationService;
 use App\Service\ReservationTableService;
@@ -55,10 +57,12 @@ use App\Service\TemplatesService;
 use App\Service\TouristTaxService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -66,6 +70,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Intl\Countries;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
@@ -1046,6 +1051,110 @@ class ReservationServiceController extends AbstractController
         return $this->forward('App\Controller\ReservationServiceController::getReservationAction', [
             'id' => $reservation->getId(),
         ], ['tab' => 'prices']);
+    }
+
+    /**
+     * Shows the booking confirmation in the details dialog as it would go out, mail and PDF, with
+     * the address to send it to. Nothing is sent or recorded.
+     */
+    #[Route('/{id}/confirmation/preview', name: 'reservations.confirmation.preview', requirements: ['id' => '\\d+'], methods: ['GET'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
+    public function previewConfirmationAction(ReservationConfirmationService $confirmations, TranslatorInterface $translator, Request $request, Reservation $reservation): Response
+    {
+        $confirmation = $confirmations->prepare($reservation);
+        $email = $this->confirmationEmail($confirmation, $request);
+        $composed = null;
+        $problem = null;
+        if ([] === $confirmation->recipients) {
+            $problem = $translator->trans('reservation.confirmation.no_recipient');
+        } elseif (null === $confirmation->emailTemplate) {
+            $problem = $translator->trans('reservation.confirmation.no_template');
+        } else {
+            try {
+                $composed = $confirmations->preview($reservation, $email);
+            } catch (\RuntimeException $e) {
+                // WorkflowSkippedException and template errors both carry a message meant for the user.
+                $problem = $translator->trans('reservation.confirmation.cannot_send', ['%reason%' => $e->getMessage()]);
+            }
+        }
+
+        return $this->render('Reservations/Confirmation/preview.html.twig', [
+            'reservation' => $reservation,
+            'confirmation' => $confirmation,
+            'composed' => $composed,
+            'problem' => $problem,
+            'email' => $email,
+        ]);
+    }
+
+    /** The address picked from the confirmation button; one that is not the booker's falls back to the first. */
+    private function confirmationEmail(ReservationConfirmation $confirmation, Request $request): ?string
+    {
+        $chosen = $request->query->getString('email');
+        foreach ($confirmation->recipients as $email) {
+            if (0 === strcasecmp($email, $chosen)) {
+                return $email;
+            }
+        }
+
+        return $confirmation->recipients[0] ?? null;
+    }
+
+    /** One attachment of the confirmation preview, rendered again and shown in the browser. */
+    #[Route('/{id}/confirmation/preview/attachment/{index}', name: 'reservations.confirmation.preview_attachment', requirements: ['id' => '\\d+', 'index' => '\\d+'], methods: ['GET'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
+    public function previewConfirmationAttachmentAction(ReservationConfirmationService $confirmations, Reservation $reservation, int $index): Response
+    {
+        try {
+            $attachment = $confirmations->preview($reservation)->attachments->attachments[$index] ?? null;
+        } catch (\RuntimeException) {
+            $attachment = null;
+        }
+        if (null === $attachment) {
+            throw $this->createNotFoundException();
+        }
+
+        $file = $attachment->mailAttachment;
+        $response = new Response($file->getBody());
+        $response->headers->set('Content-Type', $file->getContentType());
+        $response->headers->set('Content-Disposition', HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_INLINE, $file->getName(), 'attachment.pdf'));
+
+        return $response;
+    }
+
+    /**
+     * Sends the booking confirmation from the details dialog and shows the conversations tab with
+     * the new mail. Templates are fixed (see ReservationConfirmationService); the user confirms the
+     * address, or picks one when the booker has several.
+     */
+    #[Route('/{id}/confirmation/send', name: 'reservations.confirmation.send', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
+    public function sendConfirmationAction(ReservationConfirmationService $confirmations, TranslatorInterface $translator, LoggerInterface $logger, Request $request, Reservation $reservation): Response
+    {
+        $tab = 'correspondence';
+        if (!$this->isCsrfTokenValid('reservation-confirmation-'.$reservation->getId(), $request->request->getString('_token'))) {
+            $this->addFlash('warning', 'flash.invalidtoken');
+            $tab = 'booker';
+        } else {
+            try {
+                $confirmations->send($reservation, $request->request->getString('email') ?: null);
+                $this->addFlash('success', 'reservation.confirmation.sent');
+            } catch (TransportExceptionInterface $e) {
+                // The transport message may name the recipient, so it stays out of the log.
+                $logger->error('Booking confirmation could not be sent', ['reservation_id' => $reservation->getId(), 'exception' => $e::class]);
+                $this->addFlash('danger', 'reservation.confirmation.failed');
+                $tab = 'booker';
+            } catch (\RuntimeException $e) {
+                // WorkflowSkippedException and template errors from TemplatesService both carry a
+                // message meant for the user.
+                $this->addFlash('warning', $translator->trans('reservation.confirmation.not_sent', ['%reason%' => $e->getMessage()]));
+                $tab = 'booker';
+            }
+        }
+
+        return $this->forward('App\Controller\ReservationServiceController::getReservationAction', [
+            'id' => $reservation->getId(),
+        ], ['tab' => $tab]);
     }
 
     /**

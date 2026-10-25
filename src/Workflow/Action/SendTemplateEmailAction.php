@@ -26,6 +26,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *   templateId     int    – ID of the Template to render
  *   recipientType  string – booker_email | invoice_email | notification_email | custom
  *   customRecipient string – used when recipientType === 'custom'
+ *   bookerEmail    string – optional with 'booker_email': one of the booker's addresses to use
+ *                  instead of the first; set by the reservation dialog, not by workflows
  *   attachments    array  – documents to attach, see WorkflowAttachmentResolver
  *   attachmentPolicy string – skip_missing | require_all
  *   invoicePdfTemplateId int – layout for attached invoices; 0 uses the default one
@@ -132,7 +134,16 @@ class SendTemplateEmailAction implements WorkflowActionInterface
         ];
     }
 
-    public function execute(array $config, mixed $entity, array $context): string
+    /**
+     * Renders the mail as execute() would send it, without sending or recording anything; for a
+     * preview before sending.
+     *
+     * @param array<string, mixed> $config  as for execute()
+     * @param array<string, mixed> $context as for execute()
+     *
+     * @throws WorkflowSkippedException when template, recipient or a required attachment is missing
+     */
+    public function compose(array $config, mixed $entity, array $context): ComposedEmail
     {
         $templateId = (int) ($config['templateId'] ?? 0);
         if ($templateId <= 0) {
@@ -189,6 +200,19 @@ class SendTemplateEmailAction implements WorkflowActionInterface
             (int) ($config['invoicePdfTemplateId'] ?? 0),
             $guestLocale,
         );
+
+        return new ComposedEmail($recipient, $subject, $rendered, $template, $attachmentSet, $reservations);
+    }
+
+    public function execute(array $config, mixed $entity, array $context): string
+    {
+        $composed = $this->compose($config, $entity, $context);
+        $recipient = $composed->recipient;
+        $subject = $composed->subject;
+        $rendered = $composed->body;
+        $template = $composed->template;
+        $attachmentSet = $composed->attachments;
+        $reservations = $composed->reservations;
 
         $this->mailService->sendHTMLMail($recipient, $subject, $rendered, $attachmentSet->mailAttachments());
 
@@ -291,14 +315,16 @@ class SendTemplateEmailAction implements WorkflowActionInterface
                 if (!$entity instanceof Reservation) {
                     return null;
                 }
-                $booker = $entity->getBooker();
-                if (null === $booker) {
-                    return null;
+                $emails = $entity->getBooker()?->getEmails() ?? [];
+                $chosen = trim((string) ($config['bookerEmail'] ?? ''));
+                if ('' === $chosen) {
+                    return $emails[0] ?? null;
                 }
-                foreach ($booker->getCustomerAddresses() as $address) {
-                    $email = $address->getEmail();
-                    if (null !== $email && '' !== trim($email)) {
-                        return trim($email);
+
+                // Only an address of the booker counts; anything else sends nothing.
+                foreach ($emails as $email) {
+                    if (0 === strcasecmp($email, $chosen)) {
+                        return $email;
                     }
                 }
 

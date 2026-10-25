@@ -1,0 +1,47 @@
+{# Booking confirmation as it would go out (ReservationConfirmationService::preview), shown in the
+   details dialog before sending. Read-only: the default templates are always used. #}
+<div data-controller="reservations">
+    <div class="modal-body">
+        {% if problem %}
+            <div class="alert alert-warning mb-0">{{ problem }}</div>
+        {% else %}
+            <dl class="row mb-3">
+                <dt class="col-sm-3 fw-normal text-body-secondary">{{ 'reservation.confirmation.recipient'|trans }}</dt>
+                <dd class="col-sm-9 text-break">
+                    {{ email }}
+                </dd>
+                <dt class="col-sm-3 fw-normal text-body-secondary">{{ 'templates.subject'|trans }}</dt>
+                <dd class="col-sm-9 text-break">{{ composed.subject }}</dd>
+            </dl>
+            {# Sandboxed: the mail's own styles and markup stay out of the application page #}
+            <iframe class="w-100 border rounded bg-white" style="height: 55vh;" sandbox
+                    title="{{ 'reservation.confirmation.title'|trans }}" srcdoc="{{ composed.body }}"></iframe>
+            {% if composed.attachments.attachments is not empty %}
+                <ul class="list-unstyled mt-3 mb-0">
+                    {% for attachment in composed.attachments.attachments %}
+                        <li>
+                            <a href="{{ path('reservations.confirmation.preview_attachment', {'id': reservation.id, 'index': loop.index0}) }}" target="_blank" rel="noopener">
+                                <i class="fas fa-paperclip me-1" aria-hidden="true"></i>{{ attachment.mailAttachment.name }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endif %}
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary me-auto"
+                data-action="reservations#openModalContentAction"
+                data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
+                data-title="{{ 'reservation.details'|trans }}">&larr; {{ 'button.back'|trans }}</button>
+        {% if not problem %}
+            <form id="confirmation-send-{{ reservation.id }}" method="post"
+                  action="{{ path('reservations.confirmation.send', {'id': reservation.id}) }}"
+                  data-action="submit->reservations#sendConfirmation">
+                <input type="hidden" name="_token" value="{{ csrf_token('reservation-confirmation-' ~ reservation.id) }}">
+                <input type="hidden" name="email" value="{{ email }}">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i>{{ 'reservation.confirmation.send'|trans }}</button>
+            </form>
+        {% endif %}
+    </div>
+</div>

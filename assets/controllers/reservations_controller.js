@@ -3553,6 +3553,26 @@ export default class extends Controller {
         });
     }
 
+    /**
+     * "Send" in the confirmation preview: the response is the refreshed reservation dialog. With
+     * several addresses the form carries the picked one.
+     */
+    sendConfirmation(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const data = new FormData(form);
+        // Sending takes a moment (PDF and mail); a second click would send a second mail
+        form.querySelectorAll('button[type="submit"]').forEach((button) => { button.disabled = true; });
+        // The answer is the reservation dialog again, no longer the preview
+        setModalTitle(this.translate('reservation.details'));
+        httpRequest({
+            url: form.action,
+            method: 'POST',
+            data,
+            target: this.modalContent,
+        });
+    }
+
     initHtmlEditor() {
         const textarea = document.getElementById('editor1');
         if (!textarea || textarea.dataset.editorInitialized === 'true') {
