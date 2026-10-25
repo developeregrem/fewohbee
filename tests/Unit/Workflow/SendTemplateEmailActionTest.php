@@ -24,6 +24,7 @@ use App\Workflow\Attachment\ResolvedAttachmentSet;
 use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -31,6 +32,7 @@ final class SendTemplateEmailActionTest extends TestCase
 {
     private TemplatesService $templatesService;
     private MailService $mailService;
+    /** @var AppSettingsService&Stub */
     private AppSettingsService $settingsService;
     private WorkflowAttachmentResolver $attachmentResolver;
     private EntityManagerInterface $em;
@@ -272,6 +274,65 @@ final class SendTemplateEmailActionTest extends TestCase
         $message = $this->buildAction()->execute($this->baseConfig(), new Reservation(), []);
 
         self::assertStringContainsString('attachment_warnings', $message);
+    }
+
+    public function testBookerGetsTheVariantInTheirLanguage(): void
+    {
+        $variant = $this->buildTemplate('Welcome', 'TEMPLATE_RESERVATION_EMAIL', 6);
+        $variant->setLocale('en')->setBaseTemplate($this->template);
+        $this->template->getVariants()->add($variant);
+        $reservation = $this->reservationWithBookerEmail('guest@example.com');
+        $reservation->getBooker()?->setLocale('en');
+
+        $this->templatesService = $this->createMock(TemplatesService::class);
+        $this->templatesService->expects(self::once())->method('renderTemplate')->with(6, self::anything())->willReturn('<html>en</html>');
+        $this->templatesService->expects(self::once())->method('renderTemplateSubject')->with($variant, self::anything())->willReturn('Welcome!');
+
+        $this->buildAction()->execute($this->baseConfig(['recipientType' => 'booker_email']), $reservation, []);
+    }
+
+    public function testAttachmentsAreResolvedInTheBookersLanguage(): void
+    {
+        $reservation = $this->reservationWithBookerEmail('guest@example.com');
+        $reservation->getBooker()?->setLocale('en');
+
+        $this->attachmentResolver = $this->createMock(WorkflowAttachmentResolver::class);
+        $this->attachmentResolver->expects(self::once())
+            ->method('resolve')
+            ->with(self::anything(), self::anything(), self::anything(), self::anything(), self::anything(), 'en')
+            ->willReturn(new ResolvedAttachmentSet());
+
+        $this->buildAction()->execute($this->baseConfig(['recipientType' => 'booker_email']), $reservation, []);
+    }
+
+    public function testBookerWithoutAMatchingVariantGetsTheConfiguredTemplate(): void
+    {
+        $variant = $this->buildTemplate('Bienvenue', 'TEMPLATE_RESERVATION_EMAIL', 7);
+        $variant->setLocale('fr')->setBaseTemplate($this->template);
+        $this->template->getVariants()->add($variant);
+        $reservation = $this->reservationWithBookerEmail('guest@example.com');
+        $reservation->getBooker()?->setLocale('en');
+
+        $this->templatesService = $this->createMock(TemplatesService::class);
+        $this->templatesService->expects(self::once())->method('renderTemplate')->with(5, self::anything())->willReturn('<html>de</html>');
+        $this->templatesService->method('renderTemplateSubject')->willReturn('Willkommen!');
+
+        $this->buildAction()->execute($this->baseConfig(['recipientType' => 'booker_email']), $reservation, []);
+    }
+
+    public function testOtherRecipientsGetTheConfiguredTemplateWhateverTheGuestSpeaks(): void
+    {
+        $variant = $this->buildTemplate('Welcome', 'TEMPLATE_RESERVATION_EMAIL', 6);
+        $variant->setLocale('en')->setBaseTemplate($this->template);
+        $this->template->getVariants()->add($variant);
+        $reservation = $this->reservationWithBookerEmail('guest@example.com');
+        $reservation->getBooker()?->setLocale('en');
+
+        $this->templatesService = $this->createMock(TemplatesService::class);
+        $this->templatesService->expects(self::once())->method('renderTemplate')->with(5, self::anything())->willReturn('<html>de</html>');
+        $this->templatesService->method('renderTemplateSubject')->willReturn('Willkommen!');
+
+        $this->buildAction()->execute($this->baseConfig(), $reservation, []);
     }
 
     private function reservationWithBookerEmail(string $email): Reservation

@@ -55,6 +55,7 @@
     "require-dev": {
         "league/flysystem-memory": "^3",
         "phpstan/phpstan": "^2.2",
+        "phpstan/phpstan-doctrine": "^2.0",
         "phpunit/phpunit": "^13.0",
         "rector/rector": "^2.6",
         "symfony/browser-kit": "8.1.*",

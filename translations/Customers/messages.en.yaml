@@ -10,6 +10,8 @@ customer.addresstype: Type
 customer.birthday: Birthday
 customer.nationality: Nationality
 customer.nationality_unknown: Not specified
+customer.locale: Language for mails
+customer.locale_help: Automatic mails to this guest use the template's language variant if there is one.
 customer.city: City
 customer.company: Company
 customer.contact: Contact
@@ -21,7 +23,7 @@ customer.delete.ask: >-
   "deleted" guest.
 customer.details: Guest Details
 customer.email: E-Mail
-family: Family
+Family: Family
 customer.fax: Fax
 customer.firstname: First Name
 customer.flash.create.success: Guest was created successfully.
@@ -43,7 +45,7 @@ customer.person: Person
 customer.phone: Phone
 customer.remark: Remark
 customer.salutation: Title
-customer.search.addresses: Search addresses ...
+customer.search.addresses: Search addresses…
 customer.template: Template
 customer.zip: Zip code
 customer.buyerVatId: VAT ID (Buyer)

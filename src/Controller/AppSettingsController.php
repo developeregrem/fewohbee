@@ -7,6 +7,8 @@ namespace App\Controller;
 use App\Form\AppSettingsType;
 use App\Repository\WorkflowRepository;
 use App\Service\AppSettingsService;
+use App\Service\Localization\GuestLocaleService;
+use App\Service\Localization\GuestSalutations;
 use App\Service\MailService;
 use App\Service\MailTransportFactory;
 use App\Service\PublicUrlService;
@@ -31,6 +33,8 @@ class AppSettingsController extends AbstractController
         SmtpPasswordCrypto $smtpPasswordCrypto,
         MailService $mailService,
         PublicUrlService $publicUrlService,
+        GuestLocaleService $guestLocaleService,
+        GuestSalutations $salutations,
     ): Response {
         $settings = $settingsService->getSettings();
 
@@ -38,17 +42,16 @@ class AppSettingsController extends AbstractController
             'public_base_url_locked' => $publicUrlService->isPresetByEnvironment(),
         ]);
 
-        // populate the unmapped salutations field
-        $form->get('customerSalutations')->setData(implode(', ', $settings->getCustomerSalutations()));
+        // populate the unmapped fields
+        $form->get('customerSalutations')->setData($salutations->settingsRows());
+        $form->get('guestLocales')->setData($guestLocaleService->guestLocales());
 
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // parse comma-separated salutations back into array
-            $rawSalutations = (string) $form->get('customerSalutations')->getData();
-            $settings->setCustomerSalutations(
-                array_map('trim', explode(',', $rawSalutations))
-            );
+            $salutations->applySettingsRows($settings, (array) $form->get('customerSalutations')->getData());
+
+            $settings->setGuestLocales($guestLocaleService->normalizeSelection((array) $form->get('guestLocales')->getData()));
 
             $plainSmtpPassword = $form->get('smtpPassword')->getData();
             if (\is_string($plainSmtpPassword) && '' !== trim($plainSmtpPassword)) {
@@ -80,11 +83,12 @@ class AppSettingsController extends AbstractController
         AppSettingsService $settingsService,
         SmtpPasswordCrypto $smtpPasswordCrypto,
         MailTransportFactory $mailTransportFactory,
-        TranslatorInterface $translator
+        TranslatorInterface $translator,
+        GuestSalutations $salutations,
     ): JsonResponse {
         $settings = clone $settingsService->getSettings();
         $form = $this->createForm(AppSettingsType::class, $settings);
-        $form->get('customerSalutations')->setData(implode(', ', $settings->getCustomerSalutations()));
+        $form->get('customerSalutations')->setData($salutations->settingsRows());
         $form->handleRequest($request);
 
         if (!$form->isSubmitted() || !$form->isValid()) {

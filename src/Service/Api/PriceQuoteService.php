@@ -109,7 +109,7 @@ class PriceQuoteService
                 'number' => $apartment->getNumber(),
                 'description' => $apartment->getDescription(),
             ],
-            object: ['id' => $object?->getId(), 'name' => $object?->getName()],
+            object: ['id' => $object->getId(), 'name' => $object->getName()],
             roomCategory: null !== $category ? ['id' => $category->getId(), 'name' => $category->getName()] : null,
             startDate: $start->format('Y-m-d'),
             endDate: $end->format('Y-m-d'),

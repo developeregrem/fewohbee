@@ -20,7 +20,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 class GuestCheckInConfigType extends AbstractType
 {
     /** Field groups that can be hidden, offered or required, in the order they appear on the form. */
-    public const FIELD_GROUPS = ['addressMode', 'birthdayMode', 'nationalityMode', 'idDocumentMode', 'contactMode', 'companionsMode'];
+    public const FIELD_GROUPS = ['addressMode', 'birthdayMode', 'nationalityMode', 'idDocumentMode', 'contactMode', 'companyMode', 'companionsMode'];
 
     public function __construct(
         private readonly PublicUrlService $publicUrlService,
@@ -53,6 +53,10 @@ class GuestCheckInConfigType extends AbstractType
         foreach (self::FIELD_GROUPS as $field) {
             $builder->add($field, EnumType::class, [
                 'class' => GuestCheckInFieldMode::class,
+                // Company details are offered at most, see GuestCheckInConfig::setCompanyMode().
+                'choices' => 'companyMode' === $field
+                    ? [GuestCheckInFieldMode::HIDDEN, GuestCheckInFieldMode::OPTIONAL]
+                    : GuestCheckInFieldMode::cases(),
                 // For fellow travellers the mode says who is asked, not how a field behaves.
                 'choice_label' => 'companionsMode' === $field
                     ? static fn (GuestCheckInFieldMode $mode): string => 'guest_checkin.companions_mode.'.$mode->value
@@ -80,6 +84,19 @@ class GuestCheckInConfigType extends AbstractType
                 'label' => 'guest_checkin.settings.privacy_text',
                 'help' => 'guest_checkin.settings.privacy_text_help',
                 'attr' => ['rows' => 3, 'maxlength' => 2000],
+            ])
+            ->add('translations', ContentTranslationsType::class, [
+                'fields' => [
+                    'introText' => ['type' => TextareaType::class, 'max_length' => 2000, 'options' => ['attr' => ['rows' => 4]]],
+                    // A privacy page per language; same rules as the base address.
+                    'privacyUrl' => [
+                        'type' => UrlType::class,
+                        'max_length' => 255,
+                        'constraints' => [new Assert\Url(protocols: ['https', 'http'], requireTld: true)],
+                        'options' => ['default_protocol' => 'https', 'attr' => ['placeholder' => 'https://']],
+                    ],
+                    'privacyText' => ['type' => TextareaType::class, 'max_length' => 2000, 'options' => ['attr' => ['rows' => 3]]],
+                ],
             ])
         ;
     }

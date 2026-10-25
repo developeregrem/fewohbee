@@ -17,8 +17,10 @@ use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\TelType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /** Main guest on the public check-in form; groups are shown and required per GuestCheckInConfig. */
 class GuestCheckInGuestType extends AbstractType
@@ -33,7 +35,9 @@ class GuestCheckInGuestType extends AbstractType
             // form of address is not on the list.
             ->add('salutation', ChoiceType::class, [
                 'label' => 'guest_checkin.public.field.salutation_optional',
-                'choices' => array_combine($options['salutations'], $options['salutations']),
+                // Wording in the guest's language => stored salutation (GuestSalutations).
+                'choices' => $options['salutations'],
+                'choice_translation_domain' => false,
                 'placeholder' => '',
                 'required' => false,
                 'attr' => ['autocomplete' => 'honorific-prefix'],
@@ -89,6 +93,18 @@ class GuestCheckInGuestType extends AbstractType
                 ->add('country', CountryType::class, $this->country('country', $mode) + ['attr' => ['autocomplete' => 'country']]);
         }
 
+        // Collapsed on the page ("invoice to a company"): most guests travel privately.
+        if ($config->getCompanyMode()->isShown()) {
+            $builder
+                ->add('company', TextType::class, ['label' => 'guest_checkin.public.field.company', 'required' => false, 'attr' => ['autocomplete' => 'organization', 'maxlength' => 255]])
+                ->add('vatId', TextType::class, ['label' => 'guest_checkin.public.field.vat_id', 'required' => false, 'attr' => ['autocomplete' => 'off', 'maxlength' => 50]])
+                // No autofill: a browser filling only some fields would start an address the guest never meant.
+                ->add('companyStreet', TextType::class, ['label' => 'guest_checkin.public.field.street', 'required' => false, 'attr' => ['autocomplete' => 'off', 'maxlength' => 150]])
+                ->add('companyZip', TextType::class, ['label' => 'guest_checkin.public.field.zip', 'required' => false, 'attr' => ['autocomplete' => 'off', 'maxlength' => 10]])
+                ->add('companyCity', TextType::class, ['label' => 'guest_checkin.public.field.city', 'required' => false, 'attr' => ['autocomplete' => 'off', 'maxlength' => 45]])
+                ->add('companyCountry', CountryType::class, ['label' => 'guest_checkin.public.field.country', 'placeholder' => '', 'required' => false, 'attr' => ['autocomplete' => 'off']]);
+        }
+
         if ($config->getContactMode()->isShown()) {
             $mode = $config->getContactMode();
             $builder
@@ -107,6 +123,32 @@ class GuestCheckInGuestType extends AbstractType
         $resolver->setAllowedTypes('config', GuestCheckInConfig::class);
         $resolver->setAllowedTypes('salutations', 'string[]');
         $resolver->setAllowedTypes('stored_id_hint', ['null', 'string']);
+        $resolver->setNormalizer('constraints', static function (Options $options, mixed $constraints): array {
+            /** @var GuestCheckInConfig $config */
+            $config = $options['config'];
+
+            return [...(array) $constraints, new Assert\Callback(static function (?GuestCheckInGuest $guest, ExecutionContextInterface $context) use ($config): void {
+                if (null === $guest || !$config->getCompanyMode()->isShown() || !$guest->hasCompanyDetails()) {
+                    return;
+                }
+
+                if (null === $guest->company) {
+                    $context->buildViolation('guest_checkin.company_name_missing')->atPath('company')->addViolation();
+                }
+                // Without an address of the guest to fall back on, the invoice address is needed;
+                // otherwise only a started one has to be complete.
+                $addressAsked = $config->getAddressMode()->isShown();
+                if ($addressAsked && !$guest->hasCompanyAddress()) {
+                    return;
+                }
+                foreach (['companyStreet', 'companyZip', 'companyCity', 'companyCountry'] as $field) {
+                    if (null === $guest->{$field}) {
+                        $context->buildViolation($addressAsked ? 'guest_checkin.company_address_incomplete' : 'guest_checkin.company_address_missing')
+                            ->atPath($field)->addViolation();
+                    }
+                }
+            })];
+        });
     }
 
     /** @return array<string, mixed> */

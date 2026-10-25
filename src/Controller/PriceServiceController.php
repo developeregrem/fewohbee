@@ -15,7 +15,6 @@ namespace App\Controller;
 
 use App\Entity\AccountingAccount;
 use App\Entity\Price;
-use App\Entity\PricePeriod;
 use App\Entity\RoomCategory;
 use App\Entity\TaxRate;
 use App\Repository\ReservationOriginRepository;
@@ -33,6 +32,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[Route('/settings/prices')]
 class PriceServiceController extends AbstractController
 {
+    /**
+     * @return Response
+     */
     #[Route('/', name: 'prices.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine, PriceService $ps)
     {
@@ -44,6 +46,11 @@ class PriceServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/{id}/get', name: 'prices.get.price', methods: ['GET'], defaults: ['id' => '0'])]
     public function getPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AccountingSettingsService $accountingSettings, ReservationOriginRepository $originRepository, $id)
     {
@@ -74,6 +81,9 @@ class PriceServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/new', name: 'prices.new.price', methods: ['GET'])]
     public function newPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AccountingSettingsService $accountingSettings, ReservationOriginRepository $originRepository)
     {
@@ -106,6 +116,9 @@ class PriceServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/create', name: 'prices.create.price', methods: ['POST'])]
     public function createPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, PriceService $ps, PricePromiseService $pricePromises, Request $request)
     {
@@ -154,6 +167,11 @@ class PriceServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/{id}/edit', name: 'prices.edit.price', methods: ['POST'], defaults: ['id' => '0'])]
     public function editPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, PriceService $ps, PricePromiseService $pricePromises, Request $request, $id)
     {
@@ -173,8 +191,7 @@ class PriceServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->clear(Price::class);
-                $em->clear(PricePeriod::class);
+                $em->clear();
             } else {
                 $componentErrors = $ps->validateComponents($price);
                 if (!empty($componentErrors)) {
@@ -182,8 +199,7 @@ class PriceServiceController extends AbstractController
                     foreach ($componentErrors as $key) {
                         $this->addFlash('warning', $key);
                     }
-                    $em->clear(Price::class);
-                    $em->clear(PricePeriod::class);
+                    $em->clear();
                 } else {
                     $conflicts = $ps->findConflictingPrices($price);
                     // during edit we need to remove the current item from the list
@@ -200,8 +216,7 @@ class PriceServiceController extends AbstractController
                         $error = true;
                         $this->addFlash('warning', 'price.flash.create.conflict');
                         // stop auto commit of doctrine with invalid field values
-                        $em->clear(Price::class);
-                        $em->clear(PricePeriod::class);
+                        $em->clear();
                     }
                 }
             }
@@ -213,6 +228,9 @@ class PriceServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/{id}/delete', name: 'prices.delete.price', methods: ['DELETE'])]
     public function deletePriceAction(CSRFProtectionService $csrf, PriceService $ps, PricePromiseService $pricePromises, ManagerRegistry $doctrine, TranslatorInterface $translator, Request $request, Price $entry)
     {

@@ -147,7 +147,7 @@ class TouristTaxService implements ResetInterface
     private function calculateFlatPerNight(
         TouristTax $tax,
         Reservation $reservation,
-        \DateTimeInterface $start,
+        \DateTime $start,
         int $totalNights,
         ?\DateTimeInterface $rangeStart = null,
         ?\DateTimeInterface $rangeEnd = null,
@@ -204,7 +204,7 @@ class TouristTaxService implements ResetInterface
     private function calculatePercentPerRoom(
         TouristTax $tax,
         Reservation $reservation,
-        \DateTimeInterface $start,
+        \DateTime $start,
         int $totalNights,
         ?\DateTimeInterface $rangeStart = null,
         ?\DateTimeInterface $rangeEnd = null,

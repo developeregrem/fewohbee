@@ -26,6 +26,7 @@ use App\Service\InvoiceService;
 use App\Service\MailService;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\ExpressionLanguage\Expression;
@@ -66,6 +67,9 @@ class CorrespondenceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/get/reservations', name: 'correspondence.get.reservations', methods: ['GET'])]
     public function getReservationsAction(ReservationService $reservationService, Request $request)
@@ -88,6 +92,9 @@ class CorrespondenceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/remove/reservation/from/selection', name: 'correspondence.remove.reservation.from.selection', methods: ['POST'])]
     public function removeReservationFromSelectionAction(ReservationService $reservationService, Request $request)
@@ -104,12 +111,13 @@ class CorrespondenceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/email/send', name: 'correspondence.email.send', methods: ['POST'])]
-    public function sendEmailAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, MailService $mailer, Request $request)
+    public function sendEmailAction(EntityManagerInterface $em, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, MailService $mailer, Request $request)
     {
-        $em = $doctrine->getManager();
-
         $error = false;
         if ($csrf->validateCSRFToken($request)) {
             $to = $request->request->get('to');
@@ -177,10 +185,8 @@ class CorrespondenceController extends AbstractController
 
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/file/save', name: 'correspondence.file.save', methods: ['POST'])]
-    public function saveFileAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, Request $request)
+    public function saveFileAction(EntityManagerInterface $em, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, Request $request): Response
     {
-        $em = $doctrine->getManager();
-
         $error = false;
         $isAttachment = false;
         if ($csrf->validateCSRFToken($request)) {
@@ -192,15 +198,19 @@ class CorrespondenceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                // todo
+                $reservations = $ts->getReferencedReservationsInSession();
+                // Another tab can reset the shared selection after the preview was opened.
+                if ([] === $reservations) {
+                    $this->addFlash('warning', 'templates.savefile.reservations.required');
+
+                    return $this->render('feedback.html.twig', ['error' => true]);
+                }
+
                 // if this file is an attachment for email,
                 $attachmentForId = $requestStack->getSession()->get('selectedTemplateId', null);
 
                 // now save correspondence to db
                 $template = $em->getReference(Template::class, $templateId);
-
-                // associate with reservations
-                $reservations = $ts->getReferencedReservationsInSession();
 
                 // save correspondence for each reservation
                 foreach ($reservations as $reservation) {
@@ -277,6 +287,9 @@ class CorrespondenceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/remove', name: 'correspondence.remove', methods: ['DELETE'])]
     public function deleteCorrespondenceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
@@ -355,6 +368,11 @@ class CorrespondenceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/export/pdf/{id}/', name: 'correspondence.export.pdf', methods: ['GET'], defaults: ['id' => '0'])]
     public function exportPDFCorrespondenceAction(ManagerRegistry $doctrine, TemplatesService $ts, InvoiceService $is, $id)
@@ -383,6 +401,11 @@ class CorrespondenceController extends AbstractController
         return new Response('no file');
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/show/{id}', name: 'correspondence.show', methods: ['POST'], defaults: ['id' => '0'])]
     public function showMailCorrespondenceAction(ManagerRegistry $doctrine, Request $request, $id)

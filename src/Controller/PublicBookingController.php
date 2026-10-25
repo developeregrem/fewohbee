@@ -7,7 +7,9 @@ namespace App\Controller;
 use App\Entity\Enum\PublicBookingTheme;
 use App\Entity\OnlineBookingConfig;
 use App\Exception\PublicBookingException;
+use App\Service\Localization\GuestLocaleService;
 use App\Service\OnlineBooking\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OccupancyPreselector;
 use App\Service\OnlineBooking\OnlineBookingRestrictionService;
 use App\Service\OnlineBooking\PublicBookingAbuseProtectionService;
 use App\Service\OnlineBooking\PublicBookingCalendarService;
@@ -33,7 +35,15 @@ class PublicBookingController extends AbstractController
         PublicBookingRequestMapper $requestMapper,
         PublicBookingViewModelFactory $viewFactory,
         PublicBookingCalendarService $calendarService,
+        GuestLocaleService $guestLocales,
+        OccupancyPreselector $preselector,
     ): Response {
+        $embed = '1' === (string) $request->query->get('embed', $request->request->get('embed', '0'));
+        // Embedded, the host website decides the language and passes it as ?lang=; the visitor's
+        // browser language would otherwise mix languages on one page.
+        $guestLocales->applyToRequest($request, !$embed);
+        $urlParameters = $this->urlParameters($embed, $guestLocales, $request);
+
         $config = $configService->getConfig();
         $template = $this->resolveTemplate($config, $request);
         // In calendar mode the guest has already chosen the accommodation, so the
@@ -42,10 +52,10 @@ class PublicBookingController extends AbstractController
         $calendarRoom = $config->isCalendarActive()
             ? $calendarService->findBookableRoom((string) $request->request->get('room', ''), $config)
             : null;
-        $embed = '1' === (string) $request->query->get('embed', $request->request->get('embed', '0'));
         $error = $publicBookingService->validateEnabledConfig();
-        $defaultCountry = mb_strtoupper($request->getLocale());
+        $defaultCountry = $viewFactory->defaultCountry($request);
         $view = $viewFactory->createInitialView($request, $config, $calendarRoom, $embed, $error);
+        $view['bookingUrlParameters'] = $urlParameters;
 
         if ('POST' !== $request->getMethod() || null !== $error) {
             return $this->render($template, $view);
@@ -81,6 +91,12 @@ class PublicBookingController extends AbstractController
             if ('availability' === $intent) {
                 $preview = $publicBookingService->buildSelectionPreview($booking->dateFrom, $booking->dateTo, $booking->persons, $booking->roomsCount, [], [], $booking->guestCounts, $calendarRoom);
                 $view = $viewFactory->applyPreviewResult($view, $preview, 2);
+                if (null === $calendarRoom) {
+                    // A search that leaves a single fitting choice gets it filled in, so the
+                    // guest does not have to discover the quantity steppers first.
+                    $view['selectedQty'] = $preselector->preselect($preview['availability'], $booking->roomsCount, $booking->persons);
+                    $view['preselected'] = [] !== $view['selectedQty'];
+                }
             } elseif ('preview' === $intent) {
                 $preview = $publicBookingService->buildSelectionPreview($booking->dateFrom, $booking->dateTo, $booking->persons, $booking->roomsCount, $booking->occupancySelection, $booking->extrasSelection, $booking->guestCounts, $calendarRoom);
                 $view = $viewFactory->applyPreviewResult($view, $preview, 3);
@@ -106,8 +122,7 @@ class PublicBookingController extends AbstractController
 
                 $abuseProtectionService->clearSubmitFailures($request);
 
-                return $this->redirectToRoute('public.booking', [
-                    'embed' => $embed ? 1 : 0,
+                return $this->redirectToRoute('public.booking', $urlParameters + [
                     'submitted' => 1,
                     'mode' => $config->getBookingMode(),
                 ]);
@@ -160,6 +175,23 @@ class PublicBookingController extends AbstractController
         $response->setMaxAge(60);
 
         return $response;
+    }
+
+    /**
+     * Query parameters every link and form of the booking page carries. The language is kept
+     * only when it was chosen explicitly; otherwise each request detects it again.
+     *
+     * @return array<string, int|string>
+     */
+    private function urlParameters(bool $embed, GuestLocaleService $guestLocales, Request $request): array
+    {
+        $parameters = ['embed' => $embed ? 1 : 0];
+        $locale = $guestLocales->requestedLocale($request);
+        if (null !== $locale) {
+            $parameters[GuestLocaleService::QUERY_PARAMETER] = $locale;
+        }
+
+        return $parameters;
     }
 
     /**

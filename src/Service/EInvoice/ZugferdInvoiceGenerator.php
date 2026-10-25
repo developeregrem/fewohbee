@@ -219,8 +219,8 @@ class ZugferdInvoiceGenerator
     }
 
     /**
-     * @param array<string, string> $codesByConstantName
-     * @param array<string, int>    $supportedCodes
+     * @param array<string, string> $codesByConstantName constant name => ISO code
+     * @param array<string, string> $supportedCodes      ISO code => constant name
      */
     private function resolveCandidateToIsoCode(mixed $candidate, array $codesByConstantName, array $supportedCodes): ?string
     {

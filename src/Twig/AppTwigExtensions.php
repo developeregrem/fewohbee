@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace App\Twig;
 
+use App\Entity\Appartment;
 use App\Entity\Reservation;
 use App\Entity\RoomBlock;
 use App\Service\AppSettingsService;
@@ -23,13 +24,14 @@ use Twig\Extension\AbstractExtension;
 use Twig\Extension\GlobalsInterface;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
+use Yasumi\Holiday;
 
 class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
 {
-    private $em;
-    private $requestStack;
-    private $calendarService;
-    private $appSettingsService;
+    private EntityManagerInterface $em;
+    private RequestStack $requestStack;
+    private PublicHolidayService $calendarService;
+    private AppSettingsService $appSettingsService;
 
     public function __construct(EntityManagerInterface $em, RequestStack $requestStack, PublicHolidayService $cs, AppSettingsService $appSettingsService)
     {
@@ -81,7 +83,7 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         ];
     }
 
-    public function dateDifferenceFilter($startDate, $endDate)
+    public function dateDifferenceFilter(string $startDate, string $endDate): int
     {
         $start = new \DateTime($startDate);
         $end = new \DateTime($endDate);
@@ -92,8 +94,9 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
 
     /**
      * compares the reservation start and end date with the displayed period. if start or end lies inside displayed period or not.
+     * The object exposes getStartDate() and getEndDate(); the date is a Unix timestamp.
      */
-    public function reservationDateCompareFilter($date, $reservation, $type = 'start')
+    public function reservationDateCompareFilter(int $date, object $reservation, string $type = 'start'): bool
     {
         if ('start' == $type && $reservation->getStartDate()->getTimestamp() < $date) {
             return true;
@@ -104,7 +107,8 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         }
     }
 
-    public function getReservationsForPeriodFilter($today, $intervall, $apartment)
+    /** @return list<Reservation> */
+    public function getReservationsForPeriodFilter(int $today, int $intervall, Appartment $apartment): array
     {
         $start = new \DateTime(date('Y-m-d', $today));
         $end = new \DateTime(date('Y-m-d', $today + ($intervall * 3600 * 24)));
@@ -119,7 +123,7 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
      *
      * @return RoomBlock[]
      */
-    public function getRoomBlocksForPeriodFilter($today, $intervall, $apartment): array
+    public function getRoomBlocksForPeriodFilter(int $today, int $intervall, Appartment $apartment): array
     {
         $start = new \DateTime(date('Y-m-d', $today));
         $end = new \DateTime(date('Y-m-d', $today + ($intervall * 3600 * 24)));
@@ -149,6 +153,7 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         return $result;
     }
 
+    /** @param array<int, Reservation> $reservations */
     public function isSingleReservationForDayFilter(int $today, int $period, int $reservationIdx, array $reservations, string $type = 'start'): bool
     {
         /* @var $currentReservation Reservation */
@@ -191,7 +196,8 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         }
     }
 
-    public function getLetterCountForDisplayFilter($period, $intervall)
+    /** The legacy second argument is unused and accepts any value. */
+    public function getLetterCountForDisplayFilter(int $period, mixed $intervall): int|float
     {
         if ($period > 4) {
             return $period ** 2 - 2;
@@ -200,7 +206,7 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         }
     }
 
-    public function getDateDiffAmountFilter($start, $end)
+    public function getDateDiffAmountFilter(\DateTimeInterface $start, \DateTimeInterface $end): int
     {
         $interval = $start->diff($end);
 
@@ -208,7 +214,12 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
     }
 
     // prüft einen float-Wert, ob die Nachkommastellen 0 sind
-    public function isDecimalPlace0($float)
+    /**
+     * Missing values keep the existing arithmetic treatment as zero.
+     *
+     * @param int|float|numeric-string|null $float
+     */
+    public function isDecimalPlace0(int|float|string|null $float): bool
     {
         // prüfe 1. Nachkommastelle, ob sie 0 ist
         if ((($float * 10) % 10) === 0) {
@@ -221,7 +232,8 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         return false;
     }
 
-    public function getLocalizedMonthFilter($monthNumber, $pattern, $locale)
+    /** @param int|numeric-string $monthNumber */
+    public function getLocalizedMonthFilter(int|string $monthNumber, string $pattern, ?string $locale): string|false
     {
         $formatter = new \IntlDateFormatter($locale, \IntlDateFormatter::FULL, \IntlDateFormatter::FULL);
         $formatter->setPattern($pattern);
@@ -229,18 +241,19 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         return $formatter->format(mktime(0, 0, 0, $monthNumber + 1, 0, 0));
     }
 
-    public function getActiveRouteNameFilter()
+    public function getActiveRouteNameFilter(): string
     {
         $request = $this->requestStack->getCurrentRequest();
         if (null === $request || !$request->attributes->has('_route')) {
             $request = $this->requestStack->getMainRequest();
         }
-        $route = str_replace('_', '.', $request?->attributes->get('_route', ''));
+        $route = str_replace('_', '.', $request?->attributes->get('_route', '') ?? '');
 
         return $route;
     }
 
-    public function getLocalizedDateFilter($date, $pattern, $locale)
+    /** Pass the value through unchanged to IntlDateFormatter's open formatting contract. */
+    public function getLocalizedDateFilter(mixed $date, string $pattern, ?string $locale): string|false
     {
         $formatter = new \IntlDateFormatter($locale, \IntlDateFormatter::FULL, \IntlDateFormatter::FULL);
         $formatter->setPattern($pattern);
@@ -248,7 +261,12 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         return $formatter->format($date);
     }
 
-    public function existsById($array, $compare)
+    /**
+     * Objects expose getId(); identifiers are compared strictly, regardless of their class.
+     *
+     * @param iterable<object> $array
+     */
+    public function existsById(iterable $array, object $compare): bool
     {
         foreach ($array as $single) {
             if ($single->getId() === $compare->getId()) {
@@ -259,7 +277,8 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         return false;
     }
 
-    public function getPublicdaysForDay($date, $code, $locale)
+    /** @return iterable<Holiday> */
+    public function getPublicdaysForDay(\DateTime $date, string $code, string $locale): iterable
     {
         return $this->calendarService->getPublicdaysForDay($date, $code, $locale);
     }
@@ -370,6 +389,11 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         return 'linear-gradient(to right, '.implode(', ', $stops).')';
     }
 
+    /**
+     * @param array<Reservation> $reservations
+     *
+     * @return list<Reservation>
+     */
     public function getReservationsForDay(\DateTimeInterface $day, array $reservations): array
     {
         $result = [];
@@ -391,7 +415,9 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
      * Resolves overlapping reservation conflicts for displaying the reservations
      * Each row of the array returns a list of reservations without conflicts.
      *
-     * @return array[]
+     * @param array<Reservation> $reservations
+     *
+     * @return list<list<Reservation>>
      *
      * @throws \Exception
      */
@@ -437,6 +463,8 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
 
     /**
      * Finds the position (line) of a given reservation in multidimensional array of reservations.
+     *
+     * @param array<int, array<Reservation>> $reservationLines
      */
     private function getPositionOfReservation(array $reservationLines, Reservation $reservation): int|bool
     {

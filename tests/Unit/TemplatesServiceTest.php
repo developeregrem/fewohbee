@@ -635,6 +635,62 @@ final class TemplatesServiceTest extends TestCase
         return [$default, $cash, $other];
     }
 
+    public function testVariantCopiesTheTemplateButNeverTakesOverDefaultOrPaymentMeans(): void
+    {
+        $type = new TemplateType();
+        $type->setName('TEMPLATE_INVOICE_PDF');
+        $base = new Template();
+        $base->setName('Rechnung')->setSubject('Ihre Rechnung')->setText('<p>Text</p>')->setTemplateType($type)
+            ->setIsDefault(true)->setPaymentMeans(PaymentMeansCode::CASH);
+
+        $variant = $this->createService()->createVariant($base, 'en', 'Rechnung (Englisch)');
+
+        self::assertSame('en', $variant->getLocale());
+        self::assertSame($base, $variant->getBaseTemplate());
+        self::assertSame($variant, $base->getVariant('en'));
+        self::assertSame('<p>Text</p>', $variant->getText());
+        self::assertSame('Ihre Rechnung', $variant->getSubject());
+        self::assertSame($type, $variant->getTemplateType());
+        self::assertFalse($variant->getIsDefault());
+        self::assertNull($variant->getPaymentMeans());
+    }
+
+    public function testOnlyOneVariantPerLanguage(): void
+    {
+        $base = new Template();
+        $base->setName('Bestätigung')->setText('x');
+        $service = $this->createService();
+        $service->createVariant($base, 'en', 'Bestätigung (Englisch)');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $service->createVariant($base, 'en', 'Noch eine');
+    }
+
+    public function testTemplateRendersInItsLanguage(): void
+    {
+        $localeSwitcher = new \Symfony\Component\Translation\LocaleSwitcher('de', []);
+        $intlDefault = \Locale::getDefault();
+        $service = new TemplatesService(
+            new Environment(new ArrayLoader()),
+            $this->createStub(EntityManagerInterface::class),
+            new RequestStack(),
+            $this->createStub(MpdfService::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TemplateRenderParamsResolver::class),
+            $this->createStub(FilesystemOperator::class),
+            $localeSwitcher,
+        );
+        $variant = (new Template())->setLocale('en');
+
+        try {
+            self::assertSame('en', $service->inTemplateLanguage($variant, static fn (): string => $localeSwitcher->getLocale()));
+            self::assertSame('de', $service->inTemplateLanguage(new Template(), static fn (): string => $localeSwitcher->getLocale()));
+            self::assertSame('de', $localeSwitcher->getLocale());
+        } finally {
+            \Locale::setDefault($intlDefault);
+        }
+    }
+
     /**
      * @param Template[] $templates
      */

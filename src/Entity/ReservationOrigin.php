@@ -7,6 +7,7 @@ namespace App\Entity;
 use App\Entity\Enum\PaymentCollection;
 use App\Repository\ReservationOriginRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -14,15 +15,16 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'reservation_origins')]
 class ReservationOrigin
 {
+    /** @var int|'new'|null */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private int|string|null $id = null;
     #[ORM\Column(type: 'string', length: 100)]
-    private $name;
+    private ?string $name = null;
     #[ORM\Column(type: 'string', length: 7, nullable: true)]
     #[Assert\Regex('/^#[0-9a-f]{6}$/i')]
-    private $color;
+    private ?string $color = null;
 
     /**
      * The portal's commission for a booking through this origin, in percent -
@@ -64,10 +66,12 @@ class ReservationOrigin
     #[ORM\Column(name: 'tourist_tax_collection', type: 'string', length: 16, enumType: PaymentCollection::class, options: ['default' => 'property'])]
     private PaymentCollection $touristTaxCollection = PaymentCollection::PROPERTY;
 
-    #[ORM\ManyToMany(targetEntity: 'Price', mappedBy: 'reservationOrigins')]
-    private $prices;
-    #[ORM\OneToMany(targetEntity: 'Reservation', mappedBy: 'reservationOrigin')]
-    private $reservations;
+    /** @var \Doctrine\Common\Collections\Collection<int, Price> */
+    #[ORM\ManyToMany(targetEntity: Price::class, mappedBy: 'reservationOrigins')]
+    private Collection $prices;
+    /** @var \Doctrine\Common\Collections\Collection<int, Reservation> */
+    #[ORM\OneToMany(targetEntity: Reservation::class, mappedBy: 'reservationOrigin')]
+    private Collection $reservations;
 
     /**
      * Constructor.
@@ -81,11 +85,9 @@ class ReservationOrigin
     /**
      * Set id.
      *
-     * @param int $id
-     *
-     * @return ReservationOrigin
+     * @param int|'new' $id Database ID, or the UI marker for an unpersisted create form
      */
-    public function setId($id)
+    public function setId(int|string $id): static
     {
         $this->id = $id;
 
@@ -95,33 +97,21 @@ class ReservationOrigin
     /**
      * Get id.
      *
-     * @return int
+     * @return int|'new'|null
      */
-    public function getId()
+    public function getId(): int|string|null
     {
         return $this->id;
     }
 
-    /**
-     * Set name.
-     *
-     * @param string $name
-     *
-     * @return ReservationOrigin
-     */
-    public function setName($name)
+    public function setName(string $name): static
     {
         $this->name = $name;
 
         return $this;
     }
 
-    /**
-     * Get name.
-     *
-     * @return string
-     */
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }
@@ -195,12 +185,7 @@ class ReservationOrigin
         return $this;
     }
 
-    /**
-     * Add prices.
-     *
-     * @return ReservationOrigin
-     */
-    public function addPrice(Price $prices)
+    public function addPrice(Price $prices): static
     {
         $this->prices[] = $prices;
 
@@ -218,19 +203,14 @@ class ReservationOrigin
     /**
      * Get prices.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return \Doctrine\Common\Collections\Collection<int, Price>
      */
-    public function getPrices()
+    public function getPrices(): Collection
     {
         return $this->prices;
     }
 
-    /**
-     * Add reservations.
-     *
-     * @return ReservationOrigin
-     */
-    public function addReservation(Reservation $reservations)
+    public function addReservation(Reservation $reservations): static
     {
         $this->reservations[] = $reservations;
 
@@ -248,9 +228,9 @@ class ReservationOrigin
     /**
      * Get reservations.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return \Doctrine\Common\Collections\Collection<int, Reservation>
      */
-    public function getReservations()
+    public function getReservations(): Collection
     {
         return $this->reservations;
     }

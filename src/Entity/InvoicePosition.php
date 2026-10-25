@@ -27,10 +27,11 @@ class InvoicePosition
     // Negative unit prices represent deductions, just like miscellaneous prices.
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     private $price;
+    /** @var float|numeric-string Keep DBAL strings intact to avoid false updates after hydration. */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\PositiveOrZero]
-    private float $vat;
-    #[ORM\ManyToOne(targetEntity: 'Invoice', inversedBy: 'positions')]
+    private float|string $vat;
+    #[ORM\ManyToOne(targetEntity: Invoice::class, inversedBy: 'positions')]
     private $invoice;
     #[ORM\Column(type: 'boolean', nullable: true)]
     private $includesVat;
@@ -110,7 +111,7 @@ class InvoicePosition
 
     public function getVat(): float
     {
-        return $this->vat;
+        return (float) $this->vat;
     }
 
     public function getInvoice()

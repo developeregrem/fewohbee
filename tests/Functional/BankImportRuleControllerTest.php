@@ -12,6 +12,7 @@ use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Field\ChoiceFormField;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -82,7 +83,9 @@ final class BankImportRuleControllerTest extends WebTestCase
         $form = $crawler->filter('form')->form();
         $form['bank_import_rule[conditions][0][value]'] = 'Stadtwerke München';
         $form['bank_import_rule[action][splits][0][marker]'] = 'Zinsen';
-        $form['bank_import_rule[action][splits][0][debitAccountId]']->select((string) $otherAccount->getId());
+        $debitAccount = $form['bank_import_rule[action][splits][0][debitAccountId]'];
+        self::assertInstanceOf(ChoiceFormField::class, $debitAccount);
+        $debitAccount->select((string) $otherAccount->getId());
         $form['bank_import_rule[action][splits][1][remarkTemplate]'] = 'Restliche Entgelte';
         $form['bank_import_rule[action][invoiceNumberExtraction][marker]'] = 'Rechnung Nr.';
         $client->submit($form);

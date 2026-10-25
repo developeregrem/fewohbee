@@ -14,6 +14,7 @@ use App\Entity\TouristTaxRate;
 use App\Repository\GuestCategoryRepository;
 use App\Repository\TouristTaxRepository;
 use App\Service\TouristTaxService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class TouristTaxServiceTest extends TestCase
@@ -194,6 +195,42 @@ final class TouristTaxServiceTest extends TestCase
         self::assertCount(1, $rows);
         self::assertSame(3, $rows[0]->nights);
         self::assertSame(6.0, $rows[0]->total());
+    }
+
+    #[DataProvider('calendarBoundaries')]
+    public function testCalendarBoundariesKeepNightCountsAndReservationDates(string $arrival, string $departure, int $expectedNights): void
+    {
+        $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);
+        $tax = $this->makeTax('Kurtaxe', false, [[$adult, '3.00', null]]);
+        $service = $this->makeService([$tax], [$adult]);
+        $start = new \DateTime($arrival, new \DateTimeZone('Europe/Berlin'));
+        $end = new \DateTime($departure, new \DateTimeZone('Europe/Berlin'));
+        $originalStart = $start->format('Y-m-d H:i:s.u e P');
+        $originalEnd = $end->format('Y-m-d H:i:s.u e P');
+        $reservation = $this->makeReservation([1 => 2]);
+        $reservation->setStartDate($start);
+        $reservation->setEndDate($end);
+
+        $rows = $service->calculateForReservation($reservation);
+
+        self::assertCount(1, $rows);
+        self::assertSame($expectedNights, $rows[0]->nights);
+        self::assertSame(6.0 * $expectedNights, $rows[0]->total());
+        self::assertEquals($rows, $service->calculateForReservation($reservation));
+        self::assertSame($start, $reservation->getStartDate());
+        self::assertSame($end, $reservation->getEndDate());
+        self::assertSame($originalStart, $start->format('Y-m-d H:i:s.u e P'));
+        self::assertSame($originalEnd, $end->format('Y-m-d H:i:s.u e P'));
+    }
+
+    /** @return iterable<string, array{string, string, int}> */
+    public static function calendarBoundaries(): iterable
+    {
+        yield 'start of daylight saving time' => ['2026-03-28', '2026-03-31', 3];
+        yield 'end of daylight saving time' => ['2026-10-24', '2026-10-27', 3];
+        yield 'leap day and month boundary' => ['2028-02-28', '2028-03-01', 2];
+        yield 'year boundary' => ['2026-12-31', '2027-01-02', 2];
+        yield 'day use with a time component' => ['2026-06-01 15:30:00.123456', '2026-06-01 15:30:00.123456', 1];
     }
 
     public function testZeroCountCategoryIsSkipped(): void

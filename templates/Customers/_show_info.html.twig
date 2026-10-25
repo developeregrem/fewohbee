@@ -25,6 +25,10 @@
             <dt>{{ 'customer.nationality'|trans }}</dt>
             <dd>{{ customer.nationality }}</dd>
         {% endif %}
+        {% if customer.locale %}
+            <dt>{{ 'customer.locale'|trans }}</dt>
+            <dd>{{ language_name(customer.locale, false) }}</dd>
+        {% endif %}
         {% if customer.iDNumber %}
             <dt>{{ 'customer.id.number'|trans }}</dt>
             <dd>{{ customer.idType.value|trans }}: {{ customer.iDNumber }}</dd>

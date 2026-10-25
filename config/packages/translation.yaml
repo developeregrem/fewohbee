@@ -2,5 +2,7 @@ framework:
     default_locale: '%locale%'
     enabled_locales: ['de', 'en']
     translator:
-        fallbacks: ['de']
+        # English first: community languages (translated from English) show English for
+        # strings that are not translated yet.
+        fallbacks: ['en', 'de']
         default_path: '%kernel.project_dir%/translations'

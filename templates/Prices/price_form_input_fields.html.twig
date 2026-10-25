@@ -17,6 +17,8 @@
                                    value="{{ price.description }}" required>
                         </div>
                     </div>
+                    {% import 'common/content_translations.html.twig' as contentTranslations %}
+                    {{ contentTranslations.rawInputs('translations-' ~ price.id, price, 'description', {horizontal: true, offsetClass: 'col-sm-8 offset-sm-4', base: price.description, maxLength: 100}) }}
                     <div class="row">
                         <label for="price-{{ price.id }}" class="col-sm-4 col-form-label text-sm-end">{{ 'price.price'|trans }} *</label>
 

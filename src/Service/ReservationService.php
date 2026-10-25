@@ -29,6 +29,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class ReservationService
@@ -182,6 +183,11 @@ class ReservationService
         }
     }
 
+    /**
+     * Returns the stored selection without reindexing its keys or converting ID values.
+     *
+     * @return array<int|string>
+     */
     public function getSelectedReservationIds(): array
     {
         return $this->requestStack->getSession()->get(self::SESSION_SELECTED_RESERVATIONS, []);
@@ -215,8 +221,15 @@ class ReservationService
         return in_array($reservationId, $this->getSelectedReservationIds(), true);
     }
 
-    public function isAppartmentAlreadyBookedInCreationProcess($reservations, Appartment $apartment, \DateTimeInterface $start, \DateTimeInterface $end)
-    {
+    /**
+     * @param array<ReservationObject> $reservations
+     */
+    public function isAppartmentAlreadyBookedInCreationProcess(
+        array $reservations,
+        Appartment $apartment,
+        \DateTimeInterface $start,
+        \DateTimeInterface $end,
+    ): bool {
         foreach ($reservations as $reservation) {
             if ($apartment->getId() == $reservation->getAppartmentId()) {
                 $startReservation = strtotime($reservation->getStart());
@@ -313,14 +326,16 @@ class ReservationService
     /**
      * Rebuilds transient reservation entities from the reservation-creation session.
      *
-     * @param list<ReservationObject> $newReservationsInformationArray
+     * @param array<ReservationObject> $newReservationsInformationArray Selection keys can be sparse after removing a room
      *
      * @return list<Reservation>
      *
      * @throws InvalidReservationPeriodException when a stored period is invalid
      */
-    public function createReservationsFromReservationInformationArray($newReservationsInformationArray, ?Customer $customer = null)
-    {
+    public function createReservationsFromReservationInformationArray(
+        array $newReservationsInformationArray,
+        ?Customer $customer = null,
+    ): array {
         $reservations = [];
 
         foreach ($newReservationsInformationArray as $reservationInformation) {
@@ -375,14 +390,17 @@ class ReservationService
         return $status instanceof ReservationStatus ? (int) $status->getId() : 1;
     }
 
-    public function setCustomerInReservationInformationArray(&$newReservationsInformationArray, Customer $customer): void
-    {
+    /** @param array<ReservationObject> $newReservationsInformationArray */
+    public function setCustomerInReservationInformationArray(
+        array &$newReservationsInformationArray,
+        Customer $customer,
+    ): void {
         foreach ($newReservationsInformationArray as $reservationInformation) {
             $reservationInformation->setCustomerId($customer->getId());
         }
     }
 
-    public function deleteReservation($id)
+    public function deleteReservation(int|string $id): bool
     {
         $reservation = $this->em->getRepository(Reservation::class)->find($id);
 
@@ -557,13 +575,13 @@ class ReservationService
         );
     }
 
-    public function updateReservationCustomers($reservation, $customer, $tab): void
+    public function updateReservationCustomers(Reservation $reservation, Customer $customer, string $tab): void
     {
         if ('booker' === $tab) {
             $reservation->setBooker($customer);
             $this->em->persist($reservation);
             $this->em->flush();
-            $this->requestStack->getSession()->getFlashBag()->add('success', 'reservation.flash.update.success');
+            $this->addFlash('success', 'reservation.flash.update.success');
         } elseif ('guest' === $tab && count($reservation->getCustomers()) < $reservation->getTotalGuests()) {
             // check if customer is already in list
             $isAlreadyInList = false;
@@ -580,13 +598,23 @@ class ReservationService
                 $reservation->addCustomer($customer);
                 $this->em->persist($reservation);
                 $this->em->flush();
-                $this->requestStack->getSession()->getFlashBag()->add('success', 'reservation.flash.update.success');
+                $this->addFlash('success', 'reservation.flash.update.success');
             } else {
-                $this->requestStack->getSession()->getFlashBag()->add('warning', 'reservation.flash.update.customeralreadyinlist');
+                $this->addFlash('warning', 'reservation.flash.update.customeralreadyinlist');
             }
         } else {
-            $this->requestStack->getSession()->getFlashBag()->add('warning', 'reservation.flash.update.toomuchcustomers');
+            $this->addFlash('warning', 'reservation.flash.update.toomuchcustomers');
         }
+    }
+
+    private function addFlash(string $type, string $message): void
+    {
+        $session = $this->requestStack->getSession();
+        if (!$session instanceof FlashBagAwareSessionInterface) {
+            throw new \LogicException('Reservation feedback requires a session supporting flash messages.');
+        }
+
+        $session->getFlashBag()->add($type, $message);
     }
 
     /**
@@ -614,9 +642,12 @@ class ReservationService
     }
 
     /**
-     * Returns an array of prices for reservations in creation.
+     * Rebuilds and returns the miscellaneous invoice positions for reservations in creation.
+     * The session list is replaced on each call and also includes any tourist-tax positions.
      *
-     * @return type
+     * @param array<Reservation> $reservations
+     *
+     * @return list<\App\Entity\InvoicePosition>
      */
     public function getMiscPricesInCreation(InvoiceService $is, array $reservations, PriceService $ps, RequestStack $requestStack): array
     {
@@ -652,10 +683,14 @@ class ReservationService
 
     /**
      * Adds the given prices to the reservations.
+     * Preserves the reservation array's keys and entity instances.
      *
-     * @return array
+     * @param Collection<int, Price> $prices
+     * @param array<Reservation> $reservations
+     *
+     * @return array<Reservation>
      */
-    private function setPricesToReservations(Collection $prices, array $reservations)
+    private function setPricesToReservations(Collection $prices, array $reservations): array
     {
         foreach ($reservations as $reservation) {
             foreach ($prices as $price) {
@@ -668,10 +703,11 @@ class ReservationService
 
     /**
      * Based on given Reservation IDs the coresponding Invoices will be returned.
+     * Shared invoices may appear more than once, once for each selected reservation.
      *
-     * @return array
+     * @return list<\App\Entity\Invoice>
      */
-    public function getInvoicesForReservationsInProgress()
+    public function getInvoicesForReservationsInProgress(): array
     {
         $ids = $this->getSelectedReservationIds();
         $totalInvoices = [];
@@ -691,6 +727,20 @@ class ReservationService
 
     /**
      * Collects the sum of all prices for the given reservations, e.g. to be used in templates.
+     * Raw sums stay integer zero when their position list is empty.
+     *
+     * @param array<Reservation> $reservations
+     *
+     * @return array{
+     *     sumApartmentRaw: int|float,
+     *     sumMiscRaw: int|float,
+     *     totalPriceRaw: int|float,
+     *     sumApartment: string,
+     *     sumMisc: string,
+     *     totalPrice: string,
+     *     apartmentPositions: list<\App\Entity\InvoiceAppartment>,
+     *     miscPositions: list<\App\Entity\InvoicePosition>
+     * }
      */
     private function getTotalPricesForTemplate(array $reservations): array
     {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -14,27 +15,27 @@ class CustomerAddresses
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     #[ORM\Column(type: 'string', length: 50)]
-    private $type;
+    private ?string $type = null;
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private $company;
+    private ?string $company = null;
     #[ORM\Column(type: 'string', length: 150, nullable: true)]
-    private $address;
+    private ?string $address = null;
     #[ORM\Column(type: 'string', length: 10, nullable: true)]
-    private $zip;
+    private ?string $zip = null;
     #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $city;
+    private ?string $city = null;
     #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $country;
+    private ?string $country = null;
     #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $phone;
+    private ?string $phone = null;
     #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $fax;
+    private ?string $fax = null;
     #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $mobile_phone;
+    private ?string $mobile_phone = null;
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
-    private $email;
+    private ?string $email = null;
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $buyerVatId = null;
@@ -45,8 +46,9 @@ class CustomerAddresses
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $customerIBAN = null;
 
-    #[ORM\ManyToMany(targetEntity: 'Customer', mappedBy: 'customerAddresses')]
-    private $customers;
+    /** @var \Doctrine\Common\Collections\Collection<int, Customer> */
+    #[ORM\ManyToMany(targetEntity: Customer::class, mappedBy: 'customerAddresses')]
+    private Collection $customers;
 
     /**
      * Constructor.
@@ -56,252 +58,127 @@ class CustomerAddresses
         $this->customers = new ArrayCollection();
     }
 
-    /**
-     * Get id.
-     *
-     * @return int
-     */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * Set type.
-     *
-     * @param string $type
-     *
-     * @return CustomerAddresses
-     */
-    public function setType($type)
+    public function setType(string $type): static
     {
         $this->type = $type;
 
         return $this;
     }
 
-    /**
-     * Get type.
-     *
-     * @return string
-     */
-    public function getType()
+    public function getType(): ?string
     {
         return $this->type;
     }
 
-    /**
-     * Set company.
-     *
-     * @param string $company
-     *
-     * @return CustomerAddresses
-     */
-    public function setCompany($company)
+    public function setCompany(?string $company): static
     {
         $this->company = $company;
 
         return $this;
     }
 
-    /**
-     * Get company.
-     *
-     * @return string
-     */
-    public function getCompany()
+    public function getCompany(): ?string
     {
         return $this->company;
     }
 
-    /**
-     * Set address.
-     *
-     * @param string $address
-     *
-     * @return CustomerAddresses
-     */
-    public function setAddress($address)
+    public function setAddress(?string $address): static
     {
         $this->address = $address;
 
         return $this;
     }
 
-    /**
-     * Get address.
-     *
-     * @return string
-     */
-    public function getAddress()
+    public function getAddress(): ?string
     {
         return $this->address;
     }
 
-    /**
-     * Set zip.
-     *
-     * @param string $zip
-     *
-     * @return CustomerAddresses
-     */
-    public function setZip($zip)
+    public function setZip(?string $zip): static
     {
         $this->zip = $zip;
 
         return $this;
     }
 
-    /**
-     * Get zip.
-     *
-     * @return string
-     */
-    public function getZip()
+    public function getZip(): ?string
     {
         return $this->zip;
     }
 
-    /**
-     * Set city.
-     *
-     * @param string $city
-     *
-     * @return CustomerAddresses
-     */
-    public function setCity($city)
+    public function setCity(?string $city): static
     {
         $this->city = $city;
 
         return $this;
     }
 
-    /**
-     * Get city.
-     *
-     * @return string
-     */
-    public function getCity()
+    public function getCity(): ?string
     {
         return $this->city;
     }
 
-    /**
-     * Set country.
-     *
-     * @param string $country
-     *
-     * @return CustomerAddresses
-     */
-    public function setCountry($country)
+    public function setCountry(?string $country): static
     {
         $this->country = $country;
 
         return $this;
     }
 
-    /**
-     * Get country.
-     *
-     * @return string
-     */
-    public function getCountry()
+    public function getCountry(): ?string
     {
         return $this->country;
     }
 
-    /**
-     * Set phone.
-     *
-     * @param string $phone
-     *
-     * @return CustomerAddresses
-     */
-    public function setPhone($phone)
+    public function setPhone(?string $phone): static
     {
         $this->phone = $phone;
 
         return $this;
     }
 
-    /**
-     * Get phone.
-     *
-     * @return string
-     */
-    public function getPhone()
+    public function getPhone(): ?string
     {
         return $this->phone;
     }
 
-    /**
-     * Set fax.
-     *
-     * @param string $fax
-     *
-     * @return CustomerAddresses
-     */
-    public function setFax($fax)
+    public function setFax(?string $fax): static
     {
         $this->fax = $fax;
 
         return $this;
     }
 
-    /**
-     * Get fax.
-     *
-     * @return string
-     */
-    public function getFax()
+    public function getFax(): ?string
     {
         return $this->fax;
     }
 
-    /**
-     * Set mobilePhone.
-     *
-     * @param string $mobilePhone
-     *
-     * @return CustomerAddresses
-     */
-    public function setMobilePhone($mobilePhone)
+    public function setMobilePhone(?string $mobilePhone): static
     {
         $this->mobile_phone = $mobilePhone;
 
         return $this;
     }
 
-    /**
-     * Get mobilePhone.
-     *
-     * @return string
-     */
-    public function getMobilePhone()
+    public function getMobilePhone(): ?string
     {
         return $this->mobile_phone;
     }
 
-    /**
-     * Set email.
-     *
-     * @param string $email
-     *
-     * @return CustomerAddresses
-     */
-    public function setEmail($email)
+    public function setEmail(?string $email): static
     {
         $this->email = $email;
 
         return $this;
     }
 
-    /**
-     * Get email.
-     *
-     * @return string
-     */
-    public function getEmail()
+    public function getEmail(): ?string
     {
         return $this->email;
     }
@@ -342,12 +219,7 @@ class CustomerAddresses
         return $this;
     }
 
-    /**
-     * Add customer.
-     *
-     * @return CustomerAddresses
-     */
-    public function addCustomer(Customer $customer)
+    public function addCustomer(Customer $customer): static
     {
         $this->customers[] = $customer;
 
@@ -365,9 +237,9 @@ class CustomerAddresses
     /**
      * Get customers.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return \Doctrine\Common\Collections\Collection<int, Customer>
      */
-    public function getCustomers()
+    public function getCustomers(): Collection
     {
         return $this->customers;
     }

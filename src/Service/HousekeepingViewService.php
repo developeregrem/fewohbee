@@ -34,6 +34,8 @@ class HousekeepingViewService
     /**
      * Build the housekeeping view model for a single day.
      *
+     * @param int[]|null $statusIds
+     *
      * @return array{
      *     date: \DateTimeImmutable,
      *     apartments: Appartment[],
@@ -77,6 +79,9 @@ class HousekeepingViewService
 
     /**
      * Build a housekeeping view model for a date range including reservations.
+     *
+     * @param string[]   $occupancyTypes
+     * @param int[]|null $statusIds
      *
      * @return array{
      *     start: \DateTimeImmutable,
@@ -150,6 +155,8 @@ class HousekeepingViewService
 
     /**
      * Build the housekeeping view model for a Monday-Sunday week.
+     *
+     * @param int[]|null $statusIds
      *
      * @return array{
      *     start: \DateTimeImmutable,
@@ -301,6 +308,8 @@ class HousekeepingViewService
 
     /**
      * Define translation keys for housekeeping status values.
+     *
+     * @return array<string, string>
      */
     public function getStatusLabels(): array
     {
@@ -314,6 +323,8 @@ class HousekeepingViewService
 
     /**
      * Define translation keys for occupancy types.
+     *
+     * @return array<string, string>
      */
     public function getOccupancyLabels(): array
     {
@@ -394,17 +405,28 @@ class HousekeepingViewService
     }
 
     /**
+     * Filters and reindexes rows while preserving their fields, including range-view reservations.
+     *
+     * @template TRow of array{
+     *     apartment: Appartment,
+     *     occupancyType: string,
+     *     guestCount: int|null,
+     *     reservationSummary: string|null,
+     *     status: RoomDayStatus|null
+     * }
+     *
      * @param array{
      *     date: \DateTimeImmutable,
      *     apartments: Appartment[],
-     *     rows: array<int, array{
-     *         apartment: Appartment,
-     *         occupancyType: string,
-     *         guestCount: int|null,
-     *         reservationSummary: string|null,
-     *         status: RoomDayStatus|null
-     *     }>
+     *     rows: array<int, TRow>
      * } $dayView
+     * @param string[] $allowedTypes
+     *
+     * @return array{
+     *     date: \DateTimeImmutable,
+     *     apartments: Appartment[],
+     *     rows: list<TRow>
+     * }
      */
     public function filterDayViewByOccupancy(array $dayView, array $allowedTypes): array
     {
@@ -416,21 +438,34 @@ class HousekeepingViewService
     }
 
     /**
+     * Keeps a room when any day matches, preserving all of its day cells and row fields.
+     *
+     * @template TRow of array{
+     *     apartment: Appartment,
+     *     days: array<string, array{
+     *         occupancyType: string,
+     *         guestCount: int|null,
+     *         reservationSummary: string|null,
+     *         status: RoomDayStatus|null
+     *     }>
+     * }
+     *
      * @param array{
      *     start: \DateTimeImmutable,
      *     end: \DateTimeImmutable,
      *     days: \DateTimeImmutable[],
      *     apartments: Appartment[],
-     *     rows: array<int, array{
-     *         apartment: Appartment,
-     *         days: array<string, array{
-     *             occupancyType: string,
-     *             guestCount: int|null,
-     *             reservationSummary: string|null,
-     *             status: RoomDayStatus|null
-     *         }>
-     *     }>
+     *     rows: array<int, TRow>
      * } $weekView
+     * @param string[] $allowedTypes
+     *
+     * @return array{
+     *     start: \DateTimeImmutable,
+     *     end: \DateTimeImmutable,
+     *     days: \DateTimeImmutable[],
+     *     apartments: Appartment[],
+     *     rows: list<TRow>
+     * }
      */
     public function filterWeekViewByOccupancy(array $weekView, array $allowedTypes): array
     {

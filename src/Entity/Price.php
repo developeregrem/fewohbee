@@ -4,22 +4,27 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Translation\ContentTranslatable;
+use App\Entity\Translation\ContentTranslationsTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\PriceRepository')]
 #[ORM\Table(name: 'prices')]
-class Price
+class Price implements ContentTranslatable
 {
+    use ContentTranslationsTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private $id;
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     private $price;
+    /** @var float|numeric-string|null Keep DBAL strings intact to avoid false updates after hydration. */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?float $vat = null;
+    private float|string|null $vat = null;
     #[ORM\Column(type: 'string', length: 100)]
     private $description;
     #[ORM\Column(type: 'smallint', nullable: true)]
@@ -50,9 +55,11 @@ class Price
     private $allDays;
     #[ORM\Column(type: 'smallint')]
     private $type;
-    #[ORM\ManyToMany(targetEntity: 'ReservationOrigin', inversedBy: 'prices')]
+    /** @var Collection<int, ReservationOrigin> */
+    #[ORM\ManyToMany(targetEntity: ReservationOrigin::class, inversedBy: 'prices')]
     #[ORM\JoinTable(name: 'prices_has_reservation_origins')]
     private $reservationOrigins;
+    /** @var Collection<int, PricePeriod> */
     #[ORM\OneToMany(targetEntity: 'App\Entity\PricePeriod', mappedBy: 'price', orphanRemoval: true, cascade: ['persist'])]
     private $pricePeriods;
     #[ORM\Column(type: 'boolean')]
@@ -92,6 +99,7 @@ class Price
     private bool $isBookableOnline;
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isMandatoryOnline;
+    /** @var Collection<int, PriceComponent> */
     #[ORM\OneToMany(targetEntity: 'App\Entity\PriceComponent', mappedBy: 'price', orphanRemoval: true, cascade: ['persist'])]
     #[ORM\OrderBy(['sortOrder' => \SortDirection::Ascending, 'id' => \SortDirection::Ascending])]
     private Collection $components;
@@ -117,6 +125,11 @@ class Price
         $this->isMandatoryOnline = false;
     }
 
+    public static function translatableFields(): array
+    {
+        return ['description'];
+    }
+
     public function getId()
     {
         return $this->id;
@@ -127,9 +140,9 @@ class Price
         return $this->price;
     }
 
-    public function getVat()
+    public function getVat(): ?float
     {
-        return $this->vat;
+        return null === $this->vat ? null : (float) $this->vat;
     }
 
     public function getDescription()
@@ -326,7 +339,7 @@ class Price
     /**
      * Get reservationOrigins.
      *
-     * @return Collection
+     * @return Collection<int, ReservationOrigin>
      */
     public function getReservationOrigins()
     {
@@ -334,7 +347,7 @@ class Price
     }
 
     /**
-     * @return Collection|PricePeriod[]
+     * @return Collection<int, PricePeriod>
      */
     public function getPricePeriods(): Collection
     {
@@ -529,7 +542,7 @@ class Price
     }
 
     /**
-     * @return Collection|PriceComponent[]
+     * @return Collection<int, PriceComponent>
      */
     public function getComponents(): Collection
     {

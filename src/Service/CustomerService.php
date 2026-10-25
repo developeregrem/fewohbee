@@ -21,6 +21,7 @@ use App\Entity\Template;
 use App\GeoEntity\PostalCodeData;
 use App\Repository\GuestCheckInRepository;
 use App\Repository\PostalCodeDataRepository;
+use App\Service\Localization\GuestLocaleService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,6 +33,7 @@ class CustomerService
         private readonly EntityManagerInterface $em,
         private readonly PostalCodeDataRepository $postalCodeDataRepository,
         private readonly GuestCheckInRepository $guestCheckInRepository,
+        private readonly GuestLocaleService $guestLocales,
     ) {
     }
 
@@ -88,6 +90,12 @@ class CustomerService
         $customer->setIdType(IDCardType::tryFrom($request->request->get('id-type-'.$id)));
         $customer->setIDNumber($request->request->get('id-'.$id));
         // Only forms that render the field may change it, and only to a known country code.
+        if ($request->request->has('locale-'.$id)) {
+            // Only application languages; the installation language is stored as "none chosen".
+            $locale = trim((string) $request->request->get('locale-'.$id));
+            $known = \in_array($locale, $this->guestLocales->enabledLocales(), true);
+            $customer->setLocale($known && $locale !== $this->guestLocales->baseLocale() ? $locale : null);
+        }
         if ($request->request->has('nationality-'.$id)) {
             $nationality = strtoupper(trim((string) $request->request->get('nationality-'.$id)));
             $customer->setNationality(Countries::exists($nationality) ? $nationality : null);

@@ -10,9 +10,12 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
 
 /**
  * CashJournalRepository.
+ *
+ * @extends EntityRepository<\App\Entity\CashJournal>
  */
 class CashJournalRepository extends EntityRepository
 {
+    /** @return list<array{cashYear: int}> Distinct journal years, newest first */
     public function getJournalYears()
     {
         $q = $this
@@ -25,6 +28,13 @@ class CashJournalRepository extends EntityRepository
         return $q->getResult();
     }
 
+    /**
+     * @param int|string $search Calendar year; this is an equality filter, not a text search
+     * @param int|string $page Integer page number, including query-string values
+     * @param int $limit
+     *
+     * @return Paginator<\App\Entity\CashJournal>
+     */
     public function findByFilter($search, $page = 1, $limit = 20)
     {
         $q = $this
@@ -41,6 +51,7 @@ class CashJournalRepository extends EntityRepository
         return $paginator;
     }
 
+    /** @return \App\Entity\CashJournal|null Journal for the latest year/month, or null when none exists */
     public function getYoungestJournal()
     {
         $q = $this
@@ -86,6 +97,11 @@ class CashJournalRepository extends EntityRepository
         }
     }
 
+    /**
+     * @param string $class Class name; unknown names are not supported
+     *
+     * @return bool
+     */
     public function supportsClass($class)
     {
         return $this->getEntityName() === $class

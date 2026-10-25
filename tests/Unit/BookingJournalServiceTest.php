@@ -26,6 +26,7 @@ use App\Service\OriginFeeCalculator;
 use App\Service\PriceService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -593,6 +594,7 @@ final class BookingJournalServiceTest extends TestCase
      * @param InvoiceAppartment[] $apartments
      * @param InvoicePosition[]   $positions
      * @param array<float, AccountingAccount> $taxRateMap  vat → revenueAccount
+     * @param (BookingEntryRepository&Stub)|null $entryRepo
      * @return BookingEntry[]
      */
     private function runWithPositions(

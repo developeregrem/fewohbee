@@ -1,0 +1,41 @@
+login:
+  copy: FewohBee
+  description: 'Bitte anmelden'
+  oidc: 'Mit SSO anmelden'
+  password:
+    placeholder: Passwort
+  pwforgotten:
+    button: 'Passwort anfordern'
+    description: 'Sollten Sie ihr Passwort vergessen haben, können Sie auf dieser Seite ein neues anfordern. '
+    email: E-Mail
+    flash:
+      error: 'Bitte geben Sie ihre E-Mail Adressen ein.'
+    hint: 'Geben Sie ihre E-Mail Adresse ein und wir senden Ihnen ein neues Passwort zu.'
+    link: 'Passwort vergessen?'
+    mail:
+      end: 'Ihr FewohBee'
+      greeting: 'Sehr geehrte(r) Nutzer/in von FewohBee,'
+      subject: 'Ihre Anfrage zum Zurücksetzen des Passworts'
+      text1: 'um Ihr Passwort zurückzusetzen, besuchen Sie bitte den folgenden Link.'
+      valid: 'Dieser Link wird in %validity% ablaufen.'
+    reset:
+      button: 'Passwort zurücksetzen'
+      description: 'Passwort zurücksetzen'
+      password: 'Neues Passwort'
+      passwordrepeat: 'Passwort wiederholen'
+      title: 'Passwort zurücksetzen'
+    sent:
+      back: 'Zurück zum Login'
+      description: 'Sofern uns Ihre E-Mail Adresse bekannt ist, wurde eine E-Mail zu der angegebenen Adresse gesendet. Diese E-Mail entählt einen Link, mit dem Sie Ihr Passwort zurücksetzen können.'
+      hint: 'Wenn Sie keine E-Mail erhalten, überprüfen Sie bitte Ihren Spam-Ordner.'
+      title: 'Neues Passwort gesendet'
+    title: 'Neues Passwort anfordern'
+  rememberme: 'Angemeldet bleiben'
+  submit:
+    value: Anmelden
+  title: Anmelden
+  username:
+    placeholder: Benutzername
+  passkey: 'Anmelden mit Passkey'
+  webauthn:
+    failure: 'Anmeldung nicht erfolgreich'

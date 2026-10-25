@@ -19,6 +19,7 @@ use App\Dto\PublicBooking\RoomTotal;
 use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -272,7 +273,9 @@ final class PublicBookingGuestCountsTest extends TestCase
         return $service;
     }
 
+    /** @var PublicAvailabilityService&Stub */
     private PublicAvailabilityService $_currentAvailabilityStub;
+    /** @var AppartmentRepository&Stub */
     private AppartmentRepository $_currentAppartmentRepo;
 
     private function availabilityServiceMock(PublicBookingService $svc, array $availability): void

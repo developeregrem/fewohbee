@@ -38,8 +38,8 @@ class GuestCheckInFormDataFactory
     }
 
     /**
-     * @param int          $companionCount number of fellow-traveller blocks on the form
-     * @param list<string> $salutations    the configured salutations the form offers
+     * @param int                   $companionCount number of fellow-traveller blocks on the form
+     * @param array<string, string> $salutations    wording => stored salutation, as the form offers them
      */
     public function create(GuestCheckIn $checkIn, int $companionCount, array $salutations, ?GuestCheckInConfig $config = null): GuestCheckInSubmission
     {
@@ -80,6 +80,10 @@ class GuestCheckInFormDataFactory
         }
         if (GuestCheckInFieldMode::HIDDEN === $config->getContactMode()) {
             $guest->email = $guest->phone = null;
+        }
+        if (GuestCheckInFieldMode::HIDDEN === $config->getCompanyMode()) {
+            $guest->company = $guest->vatId = null;
+            $guest->companyStreet = $guest->companyZip = $guest->companyCity = $guest->companyCountry = null;
         }
         if (GuestCheckInFieldMode::HIDDEN === $config->getCompanionsMode()) {
             $submission->companions = [];
@@ -138,6 +142,14 @@ class GuestCheckInFormDataFactory
         $guest->country = self::stringOrNull($address['country'] ?? null);
         $guest->email = self::stringOrNull($main['email'] ?? null);
         $guest->phone = self::stringOrNull($main['phone'] ?? null);
+        $company = \is_array($main['company'] ?? null) ? $main['company'] : [];
+        $guest->company = self::stringOrNull($company['name'] ?? null);
+        $guest->vatId = self::stringOrNull($company['vatId'] ?? null);
+        $companyAddress = \is_array($company['address'] ?? null) ? $company['address'] : [];
+        $guest->companyStreet = self::stringOrNull($companyAddress['street'] ?? null);
+        $guest->companyZip = self::stringOrNull($companyAddress['zip'] ?? null);
+        $guest->companyCity = self::stringOrNull($companyAddress['city'] ?? null);
+        $guest->companyCountry = self::stringOrNull($companyAddress['country'] ?? null);
 
         foreach (\is_array($payload['companions'] ?? null) ? $payload['companions'] : [] as $data) {
             if (!\is_array($data)) {
@@ -160,7 +172,7 @@ class GuestCheckInFormDataFactory
         return $submission;
     }
 
-    /** @param list<string> $salutations */
+    /** @param array<string, string> $salutations wording => stored salutation, as the form offers them */
     private function fromGuestRecords(Reservation $reservation, array $salutations): GuestCheckInSubmission
     {
         $submission = new GuestCheckInSubmission();
@@ -200,7 +212,7 @@ class GuestCheckInFormDataFactory
         return $submission;
     }
 
-    /** @param list<string> $salutations */
+    /** @param array<string, string> $salutations */
     private function fillGuest(GuestCheckInGuest $guest, Customer $customer, array $salutations): void
     {
         $guest->salutation = $this->salutationChoice((string) $customer->getSalutation(), $salutations);
@@ -211,6 +223,7 @@ class GuestCheckInFormDataFactory
         $guest->idType = $customer->getIdType();
 
         $address = GuestCheckInApplyService::preferredAddress($customer);
+        $this->fillCompany($guest, $customer, $address);
         if (null === $address) {
             return;
         }
@@ -225,6 +238,27 @@ class GuestCheckInFormDataFactory
         $guest->email = null !== $email && false !== filter_var($email, \FILTER_VALIDATE_EMAIL) ? $email : null;
         $guest->phone = self::matching($address->getPhone(), '/^[0-9+()\/ .\-]{5,30}$/')
             ?? self::matching($address->getMobilePhone(), '/^[0-9+()\/ .\-]{5,30}$/');
+    }
+
+    /**
+     * The company the guest invoiced to before. Its address only counts as a separate invoice
+     * address when it differs from the one prefilled above.
+     */
+    private function fillCompany(GuestCheckInGuest $guest, Customer $customer, ?CustomerAddresses $guestAddress): void
+    {
+        $business = GuestCheckInApplyService::companyAddress($customer, null);
+        if (null === $business) {
+            return;
+        }
+
+        $guest->company = self::stringOrNull($business->getCompany());
+        $guest->vatId = self::matching($business->getBuyerVatId(), '/^[A-Za-z]{2}[A-Za-z0-9 +*.\-]{2,20}$/');
+        if (self::isPostalAddress($business) && !self::sameAddress($business, $guestAddress)) {
+            $guest->companyStreet = self::stringOrNull($business->getAddress());
+            $guest->companyZip = self::matching($business->getZip(), '/^[A-Za-z0-9 \-]{2,10}$/');
+            $guest->companyCity = self::stringOrNull($business->getCity());
+            $guest->companyCountry = self::stringOrNull($business->getCountry());
+        }
     }
 
     private static function isPostalAddress(CustomerAddresses $address): bool
@@ -256,15 +290,16 @@ class GuestCheckInFormDataFactory
     }
 
     /**
-     * Records keep the salutation in the installation's wording ("Frau"), the form offers the
-     * configured entries ("Ms"); map back, or leave it for the guest to choose.
+     * The form submits the stored salutations ("Frau"). A record may still hold a built-in key
+     * ("Ms", from bookings made through the API before), which maps to its wording; anything
+     * else is left for the guest to choose.
      *
-     * @param list<string> $salutations
+     * @param array<string, string> $salutations wording => stored salutation
      */
     private function salutationChoice(string $stored, array $salutations): ?string
     {
         foreach ($salutations as $choice) {
-            if ($choice === $stored || $this->translator->trans($choice, [], null, $this->installationLocale) === $stored) {
+            if ($choice === $stored || $this->translator->trans($stored, [], null, $this->installationLocale) === $choice) {
                 return $choice;
             }
         }

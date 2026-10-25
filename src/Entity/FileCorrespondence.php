@@ -20,7 +20,7 @@ class FileCorrespondence extends Correspondence
      *
      * @param string $fileName
      *
-     * @return FileCorrespondence
+     * @return $this
      */
     public function setFileName($fileName)
     {
@@ -57,7 +57,7 @@ class FileCorrespondence extends Correspondence
     /**
      * @param string|null $binaryPayload
      *
-     * @return FileCorrespondence
+     * @return $this
      */
     public function setBinaryPayload($binaryPayload)
     {

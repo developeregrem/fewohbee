@@ -53,7 +53,7 @@ export default class extends Controller {
         table.querySelectorAll('[data-price-calendar-new]').forEach((cell) => { cell.hidden = !show; });
         if (!show) return;
 
-        const format = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const format = new Intl.NumberFormat(document.documentElement.lang || 'de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const factor = amount / base;
         rows.forEach((row) => {
             const unit = unitOf(row);

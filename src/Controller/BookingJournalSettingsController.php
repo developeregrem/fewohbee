@@ -330,11 +330,13 @@ class BookingJournalSettingsController extends AbstractController
 
     // ── Private helpers ──────────────────────────────────────────────
 
+    /** @param \Symfony\Component\Form\FormInterface $form */
     private function renderAccountForm($form): Response
     {
         return $this->render('BookingJournal/_account_form.html.twig', ['form' => $form]);
     }
 
+    /** @param \Symfony\Component\Form\FormInterface $form */
     private function renderTaxRateForm($form): Response
     {
         return $this->render('BookingJournal/_tax_rate_form.html.twig', ['form' => $form]);

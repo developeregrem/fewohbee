@@ -17,6 +17,7 @@ use App\Service\OnlineBooking\OnlineBookingRestrictionService;
 use App\Service\OnlineBooking\PublicAvailabilityService;
 use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\RoomCategoryImageService;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -30,6 +31,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class PublicAvailabilityInfoHidingTest extends TestCase
 {
+    /** @var AppartmentRepository&Stub */
     private AppartmentRepository $appartmentRepository;
     private ReservationRepository $reservationRepository;
     private PublicPricingService $pricingService;
