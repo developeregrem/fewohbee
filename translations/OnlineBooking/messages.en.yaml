@@ -171,6 +171,7 @@ online_booking:
     name: "Name"
     email: "Email"
     phone: "Phone"
+    company: "Company (optional)"
     comment: "Comment"
     payment_terms: "Payment terms"
     cancellation_terms: "Cancellation terms / terms and conditions"

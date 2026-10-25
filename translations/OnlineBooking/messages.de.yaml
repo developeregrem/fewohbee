@@ -171,6 +171,7 @@ online_booking:
     name: "Name"
     email: "E-Mail"
     phone: "Telefon"
+    company: "Unternehmen (freiwillig)"
     comment: "Kommentar"
     payment_terms: "Zahlungsbedingungen"
     cancellation_terms: "Stornierungsbedingungen / AGB"
