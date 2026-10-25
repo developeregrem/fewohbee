@@ -951,6 +951,8 @@ class InvoiceService
      * Aggregates price amounts across all reservations and days into a keyed array, without any session involvement.
      * The key separates price rows, promised unit prices and gross/net modes. Null promise fields
      * keep the live price row as the source; a transient reservation may have no ID yet.
+     * The aggregates are ordered by price name, as the days of a stay can bring up the extras
+     * in any order.
      *
      * @param array<Reservation> $reservations
      *
@@ -1016,6 +1018,10 @@ class InvoiceService
                 }
             }
         }
+
+        $collator = new \Collator(\Locale::getDefault());
+        uasort($tmpMiscArr, static fn (array $a, array $b): int => (int) $collator->compare((string) $a['price']->getDescription(), (string) $b['price']->getDescription())
+            ?: $a['price']->getId() <=> $b['price']->getId());
 
         return $tmpMiscArr;
     }

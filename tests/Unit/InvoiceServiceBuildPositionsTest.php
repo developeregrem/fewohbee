@@ -207,6 +207,24 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
         self::assertSame(4, $positions[0]->getAmount());
     }
 
+    public function testMiscPositionsAreOrderedByName(): void
+    {
+        // An extra that only starts on the second night used to follow the ones of the first.
+        $parking = $this->createMiscPrice(1006, false);
+        $parking->setDescription('Parking');
+        $breakfast = $this->createMiscPrice(1007, false);
+        $breakfast->setDescription('Breakfast');
+        $reservation = $this->createReservation(2006, 2, '2026-03-25', '2026-03-27');
+
+        $priceService = $this->createStub(PriceService::class);
+        $priceService->method('getPricesForReservationDays')
+            ->willReturn([0 => null, 1 => [$parking], 2 => [$parking, $breakfast]]);
+
+        $positions = $this->createService($priceService)->buildMiscPositions([$reservation]);
+
+        self::assertSame(['Breakfast', 'Parking'], array_map(static fn ($position): string => (string) $position->getDescription(), $positions));
+    }
+
     public function testAMiscPositionInheritsWhetherAPortalBrokersIt(): void
     {
         // Answered once per service on the price, and recorded on the position

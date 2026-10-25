@@ -102,6 +102,7 @@ class Reservation
     private $correspondences;
     /** @var Collection<int, Price> */
     #[ORM\ManyToMany(targetEntity: Price::class)]
+    #[ORM\OrderBy(['description' => \SortDirection::Ascending, 'id' => \SortDirection::Ascending])]
     private $prices;
     #[ORM\ManyToOne(targetEntity: ReservationStatus::class, inversedBy: 'reservations')]
     #[ORM\JoinColumn(nullable: false)]

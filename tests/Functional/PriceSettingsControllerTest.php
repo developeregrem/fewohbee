@@ -237,6 +237,28 @@ final class PriceSettingsControllerTest extends WebTestCase
         self::assertContains(self::PREFIX.'all-extra', $inDouble);
     }
 
+    public function testExtrasOfAStayAreListedByName(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+        // Created against the alphabet; the seasonal one used to come first.
+        $this->postPrice($client, 'extra-c', 1, [$single]);
+        $this->postPrice($client, 'extra-a', 1, [$single]);
+        $this->postPrice($client, 'extra-b', 1, [$single], 'new', [
+            'allperiods-new' => '',
+            'period-new' => ['new'],
+            'periodstart-new' => [(new \DateTime('+390 days'))->format('Y-m-d')],
+            'periodend-new' => [(new \DateTime('+410 days'))->format('Y-m-d')],
+        ]);
+
+        $ours = array_values(array_filter(
+            $this->miscPriceDescriptions($single),
+            static fn (string $description): bool => str_starts_with($description, self::PREFIX),
+        ));
+
+        self::assertSame([self::PREFIX.'extra-a', self::PREFIX.'extra-b', self::PREFIX.'extra-c'], $ours);
+    }
+
     public function testOverviewShowsTheCategoryCombinationOnceWithRoomPricesBeforeMiscPrices(): void
     {
         $client = $this->authenticatedClient();
@@ -278,6 +300,21 @@ final class PriceSettingsControllerTest extends WebTestCase
         $present = array_values(array_intersect($headers, $expected));
         self::assertNotEmpty($present, 'Sample data must contain prices for a single room category.');
         self::assertSame(array_values(array_intersect($expected, $present)), $present);
+    }
+
+    public function testOverviewListsPricesByName(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single, $double] = $this->categoryIds();
+        $this->postPrice($client, 'overview-b', 1, [$single, $double]);
+        $this->postPrice($client, 'overview-a', 1, [$single, $double]);
+
+        $crawler = $client->request('GET', '/settings/prices/');
+
+        self::assertResponseIsSuccessful();
+        $names = $crawler->filter('.card tbody tr td:first-child')->each(static fn ($cell): string => trim($cell->text()));
+        $ours = array_values(array_filter($names, static fn (string $name): bool => str_starts_with($name, self::PREFIX)));
+        self::assertSame([self::PREFIX.'overview-a', self::PREFIX.'overview-b'], $ours);
     }
 
     /** Removes the prices created by these examples from the prepared test database. */
