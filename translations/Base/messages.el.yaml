@@ -1,0 +1,110 @@
+base.action: Ενέργεια
+button.accept: Αποδοχή
+button.add: Προσθήκη
+button.back: Πίσω
+button.next: Επόμενο
+button.cancel: Ακύρωση
+button.close: Κλείσιμο
+button.continue: Συνέχεια
+button.continue.with: Συνέχεια με
+button.delete: Διαγραφή
+button.details: Λεπτομέρειες
+button.download: Λήψη
+button.edit: Επεξεργασία
+button.export.pdf: Εξαγωγή σε PDF
+button.export.einvoicepdf: Εξαγωγή σε PDF με ενσωματωμένο ηλεκτρονικό τιμολόγιο
+button.export.xml: Εξαγωγή ως XML XRechnung (για πύλες δημόσιων αρχών)
+button.gdpr: Επισκόπηση ΓΚΠΔ
+button.hide: Απόκρυψη
+button.save: Αποθήκευση
+copy.sucess: Το κείμενο αντιγράφηκε στο πρόχειρο!
+copy.text: Αντιγραφή
+first.apartments: 'Δημιουργία δωματίων:'
+first.categories: 'Δημιουργία κατηγοριών δωματίων:'
+first.origin: 'Δημιουργία προελεύσεων κράτησης:'
+first.prices: 'Δημιουργία τιμών:'
+first.status: 'Δημιουργία καταστάσεων κράτησης:'
+first.templates: 'Προσθήκη προτύπων:'
+first.txt: Το FewohBee εγκαταστάθηκε με επιτυχία. Απομένουν μόνο λίγα βήματα για
+  να αρχίσετε να χρησιμοποιείτε την εφαρμογή.
+flash.access.denied: Δεν επιτρέπεται η πρόσβαση.
+flash.invalidtoken: Μη έγκυρο διακριτικό ασφαλείας.
+flash.mandatory: Συμπληρώστε όλα τα υποχρεωτικά πεδία.
+housekeeping.flash.updated: Η κατάσταση καθαριότητας ενημερώθηκε.
+housekeeping.flash.apartment_missing: Το δωμάτιο δεν βρέθηκε.
+login.application.title: FewohBee
+nav.appartment: Δωμάτια
+nav.appartment.add: Δημιουργία δωματίου
+nav.appartment.overview: Επισκόπηση δωματίων
+nav.cashjournal: Βιβλίο ταμείου
+nav.accounting: Λογιστική
+nav.journal: Ημερολόγιο εγγραφών
+nav.category: Κατηγορίες δωματίων
+nav.category.add: Δημιουργία κατηγορίας δωματίου
+nav.customer.add: Δημιουργία επισκέπτη
+nav.customer.overview: Επισκόπηση επισκεπτών
+nav.customers: Επισκέπτες
+nav.housekeeping: Καθαριότητα
+nav.operations: Λειτουργία
+nav.operations.frontdesk: Λίστα ελέγχου υποδοχής
+nav.operations.reports: Αναφορές
+operations.reports.title: Αναφορές λειτουργίας
+operations.reports.date_start: Ημερομηνία έναρξης
+operations.reports.date_end: Ημερομηνία λήξης
+operations.reports.template: Πρότυπο
+operations.reports.download: Λήψη PDF
+operations.reports.template.missing: Επιλέξτε ένα πρότυπο.
+operations.reports.preview: Προεπισκόπηση
+operations.frontdesk.title: Λίστα ελέγχου υποδοχής
+operations.frontdesk.filter.date: Ημερομηνία
+operations.frontdesk.filter.subsidiary: Κατάλυμα
+operations.frontdesk.filter.sections: Εμφάνιση
+operations.frontdesk.filter.reservations: Κρατήσεις
+operations.filter.reservationStatus: Κατάσταση κράτησης
+operations.frontdesk.arrivals: Αφίξεις
+operations.frontdesk.departures: Αναχωρήσεις
+operations.frontdesk.inhouse: Διαμένοντες
+operations.frontdesk.room: Δωμάτιο
+operations.frontdesk.guest: Επισκέπτης
+operations.frontdesk.period: Περίοδος
+operations.frontdesk.category: Κατηγορία
+operations.frontdesk.actions: Ενέργειες
+operations.frontdesk.registration.print: Εκτύπωση δελτίου εγγραφής
+operations.frontdesk.confirmation.send: Αποστολή επιβεβαίωσης / ενημερωτικού 
+  email
+operations.frontdesk.note.edit: Επεξεργασία σημείωσης
+operations.frontdesk.registration.missing: Δεν βρέθηκαν πρότυπα δελτίου 
+  εγγραφής. Δημιουργήστε ένα πρότυπο ή εισαγάγετε τα προεπιλεγμένα.
+operations.frontdesk.header.registration: Δελτίο εγγραφής
+operations.frontdesk.header.invoice: Τιμολόγιο
+operations.frontdesk.header.email: Email
+operations.frontdesk.header.note: Σημείωση
+nav.invoice.add: Δημιουργία τιμολογίου
+nav.invoices: Επισκόπηση τιμολογίων
+nav.logout: Αποσύνδεση
+nav.menu: Μενού
+nav.object: Καταλύματα
+nav.object.add: Δημιουργία καταλύματος
+nav.object.overview: Επισκόπηση καταλυμάτων
+nav.origin: Προέλευση κράτησης
+nav.price.add: Προσθήκη τιμής
+nav.prices: Τιμές
+nav.registrationbook: Μητρώο επισκεπτών
+nav.reservation.edit: Επεξεργασία κράτησης
+nav.reservation.overview: Επισκόπηση κρατήσεων
+nav.reservationorigin: Προέλευση κράτησης
+nav.settings: Ρυθμίσεις
+nav.statistics: Στατιστικά
+nav.status: Κατάσταση κράτησης
+nav.guest_category: Κατηγορίες επισκεπτών
+nav.tourist_tax: Φόρος διαμονής
+nav.templates: Πρότυπα
+nav.turnover: Έσοδα
+nav.tourism: Τουρισμός
+nav.calendars: Διαχείριση ημερολογίων
+nav.user: Χρήστες
+nav.user.add: Προσθήκη χρήστη
+nav.user.overview: Επισκόπηση χρηστών
+nav.utilization: Πληρότητα
+nav.welcome: Καλώς ήρθατε, %user%
+nav.profile: Προφίλ
