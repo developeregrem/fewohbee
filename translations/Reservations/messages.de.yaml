@@ -174,6 +174,9 @@ calendar_entry.form.date_to: Bis
 calendar_entry.form.date_to_help: 'Bis – ein Eintrag pro Tag'
 calendar_entry.form.date_to_too_far: 'Der Zeitraum darf nicht mehr als %max% Tage umfassen.'
 calendar_entry.form.end_time: Endzeit
+calendar_entry.form.end_time_until: 'Bis-Uhrzeit (optional)'
+calendar_entry.form.on_date: 'Am %date%'
+calendar_entry.form.change_date: 'anderes Datum oder mehrere Tage'
 calendar_entry.form.end_time_before_start: 'Die Endzeit muss nach der Startzeit liegen. 00:00 ist als Tagesende erlaubt.'
 calendar_entry.form.end_time_midnight_without_start: 'Eine Endzeit um 00:00 meint das Tagesende und braucht daher eine Startzeit. Ohne Startzeit den Termin ganztägig lassen.'
 calendar_entry.form.end_time_help: Optional

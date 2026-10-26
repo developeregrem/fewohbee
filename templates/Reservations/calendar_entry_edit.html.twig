@@ -28,24 +28,35 @@
 
     {% set formAction = isNew ? path('reservations.calendar_entry.new') : path('reservations.calendar_entry.edit', {'id': calendarEntry.id}) %}
     {{ form_start(form, {'attr': {'data-action': 'submit->reservations#saveCalendarEntryAction'}, 'action': formAction}) }}
-        {# Six fields do not fit one row of a modal-lg without squeezing the
-           date and time inputs below what their own text needs. Creating an
-           entry therefore puts what it is on the first row and when it happens
-           on the second; editing has neither the calendar picker nor the end
-           date and stays on one row. #}
+        {# A new entry almost always belongs to the day whose header was
+           clicked, so the form asks only for calendar, title and time, and the
+           date fields stay behind a link unless they already carry a range or
+           an error from a previous submit. The end time appears once a start
+           time or an end date is set (calendar_entry_form_controller): on a
+           range it belongs to the last day, so "until 14.08. 19:00" needs no
+           start time. Editing has neither the calendar picker nor the end date
+           and stays on one row. #}
         {% if isNew %}
-            <div class="row">
-                <div class="col-12 col-md-5">{{ form_row(form.calendar, {'label': false}) }}</div>
-                <div class="col-12 col-md-7">{{ form_row(form.title, {'label': false, 'attr': {'placeholder': 'calendar_entry.form.title'|trans}}) }}</div>
-            </div>
-            {# Ordered as the entry reads: from date and time, to date and
-               time. The end time belongs to the closing day, so it follows the
-               field that names that day rather than preceding it. #}
-            <div class="row">
-                <div class="col-6 col-md-3">{{ form_row(form.date, {'label': false, 'attr': {'title': 'calendar_entry.form.date'|trans}}) }}</div>
-                <div class="col-6 col-md-3">{{ form_row(form.time, {'label': false, 'attr': {'title': 'calendar_entry.form.time'|trans}}) }}</div>
-                <div class="col-6 col-md-3">{{ form_row(form.dateTo, {'label': false, 'attr': {'placeholder': 'calendar_entry.form.date_to'|trans, 'title': 'calendar_entry.form.date_to'|trans}}) }}</div>
-                <div class="col-6 col-md-3">{{ form_row(form.endTime, {'label': false, 'attr': {'title': 'calendar_entry.form.end_time'|trans}}) }}</div>
+            {% set showDateFields = form.dateTo.vars.value is not empty or form.date.vars.errors|length > 0 or form.dateTo.vars.errors|length > 0 %}
+            {% set showEndTime = form.time.vars.value is not empty or form.dateTo.vars.value is not empty or form.endTime.vars.errors|length > 0 %}
+            <div data-controller="calendar-entry-form">
+                <p class="small text-body-secondary mb-3{{ showDateFields ? ' d-none' }}" data-calendar-entry-form-target="dateSummary">
+                    {{ 'calendar_entry.form.on_date'|trans({'%date%': calendarEntry.date|date('d.m.Y')}) }}
+                    &middot;
+                    <a href="#" data-action="calendar-entry-form#showDateFields">{{ 'calendar_entry.form.change_date'|trans }}</a>
+                </p>
+                <div class="row{{ showDateFields ? '' : ' d-none' }}" data-calendar-entry-form-target="dateFields">
+                    <div class="col-6 col-md-3">{{ form_row(form.date) }}</div>
+                    <div class="col-6 col-md-3">{{ form_row(form.dateTo, {'attr': {'data-calendar-entry-form-target': 'dateTo', 'data-action': 'input->calendar-entry-form#updateEndTime'}}) }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-md-5">{{ form_row(form.calendar) }}</div>
+                    <div class="col-12 col-md-7">{{ form_row(form.title) }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-6 col-md-3">{{ form_row(form.time, {'attr': {'data-calendar-entry-form-target': 'time', 'data-action': 'input->calendar-entry-form#updateEndTime'}}) }}</div>
+                    <div class="col-6 col-md-3{{ showEndTime ? '' : ' d-none' }}" data-calendar-entry-form-target="endTimeGroup">{{ form_row(form.endTime, {'label': 'calendar_entry.form.end_time_until', 'help': null}) }}</div>
+                </div>
             </div>
         {% else %}
             <div class="row">
