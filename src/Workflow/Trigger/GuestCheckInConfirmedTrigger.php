@@ -38,7 +38,7 @@ class GuestCheckInConfirmedTrigger implements ConditionalWorkflowTriggerInterfac
         return Reservation::class;
     }
 
-    /** @return array<string, mixed> */
+    /** @return array{} */
     public function getConfigSchema(): array
     {
         return [];

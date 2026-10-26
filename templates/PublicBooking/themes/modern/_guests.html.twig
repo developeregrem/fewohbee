@@ -14,7 +14,7 @@
     {% for category in guestCategories %}
         {% set categoryRules = categoryRules|merge([{
             'id': category.id,
-            'name': category.name,
+            'name': category|localized('name'),
             'minAge': category.minAge,
             'maxAge': category.maxAge,
             'sortOrder': category.sortOrder,

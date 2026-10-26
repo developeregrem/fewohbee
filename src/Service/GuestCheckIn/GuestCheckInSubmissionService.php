@@ -132,6 +132,17 @@ class GuestCheckInSubmissionService
             ],
             'email' => self::clean($guest->email),
             'phone' => self::clean($guest->phone),
+            // Null: no invoice to a company. Its own address null: the address above.
+            'company' => null !== self::clean($guest->company) ? [
+                'name' => self::clean($guest->company),
+                'vatId' => self::clean($guest->vatId),
+                'address' => $guest->hasCompanyAddress() ? [
+                    'street' => self::clean($guest->companyStreet),
+                    'zip' => self::clean($guest->companyZip),
+                    'city' => self::clean($guest->companyCity),
+                    'country' => self::clean($guest->companyCountry),
+                ] : null,
+            ] : null,
         ];
     }
 

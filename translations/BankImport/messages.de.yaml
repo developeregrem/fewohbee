@@ -64,8 +64,8 @@ accounting:
       format.placeholder: Bitte wählen…
       format.camt: 'XML: camt.052/053 ab v08'
       format.csv_profile: 'CSV: %profile%'
-      file: Kontoauszugsdatei(en)
-      file.invalid_type: Bitte CSV- oder XML-Datei(en) hochladen.
+      file: Kontoauszugsdateien
+      file.invalid_type: Bitte CSV- oder XML-Dateien hochladen.
       multiple_files_name: '%count% XML-Dateien'
       flash:
         invalid: Eingabe unvollständig — bitte alle Felder prüfen.
@@ -139,7 +139,7 @@ accounting:
         label: aus Rechnung
         help: Die Bemerkung wird aus der erzeugten Rechnungsbuchung übernommen.
       overlap_warning:
-        message: 'Achtung: Für dieses Bankkonto gibt es bereits %count% gebuchte Import(e), die den Zeitraum %from% bis %to% überschneiden: %imports%%more%'
+        message: '{1}Achtung: Für dieses Bankkonto gibt es bereits %count% gebuchten Import, der den Zeitraum %from% bis %to% überschneidet: %imports%%more%|]1,Inf[Achtung: Für dieses Bankkonto gibt es bereits %count% gebuchte Importe, die den Zeitraum %from% bis %to% überschneiden: %imports%%more%'
         import: '%from%–%to% (gebucht am %committedAt%, %committed% Zeilen übernommen)'
         more: ' und %count% weitere'
       reapply_rules:

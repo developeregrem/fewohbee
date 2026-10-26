@@ -3,7 +3,7 @@ profile:
     title: Personal data
     subtitle: Update your personal details right here.
     submit: Save changes
-    saving: Saving...
+    saving: Saving…
     updated: Your data has been updated.
     password_help: Leave empty to keep your current password.
   theme:

@@ -20,6 +20,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Field\ChoiceFormField;
 use Symfony\Component\DomCrawler\Field\FileFormField;
 use Symfony\Component\DomCrawler\Form;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -56,8 +57,8 @@ final class BankImportControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         $form = $crawler->filter('form')->form();
-        $form['bank_statement_upload[bankAccount]']->select((string) $bankAccount->getId());
-        $form['bank_statement_upload[format]']->select('csv:'.$profile->getId());
+        $this->getChoiceField($form, 'bank_statement_upload[bankAccount]')->select((string) $bankAccount->getId());
+        $this->getChoiceField($form, 'bank_statement_upload[format]')->select('csv:'.$profile->getId());
         $this->uploadStatementFile($form, self::FIXTURE_DIR.'/'.$fixtureName);
 
         $client->submit($form);
@@ -137,8 +138,8 @@ final class BankImportControllerTest extends WebTestCase
 
         $crawler = $client->request('GET', '/journal/bank-import');
         $form = $crawler->filter('form')->form();
-        $form['bank_statement_upload[bankAccount]']->select((string) $bankAccount->getId());
-        $form['bank_statement_upload[format]']->select('csv:'.$profile->getId());
+        $this->getChoiceField($form, 'bank_statement_upload[bankAccount]')->select((string) $bankAccount->getId());
+        $this->getChoiceField($form, 'bank_statement_upload[format]')->select('csv:'.$profile->getId());
         $this->uploadStatementFile($form, self::FIXTURE_DIR.'/postbank-girokonto-anonymized.csv');
         $client->submit($form);
 
@@ -217,8 +218,8 @@ final class BankImportControllerTest extends WebTestCase
 
         $crawler = $client->request('GET', '/journal/bank-import');
         $form = $crawler->filter('form')->form();
-        $form['bank_statement_upload[bankAccount]']->select((string) $bankAccount->getId());
-        $form['bank_statement_upload[format]']->select('csv:'.$profile->getId());
+        $this->getChoiceField($form, 'bank_statement_upload[bankAccount]')->select((string) $bankAccount->getId());
+        $this->getChoiceField($form, 'bank_statement_upload[format]')->select('csv:'.$profile->getId());
         $this->uploadStatementFile($form, self::FIXTURE_DIR.'/dkb-girokonto-anonymized.csv');
         $client->submit($form);
 
@@ -282,8 +283,8 @@ final class BankImportControllerTest extends WebTestCase
 
         $crawler = $client->request('GET', '/journal/bank-import');
         $form = $crawler->filter('form')->form();
-        $form['bank_statement_upload[bankAccount]']->select((string) $bankAccount->getId());
-        $form['bank_statement_upload[format]']->select('csv:'.$profile->getId());
+        $this->getChoiceField($form, 'bank_statement_upload[bankAccount]')->select((string) $bankAccount->getId());
+        $this->getChoiceField($form, 'bank_statement_upload[format]')->select('csv:'.$profile->getId());
         $this->uploadStatementFile($form, self::FIXTURE_DIR.'/dkb-girokonto-anonymized.csv');
         $client->submit($form);
 
@@ -348,8 +349,8 @@ final class BankImportControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         $form = $crawler->filter('form')->form();
-        $form['bank_statement_upload[bankAccount]']->select((string) $bankAccount->getId());
-        $form['bank_statement_upload[format]']->select('iso20022_camt');
+        $this->getChoiceField($form, 'bank_statement_upload[bankAccount]')->select((string) $bankAccount->getId());
+        $this->getChoiceField($form, 'bank_statement_upload[format]')->select('iso20022_camt');
 
         $client->request('POST', '/journal/bank-import/upload', $form->getPhpValues(), [
             'bank_statement_upload' => [
@@ -393,8 +394,8 @@ final class BankImportControllerTest extends WebTestCase
         $bankAccount = $this->createBankAccount("DE00INVALIDUPLOADTEST");
         $crawler = $client->request("GET", "/journal/bank-import");
         $form = $crawler->filter("form")->form();
-        $form["bank_statement_upload[bankAccount]"]->select((string) $bankAccount->getId());
-        $form["bank_statement_upload[format]"]->select("iso20022_camt");
+        $this->getChoiceField($form, 'bank_statement_upload[bankAccount]')->select((string) $bankAccount->getId());
+        $this->getChoiceField($form, 'bank_statement_upload[format]')->select('iso20022_camt');
 
         $client->request("POST", "/journal/bank-import/upload", $form->getPhpValues(), [
             "bank_statement_upload" => [
@@ -659,6 +660,14 @@ final class BankImportControllerTest extends WebTestCase
         self::assertInstanceOf(BankImportDraft::class, $draft);
         $draft->setState($state->toArray());
         $em->flush();
+    }
+
+    private function getChoiceField(Form $form, string $name): ChoiceFormField
+    {
+        $field = $form[$name];
+        self::assertInstanceOf(ChoiceFormField::class, $field, $name);
+
+        return $field;
     }
 
     private function uploadStatementFile(Form $form, string $path): void

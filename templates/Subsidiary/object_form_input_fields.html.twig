@@ -172,6 +172,8 @@
                     <small class="form-text text-muted">{{ 'object.check_in_note.help'|trans }}</small>
                 </div>
             </div>
+            {% import 'common/content_translations.html.twig' as contentTranslations %}
+            {{ contentTranslations.rawInputs('translations-' ~ object.id, object, 'checkInNote', {horizontal: true, offsetClass: 'col-sm-8 offset-sm-4', base: object.checkInNote, textarea: true, rows: 2}) }}
                 </div>
             </div>
         </div>

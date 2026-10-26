@@ -6,6 +6,8 @@ namespace App\Entity;
 
 use App\Entity\Enum\PercentageBase;
 use App\Entity\Enum\TaxCalculationMode;
+use App\Entity\Translation\ContentTranslatable;
+use App\Entity\Translation\ContentTranslationsTrait;
 use App\Repository\TouristTaxRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -14,8 +16,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TouristTaxRepository::class)]
 #[ORM\Table(name: 'tourist_taxes')]
-class TouristTax
+class TouristTax implements ContentTranslatable
 {
+    use ContentTranslationsTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -25,6 +29,7 @@ class TouristTax
     #[Assert\NotBlank]
     private string $name = '';
 
+    /** @var Collection<int, Subsidiary> */
     #[ORM\ManyToMany(targetEntity: Subsidiary::class)]
     #[ORM\JoinTable(name: 'tourist_taxes_has_subsidiaries')]
     private Collection $subsidiaries;
@@ -72,6 +77,11 @@ class TouristTax
     {
         $this->subsidiaries = new ArrayCollection();
         $this->rates = new ArrayCollection();
+    }
+
+    public static function translatableFields(): array
+    {
+        return ['name'];
     }
 
     public function getId(): ?int

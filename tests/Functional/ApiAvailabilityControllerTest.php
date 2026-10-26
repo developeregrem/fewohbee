@@ -35,7 +35,7 @@ final class ApiAvailabilityControllerTest extends WebTestCase
         $payload = $this->get($token, sprintf('/api/v1/availability?start=%s&end=%s&objectId=%d&roomCategoryId=%d',
             $start->format('Y-m-d'),
             $start->modify('+2 days')->format('Y-m-d'),
-            $room->getObject()?->getId(),
+            $room->getObject()->getId(),
             $room->getRoomCategory()?->getId(),
         ));
 

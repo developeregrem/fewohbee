@@ -15,10 +15,7 @@ use Doctrine\ORM\Query\Expr;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method Price|null find($id, $lockMode = null, $lockVersion = null)
- * @method Price|null findOneBy(array $criteria, array $orderBy = null)
- * @method Price[]    findAll()
- * @method Price[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<Price>
  */
 class PriceRepository extends ServiceEntityRepository
 {
@@ -27,12 +24,15 @@ class PriceRepository extends ServiceEntityRepository
         parent::__construct($registry, Price::class);
     }
 
+    /** @return list<Price>|null */
     public function getActiveAppartmentPrices()
     {
         $q = $this
             ->createQueryBuilder('p')
             ->select('p')
             ->where('p.type = 2 AND p.active = true')
+            ->orderBy('p.description', \SortDirection::Ascending)
+            ->addOrderBy('p.id', \SortDirection::Ascending)
             ->getQuery();
 
         $prices = null;
@@ -45,7 +45,7 @@ class PriceRepository extends ServiceEntityRepository
     }
 
     /**
-     * All prices with their components and room categories, active ones first. Grouping by room
+     * All prices with their components and room categories, active ones first, then by name. Grouping by room
      * category happens in PriceService::groupByRoomCategories(), because a price can belong to
      * several categories and SQL cannot order by a collection.
      *
@@ -58,6 +58,7 @@ class PriceRepository extends ServiceEntityRepository
                 ->leftJoin('p.components', 'components')
                 ->leftJoin('p.roomCategories', 'rc')
                 ->addOrderBy('p.active', \SortDirection::Descending)
+                ->addOrderBy('p.description', \SortDirection::Ascending)
                 ->addOrderBy('p.id', \SortDirection::Ascending)
                 ->getQuery();
 
@@ -68,12 +69,15 @@ class PriceRepository extends ServiceEntityRepository
         }
     }
 
+    /** @return list<Price>|null */
     public function getActiveMiscellaneousPrices()
     {
         $q = $this
             ->createQueryBuilder('p')
             ->select('p')
             ->where('p.type = 1 AND p.active = true')
+            ->orderBy('p.description', \SortDirection::Ascending)
+            ->addOrderBy('p.id', \SortDirection::Ascending)
             ->getQuery();
 
         $prices = null;
@@ -184,10 +188,13 @@ class PriceRepository extends ServiceEntityRepository
     public function findApartmentPrices(Reservation $reservation, int $stays)
     {
         $q = $this->getFindBaseQuery($reservation)
+                /* workaround to have prices with no period at the end of the result list */
+            ->addSelect('CASE WHEN p.allPeriods = true THEN 1 ELSE 0 END as HIDDEN start_is_null')
                 /* select only room type */
             ->andWhere('p.type = 2')
                 /* make sure that all room specific fields match */
             ->andWhere(':rc MEMBER OF p.roomCategories AND p.numberOfPersons = :nop AND p.minStay <= :ms')
+            ->addOrderBy('start_is_null', \SortDirection::Ascending)
             ->addOrderBy('p.minStay', \SortDirection::Descending)
             ->setParameter('rc', $reservation->getAppartment()->getRoomCategory())
             ->setParameter('nop', $reservation->getPersons())
@@ -201,16 +208,13 @@ class PriceRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find misc prices for a reservation. The Array is already ordered by priority.
+     * Find misc prices for a reservation, ordered by name.
      *
      * @return Price[]
      */
     public function findMiscPrices(Reservation $reservation)
     {
-        $q = $this->getFindBaseQuery($reservation)
-                /* select only room type */
-            ->andWhere('p.type = 1');
-        $this->addMiscRoomCategoryFilter($q, $reservation);
+        $q = $this->getFindMiscBaseQuery($reservation);
 
         try {
             return $q->getQuery()->getResult();
@@ -220,16 +224,14 @@ class PriceRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find misc prices that are enabled for online booking.
+     * Find misc prices that are enabled for online booking, ordered by name.
      *
      * @return Price[]
      */
     public function findBookableOnlineExtras(Reservation $reservation): array
     {
-        $q = $this->getFindBaseQuery($reservation)
-            ->andWhere('p.type = 1')
+        $q = $this->getFindMiscBaseQuery($reservation)
             ->andWhere('p.isBookableOnline = true');
-        $this->addMiscRoomCategoryFilter($q, $reservation);
 
         try {
             return $q->getQuery()->getResult();
@@ -239,16 +241,14 @@ class PriceRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find misc prices that are marked as mandatory for online booking.
+     * Find misc prices that are marked as mandatory for online booking, ordered by name.
      *
      * @return Price[]
      */
     public function findMandatoryOnlineExtras(Reservation $reservation): array
     {
-        $q = $this->getFindBaseQuery($reservation)
-            ->andWhere('p.type = 1')
+        $q = $this->getFindMiscBaseQuery($reservation)
             ->andWhere('p.isMandatoryOnline = true');
-        $this->addMiscRoomCategoryFilter($q, $reservation);
 
         try {
             return $q->getQuery()->getResult();
@@ -267,8 +267,6 @@ class PriceRepository extends ServiceEntityRepository
         $q = $this
             ->createQueryBuilder('p');
         $q->select('p, ro, pp')
-                /* workaround to have prices with no period at the end of the result list */
-            ->addSelect('CASE WHEN p.allPeriods = true THEN 1 ELSE 0 END as HIDDEN start_is_null')
             ->leftJoin('p.pricePeriods', 'pp')
             ->join('p.reservationOrigins', 'ro', Expr\Join::WITH, $q->expr()->eq('ro.id', ':roid'))
                 /* select only room type and active prices */
@@ -279,10 +277,25 @@ class PriceRepository extends ServiceEntityRepository
                 .'(pp.start <= :end AND pp.end > :end) OR'
                 .'(pp.start < :start AND pp.end > :end))')
                 /* select only prices for the given reservation origin */
-            ->addOrderBy('start_is_null', \SortDirection::Ascending)
             ->setParameter('start', $reservation->getStartDate())
             ->setParameter('end', $reservation->getEndDate())
             ->setParameter('roid', $reservation->getReservationOrigin()->getId());
+
+        return $q;
+    }
+
+    /**
+     * Base query for the misc prices (type=1) of a reservation. Several misc prices can apply
+     * to the same night, so they have no priority; listing them by name keeps every list of
+     * extras in a stable order.
+     */
+    private function getFindMiscBaseQuery(Reservation $reservation): \Doctrine\ORM\QueryBuilder
+    {
+        $q = $this->getFindBaseQuery($reservation)
+            ->andWhere('p.type = 1')
+            ->addOrderBy('p.description', \SortDirection::Ascending)
+            ->addOrderBy('p.id', \SortDirection::Ascending);
+        $this->addMiscRoomCategoryFilter($q, $reservation);
 
         return $q;
     }

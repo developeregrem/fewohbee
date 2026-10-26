@@ -205,9 +205,16 @@ part of the implementation, not follow-up work.
 **Application strings, validation messages and enum labels must be complete in German and English
 in the same commit**, with matching key sets. Release notes use the separate workflow in §11a.
 
-- Directories under `translations/` group product areas. The **filename** defines the domain:
-  `messages.de.yaml` / `messages.de.xlf` use `messages`; `Housekeeping.de.xlf` uses `Housekeeping`.
-  Match the area's existing format and pass an explicit domain only when its filename requires it.
+- Translation files are YAML only, named `<domain>.<locale>.yaml`. Directories under
+  `translations/` group product areas; the **filename** defines the domain: `messages.de.yaml` uses
+  `messages`, `Housekeeping.de.yaml` uses `Housekeeping`. Pass an explicit domain only when its
+  filename requires it. Keep the German file in the structure and key order of the English one.
+- English is the source language for community translations on the translation platform (Weblate).
+  Other locales arrive from there as pull requests: do not edit those files by hand; change the
+  English source instead. Missing strings fall back to English (`translator.fallbacks`). A language
+  is offered only once it is listed in `framework.enabled_locales`.
+- `tests/Unit/Localization/TranslationFilesTest.php` checks the German/English key sets, that other
+  locales only translate English keys, and that every translation keeps the placeholders.
 - Use lowercase, dot-separated keys describing meaning, such as `workflow.flash.created`.
 - Use placeholders instead of concatenated fragments. Handle plural forms, e.g.
   `"{1}eine Nacht|]1,Inf[%count% Nächte"`; render variants server-side for JavaScript consumers.

@@ -43,7 +43,7 @@ reservation.move.hint: Drag to a free cell to move this reservation.
 reservation.invoice: Invoice
 reservation.invoices: Invoices
 reservation.new.reservation.appartments.addmore: Add rooms to the reservation
-reservation.new.reservation.appartments.selected.heading: Selected room(s)
+reservation.new.reservation.appartments.selected.heading: Selected rooms
 reservation.no.selected.appartments: No reservation selected.
 reservation.objects.all: All branches
 reservation.option: Option
@@ -182,6 +182,9 @@ calendar_entry.form.date_to: Until
 calendar_entry.form.date_to_help: "Until – one entry per day"
 calendar_entry.form.date_to_too_far: "The range may not span more than %max% days."
 calendar_entry.form.end_time: End time
+calendar_entry.form.end_time_until: "End time (optional)"
+calendar_entry.form.on_date: "On %date%"
+calendar_entry.form.change_date: "different date or several days"
 calendar_entry.form.end_time_before_start: "The end time must be after the start time. 00:00 is allowed as the end of the day."
 calendar_entry.form.end_time_midnight_without_start: "An end time of 00:00 means the end of the day and therefore needs a start time. Without one, leave the entry all-day."
 calendar_entry.form.end_time_help: "Optional"

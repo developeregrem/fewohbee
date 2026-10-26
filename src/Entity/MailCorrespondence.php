@@ -19,7 +19,7 @@ class MailCorrespondence extends Correspondence
      *
      * @param string $recipient
      *
-     * @return MailCorrespondence
+     * @return $this
      */
     public function setRecipient($recipient)
     {
@@ -43,7 +43,7 @@ class MailCorrespondence extends Correspondence
      *
      * @param string $subject
      *
-     * @return MailCorrespondence
+     * @return $this
      */
     public function setSubject($subject)
     {

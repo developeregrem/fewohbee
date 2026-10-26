@@ -15,6 +15,7 @@ namespace App\Service;
 
 use App\Entity\Appartment;
 use App\Entity\Subsidiary;
+use App\Service\Localization\ContentTranslator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -22,8 +23,10 @@ class SubsidiaryService
 {
     private $em;
 
-    public function __construct(EntityManagerInterface $em)
-    {
+    public function __construct(
+        EntityManagerInterface $em,
+        private readonly ?ContentTranslator $contentTranslator = null,
+    ) {
         $this->em = $em;
     }
 
@@ -46,6 +49,8 @@ class SubsidiaryService
         $object->setCheckInUntil($this->readTime($request, 'check-in-until-'.$id));
         $object->setCheckOutUntil($this->readTime($request, 'check-out-until-'.$id));
         $object->setCheckInNote($request->request->get('check-in-note-'.$id));
+        // The arrival note in further guest languages (online check-in); whitelisted in applySubmitted().
+        $this->contentTranslator?->applySubmitted($object, $request->request->all()['translations-'.$id] ?? null, ['checkInNote' => null]);
 
         return $object;
     }

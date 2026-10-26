@@ -57,6 +57,27 @@ final class GuestCheckInExtrasServiceTest extends TestCase
         $service->snapshot($reservation, [18]);
     }
 
+    public function testServicesAreListedByName(): void
+    {
+        $parking = (new Price())->setIsFlatPrice(true)->setIsBookableOnline(true);
+        $parking->setId(19);
+        $parking->setDescription('Parking');
+        $parking->setPrice('10.00');
+        $breakfast = (new Price())->setIsFlatPrice(true)->setIsBookableOnline(true);
+        $breakfast->setId(20);
+        $breakfast->setDescription('Breakfast');
+        $breakfast->setPrice('8.50');
+        $repository = $this->createStub(PriceRepository::class);
+        $repository->method('findBookableOnlineExtras')->willReturn([$parking, $breakfast]);
+        $pricing = $this->createStub(PriceService::class);
+        $pricing->method('getPricesForReservationDays')->willReturn([]);
+        $service = new GuestCheckInExtrasService($repository, $pricing);
+
+        $available = $service->available($this->reservation());
+
+        self::assertSame(['Breakfast', 'Parking'], array_column($available, 'label'));
+    }
+
     private function reservation(): Reservation
     {
         $reservation = new Reservation();

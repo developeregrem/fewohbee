@@ -94,6 +94,34 @@ final class TemplateWorkspaceControllerTest extends WebTestCase
         self::assertNull($saved->getPaymentMeans());
     }
 
+    public function testAnEmptyNameLeavesTheStoredTemplateUnchanged(): void
+    {
+        $client = self::createClient();
+        $client->loginUser($this->getAdminUser(), 'main');
+        $template = $this->createTemplate('TEMPLATE_RESERVATION_EMAIL', 'Original template text');
+        $id = $template->getId();
+        $name = $template->getName();
+        $crawler = $client->request('GET', '/settings/templates/'.$id.'/edit-page');
+
+        $client->request('POST', '/settings/templates/'.$id.'/edit', [
+            '_csrf_token' => $crawler->filter('input[name="_csrf_token"]')->last()->attr('value'),
+            'type-'.$id => (string) $template->getTemplateType()->getId(),
+            'name-'.$id => '',
+            'text-'.$id => 'Rejected template text',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('.alert-warning');
+        $em = self::getContainer()->get('doctrine')->getManager();
+        // The rejected template must remain unchanged even if the manager is flushed later.
+        $em->flush();
+        $em->clear();
+        $saved = $em->getRepository(Template::class)->find($id);
+        self::assertInstanceOf(Template::class, $saved);
+        self::assertSame($name, $saved->getName());
+        self::assertSame('Original template text', $saved->getText());
+    }
+
     private function createTemplate(string $typeName, string $text): Template
     {
         /** @var EntityManagerInterface $em */

@@ -10,6 +10,7 @@ use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
@@ -41,6 +42,9 @@ class CreateUserCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $helper = $this->getHelper('question');
+        if (!$helper instanceof QuestionHelper) {
+            throw new \LogicException('The question helper must be an instance of QuestionHelper.');
+        }
 
         $io->title('This process will ask you questions in order to create a new user.');
 

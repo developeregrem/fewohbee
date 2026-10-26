@@ -28,8 +28,8 @@ class WorkflowEngine
     /**
      * Process all active workflows for an event-driven trigger.
      *
-     * @param object $entity  The entity that caused the event
-     * @param array  $context Extra data (e.g. previousStatus, booker)
+     * @param object $entity The entity that caused the event
+     * @param array<string, mixed> $context Extra data (e.g. previousStatus, booker, allReservations)
      */
     public function processEvent(string $triggerType, object $entity, array $context = []): void
     {
@@ -51,6 +51,8 @@ class WorkflowEngine
      * Process a single time-based workflow for a specific entity.
      * Includes deduplication check via WorkflowLog.
      * Returns true if the action was executed, false if skipped (dedup or condition not met).
+     *
+     * @param array<string, mixed> $context Extra scheduler metadata
      */
     public function processScheduledWorkflow(Workflow $workflow, object $entity, array $context = []): bool
     {
@@ -63,6 +65,7 @@ class WorkflowEngine
         return $this->executeWorkflow($workflow, $entity, $context, logConditionSkip: false);
     }
 
+    /** @param array<string, mixed> $context Event or scheduler metadata */
     private function executeWorkflow(Workflow $workflow, mixed $entity, array $context, bool $logConditionSkip = true): bool
     {
         // Actions that work with every trigger need to know which one fired, or

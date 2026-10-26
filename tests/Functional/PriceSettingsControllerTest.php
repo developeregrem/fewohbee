@@ -13,6 +13,7 @@ use App\Entity\RoomCategory;
 use App\Entity\User;
 use App\Repository\PriceRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -36,6 +37,35 @@ final class PriceSettingsControllerTest extends WebTestCase
         $price = $this->findPrice('both');
         self::assertNotNull($price);
         self::assertEqualsCanonicalizing([$single, $double], $this->idsOf($price));
+    }
+
+    public function testZeroVatPriceCanBeCreatedAndEditedToAZeroAmount(): void
+    {
+        $client = $this->authenticatedClient();
+        $crawler = $this->postPrice($client, 'zero-vat', 1, [], overrides: [
+            'price-new' => '12,34',
+            'vat-new' => '0',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('.alert-warning'));
+        $price = $this->findPrice('zero-vat');
+        self::assertNotNull($price);
+        self::assertSame('12.34', $price->getPrice());
+        self::assertSame(0.0, $price->getVat());
+        $id = (string) $price->getId();
+
+        $crawler = $this->postPrice($client, 'zero-vat', 1, [], $id, [
+            'price-'.$id => '0,00',
+            'vat-'.$id => '0',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('.alert-warning'));
+        $edited = $this->findPrice('zero-vat');
+        self::assertNotNull($edited);
+        self::assertSame('0.00', $edited->getPrice());
+        self::assertSame(0.0, $edited->getVat());
     }
 
     public function testRoomPriceSharingACategoryIsReportedAsConflict(): void
@@ -104,6 +134,89 @@ final class PriceSettingsControllerTest extends WebTestCase
         self::assertStringContainsString('01.05.2031 - 03.05.2031 <span class="text-body-secondary small">Stadtfest</span>', (string) $client->getResponse()->getContent());
     }
 
+    #[DataProvider('rejectedEdits')]
+    public function testRejectedEditsLeaveThePriceAndItsChildrenUnchanged(string $reason): void
+    {
+        $client = $this->authenticatedClient();
+        [$single, $double] = $this->categoryIds();
+        $type = 'components' === $reason ? 1 : 2;
+        $overrides = [
+            'allperiods-new' => '',
+            'period-new' => ['new'],
+            'periodstart-new' => ['2031-05-01'],
+            'periodend-new' => ['2031-05-03'],
+            'perioddescription-new' => ['Original period'],
+        ];
+        if ('components' === $reason) {
+            $overrides += [
+                'is-package-new' => '1',
+                'component-desc-new' => ['Original component'],
+                'component-vat-new' => ['7'],
+                'component-type-new' => ['percent'],
+                'component-value-new' => ['100'],
+            ];
+        }
+        if ('conflict' === $reason) {
+            $this->postPrice($client, 'conflicting', 2, [$single], overrides: [
+                'allperiods-new' => '',
+                'period-new' => ['new'],
+                'periodstart-new' => ['2031-06-01'],
+                'periodend-new' => ['2031-06-03'],
+            ]);
+        }
+        $this->postPrice($client, 'protected', $type, [$double], overrides: $overrides);
+        $price = $this->findPrice('protected');
+        self::assertNotNull($price);
+        $id = (string) $price->getId();
+        $periodIds = $price->getPricePeriods()->map(static fn (PricePeriod $period): int => $period->getId())->getValues();
+
+        $edited = [
+            'price-'.$id => '99,00',
+            'allperiods-'.$id => '',
+            'period-'.$id => ['new'],
+            'periodstart-new' => ['2031-06-01'],
+            'periodend-new' => ['2031-06-03'],
+            'perioddescription-new' => ['Rejected period'],
+        ];
+        if ('components' === $reason) {
+            $edited += [
+                'is-package-'.$id => '1',
+                'component-desc-'.$id => ['Rejected component'],
+                'component-vat-'.$id => ['-1'],
+                'component-type-'.$id => ['percent'],
+                'component-value-'.$id => ['100'],
+            ];
+        }
+
+        $crawler = $this->postPrice($client, 'rejected', $type, 'mandatory' === $reason ? [] : [$single], $id, $edited);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('.alert-warning'));
+        // A later flush must not save the rejected form's mutations or orphan removals.
+        $this->em()->flush();
+        $saved = $this->findPrice('protected');
+        self::assertNotNull($saved);
+        self::assertSame(80.0, (float) $saved->getPrice());
+        self::assertSame([$double], $this->idsOf($saved));
+        self::assertSame($periodIds, $saved->getPricePeriods()->map(static fn (PricePeriod $period): int => $period->getId())->getValues());
+        $period = $saved->getPricePeriods()->first();
+        self::assertInstanceOf(PricePeriod::class, $period);
+        self::assertSame('Original period', $period->getDescription());
+        self::assertSame('2031-05-01', $period->getStart()?->format('Y-m-d'));
+        if ('components' === $reason) {
+            self::assertCount(1, $saved->getComponents());
+            self::assertSame('Original component', $saved->getComponents()->first()->getDescription());
+        }
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function rejectedEdits(): iterable
+    {
+        yield 'missing room category' => ['mandatory'];
+        yield 'invalid package component' => ['components'];
+        yield 'overlapping room price' => ['conflict'];
+    }
+
     public function testRoomPriceWithoutCategoryIsRejected(): void
     {
         $client = $this->authenticatedClient();
@@ -112,6 +225,24 @@ final class PriceSettingsControllerTest extends WebTestCase
 
         self::assertCount(1, $crawler->filter('.alert'));
         self::assertNull($this->findPrice('no-category'));
+    }
+
+    public function testExtraNameIsSavedInFurtherGuestLanguagesOnly(): void
+    {
+        $client = $this->authenticatedClient();
+
+        $this->postPrice($client, 'breakfast', 1, [], overrides: [
+            'translations-new' => [
+                'en' => ['description' => 'Breakfast', 'price' => '1,00'],
+                'de' => ['description' => 'Frühstück überschrieben'],
+                'xx' => ['description' => 'ignored'],
+            ],
+        ]);
+
+        $price = $this->findPrice('breakfast');
+        self::assertNotNull($price);
+        // Only offered extra languages and translatable fields are taken over; German is the stored name.
+        self::assertSame(['en' => ['description' => 'Breakfast']], $price->getContentTranslations());
     }
 
     public function testMiscPriceAppliesOnlyToItsCategories(): void
@@ -133,6 +264,28 @@ final class PriceSettingsControllerTest extends WebTestCase
         // No selection keeps applying to every category.
         self::assertContains(self::PREFIX.'all-extra', $inSingle);
         self::assertContains(self::PREFIX.'all-extra', $inDouble);
+    }
+
+    public function testExtrasOfAStayAreListedByName(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+        // Created against the alphabet; the seasonal one used to come first.
+        $this->postPrice($client, 'extra-c', 1, [$single]);
+        $this->postPrice($client, 'extra-a', 1, [$single]);
+        $this->postPrice($client, 'extra-b', 1, [$single], 'new', [
+            'allperiods-new' => '',
+            'period-new' => ['new'],
+            'periodstart-new' => [(new \DateTime('+390 days'))->format('Y-m-d')],
+            'periodend-new' => [(new \DateTime('+410 days'))->format('Y-m-d')],
+        ]);
+
+        $ours = array_values(array_filter(
+            $this->miscPriceDescriptions($single),
+            static fn (string $description): bool => str_starts_with($description, self::PREFIX),
+        ));
+
+        self::assertSame([self::PREFIX.'extra-a', self::PREFIX.'extra-b', self::PREFIX.'extra-c'], $ours);
     }
 
     public function testOverviewShowsTheCategoryCombinationOnceWithRoomPricesBeforeMiscPrices(): void
@@ -178,6 +331,21 @@ final class PriceSettingsControllerTest extends WebTestCase
         self::assertSame(array_values(array_intersect($expected, $present)), $present);
     }
 
+    public function testOverviewListsPricesByName(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single, $double] = $this->categoryIds();
+        $this->postPrice($client, 'overview-b', 1, [$single, $double]);
+        $this->postPrice($client, 'overview-a', 1, [$single, $double]);
+
+        $crawler = $client->request('GET', '/settings/prices/');
+
+        self::assertResponseIsSuccessful();
+        $names = $crawler->filter('.card tbody tr td:first-child')->each(static fn ($cell): string => trim($cell->text()));
+        $ours = array_values(array_filter($names, static fn (string $name): bool => str_starts_with($name, self::PREFIX)));
+        self::assertSame([self::PREFIX.'overview-a', self::PREFIX.'overview-b'], $ours);
+    }
+
     /** Removes the prices created by these examples from the prepared test database. */
     protected function tearDown(): void
     {
@@ -200,7 +368,7 @@ final class PriceSettingsControllerTest extends WebTestCase
      * otherwise the existing one is edited.
      *
      * @param list<int> $categoryIds
-     * @param array<string, string|list<string>> $overrides extra or replaced form fields
+     * @param array<string, mixed> $overrides extra or replaced form fields
      */
     private function postPrice(KernelBrowser $client, string $name, int $type, array $categoryIds, string $id = 'new', array $overrides = []): \Symfony\Component\DomCrawler\Crawler
     {

@@ -5,8 +5,8 @@
  * so no Stimulus controller is available here.
  *
  * Covers the guest-count steppers — including the age-to-category mapping that
- * decides how many beds a party actually occupies — and, in embed mode, the
- * position of the image gallery lightbox.
+ * decides how many beds a party actually occupies —, the room selection tally in
+ * step 2 and, in embed mode, the position of the image gallery lightbox.
  */
 (function () {
     'use strict';
@@ -224,21 +224,157 @@
         recompute();
     }
 
-    /** Stepper buttons (+/-) around the native number inputs. */
+    /**
+     * Stepper buttons (+/-) around the native number inputs. A button is disabled
+     * once its input reaches `min` or `max`, so the guest sees which way is open.
+     */
     function initSteppers(scope) {
         scope.querySelectorAll('[data-fhb-step-btn]').forEach(function (btn) {
+            var target = document.getElementById(btn.dataset.fhbStepBtn);
+            if (!target) {
+                return;
+            }
+            var delta = parseInt(btn.dataset.fhbStepDelta || '1', 10);
+
+            function bounds() {
+                return {
+                    min: parseInt(target.min || '0', 10),
+                    max: target.max === '' ? Infinity : parseInt(target.max, 10)
+                };
+            }
+
+            function sync() {
+                var limit = bounds();
+                var value = parseInt(target.value, 10) || 0;
+                btn.disabled = delta < 0 ? value <= limit.min : value >= limit.max;
+            }
+
             btn.addEventListener('click', function () {
-                var target = document.getElementById(btn.dataset.fhbStepBtn);
-                if (!target) {
-                    return;
-                }
-                var min = parseInt(target.min || '0', 10);
-                var delta = parseInt(btn.dataset.fhbStepDelta || '1', 10);
-                var next = Math.max(min, (parseInt(target.value, 10) || min) + delta);
+                var limit = bounds();
+                var next = Math.min(limit.max, Math.max(limit.min, (parseInt(target.value, 10) || limit.min) + delta));
                 target.value = String(next);
                 target.dispatchEvent(new Event('input', { bubbles: true }));
             });
+            target.addEventListener('input', sync);
+            sync();
         });
+    }
+
+    /**
+     * Room selection in step 2: the continue button stays held back until the
+     * selection adds up, and a hint above it says what is still missing.
+     *
+     * Guests kept overlooking that the quantities start at zero and pressed
+     * continue anyway — the round trip then only showed an error at the top of
+     * the page. The check mirrors the server rule in
+     * PublicBookingService::validateOccupancySelectionAgainstAvailability(): the
+     * quantities add up to the searched room count and their occupancies to the
+     * party size. Both targets are read from the live step 1 fields, because that
+     * is what the server validates against. Once they differ from the search the
+     * offer was built for, the offer is stale — its limits and prices belong to
+     * the old search — so the guest is sent back to check availability again.
+     * The server stays the authority for everything else (per-category limits,
+     * prices).
+     */
+    function initRoomSelection(form) {
+        var status = form.querySelector('[data-fhb-selection-status]');
+        var submit = form.querySelector('[data-fhb-selection-submit]');
+        var inputs = form.querySelectorAll('[data-fhb-room-qty]');
+        if (!status || !submit || inputs.length === 0) {
+            return;
+        }
+
+        var labels = JSON.parse(status.dataset.fhbSelectionLabels || '{}');
+        // The search the offer was built for; 0 when unknown.
+        var offeredRooms = parseInt(status.dataset.fhbSelectionOfferedRooms || '0', 10);
+        var offeredGuests = parseInt(status.dataset.fhbSelectionOfferedGuests || '0', 10);
+
+        function target(name) {
+            var field = form.querySelector('[name="' + name + '"]');
+            return Math.max(1, parseInt(field ? field.value : '', 10) || 1);
+        }
+
+        function evaluate() {
+            var rooms = 0;
+            var guests = 0;
+            inputs.forEach(function (input) {
+                var qty = Math.max(0, parseInt(input.value, 10) || 0);
+                rooms += qty;
+                guests += qty * parseInt(input.dataset.fhbPersons, 10);
+                var row = input.closest('.fhb-occupancy-row');
+                if (row) {
+                    row.classList.toggle('is-selected', qty > 0);
+                }
+            });
+
+            var roomsTarget = target('roomsCount');
+            var guestsTarget = target('persons');
+            var state = 'complete';
+            if ((offeredRooms > 0 && roomsTarget !== offeredRooms) || (offeredGuests > 0 && guestsTarget !== offeredGuests)) {
+                state = 'searchChanged';
+            } else if (rooms === 0) {
+                state = 'none';
+            } else if (rooms < roomsTarget) {
+                state = 'roomsMissing';
+            } else if (rooms > roomsTarget) {
+                state = 'roomsExceeded';
+            } else if (guests < guestsTarget) {
+                // Two single rooms instead of one double are only offered by a new
+                // search for two rooms, so the message points there as well.
+                state = 'guestsTooFew';
+            } else if (guests > guestsTarget) {
+                state = 'guestsTooMany';
+            }
+
+            return state;
+        }
+
+        function render() {
+            var state = evaluate();
+            // Every guest starts with nothing selected, so that only counts as a
+            // problem once they tried to continue anyway.
+            var silent = state === 'complete' || (state === 'none' && !status.classList.contains('is-attention'));
+            status.textContent = silent ? '' : (labels[state] || '');
+            status.dataset.state = state;
+            if (silent) {
+                status.classList.remove('is-attention');
+            }
+            return state;
+        }
+
+        /** Point the guest at the steppers they missed. */
+        function highlightSteppers() {
+            var addButtons = form.querySelectorAll('.fhb-occupancy .fhb-stepper-btn-add:not(:disabled)');
+            if (addButtons.length === 0) {
+                return;
+            }
+            addButtons[0].closest('.fhb-occupancy-row').scrollIntoView({ block: 'center', behavior: 'smooth' });
+            addButtons[0].focus({ preventScroll: true });
+            addButtons.forEach(function (btn) {
+                btn.classList.remove('fhb-pulse');
+                // Force a reflow so the animation restarts on every blocked attempt.
+                void btn.offsetWidth;
+                btn.classList.add('fhb-pulse');
+            });
+        }
+
+        submit.addEventListener('click', function (event) {
+            var state = evaluate();
+            if (state === 'complete') {
+                return;
+            }
+            event.preventDefault();
+            status.classList.add('is-attention');
+            render();
+            if (state === 'none') {
+                highlightSteppers();
+            }
+        });
+        // Step 1 fields change the targets, the steppers the counts.
+        form.addEventListener('input', render);
+        form.addEventListener('change', render);
+
+        render();
     }
 
     /**
@@ -274,6 +410,7 @@
     function boot() {
         document.querySelectorAll('[data-pgc-root]').forEach(init);
         initSteppers(document);
+        document.querySelectorAll('form').forEach(initRoomSelection);
         initGalleryPosition();
     }
 

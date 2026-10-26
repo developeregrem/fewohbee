@@ -5,22 +5,28 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Entity\Attribute\TemplateIgnore;
+use App\Entity\Translation\ContentTranslatable;
+use App\Entity\Translation\ContentTranslationsTrait;
 use App\Repository\SubsidiaryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SubsidiaryRepository::class)]
 #[ORM\Table(name: 'objects')]
-class Subsidiary
+class Subsidiary implements ContentTranslatable
 {
+    use ContentTranslationsTrait;
+
+    /** @var int|'new'|null */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private int|string|null $id = null;
     #[ORM\Column(type: 'string', length: 45)]
-    private $name;
+    private ?string $name = null;
     #[ORM\Column(type: 'string', length: 255)]
-    private $description;
+    private ?string $description = null;
 
     /**
      * Invoice number range of this branch, e.g. 'NORD-<year>-<number:4>'.
@@ -84,29 +90,36 @@ class Subsidiary
      */
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $checkInNote = null;
-    #[ORM\OneToMany(targetEntity: 'Appartment', mappedBy: 'object')]
-    private $appartments;
+    /** @var Collection<int, Appartment> */
+    #[ORM\OneToMany(targetEntity: Appartment::class, mappedBy: 'object')]
+    private Collection $appartments;
 
     public function __construct()
     {
         $this->appartments = new ArrayCollection();
     }
 
+    public static function translatableFields(): array
+    {
+        return ['checkInNote'];
+    }
+
     /**
      * Set id.
      *
-     * @param int $id
+     * @param int|'new' $id Database ID, or the UI marker for an unpersisted create form
      *
-     * @return Subsidiary
+     * @return $this
      */
-    public function setId($id): static
+    public function setId(int|string $id): static
     {
         $this->id = $id;
 
         return $this;
     }
 
-    public function getId()
+    /** @return int|'new'|null */
+    public function getId(): int|string|null
     {
         return $this->id;
     }
@@ -121,7 +134,12 @@ class Subsidiary
         return $this->description;
     }
 
-    public function getAppartments(): ArrayCollection
+    /**
+     * Returns the existing collection, including Doctrine's lazy collection after hydration.
+     *
+     * @return Collection<int, Appartment>
+     */
+    public function getAppartments(): Collection
     {
         return $this->appartments;
     }
@@ -267,17 +285,13 @@ class Subsidiary
         return $this;
     }
 
-    public function setAppartments($appartments): void
+    /** @param Collection<int, Appartment> $appartments */
+    public function setAppartments(Collection $appartments): void
     {
         $this->appartments = $appartments;
     }
 
-    /**
-     * Add appartments.
-     *
-     * @return Subsidiary
-     */
-    public function addAppartment(Appartment $appartments)
+    public function addAppartment(Appartment $appartments): static
     {
         $this->appartments[] = $appartments;
 

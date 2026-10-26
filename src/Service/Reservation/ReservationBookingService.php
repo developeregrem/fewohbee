@@ -19,8 +19,8 @@ use App\Exception\ReservationBookingException;
 use App\Repository\CustomerRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Repository\PriceRepository;
-use App\Service\AppSettingsService;
 use App\Service\AvailabilityService;
+use App\Service\Localization\GuestSalutations;
 use App\Service\OnlineBooking\BookingRestrictionService;
 use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\Pricing\PricePromiseService;
@@ -54,7 +54,7 @@ class ReservationBookingService
         private readonly ReservationService $reservationService,
         private readonly BookingRestrictionService $bookingRestrictionService,
         private readonly GuestCategoryRepository $guestCategoryRepository,
-        private readonly AppSettingsService $appSettingsService,
+        private readonly GuestSalutations $salutations,
         private readonly PriceRepository $priceRepository,
         private readonly PublicPricingService $pricingService,
         private readonly PricePromiseService $pricePromises,
@@ -225,10 +225,9 @@ class ReservationBookingService
         if (null !== $booker->email && '' !== trim($booker->email) && !filter_var(trim($booker->email), \FILTER_VALIDATE_EMAIL)) {
             throw new ReservationBookingException('The booker email address is invalid.');
         }
-        if (null !== $booker->salutation && '' !== trim($booker->salutation)
-            && !\in_array(trim($booker->salutation), $this->appSettingsService->getSettings()->getCustomerSalutations(), true)
-        ) {
-            throw new ReservationBookingException(sprintf('Unknown salutation. Allowed: %s.', implode(', ', $this->appSettingsService->getSettings()->getCustomerSalutations())));
+        // Any guest language or built-in key ("Mr") is accepted; the stored wording is kept.
+        if (null !== $booker->salutation && '' !== trim($booker->salutation) && null === $this->salutations->normalize($booker->salutation)) {
+            throw new ReservationBookingException(sprintf('Unknown salutation. Allowed: %s.', implode(', ', $this->salutations->offered())));
         }
     }
 
@@ -305,7 +304,7 @@ class ReservationBookingService
         }
 
         $customer = new Customer();
-        $customer->setSalutation(self::sanitize($booker->salutation ?? '', 20));
+        $customer->setSalutation(self::sanitize($this->salutations->normalize($booker->salutation) ?? '', 20));
         $customer->setFirstname(self::sanitize($booker->firstname ?? '', 45) ?: null);
         $customer->setLastname(self::sanitize($booker->lastname, 45));
 

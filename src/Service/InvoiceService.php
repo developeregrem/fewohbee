@@ -31,6 +31,7 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
+use App\Exception\InvoiceReservationSelectionException;
 use App\Service\EInvoice\EInvoiceExportService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -39,6 +40,10 @@ use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+/**
+ * @phpstan-import-type VatTotals from InvoiceSumCalculator
+ * @phpstan-type MiscPriceAggregate array{price: Price, amount: int, reservationId: int|string|null, unit: string|null, includesVat: bool|null}
+ */
 class InvoiceService
 {
     /**
@@ -66,13 +71,15 @@ class InvoiceService
      * The arithmetic itself lives in InvoiceSumCalculator; this stays as the
      * way every existing caller reaches it.
      *
-     * @param Collection $apps            The invoice positions for apartment prices
-     * @param Collection $poss            The invoice positions for miscellaneous prices
-     * @param array      $vats            Returns array of all vat values
-     * @param float      $brutto          Returns the total price including vat
-     * @param float      $netto           Returns the toal price for all vats
-     * @param float      $appartmentTotal Returns the total sum for all apartment prices
-     * @param float      $miscTotal       Returns the total price for all miscellaneous prices
+     * @param Collection<int, InvoiceAppartment> $apps            The invoice positions for apartment prices
+     * @param Collection<int, InvoicePosition>   $poss            The invoice positions for miscellaneous prices
+     * @param array<array-key, mixed>            $vats            Overwritten with the VAT totals; previous contents are discarded
+     * @param float                             $brutto          Returns the total price including vat
+     * @param float                             $netto           Returns the VAT total
+     * @param float                             $appartmentTotal Returns the total sum for all apartment prices
+     * @param float                             $miscTotal       Returns the total price for all miscellaneous prices
+     *
+     * @param-out VatTotals $vats
      */
     public function calculateSums(Collection $apps, Collection $poss, array &$vats, float &$brutto, float &$netto, float &$appartmentTotal, float &$miscTotal): void
     {
@@ -84,7 +91,7 @@ class InvoiceService
      *
      * @param Invoice $invoice
      *
-     * @return array
+     * @return list<array{startDate: \DateTime, endDate: \DateTime}>
      */
     public function getUniqueReservationPeriods($invoice)
     {
@@ -113,7 +120,7 @@ class InvoiceService
      *
      * @param Invoice $invoice
      *
-     * @return array
+     * @return list<array{number: int|string|null}>
      */
     public function getUniqueAppartmentsNumber($invoice)
     {
@@ -135,9 +142,11 @@ class InvoiceService
     }
 
     /**
-     * Delets Invoice and all dependencies.
+     * Deletes an invoice and its positions, detaching it from its reservations.
      *
-     * @param type $id The ID of the invoice
+     * The request value is forwarded unchanged to Doctrine; lookup errors are not handled here.
+     *
+     * @param scalar|null $id Raw identifier from the delete request
      *
      * @return bool
      */
@@ -172,6 +181,25 @@ class InvoiceService
 
     /**
      * Build all invoice variables required by template rendering.
+     *
+     * @return array{
+     *     invoice: Invoice,
+     *     vats: VatTotals,
+     *     brutto: float,
+     *     netto: float,
+     *     bruttoFormated: string,
+     *     nettoFormated: string,
+     *     periods: list<array{startDate: \DateTime, endDate: \DateTime}>,
+     *     numbers: list<array{number: int|string|null}>,
+     *     appartmentTotal: string,
+     *     miscTotal: string,
+     *     paymentDueDate: \DateTimeImmutable|null,
+     *     originName: string|null,
+     *     originCommission: float|null,
+     *     originCommissionFormated: string,
+     *     originPaymentFee: float|null,
+     *     originPaymentFeeFormated: string
+     * }
      */
     public function buildTemplateRenderParams(Template $template, Invoice $invoice): array
     {
@@ -476,7 +504,7 @@ class InvoiceService
     /**
      * Build apartment invoice positions for a reservation without session dependency.
      *
-     * @return InvoiceAppartment[]
+     * @return list<InvoiceAppartment>
      */
     public function buildAppartmentPositions(Reservation $reservation): array
     {
@@ -515,8 +543,8 @@ class InvoiceService
      * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
      * each day can have more than one active price category.
      *
-     * @param array $reservations      a list of reservations
-     * @param bool  $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
+     * @param array<Reservation> $reservations      Reservations; input keys are not used
+     * @param bool               $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
      */
     public function prefillMiscPositionsWithReservations(array $reservations, RequestStack $requestStack, bool $useExistingPrices = false): void
     {
@@ -527,8 +555,8 @@ class InvoiceService
      * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
      * each day can have more than one active price category.
      *
-     * @param array $reservationIds    a list of reservation IDs
-     * @param bool  $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
+     * @param array<int|string> $reservationIds    Reservation IDs; gaps in the keys are allowed
+     * @param bool              $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
      */
     public function prefillMiscPositionsWithReservationIds(array $reservationIds, RequestStack $requestStack, bool $useExistingPrices = false): void
     {
@@ -546,6 +574,7 @@ class InvoiceService
      * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
      * each day can have more than one active price category.
      *
+     * @param array<Reservation> $reservations
      * @param bool $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
      */
     private function prefillMiscPositions(array $reservations, RequestStack $requestStack, bool $useExistingPrices = false): void
@@ -566,7 +595,9 @@ class InvoiceService
     /**
      * Build miscellaneous invoice positions without writing to the session.
      *
-     * @return InvoicePosition[]
+     * @param array<Reservation> $reservations
+     *
+     * @return list<InvoicePosition>
      */
     public function buildMiscPositions(array $reservations, bool $useExistingPrices = false): array
     {
@@ -918,6 +949,14 @@ class InvoiceService
 
     /**
      * Aggregates price amounts across all reservations and days into a keyed array, without any session involvement.
+     * The key separates price rows, promised unit prices and gross/net modes. Null promise fields
+     * keep the live price row as the source; a transient reservation may have no ID yet.
+     * The aggregates are ordered by price name, as the days of a stay can bring up the extras
+     * in any order.
+     *
+     * @param array<Reservation> $reservations
+     *
+     * @return array<string, MiscPriceAggregate>
      */
     private function computeMiscPriceAggregates(array $reservations, bool $useExistingPrices = false): array
     {
@@ -979,6 +1018,10 @@ class InvoiceService
                 }
             }
         }
+
+        $collator = new \Collator(\Locale::getDefault());
+        uasort($tmpMiscArr, static fn (array $a, array $b): int => (int) $collator->compare((string) $a['price']->getDescription(), (string) $b['price']->getDescription())
+            ?: $a['price']->getId() <=> $b['price']->getId());
 
         return $tmpMiscArr;
     }
@@ -1075,9 +1118,11 @@ class InvoiceService
     }
 
     /**
-     * Returns a list of reservations that a connected with the current invoice creation process.
+     * Resolves the complete draft selection without silently dropping missing reservations.
      *
-     * @return Resrvation[]
+     * @return list<Reservation> Empty for manual invoices without selected reservations.
+     *
+     * @throws InvoiceReservationSelectionException when a selected reservation no longer exists
      */
     public function getInvoiceReservationsInCreation(RequestStack $requestStack): array
     {
@@ -1089,7 +1134,11 @@ class InvoiceService
         }
         $reservations = [];
         foreach ($reservationIds as $reservationId) {
-            $reservations[] = $this->em->getRepository(Reservation::class)->find($reservationId);
+            $reservation = $this->em->getRepository(Reservation::class)->find($reservationId);
+            if (!$reservation instanceof Reservation) {
+                throw new InvoiceReservationSelectionException('invoice.reservations.unavailable');
+            }
+            $reservations[] = $reservation;
         }
 
         return $reservations;
@@ -1098,7 +1147,7 @@ class InvoiceService
     /**
      * Collect all unique bookers and customers for recommendation list.
      *
-     * @param Reservation[] $reservations
+     * @param array<int, Reservation>|Collection<int, Reservation> $reservations
      *
      * @return Customer[]
      */
@@ -1144,6 +1193,7 @@ class InvoiceService
         return $positionAppartment;
     }
 
+    /** @param array<string, MiscPriceAggregate> $tmpPricesArr */
     private function makeMiscPositions(array $tmpPricesArr, RequestStack $requestStack): void
     {
         foreach ($this->createMiscPositionsFromAggregates($tmpPricesArr) as $position) {
@@ -1152,7 +1202,9 @@ class InvoiceService
     }
 
     /**
-     * @return InvoicePosition[]
+     * @param array<string, MiscPriceAggregate> $tmpPricesArr
+     *
+     * @return list<InvoicePosition>
      */
     private function createMiscPositionsFromAggregates(array $tmpPricesArr): array
     {
@@ -1190,7 +1242,9 @@ class InvoiceService
      * Expand a single package-price aggregate into one InvoicePosition per component, preserving
      * quantity + flags. Component unit prices are derived via PriceService::expandPackage().
      *
-     * @return InvoicePosition[]
+     * @param MiscPriceAggregate $tmpPrice
+     *
+     * @return list<InvoicePosition>
      */
     private function expandPackageAggregate(array $tmpPrice): array
     {

@@ -99,6 +99,7 @@ class BankCsvProfileController extends AbstractController
         return new Response('', Response::HTTP_NO_CONTENT);
     }
 
+    /** @param \Symfony\Component\Form\FormInterface $form */
     private function renderProfileForm($form, BankCsvProfile $profile, bool $isNew): Response
     {
         return $this->render('BookingJournal/BankImport/profile_form.html.twig', [

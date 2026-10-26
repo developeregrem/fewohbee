@@ -156,6 +156,13 @@ class SendTemplateEmailAction implements WorkflowActionInterface
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_no_recipient', ['%type%' => $config['recipientType'] ?? 'none']));
         }
 
+        // A guest gets the language variant in their language when there is one, for the mail
+        // and its attachments; it renders in that language (TemplatesService). Everyone else gets
+        // the configured templates.
+        $guestLocale = $this->guestLocale($config, $entity);
+        $template = $template->variantFor($guestLocale);
+        $templateId = (int) $template->getId();
+
         // For reservation templates: pass all reservations from context so the template
         // can render totals/positions across all rooms (e.g. online booking with multiple rooms).
         // resolveReservations() in the preview provider already handles Reservation[].
@@ -179,7 +186,8 @@ class SendTemplateEmailAction implements WorkflowActionInterface
             $entity,
             $reservations,
             (string) ($config['attachmentPolicy'] ?? WorkflowAttachmentResolver::POLICY_SKIP_MISSING),
-            (int) ($config['invoicePdfTemplateId'] ?? 0)
+            (int) ($config['invoicePdfTemplateId'] ?? 0),
+            $guestLocale,
         );
 
         $this->mailService->sendHTMLMail($recipient, $subject, $rendered, $attachmentSet->mailAttachments());
@@ -234,6 +242,8 @@ class SendTemplateEmailAction implements WorkflowActionInterface
     /**
      * All reservations a reservation-triggered workflow covers (a booking may span rooms).
      *
+     * @param array<string, mixed> $context
+     *
      * @return Reservation[]
      */
     private function resolveReservationGroup(mixed $entity, array $context): array
@@ -257,6 +267,21 @@ class SendTemplateEmailAction implements WorkflowActionInterface
         return [$entity];
     }
 
+    /**
+     * Language of the booker for mails addressed to them; null for every other recipient.
+     *
+     * @param array<string, mixed> $config
+     */
+    private function guestLocale(array $config, mixed $entity): ?string
+    {
+        if ('booker_email' !== ($config['recipientType'] ?? null) || !$entity instanceof Reservation) {
+            return null;
+        }
+
+        return $entity->getBooker()?->getLocale();
+    }
+
+    /** @param array<string, mixed> $config */
     private function resolveRecipient(array $config, mixed $entity): ?string
     {
         $recipientType = $config['recipientType'] ?? 'notification_email';

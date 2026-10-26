@@ -51,6 +51,8 @@ guest_checkin:
       idDocumentMode_help: "Type and number of the main guest's ID."
       contactMode: "Email and phone"
       contactMode_help: "Useful above all for bookings from portals that pass on no contact details."
+      companyMode: "Company details for the invoice"
+      companyMode_help: "Company, VAT ID and a different invoice address, e.g. for business travellers. The details go into a business address of the main guest and so into their invoices."
       companionsMode: "Ask for fellow travellers"
       companionsMode_help: "Every other person of the booking gets a block of their own – with name, optional salutation and, depending on the settings above, date of birth and nationality."
     section_companions: "Fellow travellers"
@@ -137,8 +139,14 @@ guest_checkin:
       email: "Email"
       phone: "Phone"
       message: "Message to the accommodation (optional)"
+      company: "Company"
+      vat_id: "VAT ID (optional)"
     submit: "Send details"
     edit: "Correct details"
+    company:
+      toggle: "Invoice to a company"
+      address_hint: "Only fill in the invoice address if it differs from your address above."
+      address_required_hint: "Invoice address of the company:"
     stay:
       title: "Your stay"
       submitted: "Thank you! Your details have reached us. The accommodation will review them before you arrive."
@@ -149,6 +157,7 @@ guest_checkin:
       arrival_time_open: "not given yet"
       extras: "Additional services"
       extra_requested: "requested"
+      invoice_to: "Invoice to"
     closed: "Online check-in is no longer possible for this booking. Please contact the accommodation directly."
     privacy_link: "Privacy policy"
   tab:
@@ -223,6 +232,8 @@ guest_checkin:
     room_overflow: "There are more people than booked. Mark who is not travelling, choose \"Do not take over\" for single people or increase the reservation's number of guests. Only then can the check-in be confirmed."
     room_now: "In the room"
     registration_print: "Print registration form"
+    invoice_address: "Invoice address"
+    company_booker_hint: "Invoices go to the booker. For the company to appear on the invoice, set the main guest as booker."
   apply:
     ambiguous_matches: "Several records match. Check them before choosing one so people are not mixed up or created twice."
     name_only_match: "A guest with this name exists, but no date of birth or email confirms the match. Check the record before choosing it."

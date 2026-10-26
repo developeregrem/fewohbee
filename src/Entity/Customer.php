@@ -13,27 +13,32 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'customers')]
 class Customer
 {
+    /** @var int|'new'|null */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private int|string|null $id = null;
     #[ORM\Column(type: 'string', length: 20)]
-    private $salutation;
+    private ?string $salutation = null;
     #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $firstname;
+    private ?string $firstname = null;
     #[ORM\Column(type: 'string', length: 45)]
-    private $lastname;
+    private ?string $lastname = null;
     #[ORM\Column(type: 'date', nullable: true)]
-    private $birthday;
+    private ?\DateTime $birthday = null;
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $remark = null;
-    #[ORM\ManyToMany(targetEntity: 'Reservation', mappedBy: 'customers')]
+    /** @var Collection<int, Reservation> */
+    #[ORM\ManyToMany(targetEntity: Reservation::class, mappedBy: 'customers')]
     private Collection $reservations;
-    #[ORM\OneToMany(mappedBy: 'customer', targetEntity: 'RegistrationBookEntry')]
+    /** @var Collection<int, RegistrationBookEntry> */
+    #[ORM\OneToMany(mappedBy: 'customer', targetEntity: RegistrationBookEntry::class)]
     private Collection $registrationBookEntries;
-    #[ORM\OneToMany(mappedBy: 'booker', targetEntity: 'Reservation')]
+    /** @var Collection<int, Reservation> */
+    #[ORM\OneToMany(mappedBy: 'booker', targetEntity: Reservation::class)]
     private Collection $bookedReservations;
-    #[ORM\ManyToMany(targetEntity: 'CustomerAddresses', inversedBy: 'customers')]
+    /** @var Collection<int, CustomerAddresses> */
+    #[ORM\ManyToMany(targetEntity: CustomerAddresses::class, inversedBy: 'customers')]
     #[ORM\JoinTable(name: 'customer_has_address')]
     private Collection $customerAddresses;
 
@@ -47,6 +52,13 @@ class Customer
     #[ORM\Column(length: 2, nullable: true)]
     private ?string $nationality = null;
 
+    /**
+     * Language for mails to this guest, a guest locale such as "en"; null means the installation
+     * language. Taken from the language of an online booking or check-in, editable in the backend.
+     */
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $locale = null;
+
     public function __construct()
     {
         $this->reservations = new ArrayCollection();
@@ -55,22 +67,23 @@ class Customer
         $this->customerAddresses = new ArrayCollection();
     }
 
-    public function getId()
+    /** @return int|'new'|null */
+    public function getId(): int|string|null
     {
         return $this->id;
     }
 
-    public function getSalutation()
+    public function getSalutation(): ?string
     {
         return $this->salutation;
     }
 
-    public function getFirstname()
+    public function getFirstname(): ?string
     {
         return $this->firstname;
     }
 
-    public function getLastname()
+    public function getLastname(): ?string
     {
         return $this->lastname;
     }
@@ -80,37 +93,40 @@ class Customer
         return $this->birthday;
     }
 
+    /** @return Collection<int, Reservation> */
     public function getReservations(): ArrayCollection|Collection
     {
         return $this->reservations;
     }
 
-    public function setId($id): void
+    /** @param int|'new' $id */
+    public function setId(int|string $id): void
     {
         $this->id = $id;
     }
 
-    public function setSalutation($salutation): void
+    public function setSalutation(string $salutation): void
     {
         $this->salutation = $salutation;
     }
 
-    public function setFirstname($firstname): void
+    public function setFirstname(?string $firstname): void
     {
         $this->firstname = $firstname;
     }
 
-    public function setLastname($lastname): void
+    public function setLastname(string $lastname): void
     {
         $this->lastname = $lastname;
     }
 
-    public function setBirthday($birthday): void
+    public function setBirthday(?\DateTime $birthday): void
     {
         $this->birthday = $birthday;
     }
 
-    public function setReservations($reservations): void
+    /** @param Collection<int, Reservation> $reservations */
+    public function setReservations(Collection $reservations): void
     {
         $this->reservations = $reservations;
     }
@@ -137,17 +153,19 @@ class Customer
         return nl2br($this->remark ?? '');
     }
 
-    public function setRemark($remark): void
+    public function setRemark(?string $remark): void
     {
         $this->remark = $remark;
     }
 
+    /** @return Collection<int, RegistrationBookEntry> */
     public function getRegistrationBookEntries(): ArrayCollection|Collection
     {
         return $this->registrationBookEntries;
     }
 
-    public function setRegistrationBookEntries($registrationBookEntries): void
+    /** @param Collection<int, RegistrationBookEntry> $registrationBookEntries */
+    public function setRegistrationBookEntries(Collection $registrationBookEntries): void
     {
         $this->registrationBookEntries = $registrationBookEntries;
     }
@@ -167,7 +185,7 @@ class Customer
     /**
      * Add bookedReservations.
      *
-     * @return Customer
+     * @return $this
      */
     public function addBookedReservation(Reservation $bookedReservations): static
     {
@@ -186,6 +204,8 @@ class Customer
 
     /**
      * Get bookedReservations.
+     *
+     * @return Collection<int, Reservation>
      */
     public function getBookedReservations(): ArrayCollection|Collection
     {
@@ -195,7 +215,7 @@ class Customer
     /**
      * Add customerAddress.
      *
-     * @return Customer
+     * @return $this
      */
     public function addCustomerAddress(CustomerAddresses $customerAddress): static
     {
@@ -214,6 +234,8 @@ class Customer
 
     /**
      * Get customerAddresses.
+     *
+     * @return Collection<int, CustomerAddresses>
      */
     public function getCustomerAddresses(): ArrayCollection|Collection
     {
@@ -251,5 +273,16 @@ class Customer
     {
         $nationality = null === $nationality ? '' : strtoupper(trim($nationality));
         $this->nationality = '' === $nationality ? null : $nationality;
+    }
+
+    public function getLocale(): ?string
+    {
+        return $this->locale;
+    }
+
+    public function setLocale(?string $locale): void
+    {
+        $locale = null === $locale ? '' : trim($locale);
+        $this->locale = '' === $locale ? null : $locale;
     }
 }

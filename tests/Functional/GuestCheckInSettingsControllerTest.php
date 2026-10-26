@@ -55,6 +55,33 @@ final class GuestCheckInSettingsControllerTest extends WebTestCase
         self::assertSelectorTextContains('select#guest_check_in_config_companionsMode', 'Nur den Hauptgast erfassen');
     }
 
+    public function testTextsAreSavedInFurtherGuestLanguages(): void
+    {
+        $client = $this->authenticatedClient();
+
+        $this->submitSettings($client, [
+            'guest_check_in_config[introText]' => 'Schön, dass du kommst!',
+            'guest_check_in_config[translations][en][introText]' => 'Glad you are coming!',
+            'guest_check_in_config[translations][en][privacyUrl]' => 'https://example.com/en/privacy',
+        ]);
+
+        self::assertResponseRedirects('/settings/guest-checkin');
+        self::assertSame(
+            ['en' => ['introText' => 'Glad you are coming!', 'privacyUrl' => 'https://example.com/en/privacy']],
+            $this->config()->getContentTranslations(),
+        );
+    }
+
+    public function testATranslatedPrivacyAddressMustBeAValidAddress(): void
+    {
+        $client = $this->authenticatedClient();
+
+        $this->submitSettings($client, ['guest_check_in_config[translations][en][privacyUrl]' => 'https://not a url']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame([], $this->config()->getContentTranslations());
+    }
+
     public function testPreviewShowsTheGuestPageWithSampleDataAndCannotSend(): void
     {
         $client = $this->authenticatedClient();
@@ -70,6 +97,19 @@ final class GuestCheckInSettingsControllerTest extends WebTestCase
         self::assertSelectorNotExists('form[name="guest_check_in"]');
         self::assertSelectorTextContains('.fhb-gci-checklist', 'Erika Mustermann');
         self::assertSelectorTextContains('.fhb-gci-checklist', '16:00');
+    }
+
+    public function testCompanyDetailsCanBeOfferedButNeverRequired(): void
+    {
+        $client = $this->authenticatedClient();
+        $crawler = $client->request('GET', '/settings/guest-checkin');
+        $options = $crawler->filter('select[name="guest_check_in_config[companyMode]"] option')->each(static fn ($option): string => (string) $option->attr('value'));
+        self::assertSame(['hidden', 'optional'], $options);
+
+        $this->submitSettings($client, ['guest_check_in_config[companyMode]' => 'optional']);
+
+        self::assertResponseRedirects('/settings/guest-checkin');
+        self::assertSame('optional', $this->config()->getCompanyMode()->value);
     }
 
     public function testAdminCanTurnOptionalServicesOnAndOff(): void
@@ -123,9 +163,11 @@ final class GuestCheckInSettingsControllerTest extends WebTestCase
             if ($em->isOpen()) {
                 $em->clear();
                 $this->config()->setEnabled(false)->setIntroText(null)
+                    ->setContentTranslations([])
                     ->setExtrasEnabled(true)
                     ->setIdDocumentMode(GuestCheckInFieldMode::OPTIONAL)
-                    ->setCompanionsMode(GuestCheckInFieldMode::OPTIONAL);
+                    ->setCompanionsMode(GuestCheckInFieldMode::OPTIONAL)
+                    ->setCompanyMode(GuestCheckInFieldMode::HIDDEN);
                 $em->getConnection()->executeStatement("DELETE FROM workflows WHERE system_code IN ('notify_guest_checkin', 'example_guest_checkin_invitation')");
                 $this->appSettings()->setPublicBaseUrl(null);
                 $em->flush();

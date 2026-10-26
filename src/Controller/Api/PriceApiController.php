@@ -141,7 +141,7 @@ class PriceApiController extends AbstractController
         }
 
         $subsidiary = $this->resolveSubsidiary($request);
-        if (null !== $apartment && null !== $subsidiary && $apartment->getObject()?->getId() !== $subsidiary->getId()) {
+        if (null !== $apartment && null !== $subsidiary && $apartment->getObject()->getId() !== $subsidiary->getId()) {
             throw new BadRequestHttpException("The apartment does not belong to 'objectId'.");
         }
         $sampleRoom = $apartment ?? (null !== $subsidiary
@@ -167,7 +167,7 @@ class PriceApiController extends AbstractController
             'end' => $lastNight->format('Y-m-d'),
             'nights' => $nights,
             'roomCategoryId' => $roomCategory->getId(),
-            'objectId' => $sampleRoom->getObject()?->getId(),
+            'objectId' => $sampleRoom->getObject()->getId(),
             'occupancies' => $occupancies,
             'origin' => ['id' => (int) $origin->getId(), 'name' => $origin->getName()],
         ]);
