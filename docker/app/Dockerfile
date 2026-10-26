@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.27
+# syntax=docker/dockerfile:1.28
 #
 # Unified application image for fewohbee.
 # Final targets:
