@@ -223,15 +223,6 @@ body {
     width: max-content;
 }
 
-/* Contact, invoice and time rows: labels in their own column, values aligned beside them.
-   A grid, because Bootstrap's popover sanitizer drops table markup */
-.reservation-popover-details {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    column-gap: .75rem;
-    margin-top: .25rem;
-}
-
 .form-switch > .form-check-input {
     margin-top: .25em;
     margin-right: .75em;

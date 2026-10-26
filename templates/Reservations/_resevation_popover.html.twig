@@ -62,26 +62,28 @@
         {% if businessCompany %}
             {% set popBody = businessCompany ~ "<br />" ~ popBody %}
         {% endif %}
-        {# Label/value pairs, the values already escaped. Arrival and departure share a row:
-           the first time set gives the label, a departure after an arrival follows in the value. #}
+        {# One line per icon and value, the values already escaped; the icon carries the label for
+           screen readers and has a fixed width (fa-fw), so the values line up without a grid.
+           Arrival and departure share a row: a departure after an arrival follows in the value. #}
         {% set details = [] %}
-        {% if invoiceNumbers|length > 0 %}{% set details = details|merge([['invoice.number.short'|trans, invoiceNumbers]]) %}{% endif %}
-        {% if phones|length > 0 %}{% set details = details|merge([['customer.phone'|trans, phones]]) %}{% endif %}
-        {% if mobiles|length > 0 %}{% set details = details|merge([['customer.mobilephone'|trans, mobiles]]) %}{% endif %}
-        {% if mails|length > 0 %}{% set details = details|merge([['customer.email'|trans, mails]]) %}{% endif %}
+        {% if invoiceNumbers|length > 0 %}{% set details = details|merge([['fa-file-invoice', 'invoice.number.short'|trans, invoiceNumbers]]) %}{% endif %}
+        {% if phones|length > 0 %}{% set details = details|merge([['fa-phone', 'customer.phone'|trans, phones]]) %}{% endif %}
+        {% if mobiles|length > 0 %}{% set details = details|merge([['fa-mobile-screen-button', 'customer.mobilephone'|trans, mobiles]]) %}{% endif %}
+        {% if mails|length > 0 %}{% set details = details|merge([['fa-envelope', 'customer.email'|trans, mails]]) %}{% endif %}
+        {% set departureIcon = "<i class='fas fa-fw fa-right-from-bracket text-body-secondary' role='img' aria-label='" ~ ('reservation.departureTime'|trans)|e ~ "'></i>" %}
         {% if reservation.arrivalTime %}
             {% set times = reservation.arrivalTime|date('H:i') %}
             {% if reservation.departureTime %}
-                {% set times = times ~ " <span class='text-body-secondary ms-2'>" ~ ('reservation.departureTime'|trans)|e ~ "</span> " ~ reservation.departureTime|date('H:i') %}
+                {% set times = times ~ " <span class='ms-2'>" ~ departureIcon ~ "</span> " ~ reservation.departureTime|date('H:i') %}
             {% endif %}
-            {% set details = details|merge([['reservation.arrivalTime'|trans, times]]) %}
+            {% set details = details|merge([['fa-right-to-bracket', 'reservation.arrivalTime'|trans, times]]) %}
         {% elseif reservation.departureTime %}
-            {% set details = details|merge([['reservation.departureTime'|trans, reservation.departureTime|date('H:i')]]) %}
+            {% set details = details|merge([['fa-right-from-bracket', 'reservation.departureTime'|trans, reservation.departureTime|date('H:i')]]) %}
         {% endif %}
         {% if details is not empty %}
-            {% set popBody = popBody ~ "<div class='reservation-popover-details'>" %}
+            {% set popBody = popBody ~ "<div class='mt-1'>" %}
             {% for detail in details %}
-                {% set popBody = popBody ~ "<span class='text-body-secondary'>" ~ detail[0]|e ~ "</span><span>" ~ detail[1] ~ "</span>" %}
+                {% set popBody = popBody ~ "<div><i class='fas fa-fw " ~ detail[0] ~ " text-body-secondary me-2' role='img' aria-label='" ~ detail[1]|e ~ "'></i>" ~ detail[2] ~ "</div>" %}
             {% endfor %}
             {% set popBody = popBody ~ "</div>" %}
         {% endif %}

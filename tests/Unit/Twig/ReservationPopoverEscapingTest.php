@@ -80,8 +80,8 @@ final class ReservationPopoverEscapingTest extends TestCase
             ['phone' => '', 'mobilePhone' => '', 'email' => ''],
         ])]);
 
-        self::assertStringContainsString("customer.phone</span><span><a href='tel:03511'>0351 1</a></span>", $popoverHtml);
-        self::assertStringContainsString("customer.email</span><span><a href='mailto:max@example.org'>max@example.org</a></span>", $popoverHtml);
+        self::assertStringContainsString("customer.phone'></i><a href='tel:03511'>0351 1</a></div>", $popoverHtml);
+        self::assertStringContainsString("customer.email'></i><a href='mailto:max@example.org'>max@example.org</a></div>", $popoverHtml);
     }
 
     public function testContactValuesSharedByTwoAddressesAppearOnce(): void
@@ -92,7 +92,7 @@ final class ReservationPopoverEscapingTest extends TestCase
         ])]);
 
         self::assertSame(1, substr_count($popoverHtml, "href='tel:03511'"));
-        self::assertStringContainsString("customer.mobilephone</span><span><a href='tel:01702'>0170 2</a>, <a href='tel:01703'>0170 3</a></span>", $popoverHtml);
+        self::assertStringContainsString("customer.mobilephone'></i><a href='tel:01702'>0170 2</a>, <a href='tel:01703'>0170 3</a></div>", $popoverHtml);
         self::assertSame(1, substr_count($popoverHtml, 'mailto:'));
     }
 
@@ -103,7 +103,7 @@ final class ReservationPopoverEscapingTest extends TestCase
             'departureTime' => new \DateTimeImmutable('10:00'),
         ]);
 
-        self::assertStringContainsString("max@example.org</a></span><span class='text-body-secondary'>reservation.departureTime</span><span>10:00</span>", $popoverHtml);
+        self::assertStringContainsString("max@example.org</a></div><div><i class='fas fa-fw fa-right-from-bracket text-body-secondary me-2' role='img' aria-label='reservation.departureTime'></i>10:00</div>", $popoverHtml);
     }
 
     public function testArrivalAndDepartureTimeShareOneRow(): void
@@ -114,7 +114,7 @@ final class ReservationPopoverEscapingTest extends TestCase
         ]);
 
         self::assertStringContainsString(
-            "<span class='text-body-secondary'>reservation.arrivalTime</span><span>17:00 <span class='text-body-secondary ms-2'>reservation.departureTime</span> 10:00</span>",
+            "aria-label='reservation.arrivalTime'></i>17:00 <span class='ms-2'><i class='fas fa-fw fa-right-from-bracket text-body-secondary' role='img' aria-label='reservation.departureTime'></i></span> 10:00</div>",
             $popoverHtml,
         );
     }
