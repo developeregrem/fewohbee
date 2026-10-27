@@ -14,38 +14,42 @@ class InvoiceAppartment
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'bigint')]
-    private $id;
+    private int|string|null $id = null;
     #[ORM\Column(type: 'string', length: 10)]
     #[Assert\NotBlank]
-    private $number;
+    private ?string $number = null;
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
-    private $description;
+    private ?string $description = null;
     #[ORM\Column(type: 'smallint')]
+    #[Assert\NotNull]
     #[Assert\Positive]
-    private $beds;
+    private ?int $beds = null;
     #[ORM\Column(type: 'smallint')]
+    #[Assert\NotNull]
     #[Assert\Positive]
-    private $persons;
+    private ?int $persons = null;
     #[ORM\Column(name: 'start_date', type: 'date')]
     #[Assert\NotNull]
-    private $startDate;
+    private ?\DateTime $startDate = null;
     #[ORM\Column(name: 'end_date', type: 'date')]
     #[Assert\NotNull]
-    private $endDate;
+    private ?\DateTime $endDate = null;
+    /** @var int|float|numeric-string|null Keep the assigned representation, including DBAL decimal strings. */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
+    #[Assert\NotNull]
     #[Assert\PositiveOrZero]
-    private $price;
+    private int|float|string|null $price = null;
     /** @var float|numeric-string Keep DBAL strings intact to avoid false updates after hydration. */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\PositiveOrZero]
     private float|string $vat;
     #[ORM\ManyToOne(targetEntity: Invoice::class, inversedBy: 'appartments')]
-    private $invoice;
+    private ?Invoice $invoice = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $includesVat;
+    private ?bool $includesVat = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $isFlatPrice;
+    private ?bool $isFlatPrice = null;
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $isPerRoom;
     #[ORM\ManyToOne(targetEntity: AccountingAccount::class)]
@@ -59,22 +63,22 @@ class InvoiceAppartment
         $this->isPerRoom = true;
     }
 
-    public function getId()
+    public function getId(): int|string|null
     {
         return $this->id;
     }
 
-    public function getNumber()
+    public function getNumber(): ?string
     {
         return $this->number;
     }
 
-    public function getBeds()
+    public function getBeds(): ?int
     {
         return $this->beds;
     }
 
-    public function getPersons()
+    public function getPersons(): ?int
     {
         return $this->persons;
     }
@@ -89,7 +93,8 @@ class InvoiceAppartment
         return $this->endDate;
     }
 
-    public function getPrice()
+    /** @return int|float|numeric-string|null */
+    public function getPrice(): int|float|string|null
     {
         return $this->price;
     }
@@ -99,12 +104,12 @@ class InvoiceAppartment
         return (float) $this->vat;
     }
 
-    public function getInvoice()
+    public function getInvoice(): ?Invoice
     {
         return $this->invoice;
     }
 
-    public function getDescription()
+    public function getDescription(): ?string
     {
         return $this->description;
     }
@@ -138,52 +143,53 @@ class InvoiceAppartment
         return number_format((float) $this->price, 2, ',', '.');
     }
 
-    public function setId($id): void
+    public function setId(int|string $id): void
     {
         $this->id = $id;
     }
 
-    public function setNumber($number): void
+    public function setNumber(?string $number): void
     {
         $this->number = $number;
     }
 
-    public function setBeds($beds): void
+    public function setBeds(?int $beds): void
     {
         $this->beds = $beds;
     }
 
-    public function setPersons($persons): void
+    public function setPersons(?int $persons): void
     {
         $this->persons = $persons;
     }
 
-    public function setStartDate($startDate): void
+    public function setStartDate(?\DateTime $startDate): void
     {
         $this->startDate = $startDate;
     }
 
-    public function setEndDate($endDate): void
+    public function setEndDate(?\DateTime $endDate): void
     {
         $this->endDate = $endDate;
     }
 
-    public function setPrice($price): void
+    /** @param int|float|numeric-string|null $price */
+    public function setPrice(int|float|string|null $price): void
     {
         $this->price = $price;
     }
 
-    public function setVat($vat): void
+    public function setVat(int|float|string|null $vat): void
     {
         $this->vat = (float) $vat;
     }
 
-    public function setInvoice($invoice): void
+    public function setInvoice(?Invoice $invoice): void
     {
         $this->invoice = $invoice;
     }
 
-    public function setDescription($description): void
+    public function setDescription(?string $description): void
     {
         $this->description = $description;
     }

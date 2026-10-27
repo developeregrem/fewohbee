@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\InvoiceAppartment;
+use App\Entity\Reservation;
+use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -14,6 +16,7 @@ use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\NotNull;
 
 class InvoiceApartmentPositionType extends AbstractType
 {
@@ -55,6 +58,8 @@ class InvoiceApartmentPositionType extends AbstractType
             ->add('vat', NumberType::class, [
                 'label' => 'invoice.vat',
                 'scale' => 2,
+                // The entity setter normalizes null to zero; validate the submitted value here.
+                'constraints' => [new NotNull()],
             ])
             ->add('includesVat', CheckboxType::class, [
                 'label' => 'price.includesvat',
@@ -82,7 +87,25 @@ class InvoiceApartmentPositionType extends AbstractType
         $resolver->setRequired(['reservations']);
     }
 
-    private function getChoices($reservations, &$choicesNumber, &$choicesDesc, &$choicesPersons, &$choicesBeds): void
+    /**
+     * Uninitialized output arguments enter as null and are always assigned before returning.
+     *
+     * @param array<Reservation>|Collection<int, Reservation> $reservations
+     * @param array<array-key, string>|null $choicesNumber
+     * @param array<int, int>|null $choicesPersons
+     * @param array<int, int>|null $choicesBeds
+     * @param-out array<array-key, string> $choicesNumber
+     * @param-out string $choicesDesc
+     * @param-out array<int, int> $choicesPersons
+     * @param-out array<int, int> $choicesBeds
+     */
+    private function getChoices(
+        array|Collection $reservations,
+        ?array &$choicesNumber,
+        ?string &$choicesDesc,
+        ?array &$choicesPersons,
+        ?array &$choicesBeds,
+    ): void
     {
         $choicesNumber = [];
         $choicesDesc = '';
@@ -91,7 +114,6 @@ class InvoiceApartmentPositionType extends AbstractType
         $maxBeds = 0;
         $count = count($reservations);
         $i = 0;
-        /* @var $reservation \App\Entity\Reservation */
         foreach ($reservations as $reservation) {
             $number = $reservation->getAppartment()->getNumber();
             $choicesNumber[$number] = $number;
@@ -111,7 +133,8 @@ class InvoiceApartmentPositionType extends AbstractType
         $choicesPersons = $this->makeArray($maxPersons);
     }
 
-    private function makeArray(int $maxNumber)
+    /** @return array<int, int> */
+    private function makeArray(int $maxNumber): array
     {
         $result = [];
         for ($i = 1; $i <= $maxNumber; ++$i) {

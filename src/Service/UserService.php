@@ -22,7 +22,6 @@ use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotCompromisedPassword;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 class UserService
 {
@@ -30,7 +29,6 @@ class UserService
         private readonly ValidatorInterface $validator,
         private readonly UserPasswordHasherInterface $hasher,
         private readonly EntityManagerInterface $em,
-        private readonly TranslatorInterface $translator
     ) {
     }
 
@@ -39,7 +37,7 @@ class UserService
         return $this->hasher->hashPassword($user, $password);
     }
 
-    public function isPasswordValid(string $password, User $user, ?FormInterface $form = null, $pwField = 'password'): bool
+    public function isPasswordValid(string $password, User $user, ?FormInterface $form = null, string $pwField = 'password'): bool
     {
         $success = true;
         // check password during create and when it's not empty during edit

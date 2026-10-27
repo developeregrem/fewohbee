@@ -350,8 +350,8 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
         $status->setContrastColor('#ffffff');
 
         $reservation = new Reservation();
-        $reservation->setStartDate(new \DateTimeImmutable('today'));
-        $reservation->setEndDate(new \DateTimeImmutable('today +3 days'));
+        $reservation->setStartDate(new \DateTime('today'));
+        $reservation->setEndDate(new \DateTime('today +3 days'));
         $reservation->setPersons(2);
         $reservation->setBooker($customer);
         $reservation->setAppartment($appartment);

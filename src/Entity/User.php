@@ -19,28 +19,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     #[ORM\Column(type: 'string', length: 180, unique: true)]
-    private $username;
+    private ?string $username = null;
     /** @var Collection<int, Role> */
     #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: 'users')]
     #[ORM\JoinTable(name: 'user_roles')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
     #[ORM\InverseJoinColumn(name: 'role_id', referencedColumnName: 'id')]
     private Collection $roleEntities;
-    /**
-     * @var string The hashed password
-     */
+    /** The hashed password; null while the account is being created. */
     #[ORM\Column(type: 'string')]
-    private $password;
+    private ?string $password = null;
     #[ORM\Column(type: 'string', length: 45)]
-    private $firstname;
+    private ?string $firstname = null;
     #[ORM\Column(type: 'string', length: 45)]
-    private $lastname;
+    private ?string $lastname = null;
     #[ORM\Column(type: 'string', length: 100)]
-    private $email;
+    private ?string $email = null;
     #[ORM\Column(type: 'string', length: 10, options: ['default' => 'light'])]
-    private $themePreference = 'light';
+    private string $themePreference = 'light';
     /**
      * Last application version whose release notes this user has seen.
      * Null means "never announced" — the notes for the current version are shown once.
@@ -48,9 +46,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 20, nullable: true)]
     private ?string $lastSeenVersion = null;
     #[ORM\Column(type: 'datetime', nullable: true)]
-    private $lastAction;
+    private ?\DateTime $lastAction = null;
     #[ORM\Column(type: 'boolean')]
-    private $active;
+    private ?bool $active = null;
     /**
      * Issuer URL of the identity provider this account is bound to, once the
      * user has signed in via OIDC at least once. Null for accounts that have
@@ -73,12 +71,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->roleEntities = new ArrayCollection();
     }
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function setId($id): self
+    public function setId(int $id): self
     {
         $this->id = $id;
 

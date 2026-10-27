@@ -469,7 +469,8 @@ class InvoiceServiceController extends AbstractController
         // during invoice create process
         if ('new' === $invoiceId) {
             $newInvoicePositionsAppartmentArray = $requestStack->getSession()->get('invoicePositionsAppartments');
-            $invoicePosition = $newInvoicePositionsAppartmentArray[$id];
+            // Form mapping happens before validation; keep the session draft intact until a valid submit.
+            $invoicePosition = clone $newInvoicePositionsAppartmentArray[$id];
 
             $reservations = $is->getInvoiceReservationsInCreation($requestStack);
         } else { // during edit process
@@ -597,8 +598,8 @@ class InvoiceServiceController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             // float values must be converted to string for later calculation steps in calculateSums()
-            $invoicePosition->setPrice(number_format($invoicePosition->getPrice(), 2));
-            $invoicePosition->setVat(number_format($invoicePosition->getVat(), 2));
+            $invoicePosition->setPrice(number_format($invoicePosition->getPrice(), 2, '.', ''));
+            $invoicePosition->setVat(number_format($invoicePosition->getVat(), 2, '.', ''));
 
             return $this->saveMiscPositions([$invoicePosition], $invoiceId, $doctrine, $requestStack, $is);
         }
@@ -666,7 +667,8 @@ class InvoiceServiceController extends AbstractController
         // during invoice create process
         if ('new' === $invoiceId) {
             $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get('invoicePositionsMiscellaneous');
-            $positionMiscellaneous = $newInvoicePositionsMiscellaneousArray[$id];
+            // Form mapping happens before validation; keep the session draft intact until a valid submit.
+            $positionMiscellaneous = clone $newInvoicePositionsMiscellaneousArray[$id];
         } else { // during edit process
             $em = $doctrine->getManager();
             $positionMiscellaneous = $em->getRepository(InvoicePosition::class)->find($id);
@@ -681,8 +683,8 @@ class InvoiceServiceController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             // float values must be converted to string for later calculation steps in calculateSums()
-            $positionMiscellaneous->setPrice(number_format($positionMiscellaneous->getPrice(), 2));
-            $positionMiscellaneous->setVat(number_format($positionMiscellaneous->getVat(), 2));
+            $positionMiscellaneous->setPrice(number_format($positionMiscellaneous->getPrice(), 2, '.', ''));
+            $positionMiscellaneous->setVat(number_format($positionMiscellaneous->getVat(), 2, '.', ''));
 
             // during invoice create process
             if ('new' === $invoiceId) {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -16,23 +17,23 @@ class Correspondence
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    protected $id;
+    protected ?int $id = null;
     #[ORM\Column(type: 'string', length: 100)]
-    protected $name;
+    protected ?string $name = null;
     #[ORM\Column(type: 'text')]
-    protected $text;
+    protected ?string $text = null;
     #[ORM\Column(name: 'created', type: 'datetime')]
-    protected $created;
+    protected ?\DateTime $created = null;
     #[ORM\ManyToOne(targetEntity: Template::class, inversedBy: 'correspondences')]
-    protected $template;
+    protected ?Template $template = null;
     #[ORM\ManyToOne(targetEntity: Reservation::class, inversedBy: 'correspondences')]
-    protected $reservation;
-    /** @var \Doctrine\Common\Collections\Collection<int, Correspondence> */
+    protected ?Reservation $reservation = null;
+    /** @var Collection<int, Correspondence> */
     #[ORM\ManyToMany(targetEntity: Correspondence::class, inversedBy: 'parents')]
-    protected $children;
-    /** @var \Doctrine\Common\Collections\Collection<int, Correspondence> */
+    protected Collection $children;
+    /** @var Collection<int, Correspondence> */
     #[ORM\ManyToMany(targetEntity: Correspondence::class, mappedBy: 'children')]
-    protected $parents;
+    protected Collection $parents;
 
     public function __construct()
     {
@@ -41,186 +42,110 @@ class Correspondence
         $this->parents = new ArrayCollection();
     }
 
-    /**
-     * Get id.
-     *
-     * @return int
-     */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * Set name.
-     *
-     * @param string $name
-     *
-     * @return $this
-     */
-    public function setName($name)
+    /** @return $this */
+    public function setName(string $name): static
     {
         $this->name = $name;
 
         return $this;
     }
 
-    /**
-     * Get name.
-     *
-     * @return string
-     */
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }
 
-    /**
-     * Set text.
-     *
-     * @param string $text
-     *
-     * @return $this
-     */
-    public function setText($text)
+    /** @return $this */
+    public function setText(string $text): static
     {
         $this->text = $text;
 
         return $this;
     }
 
-    /**
-     * Get text.
-     *
-     * @return string
-     */
-    public function getText()
+    public function getText(): ?string
     {
         return $this->text;
     }
 
-    /**
-     * Set created.
-     *
-     * @param \DateTime $created
-     *
-     * @return $this
-     */
-    public function setCreated($created)
+    /** @return $this */
+    public function setCreated(\DateTime $created): static
     {
         $this->created = $created;
 
         return $this;
     }
 
-    /**
-     * Get created.
-     */
     public function getCreated(): \DateTime
     {
         return $this->created;
     }
 
-    /**
-     * Set template.
-     *
-     * @return $this
-     */
-    public function setTemplate(?Template $template = null)
+    /** @return $this */
+    public function setTemplate(?Template $template = null): static
     {
         $this->template = $template;
 
         return $this;
     }
 
-    /**
-     * Get template.
-     *
-     * @return Template
-     */
-    public function getTemplate()
+    public function getTemplate(): ?Template
     {
         return $this->template;
     }
 
-    /**
-     * Set reservation.
-     *
-     * @return $this
-     */
-    public function setReservation(?Reservation $reservation = null)
+    /** @return $this */
+    public function setReservation(?Reservation $reservation = null): static
     {
         $this->reservation = $reservation;
 
         return $this;
     }
 
-    /**
-     * Get reservation.
-     *
-     * @return Reservation
-     */
-    public function getReservation()
+    public function getReservation(): ?Reservation
     {
         return $this->reservation;
     }
 
-    /**
-     * Add child.
-     *
-     * @return $this
-     */
-    public function addChild(Correspondence $child)
+    /** @return $this */
+    public function addChild(Correspondence $child): static
     {
         $this->children[] = $child;
 
         return $this;
     }
 
-    /**
-     * Remove child.
-     */
     public function removeChild(Correspondence $child): void
     {
         $this->children->removeElement($child);
     }
 
-    /**
-     * Get children.
-     *
-     * @return \Doctrine\Common\Collections\Collection<int, Correspondence>
-     */
-    public function getChildren()
+    /** @return Collection<int, Correspondence> */
+    public function getChildren(): Collection
     {
         return $this->children;
     }
 
-    /**
-     * Add parent.
-     *
-     * @return $this
-     */
-    public function addParent(Correspondence $parent)
+    /** @return $this */
+    public function addParent(Correspondence $parent): static
     {
         $this->parents[] = $parent;
 
         return $this;
     }
 
-    /**
-     * Remove parent.
-     */
     public function removeParent(Correspondence $parent): void
     {
         $this->parents->removeElement($parent);
     }
 
-    /**
-     * Get parents.
-     *
-     * @return \Doctrine\Common\Collections\Collection<int, Correspondence>
-     */
-    public function getParents()
+    /** @return Collection<int, Correspondence> */
+    public function getParents(): Collection
     {
         return $this->parents;
     }
