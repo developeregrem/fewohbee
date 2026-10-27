@@ -21,6 +21,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class WorkflowEngineTest extends TestCase
 {
+    /** @param list<array{type: string, config?: array<string, mixed>}> $conditions */
     private function makeWorkflow(
         string $triggerType = 'reservation.created',
         string $actionType = 'send_notification_email',
@@ -39,6 +40,7 @@ final class WorkflowEngineTest extends TestCase
         return $wf;
     }
 
+    /** @param list<Workflow> $workflows */
     private function makeEngine(
         array $workflows,
         WorkflowActionInterface $action,

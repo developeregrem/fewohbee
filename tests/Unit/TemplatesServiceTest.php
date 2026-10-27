@@ -6,6 +6,7 @@ namespace App\Tests\Unit;
 
 use App\Entity\Enum\PaymentMeansCode;
 use App\Entity\Invoice;
+use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Repository\TemplateRepository;
@@ -13,10 +14,12 @@ use App\Service\CustomFontManager;
 use App\Service\MpdfService;
 use App\Service\TemplatePreview\TemplateRenderParamsResolver;
 use App\Service\TemplatesService;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,6 +30,78 @@ use Twig\Loader\ArrayLoader;
 
 final class TemplatesServiceTest extends TestCase
 {
+    /** @param 'array'|'collection'|'generator' $container */
+    #[DataProvider('reservationContainers')]
+    public function testReservationRenderingKeepsIterationOrderAndEscapesValues(string $container): void
+    {
+        $first = new Reservation();
+        $first->setId(7);
+        $first->setRemark('<b>First</b>');
+        $second = new Reservation();
+        $second->setId(9);
+        $second->setRemark('Second');
+        $reservations = [3 => $first, 8 => $second];
+        $input = match ($container) {
+            'array' => $reservations,
+            'collection' => new ArrayCollection($reservations),
+            'generator' => (static function () use ($reservations): \Generator {
+                yield from $reservations;
+            })(),
+        };
+        $template = $this->makeTemplate(
+            5,
+            'Reservations',
+            '{% for item in reservations %}{{ item.id }}:{{ item.remark }};{% endfor %}',
+            'TEMPLATE_RESERVATION_EMAIL',
+        );
+        $service = $this->createServiceWithTemplates([5 => $template]);
+
+        $output = $service->renderTemplateForReservations('5', $input);
+
+        self::assertSame('7:&lt;b&gt;First&lt;/b&gt;;9:Second;', $output);
+    }
+
+    /** @return iterable<string, array{'array'|'collection'|'generator'}> */
+    public static function reservationContainers(): iterable
+    {
+        yield 'sparse array' => ['array'];
+        yield 'sparse collection' => ['collection'];
+        yield 'generator' => ['generator'];
+    }
+
+    #[DataProvider('renderFailures')]
+    public function testFriendlyErrorsKeepTheirCauseAndRestoreStrictVariables(bool $subject, bool $strict, string $text, string $message): void
+    {
+        $twig = new Environment(new ArrayLoader(), ['strict_variables' => $strict]);
+        $service = $this->createService($twig);
+
+        try {
+            if ($subject) {
+                $service->renderSubjectString($text, []);
+            } else {
+                $service->renderTemplateString($text, []);
+            }
+            self::fail('Invalid template content must produce a friendly error.');
+        } catch (\RuntimeException $e) {
+            self::assertSame($message, $e->getMessage());
+            self::assertInstanceOf(\Twig\Error\Error::class, $e->getPrevious());
+        }
+
+        self::assertSame($strict, $twig->isStrictVariables());
+    }
+
+    /** @return iterable<string, array{bool, bool, string, string}> */
+    public static function renderFailures(): iterable
+    {
+        foreach ([false, true] as $subject) {
+            foreach ([false, true] as $strict) {
+                $prefix = ($subject ? 'subject' : 'body').' '.($strict ? 'strict' : 'lenient');
+                yield $prefix.' missing variable' => [$subject, $strict, '[[ missing ]]', 'templates.preview.render.error.variable'];
+                yield $prefix.' syntax error' => [$subject, $strict, '[[ unfinished', 'templates.preview.render.error.syntax'];
+            }
+        }
+    }
+
     public function testRenderTemplateStringReplacesLegacyPseudoTwigSyntax(): void
     {
         $service = $this->createService();
@@ -713,9 +788,9 @@ final class TemplatesServiceTest extends TestCase
         );
     }
 
-    private function createService(): TemplatesService
+    private function createService(?Environment $twig = null): TemplatesService
     {
-        $twig = new Environment(new ArrayLoader());
+        $twig ??= new Environment(new ArrayLoader());
         $translator = $this->createStub(TranslatorInterface::class);
         $translator
             ->method('trans')
@@ -747,7 +822,7 @@ final class TemplatesServiceTest extends TestCase
 
         $repo = $this->createStub(TemplateRepository::class);
         $repo->method('find')
-            ->willReturnCallback(static fn (int $id) => $templates[$id] ?? null);
+            ->willReturnCallback(static fn (int|string $id) => $templates[$id] ?? null);
 
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getRepository')

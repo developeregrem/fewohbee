@@ -87,6 +87,10 @@ final class SendTemplateEmailActionTest extends TestCase
         );
     }
 
+    /**
+     * @param array<string, mixed> $overrides
+     * @return array<string, mixed>
+     */
     private function baseConfig(array $overrides = []): array
     {
         return array_merge([

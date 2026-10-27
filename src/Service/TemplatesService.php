@@ -32,7 +32,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
-use Twig\Error\Error as TwigError;
 
 class TemplatesService
 {
@@ -92,12 +91,8 @@ class TemplatesService
 
     /**
      * Extract form data and return Template object.
-     *
-     * @param string $id
-     *
-     * @return Template
      */
-    public function getEntityFromForm(Request $request, $id = 'new')
+    public function getEntityFromForm(Request $request, int|string $id = 'new'): Template
     {
         $template = new Template();
         if ('new' !== $id) {
@@ -185,12 +180,8 @@ class TemplatesService
 
     /**
      * Delete entity.
-     *
-     * @param int $id
-     *
-     * @return bool
      */
-    public function deleteEntity($id)
+    public function deleteEntity(int|string $id): bool
     {
         $template = $this->em->getRepository(Template::class)->find($id);
 
@@ -200,9 +191,9 @@ class TemplatesService
         return true;
     }
 
-    public function renderTemplateForReservations($templateId, $reservations)
+    /** @param iterable<Reservation> $reservations */
+    public function renderTemplateForReservations(int|string $templateId, iterable $reservations): string
     {
-        /* @var $template \App\Entity\Template */
         $template = $this->em->getRepository(Template::class)->find($templateId);
 
         $templateStr = $this->twig->createTemplate($template->getText());
@@ -214,7 +205,6 @@ class TemplatesService
 
     public function renderTemplate(int $templateId, mixed $param): string
     {
-        /* @var $template Template */
         $template = $this->em->getRepository(Template::class)->find($templateId);
         if (!$template instanceof Template) {
             throw new \InvalidArgumentException($this->translator->trans('templates.notfound'));
@@ -252,7 +242,7 @@ class TemplatesService
             $templateStr = $this->twig->createTemplate($str);
 
             return $templateStr->render($params);
-        } catch (TwigError|\Throwable $e) {
+        } catch (\Throwable $e) {
             throw new \RuntimeException($this->buildFriendlyTemplateErrorMessage($e), 0, $e);
         } finally {
             if (!$wasStrictVariables) {
@@ -301,7 +291,7 @@ class TemplatesService
 
             // Subjects are single-line; collapse any accidental newlines.
             return trim(preg_replace('/\s*\R\s*/', ' ', $templateStr->render($params)));
-        } catch (TwigError|\Throwable $e) {
+        } catch (\Throwable $e) {
             throw new \RuntimeException($this->buildFriendlyTemplateErrorMessage($e), 0, $e);
         } finally {
             if (!$wasStrictVariables) {
@@ -451,6 +441,8 @@ class TemplatesService
 
     /**
      * Build template params by merging custom settings with defaults.
+     *
+     * @param array<string, mixed> $custom
      */
     public function buildTemplateParams(array $custom): string
     {
@@ -552,7 +544,8 @@ class TemplatesService
         return $reservations;
     }
 
-    public function getCorrespondencesForAttachment()
+    /** @return list<Correspondence> */
+    public function getCorrespondencesForAttachment(): array
     {
         $selectedReservationIds = $this->requestStack->getSession()->get(ReservationService::SESSION_SELECTED_RESERVATIONS);
         $correspondences = [];
@@ -567,7 +560,7 @@ class TemplatesService
         return $correspondences;
     }
 
-    public function makeCorespondenceOfInvoice($id, InvoiceService $is, ?string $binaryPayload = null, bool $isEInvoice = false): ?int
+    public function makeCorespondenceOfInvoice(int|string $id, InvoiceService $is, ?string $binaryPayload = null, bool $isEInvoice = false): ?int
     {
         $invoice = $this->em->find(Invoice::class, $id);
         if (!$invoice instanceof Invoice) {
@@ -602,7 +595,8 @@ class TemplatesService
         return $fileId;
     }
 
-    public function addFileAsAttachment($cId, $reservations)
+    /** @param iterable<Reservation> $reservations */
+    public function addFileAsAttachment(int|string|null $cId, iterable $reservations): bool
     {
         $fileIds = [];
 
@@ -621,12 +615,10 @@ class TemplatesService
     /**
      * Builds a mail attachment from a stored file correspondence.
      * Returns null when the record does not exist or is not a file correspondence.
-     *
-     * @param int|string $attachmentId Stored correspondence identifier
+     * An empty attachment group supplies false through reset(); retain its existing lookup behavior.
      */
-    public function getMailAttachment($attachmentId): ?MailAttachment
+    public function getMailAttachment(int|string|false|null $attachmentId): ?MailAttachment
     {
-        /* @var $attachment \App\Entity\Correspondence */
         $attachment = $this->em->getRepository(Correspondence::class)->find($attachmentId);
         if ($attachment instanceof FileCorrespondence) {
             $binaryPayload = $attachment->getBinaryPayload();

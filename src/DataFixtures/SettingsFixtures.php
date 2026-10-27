@@ -34,13 +34,10 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
      */
     public const SAMPLE_INVOICE_NUMBER_PATTERN = 'RE-<year>-<number:4>';
 
-    private $translator;
-
     public function __construct(
-        TranslatorInterface $translator,
+        private readonly TranslatorInterface $translator,
         private readonly AppSettingsService $appSettingsService,
     ) {
-        $this->translator = $translator;
     }
 
     public static function getGroups(): array
@@ -111,7 +108,8 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
         }
     }
 
-    private function createRooms(ObjectManager $manager, $roomCats, Subsidiary $subsidiary): void
+    /** @param list<RoomCategory> $roomCats */
+    private function createRooms(ObjectManager $manager, array $roomCats, Subsidiary $subsidiary): void
     {
         // create 10 room, 5 single, 5 double
         for ($i = 1; $i <= 10; ++$i) {
@@ -131,7 +129,11 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
         }
     }
 
-    private function createPrices(ObjectManager $manager, $roomCats, $origins): void
+    /**
+     * @param list<RoomCategory> $roomCats
+     * @param list<ReservationOrigin> $origins
+     */
+    private function createPrices(ObjectManager $manager, array $roomCats, array $origins): void
     {
         $persons = 1;
         $amount = 30;
