@@ -179,14 +179,31 @@ class IcsOccurrenceReader
         // otherwise synthesizes an end equal to the start for timed events.
         $statesEnd = [] !== $event->select('DTEND') || [] !== $event->select('DURATION');
         $dtStart = $event->select('DTSTART')[0] ?? null;
+        $allDay = !($dtStart instanceof DateTimeProperty && $dtStart->hasTime());
+        $start = $start->setTimezone($zone);
+        $end = $statesEnd ? $iterator->getDtEnd()?->setTimezone($zone) : null;
 
         return new IcsOccurrence(
             uid: $uid,
             summary: (string) ($event->SUMMARY ?? ''),
             description: (string) ($event->DESCRIPTION ?? ''),
-            start: $start->setTimezone($zone),
-            end: $statesEnd ? $iterator->getDtEnd()?->setTimezone($zone) : null,
-            allDay: !($dtStart instanceof DateTimeProperty && $dtStart->hasTime()),
+            start: $start,
+            end: $allDay && null !== $end ? $this->endOfAllDaySpan($start, $end) : $end,
+            allDay: $allDay,
         );
+    }
+
+    /**
+     * Re-anchor an all-day end on local midnight.
+     *
+     * Sabre adds the span as elapsed seconds, so a span crossing a daylight
+     * saving switch ends one hour late in autumn and one hour early (on the
+     * previous day) in spring. Counting whole days keeps the stated date.
+     */
+    private function endOfAllDaySpan(\DateTimeImmutable $start, \DateTimeImmutable $end): \DateTimeImmutable
+    {
+        $days = (int) round(($end->getTimestamp() - $start->getTimestamp()) / 86400);
+
+        return $start->setTime(0, 0)->modify(sprintf('%+d days', $days));
     }
 }
