@@ -23,6 +23,7 @@
         }]) %}
     {% endfor %}
 {% endif %}
+{# over_capacity: %count% picks the plural branch, %max% is the printed number the browser fills in. #}
 <div class="fhb-guests"
      {% if hasCategories %}
          data-pgc-root
@@ -32,7 +33,8 @@
          data-pgc-labels="{{ {
              'noBed': 'online_booking.public.guests.no_bed'|trans,
              'bedsUsed': 'online_booking.public.guests.beds_used'|trans({'%used%': '__USED__', '%max%': '__MAX__'}),
-             'overCapacity': 'online_booking.public.guests.over_capacity'|trans({'%max%': '__MAX__'})
+             'overCapacityOne': 'online_booking.public.guests.over_capacity'|trans({'%count%': 1, '%max%': 1}),
+             'overCapacity': 'online_booking.public.guests.over_capacity'|trans({'%count%': 2, '%max%': '__MAX__'})
          }|json_encode }}"
      {% endif %}>
     <div class="fhb-search-grid">

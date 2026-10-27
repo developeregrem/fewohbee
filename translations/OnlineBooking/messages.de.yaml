@@ -157,7 +157,7 @@ online_booking:
       summary_suffix: "weitere"
       no_bed: "ohne eigenes Bett"
       beds_used: "%used% von %max% Betten belegt"
-      over_capacity: "Diese Unterkunft bietet Platz für bis zu %max% Gäste. Bitte reduziere die Anzahl."
+      over_capacity: "{1}Diese Unterkunft bietet Platz für einen Gast. Bitte reduzieren Sie die Anzahl.|]1,Inf[Diese Unterkunft bietet Platz für bis zu %max% Gäste. Bitte reduzieren Sie die Anzahl."
       adult_required: "Bitte mindestens einen Erwachsenen auswählen."
     check_availability: "Verfügbarkeit prüfen"
     no_matching_rooms: "Für Ihre gewünschten Suchkriterien konnte leider kein passendes Zimmer gefunden werden."
