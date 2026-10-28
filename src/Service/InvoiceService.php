@@ -863,11 +863,12 @@ class InvoiceService
                 }
             }
 
+            $byDay = $reservation->isEventSpace();
             foreach ($surcharges as $a) {
-                $positions[] = $this->makeExtraPersonPosition($a);
+                $positions[] = $this->makeExtraPersonPosition($a, $byDay);
             }
             foreach ($aggregates as $a) {
-                $positions[] = $this->makeApartmentModifierPosition($a);
+                $positions[] = $this->makeApartmentModifierPosition($a, $byDay);
             }
         }
 
@@ -877,15 +878,13 @@ class InvoiceService
     /**
      * @param array{adjustment: GuestAdjustment, category: \App\Entity\GuestCategory, count: int, nights: int, unitDelta: float, vat: float, includesVat: bool, revenueAccount: ?\App\Entity\AccountingAccount} $a
      */
-    private function makeApartmentModifierPosition(array $a): InvoicePosition
+    private function makeApartmentModifierPosition(array $a, bool $byDay): InvoicePosition
     {
         $modifierLabel = $this->describeAdjustment($a['adjustment']);
         $description = $this->translator->trans('invoice.apartment_modifier.position', [
             '%category%' => $a['category']->getName(),
             '%modifier%' => $modifierLabel,
-            '%nights%' => $this->translator->trans('invoice.tourist_tax.position.nights', [
-                '%count%' => $a['nights'],
-            ]),
+            '%nights%' => $this->nightsOrDays($a['nights'], $byDay),
             '%count%' => $this->translator->trans('invoice.tourist_tax.position.persons', [
                 '%count%' => $a['count'],
             ]),
@@ -911,12 +910,12 @@ class InvoiceService
      *
      * @param array{count: int, nights: int, unit: string, vat: float|null, includesVat: bool, revenueAccount: ?\App\Entity\AccountingAccount} $a
      */
-    private function makeExtraPersonPosition(array $a): InvoicePosition
+    private function makeExtraPersonPosition(array $a, bool $byDay): InvoicePosition
     {
         $position = new InvoicePosition();
         $position->setAmount($a['nights'] * $a['count']);
         $position->setDescription($this->translator->trans('invoice.apartment_extra_person.position', [
-            '%nights%' => $this->translator->trans('invoice.tourist_tax.position.nights', ['%count%' => $a['nights']]),
+            '%nights%' => $this->nightsOrDays($a['nights'], $byDay),
             '%count%' => $this->translator->trans('invoice.tourist_tax.position.persons', ['%count%' => $a['count']]),
         ]));
         $position->setPrice($a['unit']);
@@ -928,6 +927,12 @@ class InvoiceService
         $position->setPositionGroup('apartment_modifier');
 
         return $position;
+    }
+
+    /** An event space is booked by the day, accommodation by the night. */
+    private function nightsOrDays(int $count, bool $byDay): string
+    {
+        return $this->translator->trans($byDay ? 'reservation.summary.days' : 'invoice.tourist_tax.position.nights', ['%count%' => $count]);
     }
 
     private function describeAdjustment(GuestAdjustment $adjustment): string
@@ -1235,6 +1240,7 @@ class InvoiceService
         $positionAppartment->setIsFlatPrice($rate->isFlatPrice);
         $positionAppartment->setIsPerRoom($rate->isPerRoom);
         $positionAppartment->setRevenueAccount($price->getRevenueAccount());
+        $positionAppartment->setEventSpace($reservation->isEventSpace());
 
         return $positionAppartment;
     }

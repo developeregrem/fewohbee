@@ -55,6 +55,9 @@ class InvoiceAppartment
     #[ORM\ManyToOne(targetEntity: AccountingAccount::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?AccountingAccount $revenueAccount = null;
+    /** Snapshot: the room was an event space, so the position counts days and ends on its last day. */
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $eventSpace = false;
 
     public function __construct()
     {
@@ -166,6 +169,38 @@ class InvoiceAppartment
     public function setStartDate(?\DateTime $startDate): void
     {
         $this->startDate = $startDate;
+    }
+
+    public function isEventSpace(): bool
+    {
+        return $this->eventSpace;
+    }
+
+    public function setEventSpace(bool $eventSpace): self
+    {
+        $this->eventSpace = $eventSpace;
+
+        return $this;
+    }
+
+    /**
+     * The last day of an event: the stored end is the day after it, like at the reservation.
+     * Never before the start, also for same-day entries. A position without dates has none yet.
+     */
+    public function getLastDay(): ?\DateTime
+    {
+        if (!$this->endDate instanceof \DateTime) {
+            return null;
+        }
+        $lastDay = (clone $this->endDate)->modify('-1 day');
+
+        return $lastDay < $this->startDate ? clone $this->startDate : $lastDay;
+    }
+
+    /** Takes the last day of an event as typed into the position form and stores the day after it. */
+    public function setLastDay(?\DateTime $lastDay): void
+    {
+        $this->endDate = null === $lastDay ? null : (clone $lastDay)->modify('+1 day');
     }
 
     public function setEndDate(?\DateTime $endDate): void

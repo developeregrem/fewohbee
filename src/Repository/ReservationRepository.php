@@ -77,12 +77,15 @@ class ReservationRepository extends ServiceEntityRepository
     private function createTableQueryBuilder(string $statusMode): QueryBuilder
     {
         $qb = $this->createQueryBuilder('u')
-            ->addSelect('booker', 'addr', 'invoice', 'origin', 'calImport', 'rs')
+            ->addSelect('booker', 'addr', 'invoice', 'origin', 'calImport', 'rs', 'tableRoom', 'tableCategory')
             ->leftJoin('u.booker', 'booker')
             ->leftJoin('booker.customerAddresses', 'addr')
             ->leftJoin('u.invoices', 'invoice')
             ->leftJoin('u.reservationOrigin', 'origin')
-            ->leftJoin('u.calendarSyncImport', 'calImport');
+            ->leftJoin('u.calendarSyncImport', 'calImport')
+            // The kind of room decides between nights and days in the popover.
+            ->leftJoin('u.appartment', 'tableRoom')
+            ->leftJoin('tableRoom.roomCategory', 'tableCategory');
 
         $this->applyBlockingStatusFilter($qb, 'u', $statusMode);
         if ('all' === $statusMode) {

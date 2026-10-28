@@ -145,6 +145,10 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         foreach ($blocks as $block) {
             $start = new \DateTimeImmutable($block->getStartDate()->format('Y-m-d').' UTC');
             $end = new \DateTimeImmutable($block->getEndDate()->format('Y-m-d').' UTC');
+            // An event space is shown by the day: the room is free again on the end day.
+            if ($block->getAppartment()->isEventSpace() && $end > $start) {
+                $end = $end->modify('-1 day');
+            }
             if ($day >= $start && $day <= $end) {
                 $result[] = $block;
             }
@@ -401,7 +405,8 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         /* @var $reservation Reservation */
         foreach ($reservations as $reservation) {
             $start = new \DateTimeImmutable($reservation->getStartDate()->format('Y-m-d').' UTC');
-            $end = new \DateTimeImmutable($reservation->getEndDate()->format('Y-m-d').' UTC');
+            // An event ends on its last day, the stored end day after it is free again.
+            $end = new \DateTimeImmutable(($reservation->isEventSpace() ? $reservation->getLastDay() : $reservation->getEndDate())->format('Y-m-d').' UTC');
             // todo store all reservation dates as UTC time
             if ($day >= $start && $day <= $end) {
                 $result[] = $reservation;

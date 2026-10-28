@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Attribute\TemplateIgnore;
 use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\Translation\ContentTranslatable;
 use App\Entity\Translation\ContentTranslationsTrait;
@@ -106,6 +107,8 @@ class RoomCategory implements ContentTranslatable
         return $this;
     }
 
+    /** Templates use isEventSpace(): an enum cannot be printed. */
+    #[TemplateIgnore]
     public function getKind(): RoomCategoryKind
     {
         return $this->kind;

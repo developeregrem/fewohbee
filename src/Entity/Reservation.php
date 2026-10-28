@@ -217,6 +217,23 @@ class Reservation
         return $this->appartment;
     }
 
+    /** True when the booked room is an event space: the reservation then counts days, not nights. */
+    public function isEventSpace(): bool
+    {
+        return true === $this->appartment?->isEventSpace();
+    }
+
+    /**
+     * The last day of an event: the stored end is the day after it, so "Saturday to Saturday"
+     * is stored as Saturday to Sunday. Never before the start, also for same-day entries.
+     */
+    public function getLastDay(): \DateTime
+    {
+        $lastDay = (clone $this->endDate)->modify('-1 day');
+
+        return $lastDay < $this->startDate ? clone $this->startDate : $lastDay;
+    }
+
     public function setId(int|string $id): void
     {
         $this->id = $id;

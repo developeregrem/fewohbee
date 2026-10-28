@@ -262,17 +262,18 @@ class ReservationService
     }
 
     /**
-     * Returns a list of apartments that can be selected (free) for the given period.
+     * Returns a list of apartments that can be selected (free) for the period typed into the admin
+     * form: $end is the departure day, for an event space its last day.
+     *
+     * @param bool|null $eventSpace null for every room, true for event spaces only, false for accommodation only
      *
      * @return list<Appartment>
      *
      * @throws InvalidReservationPeriodException when the period is unsafe to process
      */
-    public function getAvailableApartments(\DateTimeInterface $start, \DateTimeInterface $end, ?Appartment $apartment = null, string $propertyId = 'all'): array
+    public function getAvailableApartments(\DateTimeInterface $start, \DateTimeInterface $end, ?Appartment $apartment = null, string $propertyId = 'all', ?bool $eventSpace = null): array
     {
-        $period = $this->reservationPeriodService->validate($start, $end);
-        $start = $period->start;
-        $end = $period->end;
+        $input = $this->reservationPeriodService->validate($start, $end);
 
         if ($apartment instanceof Appartment) {
             $propertyId = $apartment->getObject()->getId();
@@ -283,25 +284,21 @@ class ReservationService
         } else {
             $appartments = $this->em->getRepository(Appartment::class)->findBy(['object' => $propertyId, 'active' => true]);
         }
-        $availableApartments = [];
-        foreach ($appartments as $ap) {
-            $available = $this->isApartmentAvailable($start, $end, $ap, 0);
-            if ($available) {
-                $availableApartments[] = $ap;
-            }
-        }
-
         $newReservationsInformationArray = $this->requestStack->getSession()->get('reservationInCreation', []);
-
-        // during creation process remove reservation that is already in session
-        if (0 != count($newReservationsInformationArray)) {
-            foreach ($availableApartments as $apartment) {
-                if (!$this->isAppartmentAlreadyBookedInCreationProcess($newReservationsInformationArray, $apartment, $start, $end)) {
-                    $result[] = $apartment;
-                }
+        foreach ($appartments as $ap) {
+            if (null !== $eventSpace && $ap->isEventSpace() !== $eventSpace) {
+                continue;
             }
-        } else {
-            $result = $availableApartments;
+            $period = $this->reservationPeriodService->forRoom($input, $ap);
+            if (!$this->isApartmentAvailable($period->start, $period->end, $ap, 0)) {
+                continue;
+            }
+            // during creation process remove reservation that is already in session
+            if (0 !== count($newReservationsInformationArray)
+                && $this->isAppartmentAlreadyBookedInCreationProcess($newReservationsInformationArray, $ap, $period->start, $period->end)) {
+                continue;
+            }
+            $result[] = $ap;
         }
 
         return $result;
@@ -430,14 +427,10 @@ class ReservationService
     {
         $apartmentId = $request->request->get('aid');
         $status = $request->request->get('status');
-        $period = $this->reservationPeriodService->parse(
+        $input = $this->reservationPeriodService->parse(
             $request->request->getString('from'),
             $request->request->getString('end'),
         );
-        // Keep mutable DateTime instances here for compatibility with the existing
-        // update pipeline; moveReservation() normalizes them before persistence.
-        $start = \DateTime::createFromInterface($period->start);
-        $end = \DateTime::createFromInterface($period->end);
 
         $guestCountsRaw = $request->request->get('guestCounts', '{}');
         $guestCounts = is_string($guestCountsRaw) ? (json_decode($guestCountsRaw, true) ?: []) : [];
@@ -456,6 +449,13 @@ class ReservationService
         if (!$apartment instanceof Appartment || !$reservationStatus instanceof ReservationStatus) {
             return false;
         }
+
+        // "To" is the last day for an event space; a room of the other kind is refused by moveReservation().
+        $period = $this->reservationPeriodService->forRoom($input, $apartment);
+        // Keep mutable DateTime instances here for compatibility with the existing
+        // update pipeline; moveReservation() normalizes them before persistence.
+        $start = \DateTime::createFromInterface($period->start);
+        $end = \DateTime::createFromInterface($period->end);
 
         // Occupancy data is needed for the availability check below. Keep its
         // previous state so a rejected move leaves the managed entity untouched.
@@ -532,6 +532,12 @@ class ReservationService
         $startDate = \DateTime::createFromInterface($period->start);
         $endDate = \DateTime::createFromInterface($period->end);
 
+        // Days and nights are stored alike, so a move to the other kind of room would silently
+        // turn the last day of an event into a departure day or the other way round.
+        if (!$this->isSameKindOfRoom($reservation, $apartment)) {
+            return false;
+        }
+
         if (!$this->availabilityService->isRoomAvailable(
             $apartment,
             $startDate,
@@ -555,6 +561,16 @@ class ReservationService
         }
 
         return true;
+    }
+
+    /**
+     * A reservation stays with its kind of room: an event space only moves to another event space,
+     * accommodation only to accommodation. A reservation without a room yet may go anywhere.
+     */
+    public function isSameKindOfRoom(Reservation $reservation, Appartment $apartment): bool
+    {
+        return !$reservation->getAppartment() instanceof Appartment
+            || $reservation->isEventSpace() === $apartment->isEventSpace();
     }
 
     /**

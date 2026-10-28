@@ -6,9 +6,11 @@ namespace App\Tests\Unit;
 
 use App\Entity\Appartment;
 use App\Entity\Enum\GuestStatisticalGroup;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\GuestCategory;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Entity\RoomCategory;
 use App\Repository\GuestCategoryRepository;
 use App\Service\AvailabilityService;
 use App\Service\InvoiceService;
@@ -73,6 +75,24 @@ final class ReservationMoveTest extends TestCase
         self::assertSame('2026-07-01', $reservation->getStartDate()->format('Y-m-d'));
         self::assertSame('2026-07-04', $reservation->getEndDate()->format('Y-m-d'));
         self::assertSame($originalApartment, $reservation->getAppartment());
+    }
+
+    public function testMoveToTheOtherKindOfRoomIsRefused(): void
+    {
+        $reservation = $this->reservation();
+        $originalApartment = $reservation->getAppartment();
+        $hall = (new Appartment())->setId(22);
+        $hall->setRoomCategory((new RoomCategory())->setName('Saal')->setKind(RoomCategoryKind::EVENT_SPACE));
+
+        // Free in itself: only the kind of room stops the move.
+        $availability = $this->createStub(AvailabilityService::class);
+        $availability->method('isRoomAvailable')->willReturn(true);
+        $service = $this->service($this->createStub(EntityManagerInterface::class), $availability);
+
+        self::assertFalse($service->isSameKindOfRoom($reservation, $hall));
+        self::assertFalse($service->moveReservation($reservation, $hall, new \DateTime('2026-08-10'), new \DateTime('2026-08-13')));
+        self::assertSame($originalApartment, $reservation->getAppartment());
+        self::assertSame('2026-07-01', $reservation->getStartDate()->format('Y-m-d'));
     }
 
     public function testManualUpdateDoesNotFlushPartialChangesWhenMoveIsUnavailable(): void

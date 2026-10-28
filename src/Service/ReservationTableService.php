@@ -82,12 +82,12 @@ class ReservationTableService
                 $occupancyRows = $this->resolveMultipleOccupancy($aptReservations);
                 $first = true;
                 foreach ($occupancyRows as $rowReservations) {
-                    $cells = $this->buildCellsForRow($days, $rowReservations, $startDate, $interval, $first ? $aptBlocks : []);
+                    $cells = $this->buildCellsForRow($days, $rowReservations, $startDate, $interval, $first ? $aptBlocks : [], $apartment->isEventSpace());
                     $rows[] = new TableRow($apartment, $cells, $apartmentLabel, !$first);
                     $first = false;
                 }
             } else {
-                $cells = $this->buildCellsForRow($days, $aptReservations, $startDate, $interval, $aptBlocks);
+                $cells = $this->buildCellsForRow($days, $aptReservations, $startDate, $interval, $aptBlocks, $apartment->isEventSpace());
                 $rows[] = new TableRow($apartment, $cells, $apartmentLabel);
             }
         }
@@ -227,6 +227,8 @@ class ReservationTableService
      * - Arrival day: right half only
      * - Departure day: left half only
      * - Middle days / single-day: both halves
+     * An event space is booked by the day: its entries fill whole days from the start to the day
+     * before the exclusive end, so an event on Saturday fills the Saturday cell.
      * Consecutive slots with the same reservation are merged into one TableCell.
      *
      * All date comparisons use Y-m-d strings to avoid timezone issues.
@@ -234,10 +236,11 @@ class ReservationTableService
      * @param \DateTimeImmutable[] $days
      * @param Reservation[]        $reservations
      * @param RoomBlock[]          $blocks
+     * @param bool                 $fullDays     true for the row of an event space
      *
      * @return TableCell[]
      */
-    public function buildCellsForRow(array $days, array $reservations, \DateTimeImmutable $periodStart, int $interval, array $blocks = []): array
+    public function buildCellsForRow(array $days, array $reservations, \DateTimeImmutable $periodStart, int $interval, array $blocks = [], bool $fullDays = false): array
     {
         $periodEnd = $periodStart->modify('+'.$interval.' days');
         $numDays = count($days);
@@ -251,7 +254,7 @@ class ReservationTableService
         // so a block starting on a departure day shares the day cell with the reservation.
         foreach (array_merge($reservations, $blocks) as $entry) {
             $entryStartStr = $entry->getStartDate()->format('Y-m-d');
-            $entryEndStr = $entry->getEndDate()->format('Y-m-d');
+            $entryEndStr = $this->shownEndDate($entry, $fullDays);
 
             foreach ($days as $dayIndex => $day) {
                 $dayStr = $day->format('Y-m-d');
@@ -270,7 +273,9 @@ class ReservationTableService
                 $fillLeft = true;
                 $fillRight = true;
 
-                if ($isEntryStartDay && !$isEntryEndDay) {
+                if ($fullDays) {
+                    // Every covered day is a whole day, the shown end included.
+                } elseif ($isEntryStartDay && !$isEntryEndDay) {
                     // Arrival day (multi-day entry): only right half
                     $fillLeft = false;
                 } elseif ($isEntryEndDay && !$isEntryStartDay) {
@@ -317,7 +322,7 @@ class ReservationTableService
 
                 $position = $this->determinePositionFromDates(
                     $entry->getStartDate()->format('Y-m-d'),
-                    $entry->getEndDate()->format('Y-m-d'),
+                    $this->shownEndDate($entry, $fullDays),
                     $periodStart,
                     $periodEnd
                 );
@@ -351,6 +356,21 @@ class ReservationTableService
         }
 
         return $cells;
+    }
+
+    /**
+     * The last day an entry reaches into the row: the exclusive end for half-day rows, the day
+     * before it for whole-day rows, but never before the start.
+     */
+    private function shownEndDate(Reservation|RoomBlock $entry, bool $fullDays): string
+    {
+        $start = $entry->getStartDate()->format('Y-m-d');
+        $end = $entry->getEndDate()->format('Y-m-d');
+        if (!$fullDays || $end <= $start) {
+            return $end;
+        }
+
+        return \DateTimeImmutable::createFromInterface($entry->getEndDate())->modify('-1 day')->format('Y-m-d');
     }
 
     /**

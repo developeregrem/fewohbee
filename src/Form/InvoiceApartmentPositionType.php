@@ -15,6 +15,8 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotNull;
 
@@ -77,6 +79,23 @@ class InvoiceApartmentPositionType extends AbstractType
                 'required' => false,
             ])
         ;
+
+        // An event space holds people, not beds. Like at the reservation, "to" is its last day; the day after is stored.
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, static function (FormEvent $event) use ($choicesBeds): void {
+            $position = $event->getData();
+            if ($position instanceof InvoiceAppartment && $position->isEventSpace()) {
+                $event->getForm()->add('beds', ChoiceType::class, [
+                    'choices' => $choicesBeds,
+                    'label' => 'appartment.bedsmax',
+                ]);
+                $event->getForm()->add('endDate', DateType::class, [
+                    'label' => 'invoice.appartment.position.enddate',
+                    'widget' => 'single_text',
+                    'property_path' => 'lastDay',
+                    'help' => 'reservation.event_space.end_help',
+                ]);
+            }
+        });
     }
 
     public function configureOptions(OptionsResolver $resolver): void

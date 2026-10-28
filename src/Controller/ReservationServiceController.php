@@ -423,6 +423,7 @@ class ReservationServiceController extends AbstractController
 
         return $this->render('Reservations/reservation_form_show_available_appartments.html.twig', [
             'appartments' => $apartments,
+            'period' => $period,
             'reservationStatus' => $reservationStatus,
             'guestCategories' => $guestCategories,
         ]);
@@ -443,12 +444,15 @@ class ReservationServiceController extends AbstractController
             $request->request->getString('from'),
             $request->request->getString('end'),
         );
+        // A booking keeps its kind of room, so only rooms of the same kind are offered.
+        $edited = $em->getRepository(Reservation::class)->find($request->request->getInt('reservation-id'));
 
         $apartments = $rs->getAvailableApartments(
             $period->start,
             $period->end,
             null,
             $request->request->getString('object', 'all'),
+            $edited instanceof Reservation ? $edited->isEventSpace() : null,
         );
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
         $guestCategories = $em->getRepository(GuestCategory::class)->findActiveOrdered();
@@ -463,6 +467,7 @@ class ReservationServiceController extends AbstractController
 
         return $this->render('Reservations/reservation_form_edit_show_available_appartments.html.twig', [
             'appartments' => $apartments,
+            'period' => $period,
             'reservationStatus' => $reservationStatus,
             'guestCategories' => $guestCategories,
             'reservation' => $reservation,
@@ -475,6 +480,7 @@ class ReservationServiceController extends AbstractController
     #[Route('/appartments/add/to/reservation', name: 'reservations.add.appartment.to.reservation', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
     public function addAppartmentToReservationAction(
+        ManagerRegistry $doctrine,
         HttpKernelInterface $kernel,
         RequestStack $requestStack,
         ReservationPeriodService $periodService,
@@ -483,9 +489,12 @@ class ReservationServiceController extends AbstractController
         $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation');
 
         if (null != $request->request->get('appartmentid')) {
-            $period = $periodService->parse(
-                $request->request->getString('from'),
-                $request->request->getString('end'),
+            $period = $periodService->forRoom(
+                $periodService->parse(
+                    $request->request->getString('from'),
+                    $request->request->getString('end'),
+                ),
+                $doctrine->getManager()->getRepository(Appartment::class)->find($request->request->getInt('appartmentid')),
             );
             $reservationObject = new ReservationObject(
                 $request->request->get('appartmentid'),
@@ -562,7 +571,7 @@ class ReservationServiceController extends AbstractController
 
         $hasConflict = false;
         foreach ($apartmentsToAdd as $aptData) {
-            $period = $periodService->parse(
+            $input = $periodService->parse(
                 is_string($aptData['from'] ?? null) ? $aptData['from'] : '',
                 is_string($aptData['end'] ?? null) ? $aptData['end'] : '',
             );
@@ -572,6 +581,8 @@ class ReservationServiceController extends AbstractController
                 $hasConflict = true;
                 continue;
             }
+            // The last selected cell is the departure day, for an event space the last day.
+            $period = $periodService->forRoom($input, $room);
             $isselactable = $rs->isApartmentAvailable($period->start, $period->end, $room, 0);
             if ($isselactable) {
                 $newReservationsInformationArray[] = new ReservationObject(
@@ -1146,7 +1157,9 @@ class ReservationServiceController extends AbstractController
 
         // Reject an oversized move before updateReservation() can mutate the
         // managed entity. isRoomAvailable() repeats this as the source of truth.
-        if ($apartment instanceof Appartment && !$availabilityService->hasCapacity($apartment, $persons)) {
+        if ($apartment instanceof Appartment && !$rs->isSameKindOfRoom($reservation, $apartment)) {
+            $this->addFlash('warning', 'reservation.move.other_kind');
+        } elseif ($apartment instanceof Appartment && !$availabilityService->hasCapacity($apartment, $persons)) {
             $this->addFlash('warning', 'reservation.move.capacity');
         } elseif (!$rs->updateReservation($request, $reservation)) {
             $this->addFlash('warning', 'reservation.flash.update.conflict');
@@ -1191,6 +1204,13 @@ class ReservationServiceController extends AbstractController
                 'success' => false,
                 'message' => $translator->trans('reservation.move.error'),
             ], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!$reservationService->isSameKindOfRoom($reservation, $apartment)) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $translator->trans('reservation.move.other_kind'),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if (!$availabilityService->hasCapacity($apartment, $reservation->getPersons())) {

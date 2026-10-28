@@ -18,7 +18,7 @@
         {# Escape user-controlled values before concatenation. The completed
            block is escaped again for the data attribute; the browser decodes
            that outer layer before Bootstrap treats the value as HTML. #}
-        {% set popBody = reservation.startdate|date('d.m.Y') ~ " - " ~ reservation.enddate|date('d.m.Y') %}
+        {% set popBody = reservation.startdate|date('d.m.Y') ~ " - " ~ (reservation.eventSpace ? reservation.lastDay : reservation.enddate)|date('d.m.Y') %}
         {% set phones = "" %}{% set mails = "" %}{% set mobiles = "" %}{% set invoiceNumbers = "" %}
         {% set businessCompany = null %}
         {% if reservation.booker is defined and reservation.booker is not null %}

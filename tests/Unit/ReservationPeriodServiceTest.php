@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Entity\Appartment;
+use App\Entity\Enum\RoomCategoryKind;
+use App\Entity\RoomCategory;
 use App\Exception\InvalidReservationPeriodException;
 use App\Service\ReservationPeriodService;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +30,27 @@ final class ReservationPeriodServiceTest extends TestCase
         $period = (new ReservationPeriodService())->parse('2026-09-12', '2026-09-12');
 
         self::assertSame(1, $period->nights);
+    }
+
+    public function testReadsToAsTheLastDayOfAnEvent(): void
+    {
+        $service = new ReservationPeriodService();
+
+        $period = $service->forRoom($service->parse('2026-09-12', '2026-09-12'), self::room(RoomCategoryKind::EVENT_SPACE));
+
+        self::assertSame('2026-09-12', $period->start->format('Y-m-d'));
+        self::assertSame('2026-09-13', $period->end->format('Y-m-d'));
+        self::assertSame(1, $period->nights);
+    }
+
+    public function testKeepsToAsTheDepartureDayForAccommodation(): void
+    {
+        $service = new ReservationPeriodService();
+        $input = $service->parse('2026-09-12', '2026-09-14');
+
+        self::assertSame($input, $service->forRoom($input, self::room(RoomCategoryKind::ACCOMMODATION)));
+        self::assertSame($input, $service->forRoom($input, new Appartment()));
+        self::assertSame($input, $service->forRoom($input, null));
     }
 
     public function testRejectsMalformedDate(): void
@@ -61,5 +85,13 @@ final class ReservationPeriodServiceTest extends TestCase
         $this->expectExceptionMessage('reservation.period.too_long');
 
         (new ReservationPeriodService())->parse('2026-09-12', '4026-09-13');
+    }
+
+    private static function room(RoomCategoryKind $kind): Appartment
+    {
+        $room = new Appartment();
+        $room->setRoomCategory((new RoomCategory())->setName('Kategorie')->setKind($kind));
+
+        return $room;
     }
 }

@@ -1,12 +1,13 @@
 {# The booked stays as a reference while filling in a position: on top on phones, beside the form on wider screens #}
+{% import 'Reservations/_macros.html.twig' as reservationMacros %}
 <h2 class="small text-uppercase fw-semibold text-body-secondary mb-2">{{ 'reservation.selected.reservations'|trans }}</h2>
 <ul class="list-group">
     {% for reservation in reservations %}
         <li class="list-group-item">
             <div class="fw-semibold">{{ reservation.appartment.number }} · {{ reservation.appartment.roomCategory ? reservation.appartment.roomCategory.name : reservation.appartment.description }}</div>
             <div class="small text-body-secondary">
-                {{ reservation.startdate|date('d.m.Y') }} – {{ reservation.enddate|date('d.m.Y') }}
-                · {{ 'reservation.summary.nights'|trans({'%count%': get_date_diff_amount(reservation.startdate, reservation.enddate)}) }}
+                {{ reservationMacros.dates(reservation) }}
+                · {{ reservationMacros.length(reservation) }}
                 · {{ 'reservation.summary.persons'|trans({'%count%': reservation.persons}) }}
             </div>
         </li>

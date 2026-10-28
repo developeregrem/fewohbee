@@ -2042,6 +2042,10 @@ export default class extends Controller {
             if (!row || !cell || cell.cellIndex === 0) {
                 return null;
             }
+            // A booking stays with its kind of room: no event space row for a stay and vice versa.
+            if (draggedReservation && row.dataset.eventSpace !== draggedReservation.closest('tr')?.dataset.eventSpace) {
+                return null;
+            }
 
             const dayHeader = dayHeaders.find((header) => {
                 const rect = header.getBoundingClientRect();

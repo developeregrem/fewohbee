@@ -39,6 +39,7 @@ reservation.flash.update.toomuchcustomers: No more guests can be assigned!
 reservation.move.success: Reservation has been moved successfully.
 reservation.move.error: The reservation could not be moved.
 reservation.move.capacity: The selected room does not have enough beds for this reservation.
+reservation.move.other_kind: 'An event space can only be swapped for another event space, accommodation only for accommodation.'
 reservation.move.hint: Drag to a free cell to move this reservation.
 reservation.invoice: Invoice
 reservation.invoices: Invoices
@@ -70,6 +71,7 @@ reservation.select.customer.search.input.placeholder: Surname
 reservation.startdate: From
 reservation.status: Status
 reservation.table.calendarweek: CW
+reservation.table.event_space_days: 'booked by the day'
 reservation.table.reload: Update
 reservation.table.settings.all: all
 reservation.table.settings.country: Country
@@ -211,6 +213,9 @@ reservation.price.rules_applied: 'Adjusted by'
 reservation.price.rules_nights: '{1}1 night|]1,Inf[%count% nights'
 reservation.price.day_price: 'Day price'
 reservation.summary.nights: '{0}0 nights|{1}1 night|]1,Inf[%count% nights'
+reservation.summary.days: '{0}0 days|{1}1 day|]1,Inf[%count% days'
+reservation.event_space.period: '%days% up to and including %date%'
+reservation.event_space.end_help: 'For event spaces, “To” is the last day.'
 reservation.summary.persons: '{0}0 persons|{1}1 person|]1,Inf[%count% persons'
 reservation.summary.call: Call
 reservation.details.stay: Stay

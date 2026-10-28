@@ -5,9 +5,9 @@
             <div class="me-auto text-break">
                 <div class="fw-semibold">{{ position.number }} · {{ position.description }}</div>
                 <div class="small text-body-secondary">
-                    {{ position.startdate|date('d.m.Y') }} – {{ position.enddate|date('d.m.Y') }}
+                    {{ position.startdate|date('d.m.Y') }} – {{ (position.eventSpace ? position.lastDay : position.enddate)|date('d.m.Y') }}
                     · {{ 'reservation.summary.persons'|trans({'%count%': position.persons}) }}
-                    · {{ position.beds }} {{ 'invoice.appartment.position.beds'|trans }}
+                    · {% if position.eventSpace %}{{ 'appartment.bedsmax'|trans }}: {{ position.beds }}{% else %}{{ position.beds }} {{ 'invoice.appartment.position.beds'|trans }}{% endif %}
                     · {{ 'invoice.vat'|trans }} {{ positionMacros.vat(position.vat) }} %
                 </div>
             </div>
