@@ -58,3 +58,9 @@
 {% macro mail_link(address) -%}
     <a href='mailto:{{ address }}'>{{ address }}</a>
 {%- endmacro %}
+
+{# Invoice number opening the invoice in the dialog; reservations_controller intercepts the
+   click (initInvoiceLinkModal) and takes the dialog title from the title attribute. #}
+{% macro invoice_link(invoice) -%}
+    <a href='{{ path('invoices.get.invoice', {'id': invoice.id}) }}' class='js-invoice-link' title='{{ 'reservation.invoice'|trans }} {{ invoice.number }}'>{{ invoice.number }}</a>
+{%- endmacro %}
