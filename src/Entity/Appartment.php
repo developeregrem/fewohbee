@@ -160,6 +160,12 @@ class Appartment implements ContentTranslatable
         return $this;
     }
 
+    /** An event space is booked per day; a room without category is accommodation. */
+    public function isEventSpace(): bool
+    {
+        return true === $this->roomCategory?->isEventSpace();
+    }
+
     public function getCalendarSync(): ?CalendarSync
     {
         return $this->calendarSync;

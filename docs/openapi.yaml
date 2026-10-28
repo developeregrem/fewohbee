@@ -78,7 +78,8 @@ tags:
   - name: Statistics
     description: >-
       Utilization, booking origins and turnover, keyed by ISO months and years rather than
-      localized labels.
+      localized labels. Utilization, booking origins and booking pace cover the accommodation
+      only; event spaces count towards the turnover.
   - name: Meta
     description: The machine-readable description of this API.
 
@@ -864,7 +865,8 @@ paths:
 
         Active rooms, rooms booked by a reservation that blocks the room, rooms blocked
         without such a reservation, and free rooms. A room that is booked and blocked on
-        the same night counts as booked. No reservation data is returned.
+        the same night counts as booked. No reservation data is returned. Without
+        `roomCategoryId` event spaces are left out, as they are booked per day.
       parameters:
         - name: start
           in: query
@@ -877,7 +879,7 @@ paths:
         - $ref: '#/components/parameters/ObjectId'
         - name: roomCategoryId
           in: query
-          description: 'Only rooms of this room category. Default: all.'
+          description: 'Only rooms of this room category. Default: all accommodation (no event spaces).'
           schema: { type: integer }
       responses:
         '200':
@@ -1547,6 +1549,7 @@ components:
           properties:
             id: { type: [integer, 'null'] }
             name: { type: [string, 'null'] }
+            kind: { type: string, enum: [accommodation, event_space] }
         roomCategories:
           type: array
           description: Room categories the price applies to. Empty for a misc price that applies to every room category.
@@ -1555,6 +1558,13 @@ components:
             properties:
               id: { type: [integer, 'null'] }
               name: { type: [string, 'null'] }
+              kind:
+                type: string
+                enum: [accommodation, event_space]
+                description: >-
+                  `event_space` rooms (seminar room, hall) are booked per day: a "night" of such a
+                  booking is a day, and the end date is the day after the last day. A price serves
+                  either kind, never both.
         origins:
           type: array
           items:
@@ -1666,6 +1676,10 @@ components:
           properties:
             id: { type: [integer, 'null'] }
             name: { type: [string, 'null'] }
+            kind:
+              type: string
+              enum: [accommodation, event_space]
+              description: For `event_space` the nights are days and `endDate` is the day after the last day.
         startDate: { type: string, format: date }
         endDate: { type: string, format: date, description: 'Departure date, exclusive.' }
         nightCount: { type: integer }
@@ -1769,6 +1783,7 @@ components:
                 properties:
                   id: { type: [integer, 'null'] }
                   name: { type: [string, 'null'] }
+                  kind: { type: string, enum: [accommodation, event_space] }
               roomCategories:
                 type: array
                 description: Room categories the extra applies to. Empty when it applies to every room category.
@@ -1777,6 +1792,7 @@ components:
                   properties:
                     id: { type: [integer, 'null'] }
                     name: { type: [string, 'null'] }
+                    kind: { type: string, enum: [accommodation, event_space] }
         extrasTotal: { type: number, description: 'Sum of the mandatory extras.' }
         touristTax:
           type: [object, 'null']

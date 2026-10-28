@@ -65,6 +65,7 @@ online_booking:
     selected_subsidiaries: "Ausgewählte Niederlassungen"
     selected_subsidiaries_hint: "Diese Niederlassungen werden in der öffentlichen Onlinebuchung berücksichtigt."
     rooms_mode: "Zimmer"
+    rooms_mode_event_spaces: "Veranstaltungsräume sind noch nicht online buchbar, auch nicht mit „Alle“. Sie fehlen deshalb in der Auswahl."
     selected_rooms: "Ausgewählte Zimmer"
     selected_rooms_hint: "Nur diese Zimmer sind online buchbar. Die Auswahl greift zusätzlich zum Niederlassungsfilter."
     theme_primary: "Buttonfarbe"

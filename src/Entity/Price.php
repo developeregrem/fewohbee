@@ -434,6 +434,27 @@ class Price implements ContentTranslatable
         return $this->roomCategories;
     }
 
+    /**
+     * A price serves either accommodation or event spaces, so that "night" or "day" in its
+     * labels is unambiguous. Without categories a misc price applies to every room.
+     */
+    public function mixesRoomKinds(): bool
+    {
+        $kinds = [];
+        foreach ($this->roomCategories as $category) {
+            $kinds[$category->getKind()->value] = true;
+        }
+
+        return \count($kinds) > 1;
+    }
+
+    /** Charged per day: every assigned category is an event space. */
+    public function isForEventSpaces(): bool
+    {
+        return !$this->roomCategories->isEmpty()
+            && $this->roomCategories->forAll(static fn (int $key, RoomCategory $category): bool => $category->isEventSpace());
+    }
+
     public function addRoomCategory(RoomCategory $roomCategory): self
     {
         if (!$this->roomCategories->contains($roomCategory)) {

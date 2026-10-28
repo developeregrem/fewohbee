@@ -116,10 +116,13 @@ class StatisticsQueryService
         string $objectId,
         ?int $roomCategoryId,
     ): array {
-        $rooms = $this->appartmentRepository->findAllByProperty($objectId);
-        if (null !== $roomCategoryId) {
-            $rooms = array_filter($rooms, static fn (Appartment $room): bool => $room->getRoomCategory()?->getId() === $roomCategoryId);
-        }
+        // Without a category the pace is the accommodation's, like the occupancy.
+        $rooms = array_filter(
+            $this->appartmentRepository->findAllByProperty($objectId),
+            null !== $roomCategoryId
+                ? static fn (Appartment $room): bool => $room->getRoomCategory()?->getId() === $roomCategoryId
+                : static fn (Appartment $room): bool => !$room->isEventSpace(),
+        );
 
         return [
             'rooms' => \count($rooms),
@@ -140,12 +143,12 @@ class StatisticsQueryService
             'lastNight' => $lastNight->format('Y-m-d'),
             'cutOff' => $cutOff->format('Y-m-d'),
             'bookedByCutOff' => $this->countRoomNights(
-                $this->reservationRepository->loadBlockingSpansForPeriod($firstNight, $toExclusive, $objectId, $roomCategoryId, $cutOff->modify('+1 day')),
+                $this->reservationRepository->loadBlockingSpansForPeriod($firstNight, $toExclusive, $objectId, $roomCategoryId, $cutOff->modify('+1 day'), accommodationOnly: null === $roomCategoryId),
                 $firstNight,
                 $toExclusive,
             ),
             'bookedNow' => $this->countRoomNights(
-                $this->reservationRepository->loadBlockingSpansForPeriod($firstNight, $toExclusive, $objectId, $roomCategoryId),
+                $this->reservationRepository->loadBlockingSpansForPeriod($firstNight, $toExclusive, $objectId, $roomCategoryId, accommodationOnly: null === $roomCategoryId),
                 $firstNight,
                 $toExclusive,
             ),

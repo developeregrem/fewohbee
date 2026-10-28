@@ -5,12 +5,16 @@ import { Controller } from '@hotwired/stimulus';
 /**
  * The surcharge for every further person of a room price: it can only be set for a price per
  * night and room, and the form explains it with an example computed from the amounts entered.
+ *
+ * Event spaces are charged per day: as soon as an event-space category is selected, every text
+ * naming the unit (unitText targets with data-night / data-day) switches to days.
  */
 export default class extends Controller {
-    static targets = ['calcType', 'price', 'persons', 'surcharge', 'disabledHint', 'exactHint', 'example'];
+    static targets = ['calcType', 'category', 'price', 'persons', 'surcharge', 'disabledHint', 'exactHint', 'example', 'unitText'];
 
     static values = {
         example: String,
+        exampleDay: String,
     };
 
     connect() {
@@ -18,6 +22,12 @@ export default class extends Controller {
     }
 
     update() {
+        const perDay = this.hasCategoryTarget
+            && Array.from(this.categoryTarget.selectedOptions).some((option) => '1' === option.dataset.eventSpace);
+        this.unitTextTargets.forEach((text) => {
+            text.textContent = perDay ? text.dataset.day : text.dataset.night;
+        });
+
         if (!this.hasSurchargeTarget) {
             return;
         }
@@ -35,7 +45,7 @@ export default class extends Controller {
         this.exampleTarget.classList.toggle('d-none', !showExample);
         if (showExample) {
             // Two more guests than the price includes: the smallest example that shows the multiplication.
-            this.exampleTarget.textContent = this.exampleValue
+            this.exampleTarget.textContent = (perDay ? this.exampleDayValue : this.exampleValue)
                 .replace('__PERSONS__', String(persons + 2))
                 .replace('__BASE__', this.format(base))
                 .replace('__SURCHARGE__', this.format(surcharge))

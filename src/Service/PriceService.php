@@ -354,6 +354,19 @@ class PriceService implements ResetInterface
     }
 
     /**
+     * Validates a price before it is saved. Returns a list of translation keys describing each
+     * error; an empty array means the price is valid.
+     *
+     * @return list<string>
+     */
+    public function validate(Price $price): array
+    {
+        $errors = $price->mixesRoomKinds() ? ['price.flash.mixed_room_kinds'] : [];
+
+        return [...$errors, ...$this->validateComponents($price)];
+    }
+
+    /**
      * Validates a price's package components. Returns a list of translation keys describing
      * each error; an empty array means the price is valid (or is not a package at all).
      *

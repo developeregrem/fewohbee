@@ -7,6 +7,13 @@ category:
   description: 'Verwaltung der Zimmerkategorien'
   min_full_payers: 'Mindestanzahl Vollzahler'
   min_full_payers.help: 'Anzahl Gäste, die immer den vollen Personenpreis zahlen, bevor Preisanpassungen je Gästekategorie (z. B. Kinderrabatte) greifen. Beispiel: 2 → Rabatte greifen erst ab 3 Personen. 0 = keine Mindestanzahl.'
+  kind: Raumart
+  kind.accommodation: Unterkunft
+  kind.accommodation.help: 'Für Zimmer und Ferienwohnungen: wird pro Nacht gebucht und zählt in Auslastung, Übernachtungen und Kurtaxe.'
+  kind.event_space: Veranstaltungsraum
+  kind.event_space.help: 'Für Seminarraum, Festsaal oder Außenfläche: wird pro Tag gebucht, zählt nicht in Auslastung, Übernachtungen und Kurtaxe und ist noch nicht online buchbar. Der Umsatz zählt mit.'
+  kind.has_reservations: 'Für diese Kategorie gibt es schon Reservierungen. Änderst du die Raumart, richten sich Statistik, Kurtaxe und neue Rechnungen danach.'
+  kind.error.mixed_prices: 'Die Raumart lässt sich nicht ändern, solange die Kategorie Preise mit Kategorien der anderen Raumart teilt: %prices%. Ordne diese Preise zuerst getrennt zu.'
   double: Doppelzimmer
   flash:
     create:

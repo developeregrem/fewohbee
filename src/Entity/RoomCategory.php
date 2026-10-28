@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\Translation\ContentTranslatable;
 use App\Entity\Translation\ContentTranslationsTrait;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -35,6 +36,10 @@ class RoomCategory implements ContentTranslatable
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $details = null;
+
+    /** Accommodation (per night) or event space (per day), see RoomCategoryKind. */
+    #[ORM\Column(type: 'string', length: 20, enumType: RoomCategoryKind::class, options: ['default' => 'accommodation'])]
+    private RoomCategoryKind $kind = RoomCategoryKind::ACCOMMODATION;
 
     /** Standardized OTA room type code (e.g. "Double", "Twin", "Suite") — nullable, for future channel manager mapping */
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
@@ -99,6 +104,23 @@ class RoomCategory implements ContentTranslatable
         $this->name = $name;
 
         return $this;
+    }
+
+    public function getKind(): RoomCategoryKind
+    {
+        return $this->kind;
+    }
+
+    public function setKind(RoomCategoryKind $kind): self
+    {
+        $this->kind = $kind;
+
+        return $this;
+    }
+
+    public function isEventSpace(): bool
+    {
+        return RoomCategoryKind::EVENT_SPACE === $this->kind;
     }
 
     public function getMinFullPayers(): int
