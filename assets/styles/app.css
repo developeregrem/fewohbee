@@ -216,6 +216,13 @@ body {
     font-size: 0.9rem;
 }
 
+/* Reservation popover: as wide as its longest line instead of Bootstrap's fixed 276px,
+   so phone numbers and e-mail addresses stay on one line; long remarks still wrap */
+.reservation-bar-popover {
+    --bs-popover-max-width: min(32rem, calc(100vw - 1rem));
+    width: max-content;
+}
+
 .form-switch > .form-check-input {
     margin-top: .25em;
     margin-right: .75em;
