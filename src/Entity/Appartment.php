@@ -39,6 +39,7 @@ class Appartment implements ContentTranslatable
     private Collection $reservations;
     #[ORM\ManyToOne(targetEntity: 'App\Entity\RoomCategory', inversedBy: 'apartments')]
     #[ORM\JoinColumn(nullable: true)]
+    #[Assert\NotNull(message: 'appartment.category.required')]
     private ?RoomCategory $roomCategory = null;
     #[ORM\OneToOne(mappedBy: 'apartment', targetEntity: CalendarSync::class, cascade: ['persist', 'remove'])]
     private CalendarSync $calendarSync;

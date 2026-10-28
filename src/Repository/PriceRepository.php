@@ -287,7 +287,8 @@ class PriceRepository extends ServiceEntityRepository
                 /* select only prices for the given reservation origin */
             ->setParameter('start', $reservation->getStartDate())
             ->setParameter('end', $reservation->getEndDate())
-            ->setParameter('roid', $reservation->getReservationOrigin()->getId());
+            // Legacy reservations can lack an origin; the inner join then matches no prices.
+            ->setParameter('roid', $reservation->getReservationOrigin()?->getId());
 
         return $q;
     }

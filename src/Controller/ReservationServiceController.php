@@ -355,6 +355,10 @@ class ReservationServiceController extends AbstractController
     public function showSelectAppartmentsFormAction(ManagerRegistry $doctrine, RequestStack $requestStack, ReservationService $rs, Request $request)
     {
         $em = $doctrine->getManager();
+        if (0 === $em->getRepository(ReservationOrigin::class)->count([])) {
+            return $this->render('Reservations/reservation_form_missing_origin.html.twig');
+        }
+
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
@@ -761,6 +765,11 @@ class ReservationServiceController extends AbstractController
     public function previewNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $rs, PriceService $ps, TouristTaxService $touristTaxService, Request $request)
     {
         $em = $doctrine->getManager();
+        $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        if ([] === $origins) {
+            return $this->render('Reservations/reservation_form_missing_origin.html.twig');
+        }
+
         $tab = $request->request->get('tab', 'booker');
 
         if (null != $request->request->get('customerid')) {
@@ -794,11 +803,8 @@ class ReservationServiceController extends AbstractController
             $requestStack->getSession()->set('customersInReservation', $customersInReservation);
         }
 
-        $origins = $em->getRepository(ReservationOrigin::class)->findAll();
-        if (count($origins) > 0) {
-            foreach ($reservations as $reservation) {
-                $reservation->setReservationOrigin($origins[0]);
-            }
+        foreach ($reservations as $reservation) {
+            $reservation->setReservationOrigin($origins[0]);
         }
 
         $rs->getMiscPricesInCreation($is, $reservations, $ps, $requestStack);
@@ -881,6 +887,14 @@ class ReservationServiceController extends AbstractController
         $departureTime = $this->createTimeFromRequestValue($departureTimeInput);
 
         if ($csrf->validateCSRFToken($request)) {
+            $originId = filter_var($request->request->get('reservation-origin'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            $origin = false === $originId ? null : $em->getRepository(ReservationOrigin::class)->find($originId);
+            if (null === $origin) {
+                $this->addFlash('warning', 'reservation.flash.origin.required');
+
+                return $this->render('feedback.html.twig', ['error' => true]);
+            }
+
             $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation');
 
             $booker = $em->getRepository(Customer::class)->find($requestStack->getSession()->get('booker'));
@@ -888,8 +902,6 @@ class ReservationServiceController extends AbstractController
             $reservations = $rs->createReservationsFromReservationInformationArray($newReservationsInformationArray, $booker);
 
             $customersInReservation = $requestStack->getSession()->get('customersInReservation');
-
-            $origin = $em->getRepository(ReservationOrigin::class)->find($request->request->get('reservation-origin'));
 
             $pricesInCreation = $requestStack->getSession()->get('reservatioInCreationPrices', []);
             $groupUuid = count($reservations) > 1 ? Uuid::v4() : null;

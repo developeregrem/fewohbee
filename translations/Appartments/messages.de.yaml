@@ -12,6 +12,7 @@ appartment:
   bedsmax: 'max. Personen'
   bedsmin: 'normale Belegung'
   category: Zimmerkategorie
+  category.missing: 'Lege zuerst in den Einstellungen eine Zimmerkategorie an, bevor du ein Zimmer hinzufügst.'
   delete:
     ask: 'Dieses Zimmer wirklich löschen?'
   description: Beschreibung
