@@ -1527,10 +1527,17 @@ components:
         vat: { type: number, description: 'VAT percentage.' }
         includesVat: { type: boolean, description: 'Whether `price` is gross.' }
         isFlatPrice: { type: boolean, description: 'Billed once for the stay.' }
-        isPerRoom: { type: boolean, description: 'Billed per room-night, occupancy-independent.' }
+        isPerRoom: { type: boolean, description: 'Billed per room-night; larger parties only through `extraPersonSurcharge`.' }
         numberOfPersons:
           type: [integer, 'null']
-          description: Occupancy this row is for. Matched exactly — there is no fallback to a lower occupancy.
+          description: >-
+            Occupancy this row is for. Matched exactly, unless the row has an `extraPersonSurcharge`:
+            then it also serves every larger party up to the room's beds.
+        extraPersonSurcharge:
+          type: [number, 'null']
+          description: >-
+            Per-room rows only: added per night for every person beyond `numberOfPersons`. Null when
+            the row applies to exactly `numberOfPersons`. An exact row for the party takes precedence.
         minStay: { type: [integer, 'null'] }
         active: { type: boolean }
         roomCategory:
@@ -1605,6 +1612,8 @@ components:
         pricingModel: { type: string, enum: [per_person_night, per_room_night, flat] }
         unitPrice: { type: number, description: 'The amount of the price row after price rules or a day price; equals baseUnitPrice when neither applies.' }
         baseUnitPrice: { type: number, description: 'The stored amount of the price row.' }
+        includedPersons: { type: [integer, 'null'], description: 'Persons the room price includes when the row charges a surcharge for further persons; null otherwise.' }
+        extraPersonSurcharge: { type: [number, 'null'], description: 'Surcharge per further person and night after price rules or a day price, already part of `perNight`; null without one.' }
         adjustmentPercent: { type: number, description: 'Total change by price rules or a day price in percent; 0 when neither applies.' }
         priceRules:
           type: array

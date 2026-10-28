@@ -38,6 +38,9 @@
         <td class="text-center">
             {% if price.numberOfPersons is not null %}
                 {{ price.numberOfPersons }}
+                {% if price.hasExtraPersonSurcharge %}
+                    <div class="small text-body-secondary text-nowrap">{{ 'price.extra_person_surcharge.short'|trans({'%amount%': price.extraPersonSurcharge|number_format(2, ',', '.') ~ ' ' ~ currency_symbol}) }}</div>
+                {% endif %}
             {% else %}
                 -
             {% endif %}

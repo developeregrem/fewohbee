@@ -1,5 +1,6 @@
 <fieldset id="entry-form-fieldset-{{ price.id }}" {% if price.id != "new" %} disabled {% endif %}>
-    <div class="accordion" id="accordion" data-controller="price-components" data-price-components-price-id-value="{{ price.id }}">
+    <div class="accordion" id="accordion" data-controller="price-components price-occupancy" data-price-components-price-id-value="{{ price.id }}"
+         data-price-occupancy-example-value="{{ 'price.extra_person_surcharge.example'|trans({'%persons%': '__PERSONS__', '%base%': '__BASE__ ' ~ currency_symbol, '%surcharge%': '__SURCHARGE__ ' ~ currency_symbol, '%total%': '__TOTAL__ ' ~ currency_symbol}) }}">
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingOne-{{ price.id }}">
                 <button type="button" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#collapseOne-{{ price.id }}" aria-expanded="true" aria-controls="collapseOne-{{ price.id }}">
@@ -24,7 +25,8 @@
 
                         <div class="col-sm-4">
                             <input type="text" class="form-control" name="price-{{ price.id }}"
-                                   value="{{ price.price|number_format(2, ',', '.') }}" required>
+                                   value="{{ price.price|number_format(2, ',', '.') }}" required
+                                   data-price-occupancy-target="price" data-action="input->price-occupancy#update">
                         </div>
                         <div class="col">
                             <div class="form-check form-switch mt-4">
@@ -101,18 +103,27 @@
                         <div class="col-sm-8">
                             <div class="form-check">
                                 <input type="radio" name="calculation-type-{{ price.id }}" id="calc-per-person-{{ price.id }}"
-                                       class="form-check-input" value="per_person"{% if calcType == 'per_person' %} checked{% endif %}>
+                                       class="form-check-input" value="per_person"{% if calcType == 'per_person' %} checked{% endif %}
+                                       aria-describedby="calc-per-person-help-{{ price.id }}"
+                                       data-price-occupancy-target="calcType" data-action="change->price-occupancy#update">
                                 <label class="form-check-label" for="calc-per-person-{{ price.id }}">{{ 'price.calculation_type.per_person'|trans }}</label>
+                                <div class="form-text mt-0" id="calc-per-person-help-{{ price.id }}">{{ 'price.calculation_type.per_person.help'|trans }}</div>
                             </div>
                             <div class="form-check">
                                 <input type="radio" name="calculation-type-{{ price.id }}" id="calc-per-room-{{ price.id }}"
-                                       class="form-check-input" value="per_room"{% if calcType == 'per_room' %} checked{% endif %}>
+                                       class="form-check-input" value="per_room"{% if calcType == 'per_room' %} checked{% endif %}
+                                       aria-describedby="calc-per-room-help-{{ price.id }}"
+                                       data-price-occupancy-target="calcType" data-action="change->price-occupancy#update">
                                 <label class="form-check-label" for="calc-per-room-{{ price.id }}">{{ 'price.calculation_type.per_room'|trans }}</label>
+                                <div class="form-text mt-0" id="calc-per-room-help-{{ price.id }}">{{ 'price.calculation_type.per_room.help'|trans }}</div>
                             </div>
                             <div class="form-check">
                                 <input type="radio" name="calculation-type-{{ price.id }}" id="calc-flat-{{ price.id }}"
-                                       class="form-check-input" value="flat"{% if calcType == 'flat' %} checked{% endif %}>
+                                       class="form-check-input" value="flat"{% if calcType == 'flat' %} checked{% endif %}
+                                       aria-describedby="calc-flat-help-{{ price.id }}"
+                                       data-price-occupancy-target="calcType" data-action="change->price-occupancy#update">
                                 <label class="form-check-label" for="calc-flat-{{ price.id }}">{{ 'price.calculation_type.flat'|trans }}</label>
+                                <div class="form-text mt-0" id="calc-flat-help-{{ price.id }}">{{ 'price.calculation_type.flat.help'|trans }}</div>
                             </div>
                         </div>
                     </div>
@@ -347,7 +358,26 @@
 
                         <div class="col-sm-8">
                             <input type="text" id="number-of-persons" class="form-control"
-                                   name="number-of-persons-{{ price.id }}" value="{{ price.numberofpersons }}">
+                                   name="number-of-persons-{{ price.id }}" value="{{ price.numberofpersons }}"
+                                   data-price-occupancy-target="persons" data-action="input->price-occupancy#update">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label for="extra-person-surcharge-{{ price.id }}" class="col-sm-4 col-form-label text-sm-end">{{ 'price.extra_person_surcharge'|trans }}</label>
+
+                        <div class="col-sm-8">
+                            <div class="input-group">
+                                <input type="number" min="0" step="0.01" inputmode="decimal" class="form-control"
+                                       id="extra-person-surcharge-{{ price.id }}" name="extra-person-surcharge-{{ price.id }}"
+                                       value="{{ price.extraPersonSurcharge }}" aria-describedby="extra-person-surcharge-unit-{{ price.id }} extra-person-surcharge-help-{{ price.id }}"
+                                       data-price-occupancy-target="surcharge" data-action="input->price-occupancy#update">
+                                <span class="input-group-text" id="extra-person-surcharge-unit-{{ price.id }}">{{ 'price.extra_person_surcharge.unit'|trans({'%currency%': currency_symbol}) }}</span>
+                            </div>
+                            <div class="form-text" id="extra-person-surcharge-help-{{ price.id }}">
+                                <span data-price-occupancy-target="disabledHint">{{ 'price.extra_person_surcharge.disabled'|trans }}</span>
+                                <span data-price-occupancy-target="exactHint" class="d-none">{{ 'price.extra_person_surcharge.exact'|trans }}</span>
+                                <span data-price-occupancy-target="example" class="d-none"></span>
+                            </div>
                         </div>
                     </div>
                     <div class="row">

@@ -81,6 +81,12 @@ class Price implements ContentTranslatable
     private bool $isFlatPrice;
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isPerRoom;
+    /**
+     * Charge per night for every guest beyond numberOfPersons. Set, it widens a per-room price from
+     * exactly numberOfPersons to numberOfPersons up to the room's beds; null keeps the exact match.
+     */
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
+    private ?string $extraPersonSurcharge = null;
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $isDefaultActiveInReservationCreation;
 
@@ -481,6 +487,26 @@ class Price implements ContentTranslatable
         $this->isPerRoom = $isPerRoom;
 
         return $this;
+    }
+
+    public function getExtraPersonSurcharge(): ?string
+    {
+        return $this->extraPersonSurcharge;
+    }
+
+    public function setExtraPersonSurcharge(int|float|string|null $surcharge): self
+    {
+        $this->extraPersonSurcharge = null === $surcharge || '' === $surcharge
+            ? null
+            : number_format((float) $surcharge, 2, '.', '');
+
+        return $this;
+    }
+
+    /** Whether guests beyond numberOfPersons are billed through the surcharge (per-room prices only). */
+    public function hasExtraPersonSurcharge(): bool
+    {
+        return $this->isPerRoom && null !== $this->extraPersonSurcharge;
     }
 
     /** Whether a portal brokers this service along with the stay, see the property. */

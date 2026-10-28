@@ -183,6 +183,10 @@ class PriceRepository extends ServiceEntityRepository
     /**
      * Find apartment prices for a reservation. The Array is already ordered by priority.
      *
+     * A price matches the exact number of persons, or - with a surcharge for every further person -
+     * any larger party. Within the same season and minimum stay, the exact price comes first, then
+     * the surcharge price whose base occupancy lies closest below the party.
+     *
      * @return Price[]
      */
     public function findApartmentPrices(Reservation $reservation, int $stays)
@@ -190,12 +194,16 @@ class PriceRepository extends ServiceEntityRepository
         $q = $this->getFindBaseQuery($reservation)
                 /* workaround to have prices with no period at the end of the result list */
             ->addSelect('CASE WHEN p.allPeriods = true THEN 1 ELSE 0 END as HIDDEN start_is_null')
+            ->addSelect('CASE WHEN p.numberOfPersons = :nop THEN 0 ELSE 1 END as HIDDEN surcharge_match')
                 /* select only room type */
             ->andWhere('p.type = 2')
                 /* make sure that all room specific fields match */
-            ->andWhere(':rc MEMBER OF p.roomCategories AND p.numberOfPersons = :nop AND p.minStay <= :ms')
+            ->andWhere(':rc MEMBER OF p.roomCategories AND p.minStay <= :ms')
+            ->andWhere('p.numberOfPersons = :nop OR (p.isPerRoom = true AND p.extraPersonSurcharge IS NOT NULL AND p.numberOfPersons < :nop)')
             ->addOrderBy('start_is_null', \SortDirection::Ascending)
             ->addOrderBy('p.minStay', \SortDirection::Descending)
+            ->addOrderBy('surcharge_match', \SortDirection::Ascending)
+            ->addOrderBy('p.numberOfPersons', \SortDirection::Descending)
             ->setParameter('rc', $reservation->getAppartment()->getRoomCategory())
             ->setParameter('nop', $reservation->getPersons())
             ->setParameter('ms', $stays);

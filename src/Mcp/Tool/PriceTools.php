@@ -104,7 +104,7 @@ final class PriceTools
     #[McpTool(
         name: 'get_rate_calendar',
         title: 'Rate calendar',
-        description: 'Which room price applies per night and occupancy for a room category (at most 366 nights): the price list (baseUnitPrice), changed by price rules (priceRules, adjustmentPercent) or replaced by a day price (dayPrice), held within the limits (limited). Price rules and day prices can differ per branch, so pass objectId or apartmentId. Consecutive nights with identical rates are merged into one period; a period without rates cannot be priced. The rate depends on the intended stay length because of minimum stay rules, so pass nights for longer stays. For the total of a concrete stay use get_price_quote.',
+        description: 'Which room price applies per night and occupancy for a room category (at most 366 nights): the price list (baseUnitPrice), changed by price rules (priceRules, adjustmentPercent) or replaced by a day price (dayPrice), held within the limits (limited). A per-room price with extraPersonSurcharge also serves larger parties: every person beyond includedPersons adds the surcharge to perNight. Price rules and day prices can differ per branch, so pass objectId or apartmentId. Consecutive nights with identical rates are merged into one period; a period without rates cannot be priced. The rate depends on the intended stay length because of minimum stay rules, so pass nights for longer stays. For the total of a concrete stay use get_price_quote.',
         annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
     )]
     #[McpRequiresScope(ApiScope::PRICES_READ)]
@@ -143,7 +143,8 @@ final class PriceTools
 
         [$roomCategory, $sampleRoom] = $this->resolveRoomCategory($roomCategoryId, $apartmentId, $objectId);
         $origin = McpInput::guard(fn (): ReservationOrigin => $this->stayParameterResolver->resolveOrigin($originId));
-        // numberOfPersons is matched exactly, so only occupancies with a price are worth asking for.
+        // numberOfPersons is matched exactly (larger parties only through a surcharge), so the occupancies
+        // with a price of their own are the ones worth listing by default.
         $occupancies = null !== $occupancy ? [$occupancy] : $this->priceRepository->findOccupanciesForRoomCategory($roomCategory);
 
         $calendar = $this->rateCalendarService->build($sampleRoom, $firstNight, $lastNight, $nights, $occupancies, $origin);

@@ -73,11 +73,20 @@ price.calculation_type.label: Berechnungsart
 price.calculation_type.flat: 'Pauschalpreis (pro Buchung)'
 price.calculation_type.per_person: 'Pro Nacht, pro Person'
 price.calculation_type.per_room: 'Pro Nacht, pro Zimmer'
+price.calculation_type.per_person.help: 'Jede Person zahlt diesen Preis. Anpassungen je Gastkategorie (z. B. für Kinder) wirken hier.'
+price.calculation_type.per_room.help: 'Das Zimmer kostet diesen Preis, egal wie viele Personen darin übernachten. Optional mit Aufschlag je weitere Person.'
+price.calculation_type.flat.help: 'Ein fester Betrag pro Buchung, unabhängig von Nächten und Personen.'
 price.minstay: 'Preis gültig ab … Nächten'
 price.miscellaneous: 'Sonstiger Preis'
 price.monday: Montag
 price.numberofbeds: 'Anzahl der Betten'
 price.numberofpersons: 'Anzahl der Personen'
+price.extra_person_surcharge: 'Aufschlag je weitere Person'
+price.extra_person_surcharge.disabled: 'Nur bei Berechnungsart „Pro Nacht, pro Zimmer“.'
+price.extra_person_surcharge.exact: 'Betrag, der für jede Person über der Personenzahl hinzukommt. Leer lassen, wenn der Preis nur für genau diese Personenzahl gilt.'
+price.extra_person_surcharge.example: 'Gilt ab dieser Personenzahl bis zur Bettenzahl. Beispiel für %persons% Personen: %base% + 2 × %surcharge% = %total% pro Nacht.'
+price.extra_person_surcharge.short: '+%amount% je weitere Person'
+price.extra_person_surcharge.unit: '%currency% pro Nacht'
 price.origin: 'gültig für Herkunft'
 price.price: Preis
 price.saturday: Samstag

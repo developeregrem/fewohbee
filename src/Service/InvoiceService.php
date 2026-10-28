@@ -769,7 +769,8 @@ class InvoiceService
      *
      * Skips reservations / nights priced per flat-rate or per-room — those
      * have no per-person base rate against which a delta could meaningfully
-     * be computed.
+     * be computed. A per-room night instead emits the surcharge for every
+     * person beyond the ones its price includes, aggregated the same way.
      *
      * @param Reservation[] $reservations
      *
@@ -802,10 +803,27 @@ class InvoiceService
             // across two price rows (weekday/weekend, season change, a promise
             // kept for some nights only) has a different delta per row.
             $aggregates = [];
+            $surcharges = [];
             foreach ($this->ps->getPriceBreakdownForReservation($reservation) as $breakdown) {
                 $base = $breakdown->basePrice;
                 $rate = $breakdown->rate;
-                if (null === $base || null === $rate || $rate->isFlatPrice || $rate->isPerRoom) {
+                if (null === $base || null === $rate) {
+                    continue;
+                }
+                $extraPersons = $rate->isPerRoom && null !== $rate->extraPersonSurcharge ? $rate->extraPersons($reservation->getPersons()) : 0;
+                if ($extraPersons > 0) {
+                    $key = implode(':', [$rate->extraPersonSurcharge, $extraPersons, $rate->includesVat ? 'g' : 'n', $base->getId()]);
+                    $surcharges[$key] ??= [
+                        'count' => $extraPersons,
+                        'nights' => 0,
+                        'unit' => (string) $rate->extraPersonSurcharge,
+                        'vat' => $base->getVat(),
+                        'includesVat' => $rate->includesVat,
+                        'revenueAccount' => $base->getRevenueAccount(),
+                    ];
+                    ++$surcharges[$key]['nights'];
+                }
+                if ($rate->isFlatPrice || $rate->isPerRoom) {
                     continue;
                 }
                 $basePerHead = (float) $rate->unit;
@@ -845,6 +863,9 @@ class InvoiceService
                 }
             }
 
+            foreach ($surcharges as $a) {
+                $positions[] = $this->makeExtraPersonPosition($a);
+            }
             foreach ($aggregates as $a) {
                 $positions[] = $this->makeApartmentModifierPosition($a);
             }
@@ -874,6 +895,31 @@ class InvoiceService
         $position->setAmount($a['nights'] * $a['count']);
         $position->setDescription($description);
         $position->setPrice(number_format($a['unitDelta'], 2, '.', ''));
+        $position->setVat($a['vat']);
+        $position->setIncludesVat($a['includesVat']);
+        $position->setIsFlatPrice(false);
+        $position->setIsPerRoom(false);
+        $position->setRevenueAccount($a['revenueAccount']);
+        $position->setPositionGroup('apartment_modifier');
+
+        return $position;
+    }
+
+    /**
+     * The surcharge for the persons a per-room price does not include. It belongs to the room price
+     * like the guest category adjustments, so it shares their position group.
+     *
+     * @param array{count: int, nights: int, unit: string, vat: float|null, includesVat: bool, revenueAccount: ?\App\Entity\AccountingAccount} $a
+     */
+    private function makeExtraPersonPosition(array $a): InvoicePosition
+    {
+        $position = new InvoicePosition();
+        $position->setAmount($a['nights'] * $a['count']);
+        $position->setDescription($this->translator->trans('invoice.apartment_extra_person.position', [
+            '%nights%' => $this->translator->trans('invoice.tourist_tax.position.nights', ['%count%' => $a['nights']]),
+            '%count%' => $this->translator->trans('invoice.tourist_tax.position.persons', ['%count%' => $a['count']]),
+        ]));
+        $position->setPrice($a['unit']);
         $position->setVat($a['vat']);
         $position->setIncludesVat($a['includesVat']);
         $position->setIsFlatPrice(false);

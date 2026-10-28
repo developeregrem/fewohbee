@@ -86,11 +86,20 @@ price.calculation_type.label: Calculation type
 price.calculation_type.flat: Flat price (per booking)
 price.calculation_type.per_person: Per night, per person
 price.calculation_type.per_room: Per night, per room
+price.calculation_type.per_person.help: 'Every guest pays this price. Guest category adjustments (e.g. for children) apply here.'
+price.calculation_type.per_room.help: 'The room costs this price, however many guests stay in it. Optionally with a surcharge per additional person.'
+price.calculation_type.flat.help: 'A fixed amount per booking, regardless of nights and guests.'
 price.minstay: Price applies from … nights
 price.miscellaneous: Other price
 price.monday: Monday
 price.numberofbeds: Number of beds
 price.numberofpersons: Number of persons
+price.extra_person_surcharge: 'Surcharge per additional person'
+price.extra_person_surcharge.disabled: 'Only for the calculation type "Per night, per room".'
+price.extra_person_surcharge.exact: 'Amount added for every person above the number of persons. Leave empty if the price applies to exactly this number of persons only.'
+price.extra_person_surcharge.example: 'Applies from this number of persons up to the number of beds. Example for %persons% persons: %base% + 2 × %surcharge% = %total% per night.'
+price.extra_person_surcharge.short: '+%amount% per additional person'
+price.extra_person_surcharge.unit: '%currency% per night'
 price.origin: Origin
 price.price: Price
 price.saturday: Saturday

@@ -180,6 +180,7 @@ invoice.misc.package.hint: This package will be split into multiple lines on sav
 invoice.tourist_tax.heading: Tourist tax
 invoice.apartment_modifier.heading: Surcharges / discounts
 invoice.apartment_modifier.position: '%category% — %modifier% (%nights% × %count%)'
+invoice.apartment_extra_person.position: 'Surcharge per additional person (%nights% × %count%)'
 invoice.apartment_modifier.label.surcharge_absolute: 'Surcharge %value%'
 invoice.apartment_modifier.label.discount_percent: 'Discount %value%%'
 invoice.apartment_modifier.label.flat_rate: 'Flat rate %value%'

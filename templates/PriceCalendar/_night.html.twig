@@ -1,7 +1,7 @@
 {# Offcanvas body for one night of the price calendar: how its price comes about, and the day price form. #}
 {% import 'PriceRules/_macros.html.twig' as ruleText %}
 {% import 'PriceCalendar/_macros.html.twig' as cal %}
-<p class="text-body-secondary small mb-1">{{ category.name }} · {{ subsidiary.name }} · {{ 'price_calendar.persons_count'|trans({'%count%': persons}) }}</p>
+<p class="text-body-secondary small mb-1">{{ category.name }} · {{ subsidiary.name }} · {{ 'price_calendar.persons_count'|trans({'%count%': persons}) }}{% if day.extraPersonSurcharge is not null %} · {{ 'price.extra_person_surcharge.short'|trans({'%amount%': day.extraPersonSurcharge|number_format(2, ',', '.') ~ ' ' ~ currency_symbol}) }}{% endif %}</p>
 <div class="mb-3">{{ cal.occupancy(day) }}</div>
 
 {% if day.price is null %}

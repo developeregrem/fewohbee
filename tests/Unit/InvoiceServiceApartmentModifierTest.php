@@ -130,6 +130,54 @@ final class InvoiceServiceApartmentModifierTest extends TestCase
         self::assertSame([], $service->buildApartmentModifierPositions([$r]));
     }
 
+    public function testPerRoomSurchargeBillsThePersonsBeyondTheIncludedOnes(): void
+    {
+        $base = $this->makePrice('80.00');
+        $base->setIsPerRoom(true);
+        $base->setNumberOfPersons(2);
+        $base->setExtraPersonSurcharge('15');
+
+        $r = new Reservation();
+        $r->setPersons(4);
+        $service = $this->createService($r, [$this->makeBreakdown($base, []), $this->makeBreakdown($base, [])]);
+
+        $positions = $service->buildApartmentModifierPositions([$r]);
+
+        self::assertCount(1, $positions);
+        self::assertSame(4, $positions[0]->getAmount()); // 2 nights × 2 further persons
+        self::assertSame('15.00', (string) $positions[0]->getPrice());
+        self::assertSame('apartment_modifier', $positions[0]->getPositionGroup());
+        self::assertStringStartsWith('invoice.apartment_extra_person.position:', (string) $positions[0]->getDescription());
+    }
+
+    public function testPerRoomSurchargeIsNotChargedWithinTheIncludedPersons(): void
+    {
+        $base = $this->makePrice('80.00');
+        $base->setIsPerRoom(true);
+        $base->setNumberOfPersons(2);
+        $base->setExtraPersonSurcharge('15');
+
+        $r = new Reservation();
+        $r->setPersons(2);
+        $service = $this->createService($r, [$this->makeBreakdown($base, [])]);
+
+        self::assertSame([], $service->buildApartmentModifierPositions([$r]));
+    }
+
+    public function testSurchargeOfAPricePerPersonIsIgnored(): void
+    {
+        // The form clears it, but a row may still carry one: only a per-room price bills further persons.
+        $base = $this->makePrice('40.00');
+        $base->setNumberOfPersons(2);
+        $base->setExtraPersonSurcharge('15');
+
+        $r = new Reservation();
+        $r->setPersons(4);
+        $service = $this->createService($r, [$this->makeBreakdown($base, [])]);
+
+        self::assertSame([], $service->buildApartmentModifierPositions([$r]));
+    }
+
     public function testNonOccupancyCategoryEmitsNoDelta(): void
     {
         // Baby with isCountedInOccupancy=false is excluded from `persons`, so
