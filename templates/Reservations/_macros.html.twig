@@ -60,7 +60,12 @@
 {%- endmacro %}
 
 {# Invoice number opening the invoice in the dialog; reservations_controller intercepts the
-   click (initInvoiceLinkModal) and takes the dialog title from the title attribute. #}
+   click (initPopoverLinkModal) and takes the dialog title from the title attribute. #}
 {% macro invoice_link(invoice) -%}
     <a href='{{ path('invoices.get.invoice', {'id': invoice.id}) }}' class='js-invoice-link' title='{{ 'reservation.invoice'|trans }} {{ invoice.number }}'>{{ invoice.number }}</a>
+{%- endmacro %}
+
+{# Open the existing dialog for arrival time, departure time and remark. #}
+{% macro meta_link(reservation, text) -%}
+    <a href='{{ path('reservations.edit.remark', {'id': reservation.id}) }}' class='js-reservation-meta-link' title='{{ 'nav.reservation.edit'|trans }}'>{{ text|e|nl2br }}</a>
 {%- endmacro %}

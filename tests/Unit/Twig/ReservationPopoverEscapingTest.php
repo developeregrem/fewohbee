@@ -104,6 +104,7 @@ final class ReservationPopoverEscapingTest extends TestCase
         ]);
 
         self::assertStringContainsString("max@example.org</a></div><div><i class='fas fa-fw fa-right-from-bracket text-body-secondary me-2' role='img' aria-label='reservation.departureTime'></i>10:00</div>", $popoverHtml);
+        self::assertStringNotContainsString('js-reservation-meta-link', $popoverHtml);
     }
 
     public function testArrivalAndDepartureTimeShareOneRow(): void
@@ -117,6 +118,81 @@ final class ReservationPopoverEscapingTest extends TestCase
             "aria-label='reservation.arrivalTime'></i>17:00 <span class='ms-2'><i class='fas fa-fw fa-right-from-bracket text-body-secondary' role='img' aria-label='reservation.departureTime'></i></span> 10:00</div>",
             $popoverHtml,
         );
+        self::assertStringNotContainsString('js-reservation-meta-link', $popoverHtml);
+    }
+
+    public function testArrivalAndDepartureTimesLinkToTheStayDetailsWithReservationEditRights(): void
+    {
+        $popoverHtml = $this->renderPopover([
+            'arrivalTime' => new \DateTimeImmutable('17:00'),
+            'departureTime' => new \DateTimeImmutable('10:00'),
+            'remark' => '',
+        ], reservationRights: true);
+
+        foreach (['17:00', '10:00'] as $time) {
+            self::assertStringContainsString(
+                "<a href='/reservation/42/edit/remark' class='js-reservation-meta-link' title='nav.reservation.edit'>".$time.'</a>',
+                $popoverHtml,
+            );
+        }
+        self::assertSame(2, substr_count($popoverHtml, 'js-reservation-meta-link'));
+    }
+
+    public function testArrivalTimeAtMidnightLinksWithoutDepartureTime(): void
+    {
+        $popoverHtml = $this->renderPopover([
+            'arrivalTime' => new \DateTimeImmutable('00:00'),
+            'remark' => '',
+        ], reservationRights: true);
+
+        self::assertStringContainsString(
+            "<a href='/reservation/42/edit/remark' class='js-reservation-meta-link' title='nav.reservation.edit'>00:00</a>",
+            $popoverHtml,
+        );
+        self::assertSame(1, substr_count($popoverHtml, 'js-reservation-meta-link'));
+    }
+
+    public function testDepartureTimeLinksWithoutArrivalTime(): void
+    {
+        $popoverHtml = $this->renderPopover([
+            'departureTime' => new \DateTimeImmutable('10:00'),
+            'remark' => '',
+        ], reservationRights: true);
+
+        self::assertStringContainsString(
+            "<a href='/reservation/42/edit/remark' class='js-reservation-meta-link' title='nav.reservation.edit'>10:00</a>",
+            $popoverHtml,
+        );
+        self::assertSame(1, substr_count($popoverHtml, 'js-reservation-meta-link'));
+    }
+
+    public function testRemarkOpensTheStayDetailsWithReservationEditRights(): void
+    {
+        $popoverHtml = $this->renderPopover(['remark' => "Late arrival\nCall first"], reservationRights: true);
+
+        self::assertStringContainsString(
+            "<a href='/reservation/42/edit/remark' class='js-reservation-meta-link' title='nav.reservation.edit'>Late arrival<br />\nCall first</a>",
+            $popoverHtml,
+        );
+    }
+
+    public function testRemarkStaysPlainTextWithoutReservationEditRights(): void
+    {
+        $popoverHtml = $this->renderPopover(['remark' => "Late arrival\nCall first"]);
+
+        self::assertStringContainsString("Late arrival<br />\nCall first", $popoverHtml);
+        self::assertStringNotContainsString('js-reservation-meta-link', $popoverHtml);
+    }
+
+    public function testRemarkLinkKeepsUserContentEscaped(): void
+    {
+        $popoverHtml = $this->renderPopover([], reservationRights: true);
+
+        self::assertStringContainsString(
+            "title='nav.reservation.edit'>&lt;img src=x onerror=alert(1)&gt;</a>",
+            $popoverHtml,
+        );
+        self::assertStringNotContainsString(self::PAYLOAD, $popoverHtml);
     }
 
     /**
@@ -146,7 +222,7 @@ final class ReservationPopoverEscapingTest extends TestCase
      *
      * @param array<string, mixed> $overrides
      */
-    private function renderPopover(array $overrides, bool $invoiceRights = false): string
+    private function renderPopover(array $overrides, bool $invoiceRights = false, bool $reservationRights = false): string
     {
         $payload = self::PAYLOAD;
         $twig = new Environment(
@@ -157,14 +233,23 @@ final class ReservationPopoverEscapingTest extends TestCase
         // This test drives the template with plain arrays and only asserts
         // escaping, so display_name is stubbed down to the raw name.
         $twig->addFilter(new TwigFilter('display_name', static fn (array $status): string => $status['name']));
-        $twig->addFunction(new TwigFunction('is_granted', static fn (string $role): bool => $invoiceRights && 'ROLE_INVOICES' === $role));
+        $twig->addFunction(new TwigFunction('is_granted', static fn (string $role): bool => match ($role) {
+            'ROLE_INVOICES' => $invoiceRights,
+            'ROLE_RESERVATIONS' => $reservationRights,
+            default => false,
+        }));
         $twig->addFunction(new TwigFunction(
             'path',
-            static fn (string $route, array $parameters): string => 'invoices.get.invoice' === $route ? '/invoices/get/'.$parameters['id'].'/' : '/'.$route,
+            static fn (string $route, array $parameters): string => match ($route) {
+                'invoices.get.invoice' => '/invoices/get/'.$parameters['id'].'/',
+                'reservations.edit.remark' => '/reservation/'.$parameters['id'].'/edit/remark',
+                default => '/'.$route,
+            },
         ));
 
         $rendered = $twig->render('Reservations/_resevation_popover.html.twig', [
             'reservation' => $overrides + [
+                'id' => 42,
                 'booker' => [
                     'salutation' => $payload,
                     'firstname' => $payload,

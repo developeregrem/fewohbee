@@ -70,15 +70,20 @@
         {% if phones|length > 0 %}{% set details = details|merge([['fa-phone', 'customer.phone'|trans, phones]]) %}{% endif %}
         {% if mobiles|length > 0 %}{% set details = details|merge([['fa-mobile-screen-button', 'customer.mobilephone'|trans, mobiles]]) %}{% endif %}
         {% if mails|length > 0 %}{% set details = details|merge([['fa-envelope', 'customer.email'|trans, mails]]) %}{% endif %}
+        {% set canEditReservation = is_granted('ROLE_RESERVATIONS') %}
         {% set departureIcon = "<i class='fas fa-fw fa-right-from-bracket text-body-secondary' role='img' aria-label='" ~ ('reservation.departureTime'|trans)|e ~ "'></i>" %}
         {% if reservation.arrivalTime %}
-            {% set times = reservation.arrivalTime|date('H:i') %}
+            {% set arrivalTime = reservation.arrivalTime|date('H:i') %}
+            {% set times = canEditReservation ? popoverMacros.meta_link(reservation, arrivalTime) : arrivalTime %}
             {% if reservation.departureTime %}
-                {% set times = times ~ " <span class='ms-2'>" ~ departureIcon ~ "</span> " ~ reservation.departureTime|date('H:i') %}
+                {% set departureTime = reservation.departureTime|date('H:i') %}
+                {% set times = times ~ " <span class='ms-2'>" ~ departureIcon ~ "</span> " ~ (canEditReservation ? popoverMacros.meta_link(reservation, departureTime) : departureTime) %}
             {% endif %}
             {% set details = details|merge([['fa-right-to-bracket', 'reservation.arrivalTime'|trans, times]]) %}
         {% elseif reservation.departureTime %}
-            {% set details = details|merge([['fa-right-from-bracket', 'reservation.departureTime'|trans, reservation.departureTime|date('H:i')]]) %}
+            {% set departureTime = reservation.departureTime|date('H:i') %}
+            {% set times = canEditReservation ? popoverMacros.meta_link(reservation, departureTime) : departureTime %}
+            {% set details = details|merge([['fa-right-from-bracket', 'reservation.departureTime'|trans, times]]) %}
         {% endif %}
         {% if details is not empty %}
             {% set popBody = popBody ~ "<div class='mt-1'>" %}
@@ -87,7 +92,10 @@
             {% endfor %}
             {% set popBody = popBody ~ "</div>" %}
         {% endif %}
-        {% if reservation.remark|length > 0 %}{% set popBody = popBody ~ "<div class='mt-1'>" ~ reservation.remark|e|nl2br ~ "</div>" %}{% endif %}
+        {% if reservation.remark|length > 0 %}
+            {% set remark = canEditReservation ? popoverMacros.meta_link(reservation, reservation.remark) : reservation.remark|e|nl2br %}
+            {% set popBody = popBody ~ "<div class='mt-1'>" ~ remark ~ "</div>" %}
+        {% endif %}
         {% if reservation.calendarSyncImport is defined and reservation.calendarSyncImport is not null %}
             {% set popBody = popBody ~ "<div class='mt-1'><i class='fas fa-cloud-download-alt'></i> " ~ reservation.calendarSyncImport.name|e ~ "</div>" %}
         {% endif %}

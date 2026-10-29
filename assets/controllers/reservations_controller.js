@@ -2188,7 +2188,7 @@ export default class extends Controller {
 
         this.initClickPopoverDismissal();
         this.initCalendarEntryModal();
-        this.initInvoiceLinkModal();
+        this.initPopoverLinkModal();
     }
 
     /**
@@ -2281,20 +2281,20 @@ export default class extends Controller {
         });
     }
 
-    // The invoice numbers in a reservation's popover open the invoice in the
-    // dialog, as the invoice menu of the reservation dialog does. Same plain
-    // click interceptor and live modal lookup as initCalendarEntryModal; the
-    // dialog title comes from the link's title attribute, which the popover
-    // sanitizer keeps. Opening the dialog hides the popover
+    // Invoice numbers, arrival/departure times and remarks in a reservation's
+    // popover open their existing dialogs. Same plain click interceptor and
+    // live modal lookup as initCalendarEntryModal; the dialog title comes from
+    // the link's title attribute, which the popover sanitizer keeps.
+    // Opening the dialog hides the popover
     // (setTablePopoversEnabled).
-    initInvoiceLinkModal() {
-        if (document._invoiceLinkModalBound) {
+    initPopoverLinkModal() {
+        if (document._reservationPopoverLinkModalBound) {
             return;
         }
-        document._invoiceLinkModalBound = true;
+        document._reservationPopoverLinkModalBound = true;
 
         document.addEventListener('click', (event) => {
-            const trigger = event.target.closest('.js-invoice-link');
+            const trigger = event.target.closest('.js-invoice-link, .js-reservation-meta-link');
             if (!trigger) {
                 return;
             }
