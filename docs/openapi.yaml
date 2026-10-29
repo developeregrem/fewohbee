@@ -1334,7 +1334,10 @@ components:
           format: uuid
           description: Groups reservations that were booked together.
         startDate: { type: string, format: date }
-        endDate: { type: string, format: date }
+        endDate:
+          type: string
+          format: date
+          description: Departure date, exclusive. For an event space the day after its last day.
         arrivalTime: { type: [string, 'null'], examples: ['15:00'] }
         departureTime: { type: [string, 'null'], examples: ['10:00'] }
         persons: { type: integer }
@@ -1353,6 +1356,13 @@ components:
             id: { type: [integer, 'null'] }
             number: { type: [string, 'null'] }
             description: { type: [string, 'null'] }
+            kind:
+              type: [string, 'null']
+              enum: [accommodation, event_space, null]
+              description: >-
+                Kind of the room's category; a room without category is accommodation. An
+                `event_space` is booked per day: a "night" is a day and `endDate` is the day after
+                the last day.
         object:
           type: object
           description: The property/branch the room belongs to.
@@ -1454,9 +1464,15 @@ components:
               description: { type: [string, 'null'] }
               startDate: { type: string, format: date }
               endDate: { type: string, format: date }
+              eventSpace:
+                type: boolean
+                description: >-
+                  The room was an event space when the line was created: `endDate` is the day
+                  after the last day and `amount` counts days. False for lines created before
+                  FewohBee 4.14.0.
               beds: { type: integer }
               persons: { type: integer }
-              amount: { type: integer, description: Number of nights charged. }
+              amount: { type: integer, description: Number of nights charged (days for an event space). }
               price: { type: number, format: float }
               vat: { type: number, format: float }
               includesVat: { type: boolean }
@@ -1529,12 +1545,13 @@ components:
         vat: { type: number, description: 'VAT percentage.' }
         includesVat: { type: boolean, description: 'Whether `price` is gross.' }
         isFlatPrice: { type: boolean, description: 'Billed once for the stay.' }
-        isPerRoom: { type: boolean, description: 'Billed per room-night; larger parties only through `extraPersonSurcharge`.' }
+        isPerRoom: { type: boolean, description: 'Billed per room-night; other occupancies only through `extraPersonSurcharge`.' }
         numberOfPersons:
           type: [integer, 'null']
           description: >-
             Occupancy this row is for. Matched exactly, unless the row has an `extraPersonSurcharge`:
-            then it also serves every larger party up to the room's beds.
+            then it serves every party up to the room's beds, the price including up to
+            `numberOfPersons`.
         extraPersonSurcharge:
           type: [number, 'null']
           description: >-

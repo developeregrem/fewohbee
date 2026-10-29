@@ -51,7 +51,7 @@ final class ReservationTools
     #[McpTool(
         name: 'search_reservations',
         title: 'Search reservations',
-        description: 'Finds reservations that touch a date range (at most 180 days), optionally filtered by property, room, status or type. Guest names and remarks are only included when the access token may share guest data.',
+        description: 'Finds reservations that touch a date range (at most 180 days), optionally filtered by property, room, status or type. Guest names and remarks are only included when the access token may share guest data. For a room of kind "event_space" the nights are days and the departure is the day after the last day.',
         annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
     )]
     #[McpRequiresScope(ApiScope::RESERVATIONS_READ)]

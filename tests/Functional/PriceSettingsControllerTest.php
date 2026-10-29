@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** HTTP and persistence coverage for prices bound to several room categories, including the conflict check. */
 final class PriceSettingsControllerTest extends WebTestCase
@@ -355,7 +356,15 @@ final class PriceSettingsControllerTest extends WebTestCase
         $this->postPrice($client, 'surcharge', 2, [$single], overrides: ['extra-person-surcharge-new' => '15,50']);
 
         self::assertResponseIsSuccessful();
-        self::assertSame('15.50', $this->findPrice('surcharge')?->getExtraPersonSurcharge());
+        $price = $this->findPrice('surcharge');
+        self::assertSame('15.50', $price?->getExtraPersonSurcharge());
+
+        // Elsewhere the number of persons is matched exactly, so form and list say "up to".
+        $translator = self::getContainer()->get(TranslatorInterface::class);
+        $form = $client->request('GET', sprintf('/settings/prices/%d/get', $price->getId()));
+        self::assertSame($translator->trans('price.numberofpersons.scope.up_to'), trim($form->filter('#number-of-persons-scope-'.$price->getId())->text()));
+        $list = $client->request('GET', '/settings/prices/');
+        self::assertStringContainsString($translator->trans('price.numberofpersons.up_to_count', ['%count%' => self::PERSONS]), $list->filter('body')->text());
     }
 
     public function testSurchargeIsDroppedForAPricePerPerson(): void
@@ -374,19 +383,38 @@ final class PriceSettingsControllerTest extends WebTestCase
         self::assertNull($price->getExtraPersonSurcharge());
     }
 
-    public function testASurchargePriceServesLargerPartiesUntilAnExactPriceExists(): void
+    public function testASurchargePriceServesEveryPartyUntilAnExactPriceExists(): void
     {
         $client = $this->authenticatedClient();
         [$single] = $this->categoryIds();
         $this->postPrice($client, 'base', 2, [$single], overrides: ['extra-person-surcharge-new' => '15']);
 
         self::assertSame([self::PREFIX.'base'], $this->apartmentPriceDescriptions($single, self::PERSONS + 2));
-        // The price includes its occupancy and serves larger parties only, never smaller ones.
-        self::assertSame([], $this->apartmentPriceDescriptions($single, self::PERSONS - 1));
+        // The base price includes up to its number of persons, so a smaller party pays it as well.
+        self::assertSame([self::PREFIX.'base'], $this->apartmentPriceDescriptions($single, self::PERSONS - 1));
 
         $this->postPrice($client, 'exact', 2, [$single], overrides: ['number-of-persons-new' => (string) (self::PERSONS + 2)]);
+        $this->postPrice($client, 'exact-small', 2, [$single], overrides: ['number-of-persons-new' => (string) (self::PERSONS - 1)]);
 
         self::assertSame([self::PREFIX.'exact', self::PREFIX.'base'], $this->apartmentPriceDescriptions($single, self::PERSONS + 2));
+        self::assertSame([self::PREFIX.'exact-small', self::PREFIX.'base'], $this->apartmentPriceDescriptions($single, self::PERSONS - 1));
+    }
+
+    public function testTheClosestSurchargePriceBelowThePartyComesBeforeOneAbove(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+        $this->postPrice($client, 'small', 2, [$single], overrides: ['extra-person-surcharge-new' => '15']);
+        $this->postPrice($client, 'large', 2, [$single], overrides: [
+            'extra-person-surcharge-new' => '5',
+            'number-of-persons-new' => (string) (self::PERSONS + 4),
+        ]);
+
+        // Between both bases the party exceeds the small one and pays its surcharge.
+        self::assertSame([self::PREFIX.'small', self::PREFIX.'large'], $this->apartmentPriceDescriptions($single, self::PERSONS + 1));
+        self::assertSame([self::PREFIX.'large', self::PREFIX.'small'], $this->apartmentPriceDescriptions($single, self::PERSONS + 5));
+        // Below both bases the closest one applies.
+        self::assertSame([self::PREFIX.'small', self::PREFIX.'large'], $this->apartmentPriceDescriptions($single, self::PERSONS - 1));
     }
 
     protected function tearDown(): void

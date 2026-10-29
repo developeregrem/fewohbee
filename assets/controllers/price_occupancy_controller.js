@@ -10,7 +10,7 @@ import { Controller } from '@hotwired/stimulus';
  * naming the unit (unitText targets with data-night / data-day) switches to days.
  */
 export default class extends Controller {
-    static targets = ['calcType', 'category', 'price', 'persons', 'surcharge', 'disabledHint', 'exactHint', 'example', 'unitText'];
+    static targets = ['calcType', 'category', 'price', 'persons', 'personsScope', 'personsHelp', 'surcharge', 'disabledHint', 'exactHint', 'example', 'unitText'];
 
     static values = {
         example: String,
@@ -40,6 +40,12 @@ export default class extends Controller {
         const base = this.hasPriceTarget ? this.parse(this.priceTarget.value) : null;
         const persons = this.hasPersonsTarget ? parseInt(this.personsTarget.value, 10) : NaN;
         const showExample = perRoom && null !== surcharge && null !== base && persons > 0;
+
+        // With a surcharge the price applies up to its number of persons, otherwise to exactly that number.
+        const upTo = perRoom && null !== surcharge;
+        [...this.personsScopeTargets, ...this.personsHelpTargets].forEach((text) => {
+            text.textContent = upTo ? text.dataset.upTo : text.dataset.exact;
+        });
 
         this.exactHintTarget.classList.toggle('d-none', !perRoom || null !== surcharge);
         this.exampleTarget.classList.toggle('d-none', !showExample);

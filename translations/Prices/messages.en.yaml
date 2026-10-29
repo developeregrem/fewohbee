@@ -100,12 +100,17 @@ price.miscellaneous: Other price
 price.monday: Monday
 price.numberofbeds: Number of beds
 price.numberofpersons: Number of persons
+price.numberofpersons.scope.exact: exactly
+price.numberofpersons.scope.up_to: 'up to'
+price.numberofpersons.help.exact: 'The price only applies when exactly this many persons are booked.'
+price.numberofpersons.help.up_to: 'The price also applies to fewer persons. Above it, the surcharge per additional person is added.'
+price.numberofpersons.up_to_count: 'up to %count%'
 price.extra_person_surcharge: 'Surcharge per additional person'
 price.extra_person_surcharge.disabled: 'Only for the calculation type "Per night, per room".'
 price.extra_person_surcharge.disabled.day: 'Only for the calculation type "Per day, per room".'
 price.extra_person_surcharge.exact: 'Amount added for every person above the number of persons. Leave empty if the price applies to exactly this number of persons only.'
-price.extra_person_surcharge.example: 'Applies from this number of persons up to the number of beds. Example for %persons% persons: %base% + 2 × %surcharge% = %total% per night.'
-price.extra_person_surcharge.example.day: 'Applies from this number of persons up to the maximum number of persons of the room. Example for %persons% persons: %base% + 2 × %surcharge% = %total% per day.'
+price.extra_person_surcharge.example: 'Every further person up to the number of beds costs the surcharge. Example for %persons% persons: %base% + 2 × %surcharge% = %total% per night.'
+price.extra_person_surcharge.example.day: 'Every further person up to the maximum number of persons of the room costs the surcharge. Example for %persons% persons: %base% + 2 × %surcharge% = %total% per day.'
 price.extra_person_surcharge.short: '+%amount% per additional person'
 price.extra_person_surcharge.unit: '%currency% per night'
 price.extra_person_surcharge.unit.day: '%currency% per day'

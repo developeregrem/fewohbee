@@ -34,7 +34,7 @@ reservation.flash.update.success: 'Reservierung wurde erfolgreich bearbeitet.'
 reservation.flash.update.toomuchcustomers: 'Es können nicht mehr Gäste zugewiesen werden!'
 reservation.move.success: 'Reservierung wurde erfolgreich verschoben.'
 reservation.move.error: 'Die Reservierung konnte nicht verschoben werden.'
-reservation.move.capacity: 'Das gewählte Zimmer hat nicht genügend Betten für diese Reservierung.'
+reservation.move.capacity: 'Das gewählte Zimmer ist für die Personenzahl dieser Reservierung zu klein.'
 reservation.move.other_kind: 'Ein Veranstaltungsraum lässt sich nur mit einem anderen Veranstaltungsraum tauschen, eine Unterkunft nur mit einer Unterkunft.'
 reservation.move.hint: 'Auf ein freies Feld ziehen, um diese Reservierung zu verschieben.'
 reservation.invoice: Rechnung

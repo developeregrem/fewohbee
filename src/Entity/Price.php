@@ -83,7 +83,8 @@ class Price implements ContentTranslatable
     private bool $isPerRoom;
     /**
      * Charge per night for every guest beyond numberOfPersons. Set, it widens a per-room price from
-     * exactly numberOfPersons to numberOfPersons up to the room's beds; null keeps the exact match.
+     * exactly numberOfPersons to every party up to the room's beds, the price including up to
+     * numberOfPersons; null keeps the exact match.
      */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
     private ?string $extraPersonSurcharge = null;

@@ -187,6 +187,20 @@ final class InvoiceServiceApartmentModifierTest extends TestCase
         self::assertSame([], $service->buildApartmentModifierPositions([$r]));
     }
 
+    public function testASmallerPartyPaysTheBasePriceWithoutSurcharge(): void
+    {
+        $base = $this->makePrice('500.00');
+        $base->setIsPerRoom(true);
+        $base->setNumberOfPersons(50);
+        $base->setExtraPersonSurcharge('5');
+
+        $r = new Reservation();
+        $r->setPersons(30);
+        $service = $this->createService($r, [$this->makeBreakdown($base, [])]);
+
+        self::assertSame([], $service->buildApartmentModifierPositions([$r]));
+    }
+
     public function testSurchargeOfAPricePerPersonIsIgnored(): void
     {
         // The form clears it, but a row may still carry one: only a per-room price bills further persons.
