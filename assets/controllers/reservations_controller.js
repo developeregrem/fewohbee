@@ -1904,10 +1904,12 @@ export default class extends Controller {
     }
 
     /**
-     * Normal and week view: spreads the free space below the table over the rooms, so a
-     * short room list fills the screen instead of leaving it half empty. Each
-     * room gets the same share; a room split into several lines divides its
-     * share among them. The reservation bars grow along with their row.
+     * Spreads the free space below the table over the visible rooms. Normal
+     * view caps rows at twice their natural height for one or two rooms,
+     * gradually uses more space for three or four, and fills it from five.
+     * Week view always fills the available height.
+     * Each room gets the same share; a room split into several lines divides
+     * its share among them. The reservation bars grow along with their row.
      */
     stretchRoomRows() {
         const table = document.getElementById('reservation-table');
@@ -1930,15 +1932,21 @@ export default class extends Controller {
             - parseFloat(getComputedStyle(table).marginBottom) - 1;
         const rowsPerRoom = new Map();
         rows.forEach((row) => rowsPerRoom.set(row.dataset.appartment, (rowsPerRoom.get(row.dataset.appartment) || 0) + 1));
-        if (!(free > 0) || rowsPerRoom.size === 0) {
+        const roomCount = rowsPerRoom.size;
+        if (!(free > 0) || roomCount === 0) {
             return;
         }
-        const perRoom = free / rowsPerRoom.size;
+        const perRoom = free / roomCount;
+        const fillShare = this.isWeekLayout() ? 1 : Math.min(1, Math.max(0, (roomCount - 2) / 3));
         // Rounded down: fractional heights add up past the container and bring back a scrollbar.
         // The bars grow by the same factor as their row, so they keep their proportions.
         rows.forEach((row) => {
             const height = row.getBoundingClientRect().height;
-            const stretched = Math.floor(height + perRoom / rowsPerRoom.get(row.dataset.appartment));
+            const fillHeight = height + perRoom / rowsPerRoom.get(row.dataset.appartment);
+            const cappedHeight = Math.min(fillHeight, height * 2);
+            const stretched = Math.floor(fillShare === 1
+                ? fillHeight
+                : cappedHeight + (fillHeight - cappedHeight) * fillShare);
             row.style.height = `${stretched}px`;
             if (barHeight) {
                 row.style.setProperty('--week-bar-height', `${Math.floor(barHeight * stretched / height)}px`);

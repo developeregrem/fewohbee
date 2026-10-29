@@ -412,8 +412,8 @@ body.reservations-week-layout #reservation-table {
     width: 100%;
 }
 
-/* Rooms are stretched to fill the screen in the normal and the week view
-   (stretchRoomRows), keep the bars level with the room names */
+/* A few rooms grow moderately in normal view; five or more rooms and week
+   view fill the available height. Keep the bars level with the room names. */
 #reservation-table tbody td {
     vertical-align: middle;
 }
