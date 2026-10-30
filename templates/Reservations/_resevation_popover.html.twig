@@ -18,49 +18,86 @@
         {# Escape user-controlled values before concatenation. The completed
            block is escaped again for the data attribute; the browser decodes
            that outer layer before Bootstrap treats the value as HTML. #}
-        {% set popBody = reservation.startdate|date('d.m.Y') ~ " - " ~ reservation.enddate|date('d.m.Y') %}
+        {% set popBody = reservation.startdate|date('d.m.Y') ~ " - " ~ (reservation.eventSpace ? reservation.lastDay : reservation.enddate)|date('d.m.Y') %}
         {% set phones = "" %}{% set mails = "" %}{% set mobiles = "" %}{% set invoiceNumbers = "" %}
+        {% set phoneList = [] %}{% set mobileList = [] %}{% set mailList = [] %}
         {% set businessCompany = null %}
         {% if reservation.booker is defined and reservation.booker is not null %}
-            {% for address in reservation.booker.customerAddresses %} 
+            {# Collected first, so the separators only go between values and a number or
+               address shared by private and business address appears once #}
+            {% for address in reservation.booker.customerAddresses %}
                 {% if businessCompany is null and address.type == 'CUSTOMER_ADDRESS_TYPE_BUSINESS' and address.company is not empty %}
                     {% set businessCompany = address.company|e %}
                 {% endif %}
-                {% if address.phone|length > 0 %}
-                    {% set phones = phones ~ popoverMacros.tel_link(address.phone) %}
-                    {% if not loop.last %}{% set phones = phones ~ ", " %}{% endif %}
+                {% if address.phone|trim is not empty and address.phone|trim not in phoneList %}
+                    {% set phoneList = phoneList|merge([address.phone|trim]) %}
                 {% endif %}
-                {% if address.mobilePhone|length > 0 %}
-                    {% set mobiles = mobiles ~ popoverMacros.tel_link(address.mobilePhone) %}
-                    {% if not loop.last %}{% set mobiles = mobiles ~ ", " %}{% endif %}
+                {% if address.mobilePhone|trim is not empty and address.mobilePhone|trim not in mobileList %}
+                    {% set mobileList = mobileList|merge([address.mobilePhone|trim]) %}
                 {% endif %}
-                {% if address.email|length > 0 %}
-                    {% set mails = mails ~ popoverMacros.mail_link(address.email) %}
-                    {% if not loop.last %}{% set mails = mails ~ ", " %}{% endif %}
-                {% endif %}                           
+                {% if address.email|trim is not empty and address.email|trim|lower not in mailList|map(mail => mail|lower) %}
+                    {% set mailList = mailList|merge([address.email|trim]) %}
+                {% endif %}
             {% endfor %}
         {% endif %}
+        {% for number in phoneList %}
+            {% set phones = phones ~ popoverMacros.tel_link(number) ~ (loop.last ? "" : ", ") %}
+        {% endfor %}
+        {% for number in mobileList %}
+            {% set mobiles = mobiles ~ popoverMacros.tel_link(number) ~ (loop.last ? "" : ", ") %}
+        {% endfor %}
+        {% for address in mailList %}
+            {% set mails = mails ~ popoverMacros.mail_link(address) ~ (loop.last ? "" : ", ") %}
+        {% endfor %}
         {% for invoice in reservation.invoices %}
-            {% set invoiceNumbers = invoiceNumbers ~ invoice.number|e %}
+            {% set invoiceStatus = enum('App\\Entity\\Enum\\InvoiceStatus').fromStatus(invoice.status) %}
+            {% set invoiceNumbers = invoiceNumbers ~ (is_granted('ROLE_INVOICES') ? popoverMacros.invoice_link(invoice) : invoice.number|e) %}
+            {% if invoiceStatus %}{% set invoiceNumbers = invoiceNumbers ~ " (" ~ (invoiceStatus.labelKey|trans)|e ~ ")" %}{% endif %}
             {% if not loop.last %}{% set invoiceNumbers = invoiceNumbers ~ ", " %}{% endif %}
         {% endfor %}
-        {% set popBody = popBody ~ " <i>(" ~ (reservation.reservationStatus|display_name)|e ~ ")</i>" %}
+        {# With an invoice the popover states the invoice status instead of the reservation status #}
+        {% if invoiceNumbers is empty %}
+            {% set popBody = popBody ~ " <i>(" ~ (reservation.reservationStatus|display_name)|e ~ ")</i>" %}
+        {% endif %}
         {% if businessCompany %}
             {% set popBody = businessCompany ~ "<br />" ~ popBody %}
         {% endif %}
-        {% if invoiceNumbers|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'invoice.number.short'|trans~": " ~ invoiceNumbers %}{% endif %}
-        {% if phones|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.phone'|trans~": " ~ phones %}{% endif %}
-        {% if mobiles|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.mobilephone'|trans~": " ~ mobiles %}{% endif %}
-        {% if mails|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.email'|trans~": " ~ mails %}{% endif %}
+        {# One line per icon and value, the values already escaped; the icon carries the label for
+           screen readers and has a fixed width (fa-fw), so the values line up without a grid.
+           Arrival and departure share a row: a departure after an arrival follows in the value. #}
+        {% set details = [] %}
+        {% if invoiceNumbers|length > 0 %}{% set details = details|merge([['fa-file-invoice', 'invoice.number.short'|trans, invoiceNumbers]]) %}{% endif %}
+        {% if phones|length > 0 %}{% set details = details|merge([['fa-phone', 'customer.phone'|trans, phones]]) %}{% endif %}
+        {% if mobiles|length > 0 %}{% set details = details|merge([['fa-mobile-screen-button', 'customer.mobilephone'|trans, mobiles]]) %}{% endif %}
+        {% if mails|length > 0 %}{% set details = details|merge([['fa-envelope', 'customer.email'|trans, mails]]) %}{% endif %}
+        {% set canEditReservation = is_granted('ROLE_RESERVATIONS') %}
+        {% set departureIcon = "<i class='fas fa-fw fa-right-from-bracket text-body-secondary' role='img' aria-label='" ~ ('reservation.departureTime'|trans)|e ~ "'></i>" %}
         {% if reservation.arrivalTime %}
-            {% set popBody = popBody ~ "<br />" ~ 'reservation.arrivalTime'|trans ~ ": " ~ reservation.arrivalTime|date('H:i') %}
+            {% set arrivalTime = reservation.arrivalTime|date('H:i') %}
+            {% set times = canEditReservation ? popoverMacros.meta_link(reservation, arrivalTime) : arrivalTime %}
+            {% if reservation.departureTime %}
+                {% set departureTime = reservation.departureTime|date('H:i') %}
+                {% set times = times ~ " <span class='ms-2'>" ~ departureIcon ~ "</span> " ~ (canEditReservation ? popoverMacros.meta_link(reservation, departureTime) : departureTime) %}
+            {% endif %}
+            {% set details = details|merge([['fa-right-to-bracket', 'reservation.arrivalTime'|trans, times]]) %}
+        {% elseif reservation.departureTime %}
+            {% set departureTime = reservation.departureTime|date('H:i') %}
+            {% set times = canEditReservation ? popoverMacros.meta_link(reservation, departureTime) : departureTime %}
+            {% set details = details|merge([['fa-right-from-bracket', 'reservation.departureTime'|trans, times]]) %}
         {% endif %}
-        {% if reservation.departureTime %}
-            {% set popBody = popBody ~ " " ~ 'reservation.departureTime'|trans ~ ": " ~ reservation.departureTime|date('H:i') %}
+        {% if details is not empty %}
+            {% set popBody = popBody ~ "<div class='mt-1'>" %}
+            {% for detail in details %}
+                {% set popBody = popBody ~ "<div><i class='fas fa-fw " ~ detail[0] ~ " text-body-secondary me-2' role='img' aria-label='" ~ detail[1]|e ~ "'></i>" ~ detail[2] ~ "</div>" %}
+            {% endfor %}
+            {% set popBody = popBody ~ "</div>" %}
         {% endif %}
-        {% if reservation.remark|length > 0 %}{% set popBody = popBody ~ "<br />" ~ reservation.remark|e|nl2br %}{% endif %}
+        {% if reservation.remark|length > 0 %}
+            {% set remark = canEditReservation ? popoverMacros.meta_link(reservation, reservation.remark) : reservation.remark|e|nl2br %}
+            {% set popBody = popBody ~ "<div class='mt-1'>" ~ remark ~ "</div>" %}
+        {% endif %}
         {% if reservation.calendarSyncImport is defined and reservation.calendarSyncImport is not null %}
-            {% set popBody = popBody ~ "<br /><i class='fas fa-cloud-download-alt'></i> " ~ reservation.calendarSyncImport.name|e %}
+            {% set popBody = popBody ~ "<div class='mt-1'><i class='fas fa-cloud-download-alt'></i> " ~ reservation.calendarSyncImport.name|e ~ "</div>" %}
         {% endif %}
         {{ popBody }}
     {% endif %}

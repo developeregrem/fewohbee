@@ -169,6 +169,7 @@ final class TouristTaxServicePercentTest extends TestCase
         return $tax;
     }
 
+    /** @param array<int, int> $guestCounts */
     private function makeReservation(array $guestCounts, string $start, string $end): Reservation
     {
         $r = new Reservation();

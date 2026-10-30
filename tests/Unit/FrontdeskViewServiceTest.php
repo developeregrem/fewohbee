@@ -55,6 +55,8 @@ final class FrontdeskViewServiceTest extends TestCase
     }
 
     /**
+     * @param list<array{apartment: Appartment, apartmentReservations: list<Reservation>}> $rows
+     *
      * @return array<int, array<string, mixed>>
      */
     private function buildItems(FrontdeskViewService $service, array $rows, string $date): array
@@ -84,6 +86,8 @@ final class FrontdeskViewServiceTest extends TestCase
     }
 
     /**
+     * @param array<int, array<string, mixed>> $items
+     *
      * @return array<int, string>
      */
     private function findCategoriesByReservationId(array $items, int $reservationId): array

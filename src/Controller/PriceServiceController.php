@@ -131,13 +131,14 @@ class PriceServiceController extends AbstractController
 
             // check for mandatory fields
             // apartment prices must name at least one room category, misc prices without one apply to all
-            if (0 == strlen($price->getDescription()) || 0 == strlen($price->getPrice()) || 0 === $price->getVat()
+            // Zero amounts and a 0% VAT rate are valid.
+            if (0 == strlen($price->getDescription()) || 0 == strlen($price->getPrice())
                 || 0 == count($price->getReservationOrigins())
                 || (2 == $price->getType() && $price->getRoomCategories()->isEmpty())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $componentErrors = $ps->validateComponents($price);
+                $componentErrors = $ps->validate($price);
                 if (!empty($componentErrors)) {
                     $error = true;
                     foreach ($componentErrors as $key) {
@@ -185,7 +186,8 @@ class PriceServiceController extends AbstractController
 
             // check for mandatory fields
             // apartment prices must name at least one room category, misc prices without one apply to all
-            if (0 == strlen($price->getDescription()) || 0 == strlen($price->getPrice()) || 0 === $price->getVat()
+            // Zero amounts and a 0% VAT rate are valid.
+            if (0 == strlen($price->getDescription()) || 0 == strlen($price->getPrice())
                 || 0 == count($price->getReservationOrigins())
                 || (2 == $price->getType() && $price->getRoomCategories()->isEmpty())) {
                 $error = true;
@@ -193,7 +195,7 @@ class PriceServiceController extends AbstractController
                 // stop auto commit of doctrine with invalid field values
                 $em->clear();
             } else {
-                $componentErrors = $ps->validateComponents($price);
+                $componentErrors = $ps->validate($price);
                 if (!empty($componentErrors)) {
                     $error = true;
                     foreach ($componentErrors as $key) {

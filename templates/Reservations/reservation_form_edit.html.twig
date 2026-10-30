@@ -22,10 +22,14 @@
                 </div>
                 <div class="col">
                     <label for="end" class="form-label">{{ 'reservation.enddate'|trans }}</label>
+                    {# An event space is booked by the day: "to" is its last day, stored as the day after #}
                     <input type="date" class="form-control" id="end" name="end"
-                           value="{{ reservation.enddate|date('Y-m-d') }}"
+                           value="{{ (reservation.eventSpace ? reservation.lastDay : reservation.enddate)|date('Y-m-d') }}"
                            data-action="change->reservations#getAvailableAppartmentsAction"
-                           data-mode="edit">
+                           data-mode="edit"{% if reservation.eventSpace %} aria-describedby="end-help"{% endif %}>
+                    {% if reservation.eventSpace %}
+                        <div id="end-help" class="form-text">{{ 'reservation.event_space.end_help'|trans }}</div>
+                    {% endif %}
                 </div>
             </div>
 

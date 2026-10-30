@@ -769,7 +769,8 @@ class InvoiceService
      *
      * Skips reservations / nights priced per flat-rate or per-room — those
      * have no per-person base rate against which a delta could meaningfully
-     * be computed.
+     * be computed. A per-room night instead emits the surcharge for every
+     * person beyond the ones its price includes, aggregated the same way.
      *
      * @param Reservation[] $reservations
      *
@@ -802,10 +803,27 @@ class InvoiceService
             // across two price rows (weekday/weekend, season change, a promise
             // kept for some nights only) has a different delta per row.
             $aggregates = [];
+            $surcharges = [];
             foreach ($this->ps->getPriceBreakdownForReservation($reservation) as $breakdown) {
                 $base = $breakdown->basePrice;
                 $rate = $breakdown->rate;
-                if (null === $base || null === $rate || $rate->isFlatPrice || $rate->isPerRoom) {
+                if (null === $base || null === $rate) {
+                    continue;
+                }
+                $extraPersons = $rate->isPerRoom && null !== $rate->extraPersonSurcharge ? $rate->extraPersons($reservation->getPersons()) : 0;
+                if ($extraPersons > 0) {
+                    $key = implode(':', [$rate->extraPersonSurcharge, $extraPersons, $rate->includesVat ? 'g' : 'n', $base->getId()]);
+                    $surcharges[$key] ??= [
+                        'count' => $extraPersons,
+                        'nights' => 0,
+                        'unit' => (string) $rate->extraPersonSurcharge,
+                        'vat' => $base->getVat(),
+                        'includesVat' => $rate->includesVat,
+                        'revenueAccount' => $base->getRevenueAccount(),
+                    ];
+                    ++$surcharges[$key]['nights'];
+                }
+                if ($rate->isFlatPrice || $rate->isPerRoom) {
                     continue;
                 }
                 $basePerHead = (float) $rate->unit;
@@ -845,8 +863,12 @@ class InvoiceService
                 }
             }
 
+            $byDay = $reservation->isEventSpace();
+            foreach ($surcharges as $a) {
+                $positions[] = $this->makeExtraPersonPosition($a, $byDay);
+            }
             foreach ($aggregates as $a) {
-                $positions[] = $this->makeApartmentModifierPosition($a);
+                $positions[] = $this->makeApartmentModifierPosition($a, $byDay);
             }
         }
 
@@ -856,15 +878,13 @@ class InvoiceService
     /**
      * @param array{adjustment: GuestAdjustment, category: \App\Entity\GuestCategory, count: int, nights: int, unitDelta: float, vat: float, includesVat: bool, revenueAccount: ?\App\Entity\AccountingAccount} $a
      */
-    private function makeApartmentModifierPosition(array $a): InvoicePosition
+    private function makeApartmentModifierPosition(array $a, bool $byDay): InvoicePosition
     {
         $modifierLabel = $this->describeAdjustment($a['adjustment']);
         $description = $this->translator->trans('invoice.apartment_modifier.position', [
             '%category%' => $a['category']->getName(),
             '%modifier%' => $modifierLabel,
-            '%nights%' => $this->translator->trans('invoice.tourist_tax.position.nights', [
-                '%count%' => $a['nights'],
-            ]),
+            '%nights%' => $this->nightsOrDays($a['nights'], $byDay),
             '%count%' => $this->translator->trans('invoice.tourist_tax.position.persons', [
                 '%count%' => $a['count'],
             ]),
@@ -882,6 +902,37 @@ class InvoiceService
         $position->setPositionGroup('apartment_modifier');
 
         return $position;
+    }
+
+    /**
+     * The surcharge for the persons a per-room price does not include. It belongs to the room price
+     * like the guest category adjustments, so it shares their position group.
+     *
+     * @param array{count: int, nights: int, unit: string, vat: float|null, includesVat: bool, revenueAccount: ?\App\Entity\AccountingAccount} $a
+     */
+    private function makeExtraPersonPosition(array $a, bool $byDay): InvoicePosition
+    {
+        $position = new InvoicePosition();
+        $position->setAmount($a['nights'] * $a['count']);
+        $position->setDescription($this->translator->trans('invoice.apartment_extra_person.position', [
+            '%nights%' => $this->nightsOrDays($a['nights'], $byDay),
+            '%count%' => $this->translator->trans('invoice.tourist_tax.position.persons', ['%count%' => $a['count']]),
+        ]));
+        $position->setPrice($a['unit']);
+        $position->setVat($a['vat']);
+        $position->setIncludesVat($a['includesVat']);
+        $position->setIsFlatPrice(false);
+        $position->setIsPerRoom(false);
+        $position->setRevenueAccount($a['revenueAccount']);
+        $position->setPositionGroup('apartment_modifier');
+
+        return $position;
+    }
+
+    /** An event space is booked by the day, accommodation by the night. */
+    private function nightsOrDays(int $count, bool $byDay): string
+    {
+        return $this->translator->trans($byDay ? 'reservation.summary.days' : 'invoice.tourist_tax.position.nights', ['%count%' => $count]);
     }
 
     private function describeAdjustment(GuestAdjustment $adjustment): string
@@ -951,6 +1002,8 @@ class InvoiceService
      * Aggregates price amounts across all reservations and days into a keyed array, without any session involvement.
      * The key separates price rows, promised unit prices and gross/net modes. Null promise fields
      * keep the live price row as the source; a transient reservation may have no ID yet.
+     * The aggregates are ordered by price name, as the days of a stay can bring up the extras
+     * in any order.
      *
      * @param array<Reservation> $reservations
      *
@@ -1016,6 +1069,10 @@ class InvoiceService
                 }
             }
         }
+
+        $collator = new \Collator(\Locale::getDefault());
+        uasort($tmpMiscArr, static fn (array $a, array $b): int => (int) $collator->compare((string) $a['price']->getDescription(), (string) $b['price']->getDescription())
+            ?: $a['price']->getId() <=> $b['price']->getId());
 
         return $tmpMiscArr;
     }
@@ -1183,6 +1240,7 @@ class InvoiceService
         $positionAppartment->setIsFlatPrice($rate->isFlatPrice);
         $positionAppartment->setIsPerRoom($rate->isPerRoom);
         $positionAppartment->setRevenueAccount($price->getRevenueAccount());
+        $positionAppartment->setEventSpace($reservation->isEventSpace());
 
         return $positionAppartment;
     }

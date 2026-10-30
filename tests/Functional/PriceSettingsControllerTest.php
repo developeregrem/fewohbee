@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** HTTP and persistence coverage for prices bound to several room categories, including the conflict check. */
 final class PriceSettingsControllerTest extends WebTestCase
@@ -37,6 +38,35 @@ final class PriceSettingsControllerTest extends WebTestCase
         $price = $this->findPrice('both');
         self::assertNotNull($price);
         self::assertEqualsCanonicalizing([$single, $double], $this->idsOf($price));
+    }
+
+    public function testZeroVatPriceCanBeCreatedAndEditedToAZeroAmount(): void
+    {
+        $client = $this->authenticatedClient();
+        $crawler = $this->postPrice($client, 'zero-vat', 1, [], overrides: [
+            'price-new' => '12,34',
+            'vat-new' => '0',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('.alert-warning'));
+        $price = $this->findPrice('zero-vat');
+        self::assertNotNull($price);
+        self::assertSame('12.34', $price->getPrice());
+        self::assertSame(0.0, $price->getVat());
+        $id = (string) $price->getId();
+
+        $crawler = $this->postPrice($client, 'zero-vat', 1, [], $id, [
+            'price-'.$id => '0,00',
+            'vat-'.$id => '0',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('.alert-warning'));
+        $edited = $this->findPrice('zero-vat');
+        self::assertNotNull($edited);
+        self::assertSame('0.00', $edited->getPrice());
+        self::assertSame(0.0, $edited->getVat());
     }
 
     public function testRoomPriceSharingACategoryIsReportedAsConflict(): void
@@ -237,6 +267,28 @@ final class PriceSettingsControllerTest extends WebTestCase
         self::assertContains(self::PREFIX.'all-extra', $inDouble);
     }
 
+    public function testExtrasOfAStayAreListedByName(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+        // Created against the alphabet; the seasonal one used to come first.
+        $this->postPrice($client, 'extra-c', 1, [$single]);
+        $this->postPrice($client, 'extra-a', 1, [$single]);
+        $this->postPrice($client, 'extra-b', 1, [$single], 'new', [
+            'allperiods-new' => '',
+            'period-new' => ['new'],
+            'periodstart-new' => [(new \DateTime('+390 days'))->format('Y-m-d')],
+            'periodend-new' => [(new \DateTime('+410 days'))->format('Y-m-d')],
+        ]);
+
+        $ours = array_values(array_filter(
+            $this->miscPriceDescriptions($single),
+            static fn (string $description): bool => str_starts_with($description, self::PREFIX),
+        ));
+
+        self::assertSame([self::PREFIX.'extra-a', self::PREFIX.'extra-b', self::PREFIX.'extra-c'], $ours);
+    }
+
     public function testOverviewShowsTheCategoryCombinationOnceWithRoomPricesBeforeMiscPrices(): void
     {
         $client = $this->authenticatedClient();
@@ -280,7 +332,91 @@ final class PriceSettingsControllerTest extends WebTestCase
         self::assertSame(array_values(array_intersect($expected, $present)), $present);
     }
 
+    public function testOverviewListsPricesByName(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single, $double] = $this->categoryIds();
+        $this->postPrice($client, 'overview-b', 1, [$single, $double]);
+        $this->postPrice($client, 'overview-a', 1, [$single, $double]);
+
+        $crawler = $client->request('GET', '/settings/prices/');
+
+        self::assertResponseIsSuccessful();
+        $names = $crawler->filter('.card tbody tr td:first-child')->each(static fn ($cell): string => trim($cell->text()));
+        $ours = array_values(array_filter($names, static fn (string $name): bool => str_starts_with($name, self::PREFIX)));
+        self::assertSame([self::PREFIX.'overview-a', self::PREFIX.'overview-b'], $ours);
+    }
+
     /** Removes the prices created by these examples from the prepared test database. */
+    public function testSurchargeForFurtherPersonsIsSavedForAPerRoomPrice(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+
+        $this->postPrice($client, 'surcharge', 2, [$single], overrides: ['extra-person-surcharge-new' => '15,50']);
+
+        self::assertResponseIsSuccessful();
+        $price = $this->findPrice('surcharge');
+        self::assertSame('15.50', $price?->getExtraPersonSurcharge());
+
+        // Elsewhere the number of persons is matched exactly, so form and list say "up to".
+        $translator = self::getContainer()->get(TranslatorInterface::class);
+        $form = $client->request('GET', sprintf('/settings/prices/%d/get', $price->getId()));
+        self::assertSame($translator->trans('price.numberofpersons.scope.up_to'), trim($form->filter('#number-of-persons-scope-'.$price->getId())->text()));
+        $list = $client->request('GET', '/settings/prices/');
+        self::assertStringContainsString($translator->trans('price.numberofpersons.up_to_count', ['%count%' => self::PERSONS]), $list->filter('body')->text());
+    }
+
+    public function testSurchargeIsDroppedForAPricePerPerson(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+
+        $this->postPrice($client, 'per-person', 2, [$single], overrides: [
+            'calculation-type-new' => 'per_person',
+            'extra-person-surcharge-new' => '15',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        $price = $this->findPrice('per-person');
+        self::assertNotNull($price);
+        self::assertNull($price->getExtraPersonSurcharge());
+    }
+
+    public function testASurchargePriceServesEveryPartyUntilAnExactPriceExists(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+        $this->postPrice($client, 'base', 2, [$single], overrides: ['extra-person-surcharge-new' => '15']);
+
+        self::assertSame([self::PREFIX.'base'], $this->apartmentPriceDescriptions($single, self::PERSONS + 2));
+        // The base price includes up to its number of persons, so a smaller party pays it as well.
+        self::assertSame([self::PREFIX.'base'], $this->apartmentPriceDescriptions($single, self::PERSONS - 1));
+
+        $this->postPrice($client, 'exact', 2, [$single], overrides: ['number-of-persons-new' => (string) (self::PERSONS + 2)]);
+        $this->postPrice($client, 'exact-small', 2, [$single], overrides: ['number-of-persons-new' => (string) (self::PERSONS - 1)]);
+
+        self::assertSame([self::PREFIX.'exact', self::PREFIX.'base'], $this->apartmentPriceDescriptions($single, self::PERSONS + 2));
+        self::assertSame([self::PREFIX.'exact-small', self::PREFIX.'base'], $this->apartmentPriceDescriptions($single, self::PERSONS - 1));
+    }
+
+    public function testTheClosestSurchargePriceBelowThePartyComesBeforeOneAbove(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+        $this->postPrice($client, 'small', 2, [$single], overrides: ['extra-person-surcharge-new' => '15']);
+        $this->postPrice($client, 'large', 2, [$single], overrides: [
+            'extra-person-surcharge-new' => '5',
+            'number-of-persons-new' => (string) (self::PERSONS + 4),
+        ]);
+
+        // Between both bases the party exceeds the small one and pays its surcharge.
+        self::assertSame([self::PREFIX.'small', self::PREFIX.'large'], $this->apartmentPriceDescriptions($single, self::PERSONS + 1));
+        self::assertSame([self::PREFIX.'large', self::PREFIX.'small'], $this->apartmentPriceDescriptions($single, self::PERSONS + 5));
+        // Below both bases the closest one applies.
+        self::assertSame([self::PREFIX.'small', self::PREFIX.'large'], $this->apartmentPriceDescriptions($single, self::PERSONS - 1));
+    }
+
     protected function tearDown(): void
     {
         if (null !== self::$kernel) {
@@ -348,6 +484,31 @@ final class PriceSettingsControllerTest extends WebTestCase
             static fn (Price $price): string => (string) $price->getDescription(),
             self::getContainer()->get(PriceRepository::class)->findMiscPrices($reservation),
         );
+    }
+
+    /**
+     * Descriptions of the room prices, in priority order, for a party in a room of the category.
+     *
+     * @return list<string>
+     */
+    private function apartmentPriceDescriptions(int $categoryId, int $persons): array
+    {
+        $em = $this->em();
+        $em->clear();
+        $reservation = new Reservation();
+        $reservation->setAppartment($em->getRepository(Appartment::class)->findOneBy(['roomCategory' => $categoryId]));
+        $reservation->setReservationOrigin($em->getRepository(ReservationOrigin::class)->findOneBy([]));
+        $reservation->setPersons($persons);
+        $reservation->setStartDate(new \DateTime('+400 days'));
+        $reservation->setEndDate(new \DateTime('+413 days'));
+
+        return array_values(array_filter(
+            array_map(
+                static fn (Price $price): string => (string) $price->getDescription(),
+                self::getContainer()->get(PriceRepository::class)->findApartmentPrices($reservation, self::MIN_STAY),
+            ),
+            static fn (string $description): bool => str_starts_with($description, self::PREFIX),
+        ));
     }
 
     /** @return array{0: int, 1: int} ids of the two sample room categories */

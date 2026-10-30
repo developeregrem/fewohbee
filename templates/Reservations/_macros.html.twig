@@ -1,3 +1,14 @@
+{# When a reservation runs: arrival to departure day, for an event space its first to its last day. #}
+{% macro dates(reservation) -%}
+    {{ reservation.startdate|date('d.m.Y') }} – {{ (reservation.eventSpace ? reservation.lastDay : reservation.enddate)|date('d.m.Y') }}
+{%- endmacro %}
+
+{# How long it runs: nights, for an event space days. #}
+{% macro length(reservation) -%}
+    {%- set count = reservation.startdate.diff(reservation.enddate).days -%}
+    {{ reservation.eventSpace ? 'reservation.summary.days'|trans({'%count%': max(1, count)}) : 'reservation.summary.nights'|trans({'%count%': count}) }}
+{%- endmacro %}
+
 {# Persons of a reservation split by guest category, e.g. "(2×E, 1×K)"; empty without counts. #}
 {% macro guest_counts(reservation, guestCategoriesById) -%}
     {% set counts = reservation.guestCounts %}
@@ -46,4 +57,15 @@
 
 {% macro mail_link(address) -%}
     <a href='mailto:{{ address }}'>{{ address }}</a>
+{%- endmacro %}
+
+{# Invoice number opening the invoice in the dialog; reservations_controller intercepts the
+   click (initPopoverLinkModal) and takes the dialog title from the title attribute. #}
+{% macro invoice_link(invoice) -%}
+    <a href='{{ path('invoices.get.invoice', {'id': invoice.id}) }}' class='js-invoice-link' title='{{ 'reservation.invoice'|trans }} {{ invoice.number }}'>{{ invoice.number }}</a>
+{%- endmacro %}
+
+{# Open the existing dialog for arrival time, departure time and remark. #}
+{% macro meta_link(reservation, text) -%}
+    <a href='{{ path('reservations.edit.remark', {'id': reservation.id}) }}' class='js-reservation-meta-link' title='{{ 'nav.reservation.edit'|trans }}'>{{ text|e|nl2br }}</a>
 {%- endmacro %}

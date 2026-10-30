@@ -276,7 +276,7 @@ class PriceApiController extends AbstractController
         }
 
         // Without an explicit occupancy, report every one the category actually has a
-        // price for — numberOfPersons is matched exactly, so any other value is empty.
+        // price for — numberOfPersons is matched exactly, so without a surcharge price any other value is empty.
         $occupancies = $this->priceRepository->findOccupanciesForRoomCategory($roomCategory);
 
         return [] === $occupancies ? [] : $occupancies;

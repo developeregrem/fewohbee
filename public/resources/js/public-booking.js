@@ -192,7 +192,9 @@
             var overCapacity = capacity > 0 && party.occupying > capacity;
             if (capacityWarning) {
                 capacityWarning.classList.toggle('d-none', !overCapacity);
-                capacityWarning.textContent = (labels.overCapacity || '').replace('__MAX__', String(capacity));
+                capacityWarning.textContent = 1 === capacity
+                    ? (labels.overCapacityOne || '')
+                    : (labels.overCapacity || '').replace('__MAX__', String(capacity));
             }
 
             var valid = adults > 0 && !overCapacity;

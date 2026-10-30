@@ -10,9 +10,64 @@ use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\ObjectRepository;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 final class OperationsFilterServiceTest extends TestCase
 {
+    public function testArrayQueryPreservesRawValuesAndReplacesSessionFallback(): void
+    {
+        $values = ['chosen' => 'arrival', 5 => 2, 9 => null];
+        $request = new Request(['categories' => $values]);
+        $session = new Session(new MockArraySessionStorage());
+        $session->set('frontdesk.categories', ['inhouse']);
+        $service = new OperationsFilterService();
+
+        $result = $service->resolveFilterArray($request, $session, 'frontdesk.categories', 'categories');
+
+        self::assertSame($values, $result);
+        self::assertSame($values, $session->get('frontdesk.categories'));
+        self::assertSame(['arrival'], $service->normalizeCategories($result));
+    }
+
+    public function testScalarArrayQueryIsRejectedBeforeSessionChanges(): void
+    {
+        $request = new Request(['categories' => 'arrival']);
+        $session = $this->createMock(SessionInterface::class);
+        $session->expects(self::never())->method('set');
+
+        $this->expectException(BadRequestException::class);
+
+        new OperationsFilterService()->resolveFilterArray($request, $session, 'frontdesk.categories', 'categories');
+    }
+
+    /** @param array<array-key, mixed> $expected */
+    #[DataProvider('storedArrayFilterValues')]
+    public function testStoredArrayFilterPreservesArraysAndIgnoresInvalidValues(mixed $stored, array $expected): void
+    {
+        $session = new Session(new MockArraySessionStorage());
+        $session->set('frontdesk.categories', $stored);
+
+        $result = new OperationsFilterService()->resolveFilterArray(new Request(), $session, 'frontdesk.categories', 'categories');
+
+        self::assertSame($expected, $result);
+        self::assertSame($stored, $session->get('frontdesk.categories'));
+    }
+
+    /** @return iterable<string, array{mixed, array<array-key, mixed>}> */
+    public static function storedArrayFilterValues(): iterable
+    {
+        yield 'stored array' => [['chosen' => 'arrival', 5 => 2], ['chosen' => 'arrival', 5 => 2]];
+        yield 'empty array' => [[], []];
+        yield 'legacy string' => ['arrival', []];
+        yield 'null' => [null, []];
+        yield 'boolean' => [false, []];
+        yield 'integer' => [7, []];
+    }
+
     #[DataProvider('unfilteredSelections')]
     public function testUnfilteredSelectionDoesNotQueryTheManager(string $id): void
     {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Appartment;
+use App\Entity\Enum\RoomCategoryKind;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\QueryBuilder;
@@ -99,25 +100,33 @@ class AppartmentRepository extends ServiceEntityRepository
     }
 
     /**
+     * Restricts a query to accommodation: rooms without a category or of a category of that kind.
+     * Event spaces stay out of occupancy, overnight stays and the statistics built on them.
+     */
+    public static function restrictToAccommodation(QueryBuilder $qb, string $apartmentAlias): QueryBuilder
+    {
+        return $qb
+            ->leftJoin($apartmentAlias.'.roomCategory', 'accommodationCategory')
+            ->andWhere('(accommodationCategory.id IS NULL OR accommodationCategory.kind = :accommodationKind)')
+            ->setParameter('accommodationKind', RoomCategoryKind::ACCOMMODATION->value);
+    }
+
+    /**
+     * Beds of the accommodation; event spaces are left out.
+     *
      * @param int|string|null $objectId Subsidiary ID, or 'all' for every subsidiary
      *
      * @return int|string|null Raw SUM of maximum beds; null for no rooms, 0 on NoResultException
      */
     public function loadSumBedsMinForObject($objectId)
     {
-        if ('all' === $objectId) {
-            $query = $this->createQueryBuilder('u')
-            ->select('SUM(u.beds_max)')
-            // ->addGroupBy('u.object')
-            ->getQuery();
-        } else {
-            $query = $this->createQueryBuilder('u')
-            ->select('SUM(u.beds_max)')
-            ->where('u.object = :id')
-            // ->addGroupBy('u.object')
-            ->setParameter('id', $objectId)
-            ->getQuery();
+        $qb = $this->createQueryBuilder('u')
+            ->select('SUM(u.beds_max)');
+        if ('all' !== $objectId) {
+            $qb->where('u.object = :id')
+                ->setParameter('id', $objectId);
         }
+        $query = self::restrictToAccommodation($qb, 'u')->getQuery();
 
         try {
             return $query->getSingleScalarResult();
@@ -148,7 +157,7 @@ class AppartmentRepository extends ServiceEntityRepository
     }
 
     /**
-     * Count apartments (rooms) for a specific subsidiary or across all.
+     * Count accommodation rooms for a specific subsidiary or across all; event spaces are left out.
      *
      * @param int|string|null $objectId Subsidiary ID, or 'all' for every subsidiary
      */
@@ -161,6 +170,7 @@ class AppartmentRepository extends ServiceEntityRepository
             $qb->andWhere('a.object = :id')
                 ->setParameter('id', $objectId);
         }
+        self::restrictToAccommodation($qb, 'a');
 
         try {
             return (int) $qb->getQuery()->getSingleScalarResult();
@@ -171,6 +181,9 @@ class AppartmentRepository extends ServiceEntityRepository
 
     /**
      * Return rooms limited to the given room and subsidiary IDs with joins needed for public booking.
+     *
+     * Event spaces are left out until the booking page can book days instead of nights; they
+     * can then be released through the room selection of the online booking settings.
      *
      * @param int[] $roomIds
      * @param int[] $subsidiaryIds
@@ -191,8 +204,10 @@ class AppartmentRepository extends ServiceEntityRepository
             ->where('a.id IN (:roomIds)')
             ->andWhere('a.active = true')
             ->andWhere('o.id IN (:subsidiaryIds)')
+            ->andWhere('(rc.id IS NULL OR rc.kind = :accommodationKind)')
             ->setParameter('roomIds', $roomIds)
             ->setParameter('subsidiaryIds', $subsidiaryIds)
+            ->setParameter('accommodationKind', RoomCategoryKind::ACCOMMODATION->value)
             ->addOrderBy('rc.name', \SortDirection::Ascending)
             ->addOrderBy('LENGTH(a.number)', \SortDirection::Ascending)
             ->addOrderBy('a.number', \SortDirection::Ascending)

@@ -78,9 +78,11 @@ final class BookingJournalServiceTest extends TestCase
 
     public function testPopulateCashBalancesNoOpOnEmpty(): void
     {
-        $service = $this->createService();
+        $entryRepo = $this->createMock(BookingEntryRepository::class);
+        $entryRepo->expects(self::never())->method('getCashOpeningForYear');
+        $entryRepo->expects(self::never())->method('getCashDeltasByMonth');
+        $service = $this->createService(entryRepo: $entryRepo);
         $service->populateCashBalances([], 2026);
-        self::assertTrue(true);
     }
 
     public function testGetOrCreateBatchReusesNewUnflushedBatch(): void
@@ -256,43 +258,66 @@ final class BookingJournalServiceTest extends TestCase
         self::assertEqualsWithDelta(165.0, (float) $entries[0]->getAmount(), 0.01);
     }
 
-    public function testDifferentVatRatesProduceSeparateMiscEntries(): void
+    #[\PHPUnit\Framework\Attributes\DataProvider('differentVatRates')]
+    public function testDifferentVatRatesProduceSeparateMiscEntries(float $firstRate, float $secondRate): void
     {
-        $revenue7 = $this->makeAccount('8300', 'Erlöse 7%');
-        $revenue19 = $this->makeAccount('8400', 'Erlöse 19%');
+        $firstAccount = $this->makeAccount('8300', 'First revenue account');
+        $secondAccount = $this->makeAccount('8400', 'Second revenue account');
 
-        $p7  = $this->makeMiscPosition(100.0, 7.0);
-        $p19 = $this->makeMiscPosition(119.0, 19.0);
+        $firstPosition = $this->makeMiscPosition(100.0, $firstRate);
+        $secondPosition = $this->makeMiscPosition(119.0, $secondRate);
 
-        $entries = $this->runWithPositions([], [$p7, $p19], null, null, [
-            7.0  => $revenue7,
-            19.0 => $revenue19,
+        $entries = $this->runWithPositions([], [$firstPosition, $secondPosition], null, null, [
+            ['rate' => $firstRate, 'account' => $firstAccount],
+            ['rate' => $secondRate, 'account' => $secondAccount],
         ]);
 
         self::assertCount(2, $entries);
-        $amounts = array_map(fn ($e) => (float) $e->getAmount(), $entries);
-        sort($amounts);
-        self::assertEqualsWithDelta(100.0, $amounts[0], 0.01);
-        self::assertEqualsWithDelta(119.0, $amounts[1], 0.01);
+        $byAmount = [];
+        foreach ($entries as $entry) {
+            $byAmount[$entry->getAmount()] = $entry;
+        }
+        self::assertSame($firstAccount, $byAmount['100.00']->getCreditAccount());
+        self::assertSame($secondAccount, $byAmount['119.00']->getCreditAccount());
+        self::assertSame((string) $firstRate, $byAmount['100.00']->getTaxRate()?->getRate());
+        self::assertSame((string) $secondRate, $byAmount['119.00']->getTaxRate()?->getRate());
     }
 
-    public function testExplicitRevenueAccountOverrideTakesPrecedence(): void
+    /** @return iterable<string, array{float, float}> */
+    public static function differentVatRates(): iterable
+    {
+        yield 'whole rates' => [7.0, 19.0];
+        yield 'whole and fractional rate' => [7.0, 7.5];
+        yield 'two fractional rates' => [7.5, 7.75];
+        yield 'rates below one percent' => [0.5, 0.75];
+        yield 'tax-free and fractional' => [0.0, 7.5];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('overrideAmounts')]
+    public function testExplicitRevenueAccountOverrideTakesPrecedence(string $overrideAmount, string $defaultAmount): void
     {
         $defaultAccount = $this->makeAccount('8400', 'Erlöse 19%', 1);
         $overrideAccount = $this->makeAccount('8196', 'Kurtaxe', 99);
 
-        $p1 = $this->makeMiscPosition(50.0, 19.0, $overrideAccount); // explicit override
-        $p2 = $this->makeMiscPosition(69.0, 19.0);                   // default
+        $p1 = $this->makeMiscPosition((float) $overrideAmount, 19.0, $overrideAccount);
+        $p2 = $this->makeMiscPosition((float) $defaultAmount, 19.0);
 
         $entries = $this->runWithPositions([], [$p1, $p2], $defaultAccount, null);
 
         self::assertCount(2, $entries);
         $bySumAmount = [];
         foreach ($entries as $e) {
-            $bySumAmount[(float) $e->getAmount()] = $e->getCreditAccount();
+            $bySumAmount[$e->getAmount()] = $e->getCreditAccount();
         }
-        self::assertSame($overrideAccount, $bySumAmount[50.0]);
-        self::assertSame($defaultAccount, $bySumAmount[69.0]);
+        self::assertSame($overrideAccount, $bySumAmount[$overrideAmount]);
+        self::assertSame($defaultAccount, $bySumAmount[$defaultAmount]);
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function overrideAmounts(): iterable
+    {
+        yield 'whole amounts' => ['50.00', '69.00'];
+        yield 'cents with the same integer part' => ['50.01', '50.02'];
     }
 
     public function testExplicitOverrideSameAsDefaultMergesIntoOneEntry(): void
@@ -467,8 +492,8 @@ final class BookingJournalServiceTest extends TestCase
         $pos->setIsPerRoom(false);
 
         $entries = $this->runWithPositions([$apt], [$pos], null, null, [
-            7.0  => $revenue7,
-            19.0 => $revenue19,
+            ['rate' => 7.0, 'account' => $revenue7],
+            ['rate' => 19.0, 'account' => $revenue19],
         ]);
         $journalBrutto = array_sum(array_map(fn ($e) => (float) $e->getAmount(), $entries));
 
@@ -572,8 +597,8 @@ final class BookingJournalServiceTest extends TestCase
         $pos->setIsPerRoom(false);
 
         $entries = $this->runWithPositions([$apt], [$pos], null, null, [
-            7.0  => $revenue7,
-            19.0 => $revenue19,
+            ['rate' => 7.0, 'account' => $revenue7],
+            ['rate' => 19.0, 'account' => $revenue19],
         ]);
 
         $journalBrutto = array_sum(array_map(fn ($e) => (float) $e->getAmount(), $entries));
@@ -593,7 +618,7 @@ final class BookingJournalServiceTest extends TestCase
     /**
      * @param InvoiceAppartment[] $apartments
      * @param InvoicePosition[]   $positions
-     * @param array<float, AccountingAccount> $taxRateMap  vat → revenueAccount
+     * @param list<array{rate: float, account: AccountingAccount}> $taxRateMap
      * @param (BookingEntryRepository&Stub)|null $entryRepo
      * @return BookingEntry[]
      */
@@ -633,11 +658,11 @@ final class BookingJournalServiceTest extends TestCase
         $taxRateRepo = $this->createStub(TaxRateRepository::class);
         $taxRateRepo->method('findByRate')->willReturnCallback(
             function (float $rate) use ($taxRateMap, $defaultTaxRateAccount) {
-                foreach ($taxRateMap as $mapRate => $account) {
-                    if (abs($rate - $mapRate) < 0.001) {
+                foreach ($taxRateMap as $definition) {
+                    if (abs($rate - $definition['rate']) < 0.001) {
                         $tr = new TaxRate();
-                        $tr->setRate((string) $mapRate);
-                        $tr->setRevenueAccount($account);
+                        $tr->setRate((string) $definition['rate']);
+                        $tr->setRevenueAccount($definition['account']);
 
                         return $tr;
                     }

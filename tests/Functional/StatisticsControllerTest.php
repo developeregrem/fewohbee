@@ -6,6 +6,7 @@ namespace App\Tests\Functional;
 
 use App\Entity\Appartment;
 use App\Entity\Customer;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\CustomerAddresses;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
@@ -13,7 +14,9 @@ use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\Role;
+use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
+use App\Entity\User;
 use App\Repository\ReservationRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -175,6 +178,30 @@ final class StatisticsControllerTest extends WebTestCase
         self::assertSame(200.0, (float) $data[4]);
     }
 
+    public function testEventSpacesStayOutOfUtilizationAndOriginsButCountTowardsTurnover(): void
+    {
+        $client = static::createClient();
+        $user = $this->createUserWithRoles(['ROLE_STATISTICS']);
+        $client->loginUser($user);
+
+        $year = $this->getScenarioYear(5);
+        $this->createStatisticsScenario(sprintf('%d-06-01', $year), sprintf('%d-06-03', $year), kind: RoomCategoryKind::EVENT_SPACE);
+        $month = ['objectId' => 'all', 'monthStart' => 6, 'monthEnd' => 6, 'yearStart' => $year, 'yearEnd' => $year];
+
+        $client->request('GET', '/statistics/utilization/monthtly', $month);
+        self::assertResponseIsSuccessful();
+        $data = json_decode((string) $client->getResponse()->getContent(), true)['datasets'][0]['data'];
+        self::assertSame(0.0, (float) $data[0], 'A booked event space is no overnight stay.');
+
+        $client->request('GET', '/statistics/origin/monthtly', $month);
+        self::assertResponseIsSuccessful();
+        self::assertSame([], json_decode((string) $client->getResponse()->getContent(), true)['labels']);
+
+        $client->request('GET', '/statistics/turnover/monthly', ['yearStart' => $year, 'yearEnd' => $year, 'invoice-status' => [2]]);
+        self::assertResponseIsSuccessful();
+        self::assertSame(200.0, (float) json_decode((string) $client->getResponse()->getContent(), true)['datasets'][0]['data'][5]);
+    }
+
     public function testTurnoverOffersTheForecastAsItsOwnSeries(): void
     {
         $client = static::createClient();
@@ -209,7 +236,7 @@ final class StatisticsControllerTest extends WebTestCase
         self::assertCount(1, $yearly['datasets'][1]['details']);
     }
 
-    private function createStatisticsScenario(string $start, string $end, string $originName = 'Web', ?string $originColor = null): void
+    private function createStatisticsScenario(string $start, string $end, string $originName = 'Web', ?string $originColor = null, ?RoomCategoryKind $kind = null): void
     {
         $container = static::getContainer();
         $em = $container->get(ManagerRegistry::class)->getManager();
@@ -224,6 +251,11 @@ final class StatisticsControllerTest extends WebTestCase
         $appartment->setBedsMax(2);
         $appartment->setDescription('Test room');
         $appartment->setObject($subsidiary);
+        if (null !== $kind) {
+            $category = (new RoomCategory())->setName('Statistics '.$kind->value)->setKind($kind);
+            $em->persist($category);
+            $appartment->setRoomCategory($category);
+        }
         $em->persist($appartment);
 
         $origin = new ReservationOrigin();
@@ -302,7 +334,7 @@ final class StatisticsControllerTest extends WebTestCase
     /**
      * @param string[] $roleCodes
      */
-    private function createUserWithRoles(array $roleCodes)
+    private function createUserWithRoles(array $roleCodes): User
     {
         $container = static::getContainer();
         $doctrine = $container->get(ManagerRegistry::class);

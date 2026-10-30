@@ -60,6 +60,7 @@ final class HousekeepingViewServiceTest extends TestCase
         ];
     }
 
+    /** @param list<Reservation> $reservations */
     #[DataProvider('occupancyCases')]
     public function testResolveOccupancyForDay(\DateTimeImmutable $date, array $reservations, string $expected): void
     {

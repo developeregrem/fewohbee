@@ -259,9 +259,9 @@ class CorrespondenceController extends AbstractController
             $isAttachment = false;
             // loop through all reservations
             foreach ($attachments as $key => $attachment) {
-                // search for attachment id and delte entry if it exists
+                // Remove a reference only when this group contains the requested attachment.
                 $rId = array_search($aId, $attachment);
-                if (false !== $key) {
+                if (false !== $rId) {
                     unset($attachments[$key][$rId]);
                     $isAttachment = true;
                 }

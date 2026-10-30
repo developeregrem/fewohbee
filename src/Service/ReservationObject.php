@@ -13,21 +13,30 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+/**
+ * Reservation draft stored in the wizard session. ID values keep their form representation;
+ * periods are date strings validated by ReservationPeriodService.
+ */
 class ReservationObject
 {
-    private $appartmentId;
-    private $start;
-    private $end;
-    private $reservationStatus;
-    private $persons;
-    private $customerId;
+    private int|string $appartmentId;
+    private string $start;
+    private string $end;
+    private int|string|null $reservationStatus;
+    private int $persons;
+    private int|string|null $customerId = null;
     /** @var array<int, int> */
     private array $guestCounts = [];
     private bool $adultRuleOverride = false;
     private bool $kurtaxeWaived = false;
 
-    public function __construct($appartmentId, $start, $end, $status, $persons)
-    {
+    public function __construct(
+        int|string $appartmentId,
+        string $start,
+        string $end,
+        int|string|null $status,
+        int $persons,
+    ) {
         $this->appartmentId = $appartmentId;
         $this->start = $start;
         $this->end = $end;
@@ -35,47 +44,47 @@ class ReservationObject
         $this->persons = $persons;
     }
 
-    public function getCustomerId()
+    public function getCustomerId(): int|string|null
     {
         return $this->customerId;
     }
 
-    public function setCustomerId($customerId): void
+    public function setCustomerId(int|string|null $customerId): void
     {
         $this->customerId = $customerId;
     }
 
-    public function getAppartmentId()
+    public function getAppartmentId(): int|string
     {
         return $this->appartmentId;
     }
 
-    public function getStart()
+    public function getStart(): string
     {
         return $this->start;
     }
 
-    public function getEnd()
+    public function getEnd(): string
     {
         return $this->end;
     }
 
-    public function getReservationStatus()
+    public function getReservationStatus(): int|string|null
     {
         return $this->reservationStatus;
     }
 
-    public function getPersons()
+    public function getPersons(): int
     {
         return $this->persons;
     }
 
-    public function setReservationStatus($status): void
+    public function setReservationStatus(int|string|null $status): void
     {
         $this->reservationStatus = $status;
     }
 
-    public function setPersons($persons): void
+    public function setPersons(int $persons): void
     {
         $this->persons = $persons;
     }

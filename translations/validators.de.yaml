@@ -27,7 +27,7 @@ guest_checkin:
   zip_invalid: 'Bitte geben Sie eine gültige Postleitzahl an.'
   phone_invalid: 'Bitte geben Sie eine gültige Telefonnummer an.'
   companion_address_incomplete: 'Bitte vervollständigen Sie die Anschrift oder leeren Sie alle Anschriftsfelder, wenn diese Person beim Hauptgast wohnt.'
-  company_name_missing: 'Bitte geben Sie den Namen der Firma an.'
+  company_name_missing: 'Bitte geben Sie den Namen des Unternehmens an.'
   company_address_incomplete: 'Bitte vervollständigen Sie die Rechnungsanschrift oder leeren Sie alle ihre Felder, wenn sie Ihrer Anschrift oben entspricht.'
   company_address_missing: 'Bitte geben Sie die Rechnungsanschrift an.'
   vat_id_invalid: 'Bitte geben Sie die USt-IdNr. mit Länderkürzel an, z. B. DE123456789.'

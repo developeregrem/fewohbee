@@ -359,6 +359,10 @@ class ReservationServiceController extends AbstractController
     public function showSelectAppartmentsFormAction(ManagerRegistry $doctrine, RequestStack $requestStack, ReservationService $rs, Request $request)
     {
         $em = $doctrine->getManager();
+        if (0 === $em->getRepository(ReservationOrigin::class)->count([])) {
+            return $this->render('Reservations/reservation_form_missing_origin.html.twig');
+        }
+
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
@@ -423,6 +427,7 @@ class ReservationServiceController extends AbstractController
 
         return $this->render('Reservations/reservation_form_show_available_appartments.html.twig', [
             'appartments' => $apartments,
+            'period' => $period,
             'reservationStatus' => $reservationStatus,
             'guestCategories' => $guestCategories,
         ]);
@@ -443,12 +448,15 @@ class ReservationServiceController extends AbstractController
             $request->request->getString('from'),
             $request->request->getString('end'),
         );
+        // A booking keeps its kind of room, so only rooms of the same kind are offered.
+        $edited = $em->getRepository(Reservation::class)->find($request->request->getInt('reservation-id'));
 
         $apartments = $rs->getAvailableApartments(
             $period->start,
             $period->end,
             null,
             $request->request->getString('object', 'all'),
+            $edited instanceof Reservation ? $edited->isEventSpace() : null,
         );
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
         $guestCategories = $em->getRepository(GuestCategory::class)->findActiveOrdered();
@@ -463,6 +471,7 @@ class ReservationServiceController extends AbstractController
 
         return $this->render('Reservations/reservation_form_edit_show_available_appartments.html.twig', [
             'appartments' => $apartments,
+            'period' => $period,
             'reservationStatus' => $reservationStatus,
             'guestCategories' => $guestCategories,
             'reservation' => $reservation,
@@ -475,6 +484,7 @@ class ReservationServiceController extends AbstractController
     #[Route('/appartments/add/to/reservation', name: 'reservations.add.appartment.to.reservation', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
     public function addAppartmentToReservationAction(
+        ManagerRegistry $doctrine,
         HttpKernelInterface $kernel,
         RequestStack $requestStack,
         ReservationPeriodService $periodService,
@@ -483,9 +493,12 @@ class ReservationServiceController extends AbstractController
         $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation');
 
         if (null != $request->request->get('appartmentid')) {
-            $period = $periodService->parse(
-                $request->request->getString('from'),
-                $request->request->getString('end'),
+            $period = $periodService->forRoom(
+                $periodService->parse(
+                    $request->request->getString('from'),
+                    $request->request->getString('end'),
+                ),
+                $doctrine->getManager()->getRepository(Appartment::class)->find($request->request->getInt('appartmentid')),
             );
             $reservationObject = new ReservationObject(
                 $request->request->get('appartmentid'),
@@ -562,7 +575,7 @@ class ReservationServiceController extends AbstractController
 
         $hasConflict = false;
         foreach ($apartmentsToAdd as $aptData) {
-            $period = $periodService->parse(
+            $input = $periodService->parse(
                 is_string($aptData['from'] ?? null) ? $aptData['from'] : '',
                 is_string($aptData['end'] ?? null) ? $aptData['end'] : '',
             );
@@ -572,6 +585,8 @@ class ReservationServiceController extends AbstractController
                 $hasConflict = true;
                 continue;
             }
+            // The last selected cell is the departure day, for an event space the last day.
+            $period = $periodService->forRoom($input, $room);
             $isselactable = $rs->isApartmentAvailable($period->start, $period->end, $room, 0);
             if ($isselactable) {
                 $newReservationsInformationArray[] = new ReservationObject(
@@ -765,6 +780,11 @@ class ReservationServiceController extends AbstractController
     public function previewNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $rs, PriceService $ps, TouristTaxService $touristTaxService, Request $request)
     {
         $em = $doctrine->getManager();
+        $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        if ([] === $origins) {
+            return $this->render('Reservations/reservation_form_missing_origin.html.twig');
+        }
+
         $tab = $request->request->get('tab', 'booker');
 
         if (null != $request->request->get('customerid')) {
@@ -798,11 +818,8 @@ class ReservationServiceController extends AbstractController
             $requestStack->getSession()->set('customersInReservation', $customersInReservation);
         }
 
-        $origins = $em->getRepository(ReservationOrigin::class)->findAll();
-        if (count($origins) > 0) {
-            foreach ($reservations as $reservation) {
-                $reservation->setReservationOrigin($origins[0]);
-            }
+        foreach ($reservations as $reservation) {
+            $reservation->setReservationOrigin($origins[0]);
         }
 
         $rs->getMiscPricesInCreation($is, $reservations, $ps, $requestStack);
@@ -863,7 +880,7 @@ class ReservationServiceController extends AbstractController
             'hasActiveTouristTax' => count($reservations) > 0
                 ? $touristTaxService->hasActiveTaxForSubsidiary($reservations[0]->getAppartment()?->getObject())
                 : false,
-            'guestCategoriesById' => $guestCategoriesById ?? [],
+            'guestCategoriesById' => $guestCategoriesById,
             'nightRates' => array_merge(...array_map(static fn (Reservation $reservation): array => $ps->getNightRates($reservation), $reservations)),
         ]);
     }
@@ -885,6 +902,14 @@ class ReservationServiceController extends AbstractController
         $departureTime = $this->createTimeFromRequestValue($departureTimeInput);
 
         if ($csrf->validateCSRFToken($request)) {
+            $originId = filter_var($request->request->get('reservation-origin'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            $origin = false === $originId ? null : $em->getRepository(ReservationOrigin::class)->find($originId);
+            if (null === $origin) {
+                $this->addFlash('warning', 'reservation.flash.origin.required');
+
+                return $this->render('feedback.html.twig', ['error' => true]);
+            }
+
             $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation');
 
             $booker = $em->getRepository(Customer::class)->find($requestStack->getSession()->get('booker'));
@@ -892,8 +917,6 @@ class ReservationServiceController extends AbstractController
             $reservations = $rs->createReservationsFromReservationInformationArray($newReservationsInformationArray, $booker);
 
             $customersInReservation = $requestStack->getSession()->get('customersInReservation');
-
-            $origin = $em->getRepository(ReservationOrigin::class)->find($request->request->get('reservation-origin'));
 
             $pricesInCreation = $requestStack->getSession()->get('reservatioInCreationPrices', []);
             $groupUuid = count($reservations) > 1 ? Uuid::v4() : null;
@@ -1232,7 +1255,9 @@ class ReservationServiceController extends AbstractController
 
         // Reject an oversized move before updateReservation() can mutate the
         // managed entity. isRoomAvailable() repeats this as the source of truth.
-        if ($apartment instanceof Appartment && !$availabilityService->hasCapacity($apartment, $persons)) {
+        if ($apartment instanceof Appartment && !$rs->isSameKindOfRoom($reservation, $apartment)) {
+            $this->addFlash('warning', 'reservation.move.other_kind');
+        } elseif ($apartment instanceof Appartment && !$availabilityService->hasCapacity($apartment, $persons)) {
             $this->addFlash('warning', 'reservation.move.capacity');
         } elseif (!$rs->updateReservation($request, $reservation)) {
             $this->addFlash('warning', 'reservation.flash.update.conflict');
@@ -1277,6 +1302,13 @@ class ReservationServiceController extends AbstractController
                 'success' => false,
                 'message' => $translator->trans('reservation.move.error'),
             ], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!$reservationService->isSameKindOfRoom($reservation, $apartment)) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $translator->trans('reservation.move.other_kind'),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if (!$availabilityService->hasCapacity($apartment, $reservation->getPersons())) {
@@ -1363,11 +1395,8 @@ class ReservationServiceController extends AbstractController
                     $rs->updateReservationCustomers($reservation, $customer, $tab);
                 } else {
                     $customersInReservation = $requestStack->getSession()->get('customersInReservation');
-                    $customerIsAlreadyInReservation = false;
-                    if (!$customerIsAlreadyInReservation) {
-                        $customersInReservation[] = ['id' => $customer->getId(), 'appartmentId' => $request->request->get('appartmentId')];
-                        $requestStack->getSession()->set('customersInReservation', $customersInReservation);
-                    }
+                    $customersInReservation[] = ['id' => $customer->getId(), 'appartmentId' => $request->request->get('appartmentId')];
+                    $requestStack->getSession()->set('customersInReservation', $customersInReservation);
                 }
             }
         }

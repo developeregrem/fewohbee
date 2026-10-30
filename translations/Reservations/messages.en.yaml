@@ -38,7 +38,8 @@ reservation.flash.update.success: Reservation has been successfully updated.
 reservation.flash.update.toomuchcustomers: No more guests can be assigned!
 reservation.move.success: Reservation has been moved successfully.
 reservation.move.error: The reservation could not be moved.
-reservation.move.capacity: The selected room does not have enough beds for this reservation.
+reservation.move.capacity: 'The selected room is too small for the number of people in this reservation.'
+reservation.move.other_kind: 'An event space can only be swapped for another event space, accommodation only for accommodation.'
 reservation.move.hint: Drag to a free cell to move this reservation.
 reservation.invoice: Invoice
 reservation.invoices: Invoices
@@ -70,6 +71,7 @@ reservation.select.customer.search.input.placeholder: Surname
 reservation.startdate: From
 reservation.status: Status
 reservation.table.calendarweek: CW
+reservation.table.event_space_days: 'booked by the day'
 reservation.table.reload: Update
 reservation.table.settings.all: all
 reservation.table.settings.country: Country
@@ -182,6 +184,9 @@ calendar_entry.form.date_to: Until
 calendar_entry.form.date_to_help: "Until – one entry per day"
 calendar_entry.form.date_to_too_far: "The range may not span more than %max% days."
 calendar_entry.form.end_time: End time
+calendar_entry.form.end_time_until: "End time (optional)"
+calendar_entry.form.on_date: "On %date%"
+calendar_entry.form.change_date: "different date or several days"
 calendar_entry.form.end_time_before_start: "The end time must be after the start time. 00:00 is allowed as the end of the day."
 calendar_entry.form.end_time_midnight_without_start: "An end time of 00:00 means the end of the day and therefore needs a start time. Without one, leave the entry all-day."
 calendar_entry.form.end_time_help: "Optional"
@@ -208,6 +213,9 @@ reservation.price.rules_applied: 'Adjusted by'
 reservation.price.rules_nights: '{1}1 night|]1,Inf[%count% nights'
 reservation.price.day_price: 'Day price'
 reservation.summary.nights: '{0}0 nights|{1}1 night|]1,Inf[%count% nights'
+reservation.summary.days: '{0}0 days|{1}1 day|]1,Inf[%count% days'
+reservation.event_space.period: '%days% up to and including %date%'
+reservation.event_space.end_help: 'For event spaces, “To” is the last day.'
 reservation.summary.persons: '{0}0 persons|{1}1 person|]1,Inf[%count% persons'
 reservation.summary.call: Call
 reservation.details.stay: Stay
@@ -226,6 +234,8 @@ reservation.selected.reservations: 'Selected reservations'
 reservation.filter.by_period: 'By period'
 reservation.filter.by_guest: 'By guest'
 reservation.correspondences.empty: 'No conversations yet.'
+reservation.origin.missing: Before you can create a reservation, a reservation origin must be added in the settings.
+reservation.flash.origin.required: Select a valid reservation origin. If none exists yet, create one in the settings first.
 reservation.confirmation.button: 'Confirmation'
 reservation.confirmation.title: 'Send confirmation'
 reservation.confirmation.sent: 'The confirmation was sent.'

@@ -19,20 +19,19 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class StatisticsService
 {
-    /** @var EntityManagerInterface */
-    private $em;
-
-    public function __construct(EntityManagerInterface $em)
-    {
-        $this->em = $em;
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+    ) {
     }
 
     /**
+     * @param int|string|null $objectId Subsidiary ID, or 'all' for every subsidiary
+     * @param int|string $beds Bed count, including database SUM strings; callers handle empty inventory
      * @param array<int|string> $reservationStatus Reservation status IDs, including query-string values
      *
      * @return list<float> Monthly utilization from January through December
      */
-    public function loadUtilizationForYear($objectId, $year, $beds, array $reservationStatus = [])
+    public function loadUtilizationForYear(int|string|null $objectId, int $year, int|string $beds, array $reservationStatus = []): array
     {
         $data = [];
         // each month of the year

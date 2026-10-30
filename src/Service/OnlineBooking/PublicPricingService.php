@@ -179,10 +179,7 @@ class PublicPricingService
             }
         }
 
-        // Global extras first, then category-bound grouped by category name.
-        usort($byCategory, static fn ($a, $b) => [$a['categoryName'], $a['description']] <=> [$b['categoryName'], $b['description']]);
-
-        return array_merge(array_values($global), array_values($byCategory));
+        return $this->sortExtras([...array_values($global), ...array_values($byCategory)]);
     }
 
     /**
@@ -292,7 +289,27 @@ class PublicPricingService
             ];
         }
 
-        return $result;
+        return $this->sortExtras($result);
+    }
+
+    /**
+     * Orders extras the same way in every booking step: global extras first, then the
+     * category-bound ones grouped by category, each by the name the guest reads.
+     *
+     * @template T of array{categoryIds: list<int>, categoryName: ?string, description: string}
+     *
+     * @param list<T> $extras
+     *
+     * @return list<T>
+     */
+    private function sortExtras(array $extras): array
+    {
+        $collator = new \Collator(\Locale::getDefault());
+        usort($extras, static fn (array $a, array $b): int => ([] !== $a['categoryIds']) <=> ([] !== $b['categoryIds'])
+            ?: (int) $collator->compare((string) $a['categoryName'], (string) $b['categoryName'])
+            ?: (int) $collator->compare($a['description'], $b['description']));
+
+        return $extras;
     }
 
     /**
@@ -326,7 +343,7 @@ class PublicPricingService
 
         $validDays = 0;
         for ($i = 1; $i <= $nights; ++$i) {
-            if (isset($pricesPerDay[$i]) && null !== $pricesPerDay[$i]) {
+            if (isset($pricesPerDay[$i])) {
                 ++$validDays;
             }
         }

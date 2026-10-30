@@ -316,7 +316,7 @@ class TemplatesServiceController extends AbstractController
         }
         $hostTypeName = $template->getTemplateType()?->getName();
         try {
-            $html = $templatesService->inTemplateLanguage($template, static fn (): string => $templatesService->renderTemplateString($templateText, $params, $hostTypeName));
+            $html = $templatesService->inTemplateLanguage($template, static fn (): string => $templatesService->renderTemplateString($templateText, $params, $hostTypeName, $template->getLocale()));
         } catch (\Throwable $e) {
             return $this->json([
                 'html' => '',
@@ -408,7 +408,7 @@ class TemplatesServiceController extends AbstractController
         }
         $hostTypeName = $template->getTemplateType()?->getName();
         try {
-            $html = $templatesService->inTemplateLanguage($template, static fn (): string => $templatesService->renderTemplateString($templateText, $params, $hostTypeName));
+            $html = $templatesService->inTemplateLanguage($template, static fn (): string => $templatesService->renderTemplateString($templateText, $params, $hostTypeName, $template->getLocale()));
         } catch (\Throwable $e) {
             if ($request->isXmlHttpRequest()) {
                 return $this->json([

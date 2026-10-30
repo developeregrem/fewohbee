@@ -239,6 +239,54 @@ final class BankImportControllerTest extends WebTestCase
         self::assertSame('RE-2024-047', $state->lines[0]['userInvoiceNumber']);
     }
 
+    /** @param array<string, mixed> $parameters */
+    #[DataProvider('nonArrayPreviewParameters')]
+    public function testNonArrayPreviewParametersLeaveDraftAndRulesUnchanged(string $endpoint, array $parameters): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+        $bankAccount = $this->createBankAccount('DE00ARRAYBOUNDARY0001');
+        $profile = $this->createCsvProfile('dkb');
+        $form = $client->request('GET', '/journal/bank-import')->filter('form')->form();
+        $this->uploadStatementFile($form, self::FIXTURE_DIR.'/dkb-girokonto-anonymized.csv');
+        $client->submit($form, [
+            'bank_statement_upload[bankAccount]' => (string) $bankAccount->getId(),
+            'bank_statement_upload[format]' => 'csv:'.$profile->getId(),
+        ]);
+        self::assertResponseRedirects();
+        preg_match('#/journal/bank-import/([0-9a-f-]{36})$#', (string) $client->getResponse()->headers->get('Location'), $matches);
+        $draftId = $matches[1];
+        $preview = $client->followRedirect();
+        $token = (string) $preview->filter('[data-bank-import-preview-csrf-value]')->attr('data-bank-import-preview-csrf-value');
+        $before = $this->loadDraft($draftId)->toArray();
+        $ruleCount = $this->getEntityManager()->getRepository(BankImportRule::class)->count([]);
+
+        $client->request('POST', sprintf('/journal/bank-import/%s/%s', $draftId, $endpoint), [
+            '_token' => $token,
+        ] + $parameters, [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        self::assertSame($before, $this->loadDraft($draftId)->toArray());
+        self::assertSame($ruleCount, $this->getEntityManager()->getRepository(BankImportRule::class)->count([]));
+    }
+
+    /** @return iterable<string, array{string, array<string, mixed>}> */
+    public static function nonArrayPreviewParameters(): iterable
+    {
+        yield 'manual splits' => ['line/0/split', ['splits' => 'not-an-array']];
+        yield 'bulk indices' => ['bulk', ['action' => 'ignore', 'indices' => 'not-an-array']];
+        yield 'rule conditions' => ['line/0/rule', [
+            'name' => 'Invalid condition shape',
+            'conditionFields' => 'not-an-array',
+        ]];
+        yield 'rule splits' => ['line/0/rule', [
+            'name' => 'Invalid split shape',
+            'conditionFields' => ['direction'],
+            'actionMode' => 'split',
+            'splits' => 'not-an-array',
+        ]];
+    }
+
     public function testDraftIsPrivateToItsUserAndExpiresWithoutChanges(): void
     {
         $client = static::createClient();

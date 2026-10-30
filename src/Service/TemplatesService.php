@@ -32,7 +32,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
-use Twig\Error\Error as TwigError;
 
 class TemplatesService
 {
@@ -92,12 +91,8 @@ class TemplatesService
 
     /**
      * Extract form data and return Template object.
-     *
-     * @param string $id
-     *
-     * @return Template
      */
-    public function getEntityFromForm(Request $request, $id = 'new')
+    public function getEntityFromForm(Request $request, int|string $id = 'new'): Template
     {
         $template = new Template();
         if ('new' !== $id) {
@@ -185,12 +180,8 @@ class TemplatesService
 
     /**
      * Delete entity.
-     *
-     * @param int $id
-     *
-     * @return bool
      */
-    public function deleteEntity($id)
+    public function deleteEntity(int|string $id): bool
     {
         $template = $this->em->getRepository(Template::class)->find($id);
 
@@ -200,9 +191,9 @@ class TemplatesService
         return true;
     }
 
-    public function renderTemplateForReservations($templateId, $reservations)
+    /** @param iterable<Reservation> $reservations */
+    public function renderTemplateForReservations(int|string $templateId, iterable $reservations): string
     {
-        /* @var $template \App\Entity\Template */
         $template = $this->em->getRepository(Template::class)->find($templateId);
 
         $templateStr = $this->twig->createTemplate($template->getText());
@@ -214,7 +205,6 @@ class TemplatesService
 
     public function renderTemplate(int $templateId, mixed $param): string
     {
-        /* @var $template Template */
         $template = $this->em->getRepository(Template::class)->find($templateId);
         if (!$template instanceof Template) {
             throw new \InvalidArgumentException($this->translator->trans('templates.notfound'));
@@ -224,7 +214,7 @@ class TemplatesService
             $params = $this->renderParamsResolver->resolve($template, $param);
 
             $hostTypeName = $template->getTemplateType()?->getName();
-            $text = $this->resolveTemplateIncludes($template->getText(), $hostTypeName);
+            $text = $this->resolveTemplateIncludes($template->getText(), $hostTypeName, locale: $template->getLocale());
             $str = $this->replaceTwigSyntax($text);
             $templateStr = $this->twig->createTemplate($str);
 
@@ -236,8 +226,9 @@ class TemplatesService
      * Render raw template content using the pseudo-twig syntax replacements.
      *
      * @param array<string, mixed> $params
+     * @param string|null          $locale Language of the template the text belongs to, for its includes
      */
-    public function renderTemplateString(string $templateText, array $params, ?string $hostTypeName = null): string
+    public function renderTemplateString(string $templateText, array $params, ?string $hostTypeName = null, ?string $locale = null): string
     {
         $wasStrictVariables = $this->twig->isStrictVariables();
 
@@ -247,12 +238,12 @@ class TemplatesService
                 $this->twig->enableStrictVariables();
             }
 
-            $text = $this->resolveTemplateIncludes($templateText, $hostTypeName);
+            $text = $this->resolveTemplateIncludes($templateText, $hostTypeName, locale: $locale);
             $str = $this->replaceTwigSyntax($text);
             $templateStr = $this->twig->createTemplate($str);
 
             return $templateStr->render($params);
-        } catch (TwigError|\Throwable $e) {
+        } catch (\Throwable $e) {
             throw new \RuntimeException($this->buildFriendlyTemplateErrorMessage($e), 0, $e);
         } finally {
             if (!$wasStrictVariables) {
@@ -301,7 +292,7 @@ class TemplatesService
 
             // Subjects are single-line; collapse any accidental newlines.
             return trim(preg_replace('/\s*\R\s*/', ' ', $templateStr->render($params)));
-        } catch (TwigError|\Throwable $e) {
+        } catch (\Throwable $e) {
             throw new \RuntimeException($this->buildFriendlyTemplateErrorMessage($e), 0, $e);
         } finally {
             if (!$wasStrictVariables) {
@@ -451,6 +442,8 @@ class TemplatesService
 
     /**
      * Build template params by merging custom settings with defaults.
+     *
+     * @param array<string, mixed> $custom
      */
     public function buildTemplateParams(array $custom): string
     {
@@ -552,7 +545,8 @@ class TemplatesService
         return $reservations;
     }
 
-    public function getCorrespondencesForAttachment()
+    /** @return list<Correspondence> */
+    public function getCorrespondencesForAttachment(): array
     {
         $selectedReservationIds = $this->requestStack->getSession()->get(ReservationService::SESSION_SELECTED_RESERVATIONS);
         $correspondences = [];
@@ -567,7 +561,7 @@ class TemplatesService
         return $correspondences;
     }
 
-    public function makeCorespondenceOfInvoice($id, InvoiceService $is, ?string $binaryPayload = null, bool $isEInvoice = false): ?int
+    public function makeCorespondenceOfInvoice(int|string $id, InvoiceService $is, ?string $binaryPayload = null, bool $isEInvoice = false): ?int
     {
         $invoice = $this->em->find(Invoice::class, $id);
         if (!$invoice instanceof Invoice) {
@@ -602,7 +596,8 @@ class TemplatesService
         return $fileId;
     }
 
-    public function addFileAsAttachment($cId, $reservations)
+    /** @param iterable<Reservation> $reservations */
+    public function addFileAsAttachment(int|string|null $cId, iterable $reservations): bool
     {
         $fileIds = [];
 
@@ -621,12 +616,10 @@ class TemplatesService
     /**
      * Builds a mail attachment from a stored file correspondence.
      * Returns null when the record does not exist or is not a file correspondence.
-     *
-     * @param int|string $attachmentId Stored correspondence identifier
+     * An empty attachment group supplies false through reset(); retain its existing lookup behavior.
      */
-    public function getMailAttachment($attachmentId): ?MailAttachment
+    public function getMailAttachment(int|string|false|null $attachmentId): ?MailAttachment
     {
-        /* @var $attachment \App\Entity\Correspondence */
         $attachment = $this->em->getRepository(Correspondence::class)->find($attachmentId);
         if ($attachment instanceof FileCorrespondence) {
             $binaryPayload = $attachment->getBinaryPayload();
@@ -881,6 +874,7 @@ class TemplatesService
      *
      * Compatibility rules:
      * - TEMPLATE_FILE_PDF can be embedded into any template
+     * - TEMPLATE_GENERAL_EMAIL can be embedded into any mail template
      * - Otherwise, only templates sharing the same base type are allowed
      *   (e.g. TEMPLATE_RESERVATION_PDF ↔ TEMPLATE_RESERVATION_EMAIL)
      *
@@ -888,8 +882,10 @@ class TemplatesService
      * @param string|null $hostTypeName The template type name of the host template (for compatibility checks)
      * @param int         $depth        Current recursion depth
      * @param int[]       $visitedIds   IDs already resolved in this chain (cycle detection)
+     * @param string|null $locale       Language of the host template: an embedded template contributes
+     *                                  its variant in that language, else its own text
      */
-    public function resolveTemplateIncludes(string $text, ?string $hostTypeName = null, int $depth = 0, array $visitedIds = []): string
+    public function resolveTemplateIncludes(string $text, ?string $hostTypeName = null, int $depth = 0, array $visitedIds = [], ?string $locale = null): string
     {
         if ($depth >= self::MAX_INCLUDE_DEPTH) {
             return $text;
@@ -897,7 +893,7 @@ class TemplatesService
 
         return preg_replace_callback(
             '/<span\b(?=[^>]*\bclass="[^"]*\btemplate-include\b[^"]*")(?=[^>]*\bdata-template-id="(\d+)")[^>]*>.*?<\/span>/is',
-            function (array $matches) use ($hostTypeName, $depth, $visitedIds): string {
+            function (array $matches) use ($hostTypeName, $depth, $visitedIds, $locale): string {
                 $templateId = (int) $matches[1];
 
                 if (in_array($templateId, $visitedIds, true)) {
@@ -914,10 +910,10 @@ class TemplatesService
                     throw new \RuntimeException($this->translator->trans('templates.include.error.incompatible', ['%name%' => $included->getName(), '%type%' => $includedTypeName]));
                 }
 
-                $includedText = $included->getText() ?? '';
+                $includedText = $included->variantFor($locale)->getText() ?? '';
                 $visitedIds[] = $templateId;
 
-                return $this->resolveTemplateIncludes($includedText, $hostTypeName, $depth + 1, $visitedIds);
+                return $this->resolveTemplateIncludes($includedText, $hostTypeName, $depth + 1, $visitedIds, $locale);
             },
             $text
         ) ?? $text;
@@ -926,12 +922,18 @@ class TemplatesService
     /**
      * Check if a template type is compatible for inclusion into a host template.
      *
-     * TEMPLATE_FILE_PDF is always allowed. Otherwise the base type must match
+     * TEMPLATE_FILE_PDF is always allowed. TEMPLATE_GENERAL_EMAIL is allowed in every mail
+     * template: it is rendered without a reservation or invoice, so its text (a signature, say)
+     * does not depend on the host. Otherwise the base type must match
      * (e.g. TEMPLATE_RESERVATION_PDF and TEMPLATE_RESERVATION_EMAIL share "RESERVATION").
      */
     public function isTemplateIncludeCompatible(string $hostTypeName, string $includedTypeName): bool
     {
         if ('TEMPLATE_FILE_PDF' === $includedTypeName) {
+            return true;
+        }
+
+        if ('TEMPLATE_GENERAL_EMAIL' === $includedTypeName && str_ends_with($hostTypeName, '_EMAIL')) {
             return true;
         }
 
@@ -953,16 +955,23 @@ class TemplatesService
     /**
      * Return templates that can be embedded into a template of the given type.
      *
+     * Variants are left out: an embedded template follows the language of its host by itself
+     * (see resolveTemplateIncludes()). For the same reason a variant cannot embed the template it
+     * translates, that would be embedding itself.
+     *
      * @return Template[]
      */
     public function getEmbeddableTemplates(TemplateType $hostType, ?int $excludeTemplateId = null): array
     {
-        $allTemplates = $this->em->getRepository(Template::class)->findAll();
+        $repository = $this->em->getRepository(Template::class);
+        $excluded = null !== $excludeTemplateId ? $repository->find($excludeTemplateId) : null;
+        $excludedId = ($excluded?->getBaseTemplate() ?? $excluded)?->getId();
+        $allTemplates = $repository->findAll();
         $hostTypeName = $hostType->getName();
         $result = [];
 
         foreach ($allTemplates as $template) {
-            if (null !== $excludeTemplateId && $template->getId() === $excludeTemplateId) {
+            if ($template->isVariant() || (null !== $excludedId && $template->getId() === $excludedId)) {
                 continue;
             }
             $includedTypeName = $template->getTemplateType()?->getName() ?? '';

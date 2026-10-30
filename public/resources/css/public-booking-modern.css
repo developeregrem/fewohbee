@@ -319,7 +319,7 @@
     flex-shrink: 0;
     font-size: 1.1rem;
     line-height: 1;
-    width: 42px;
+    width: 32px;
 }
 
 .fhb-stepper-btn:hover {
@@ -835,10 +835,6 @@
     padding-left: 0.25rem;
     padding-right: 0.25rem;
     width: 3rem;
-}
-
-.fhb-qty-stepper .fhb-stepper-btn {
-    width: 32px;
 }
 
 /* "+" is the way forward from the initial zero, so it carries the accent colour. */

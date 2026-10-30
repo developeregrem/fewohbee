@@ -33,7 +33,7 @@ final class PropertyTools
     #[McpTool(
         name: 'get_property_overview',
         title: 'Property overview',
-        description: 'Lists properties (objects), bookable rooms (apartments) with beds and category, room categories, guest categories, reservation statuses and booking origins with their ids. Call this first; the other tools expect these ids.',
+        description: 'Lists properties (objects), bookable rooms (apartments) with beds and category, room categories with their kind, guest categories, reservation statuses and booking origins with their ids. Call this first; the other tools expect these ids. A category of kind "event_space" (seminar room, hall) is booked per day: a "night" of such a booking is a day, and the end date is the day after the last day. Event spaces stay out of occupancy figures and tourist tax.',
         annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
     )]
     #[McpRequiresScope(ApiScope::RESERVATIONS_READ)]
@@ -59,7 +59,7 @@ final class PropertyTools
         }
 
         $roomCategories = array_map(
-            static fn (RoomCategory $c): array => ['id' => $c->getId(), 'name' => $c->getName()],
+            static fn (RoomCategory $c): array => ['id' => $c->getId(), 'name' => $c->getName(), 'kind' => $c->getKind()->value],
             $this->em->getRepository(RoomCategory::class)->findBy([], ['name' => 'ASC'])
         );
 

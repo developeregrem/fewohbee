@@ -84,7 +84,7 @@ final class GenericCsvParser implements ParserInterface
     /**
      * @param list<string> $warnings
      *
-     * @return list<list<string>>
+     * @return list<list<string|null>> Empty CSV lines contain a single null cell.
      */
     private function readAllRows(\SplFileInfo $file, BankCsvProfile $profile, array &$warnings): array
     {
@@ -149,6 +149,7 @@ final class GenericCsvParser implements ParserInterface
     }
 
     /**
+     * @param list<string|null> $row
      * @param array<string, int> $columnMap
      */
     private function buildLine(array $row, array $columnMap, BankCsvProfile $profile): StatementLineDto
@@ -204,6 +205,7 @@ final class GenericCsvParser implements ParserInterface
     /**
      * Returns the amount as a fixed-point string with two decimals, e.g. "-41.98".
      *
+     * @param list<string|null> $row
      * @param array<string, int> $columnMap
      */
     private function parseAmount(array $row, array $columnMap, BankCsvProfile $profile): string
@@ -259,12 +261,14 @@ final class GenericCsvParser implements ParserInterface
         return '' === $raw ? null : $raw;
     }
 
+    /** @param list<string|null> $row */
     private function cell(array $row, int $index): string
     {
         return (string) ($row[$index] ?? '');
     }
 
     /**
+     * @param list<string|null> $row
      * @param array<string, int> $columnMap
      */
     private function optional(array $row, array $columnMap, string $field): ?string
@@ -301,7 +305,7 @@ final class GenericCsvParser implements ParserInterface
     }
 
     /**
-     * @param list<list<string>> $rows
+     * @param list<list<string|null>> $rows
      */
     private function extractIban(array $rows, BankCsvProfile $profile): ?string
     {
@@ -321,7 +325,7 @@ final class GenericCsvParser implements ParserInterface
     }
 
     /**
-     * @param list<list<string>> $rows
+     * @param list<list<string|null>> $rows
      *
      * @return array{0: ?\DateTimeImmutable, 1: ?\DateTimeImmutable}
      */
@@ -362,6 +366,7 @@ final class GenericCsvParser implements ParserInterface
     }
 
     /**
+     * @param list<string|null> $row
      * @param array<string, int> $columnMap
      */
     private function looksLikeDataRow(array $row, array $columnMap): bool
@@ -376,6 +381,7 @@ final class GenericCsvParser implements ParserInterface
         return 1 === preg_match('/\d/', $dateCell);
     }
 
+    /** @param list<string|null> $row */
     private function isEmptyRow(array $row): bool
     {
         if (1 === count($row) && '' === trim((string) $row[0])) {

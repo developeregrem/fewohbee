@@ -81,7 +81,8 @@ class TouristTaxService implements ResetInterface
         ?\DateTimeInterface $rangeStart = null,
         ?\DateTimeInterface $rangeEnd = null,
     ): array {
-        if ($reservation->isKurtaxeWaived()) {
+        // Event spaces host no overnight guests, so there is no tourist tax to charge.
+        if ($reservation->isKurtaxeWaived() || true === $reservation->getAppartment()?->isEventSpace()) {
             return [];
         }
 

@@ -26,7 +26,7 @@ class GuestCheckInExtrasService
      * offered here, because Reservation::prices cannot persist either choice.
      *
      * `description` is the stored name (it goes into the snapshot for the host), `label` the
-     * name in the guest's language.
+     * name in the guest's language; the list is ordered by it.
      *
      * @return list<array{id: int, description: string, label: string, total: string, booked: bool, price: Price}>
      */
@@ -78,6 +78,9 @@ class GuestCheckInExtrasService
                 'price' => $price,
             ];
         }
+
+        $collator = new \Collator(\Locale::getDefault());
+        usort($result, static fn (array $a, array $b): int => (int) $collator->compare($a['label'], $b['label']));
 
         return $result;
     }

@@ -149,6 +149,10 @@ final class SendInvoiceEmailActionTest extends TestCase
         return new EInvoiceReadiness(true, $ready, 'en16931', $result);
     }
 
+    /**
+     * @param array<string, mixed> $overrides
+     * @return array<string, mixed>
+     */
     private function baseConfig(array $overrides = []): array
     {
         return array_merge([

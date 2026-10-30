@@ -326,8 +326,12 @@ const TemplateInclude = Node.create({
         };
     },
 
+    /**
+     * Above the TextStyle rule, which takes every span with a class: at equal priority marks are
+     * matched before nodes, and the include would turn into plain text without its template ID.
+     */
     parseHTML() {
-        return [{ tag: 'span.template-include[data-template-id]' }];
+        return [{ tag: 'span.template-include[data-template-id]', priority: 60 }];
     },
 
     renderHTML({ HTMLAttributes, node }) {
@@ -353,12 +357,13 @@ const TemplateInlineControlSpan = Node.create({
     content: 'inline*',
 
     /**
-     * Preserve span wrappers that carry template control attributes.
+     * Preserve span wrappers that carry template control attributes, also when they have a class
+     * (above the TextStyle rule, see TemplateInclude).
      */
     parseHTML() {
         return [
-            { tag: 'span[data-repeat]' },
-            { tag: 'span[data-if]' },
+            { tag: 'span[data-repeat]', priority: 60 },
+            { tag: 'span[data-if]', priority: 60 },
         ];
     },
 

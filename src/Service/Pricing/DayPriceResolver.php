@@ -123,6 +123,9 @@ class DayPriceResolver implements ResetInterface
                 return null;
             }
             $listed = (float) $row->getPrice() * ($row->getIsPerRoom() ? 1 : $dayPrice->getPersons());
+            if ($row->hasExtraPersonSurcharge()) {
+                $listed += (float) $row->getExtraPersonSurcharge() * max(0, $dayPrice->getPersons() - (int) $row->getNumberOfPersons());
+            }
 
             return $listed > 0.0 ? $listed : null;
         }

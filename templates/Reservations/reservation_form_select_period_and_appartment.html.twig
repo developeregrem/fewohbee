@@ -20,8 +20,8 @@
                            data-action="click->reservations#toggleAppartmentOptionsAction" data-appartment-id="{{ key }}">
                             <span class="d-block fw-semibold">{{ reservation.appartment.number }} · {{ reservation.appartment.description }}</span>
                             <span class="d-block small text-body-secondary">
-                                {{ reservation.startdate|date('d.m.Y') }} – {{ reservation.enddate|date('d.m.Y') }}
-                                · {{ 'reservation.summary.nights'|trans({'%count%': reservation.startdate.diff(reservation.enddate).days}) }}
+                                {{ reservationMacros.dates(reservation) }}
+                                · {{ reservationMacros.length(reservation) }}
                                 · {{ 'reservation.summary.persons'|trans({'%count%': reservation.persons}) }}
                                 {{ reservationMacros.guest_counts(reservation, guestCategoriesById|default({})) }}
                                 · {{ reservation.reservationStatus|display_name }}
@@ -50,7 +50,8 @@
                     </div>
                 </div>
                 {% set lastStartDate = reservation.startdate|date('Y-m-d') %}
-                {% set lastEndDate = reservation.enddate|date('Y-m-d') %}
+                {# "To" of an event space is its last day #}
+                {% set lastEndDate = (reservation.eventSpace ? reservation.lastDay : reservation.enddate)|date('Y-m-d') %}
             {% endfor %}
         </div>
     {% endif %}

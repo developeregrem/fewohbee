@@ -137,7 +137,95 @@ final class CorrespondenceFileSaveTest extends WebTestCase
         $session->save();
     }
 
-    public function testAReadOnlyUserCannotSaveAFile(): void
+    #[DataProvider('invalidTokenPairs')]
+    public function testMissingEmptyOrLooselyEqualTokensCannotSaveAFile(?string $saved, ?string $submitted): void
+    {
+        $fields = $this->prepareForm(1, true);
+        $session = $this->session();
+        if (null === $saved) {
+            $session->remove('_csrf_token');
+        } else {
+            $session->set('_csrf_token', $saved);
+        }
+        $attachments = $session->get('templateAttachmentIds');
+        $session->save();
+        if (null === $submitted) {
+            unset($fields['_csrf_token']);
+        } else {
+            $fields['_csrf_token'] = $submitted;
+        }
+
+        $this->client->request('POST', '/correspondence/file/save', $fields);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $this->files(), 'Rejected CSRF tokens must not persist correspondence.');
+        $message = self::getContainer()->get(TranslatorInterface::class)->trans('flash.invalidtoken');
+        self::assertSelectorTextContains('.alert-warning', $message);
+        self::assertSelectorNotExists('.alert-success');
+        $session = $this->session();
+        self::assertSame($attachments, $session->get('templateAttachmentIds'));
+        self::assertSame($saved, $session->get('_csrf_token'));
+        $session->save();
+    }
+
+    /** @return iterable<string, array{string|null, string|null}> */
+    public static function invalidTokenPairs(): iterable
+    {
+        yield 'both missing' => [null, null];
+        yield 'both empty' => ['', ''];
+        yield 'numeric-looking but unequal' => ['0e'.str_repeat('1', 18), '0e'.str_repeat('2', 18)];
+        yield 'saved token missing' => [null, 'LegacyCsrfToken123456'];
+        yield 'submitted token missing' => ['LegacyCsrfToken123456', null];
+    }
+
+    #[DataProvider('attachmentRemovals')]
+    public function testRemovingAnAttachmentKeepsOtherReferencesAndStoredFiles(string $scenario): void
+    {
+        $fields = $this->prepareForm(1, true);
+        $this->client->request('POST', '/correspondence/file/save', $fields);
+        self::assertResponseIsSuccessful();
+        $fields['subject'] = 'Second attachment';
+        $this->client->request('POST', '/correspondence/file/save', $fields);
+        self::assertResponseIsSuccessful();
+        $files = $this->files();
+        self::assertCount(2, $files);
+        $session = $this->session();
+        $before = $session->get('templateAttachmentIds');
+        self::assertCount(2, $before);
+        $session->save();
+        $id = 'missing' === $scenario ? $files[1]->getId() + 10000 : $files[0]->getId();
+        $csrf = 'invalid token' === $scenario ? 'invalid-token' : $fields['_csrf_token'];
+
+        $this->client->request('POST', '/correspondence/attachment/remove', [
+            'id' => (string) $id,
+            '_csrf_token' => $csrf,
+        ]);
+
+        self::assertResponseIsSuccessful();
+        $expected = $before;
+        if ('existing' === $scenario) {
+            self::assertSelectorNotExists('.alert-warning');
+            unset($expected[array_key_first($before)]);
+        } else {
+            $key = 'missing' === $scenario ? 'templates.attachment.notfound' : 'flash.invalidtoken';
+            $message = self::getContainer()->get(TranslatorInterface::class)->trans($key);
+            self::assertSelectorTextContains('.alert-warning', $message);
+        }
+        $session = $this->session();
+        self::assertSame($expected, $session->get('templateAttachmentIds'));
+        $session->save();
+        self::assertCount(2, $this->files(), 'Removing an attachment must leave the stored correspondence intact.');
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function attachmentRemovals(): iterable
+    {
+        yield 'numeric string identifier' => ['existing'];
+        yield 'unknown attachment' => ['missing'];
+        yield 'invalid CSRF token' => ['invalid token'];
+    }
+
+    public function testAReadOnlyUserCannotSaveOrRemoveAFile(): void
     {
         $fields = $this->prepareForm(1, false);
         $role = $this->em()->getRepository(Role::class)->findOneBy(['role' => 'ROLE_RESERVATIONS_RO']);
@@ -157,6 +245,14 @@ final class CorrespondenceFileSaveTest extends WebTestCase
         $this->client->loginUser($user, 'main');
 
         $this->client->request('POST', '/correspondence/file/save', $fields);
+
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame([], $this->files());
+
+        $this->client->request('POST', '/correspondence/attachment/remove', [
+            'id' => '1',
+            '_csrf_token' => $fields['_csrf_token'],
+        ]);
 
         self::assertResponseStatusCodeSame(403);
         self::assertSame([], $this->files());

@@ -78,7 +78,8 @@ tags:
   - name: Statistics
     description: >-
       Utilization, booking origins and turnover, keyed by ISO months and years rather than
-      localized labels.
+      localized labels. Utilization, booking origins and booking pace cover the accommodation
+      only; event spaces count towards the turnover.
   - name: Meta
     description: The machine-readable description of this API.
 
@@ -864,7 +865,8 @@ paths:
 
         Active rooms, rooms booked by a reservation that blocks the room, rooms blocked
         without such a reservation, and free rooms. A room that is booked and blocked on
-        the same night counts as booked. No reservation data is returned.
+        the same night counts as booked. No reservation data is returned. Without
+        `roomCategoryId` event spaces are left out, as they are booked per day.
       parameters:
         - name: start
           in: query
@@ -877,7 +879,7 @@ paths:
         - $ref: '#/components/parameters/ObjectId'
         - name: roomCategoryId
           in: query
-          description: 'Only rooms of this room category. Default: all.'
+          description: 'Only rooms of this room category. Default: all accommodation (no event spaces).'
           schema: { type: integer }
       responses:
         '200':
@@ -1332,7 +1334,10 @@ components:
           format: uuid
           description: Groups reservations that were booked together.
         startDate: { type: string, format: date }
-        endDate: { type: string, format: date }
+        endDate:
+          type: string
+          format: date
+          description: Departure date, exclusive. For an event space the day after its last day.
         arrivalTime: { type: [string, 'null'], examples: ['15:00'] }
         departureTime: { type: [string, 'null'], examples: ['10:00'] }
         persons: { type: integer }
@@ -1351,6 +1356,13 @@ components:
             id: { type: [integer, 'null'] }
             number: { type: [string, 'null'] }
             description: { type: [string, 'null'] }
+            kind:
+              type: [string, 'null']
+              enum: [accommodation, event_space, null]
+              description: >-
+                Kind of the room's category; a room without category is accommodation. An
+                `event_space` is booked per day: a "night" is a day and `endDate` is the day after
+                the last day.
         object:
           type: object
           description: The property/branch the room belongs to.
@@ -1452,9 +1464,15 @@ components:
               description: { type: [string, 'null'] }
               startDate: { type: string, format: date }
               endDate: { type: string, format: date }
+              eventSpace:
+                type: boolean
+                description: >-
+                  The room was an event space when the line was created: `endDate` is the day
+                  after the last day and `amount` counts days. False for lines created before
+                  FewohBee 4.14.0.
               beds: { type: integer }
               persons: { type: integer }
-              amount: { type: integer, description: Number of nights charged. }
+              amount: { type: integer, description: Number of nights charged (days for an event space). }
               price: { type: number, format: float }
               vat: { type: number, format: float }
               includesVat: { type: boolean }
@@ -1527,10 +1545,18 @@ components:
         vat: { type: number, description: 'VAT percentage.' }
         includesVat: { type: boolean, description: 'Whether `price` is gross.' }
         isFlatPrice: { type: boolean, description: 'Billed once for the stay.' }
-        isPerRoom: { type: boolean, description: 'Billed per room-night, occupancy-independent.' }
+        isPerRoom: { type: boolean, description: 'Billed per room-night; other occupancies only through `extraPersonSurcharge`.' }
         numberOfPersons:
           type: [integer, 'null']
-          description: Occupancy this row is for. Matched exactly — there is no fallback to a lower occupancy.
+          description: >-
+            Occupancy this row is for. Matched exactly, unless the row has an `extraPersonSurcharge`:
+            then it serves every party up to the room's beds, the price including up to
+            `numberOfPersons`.
+        extraPersonSurcharge:
+          type: [number, 'null']
+          description: >-
+            Per-room rows only: added per night for every person beyond `numberOfPersons`. Null when
+            the row applies to exactly `numberOfPersons`. An exact row for the party takes precedence.
         minStay: { type: [integer, 'null'] }
         active: { type: boolean }
         roomCategory:
@@ -1540,6 +1566,7 @@ components:
           properties:
             id: { type: [integer, 'null'] }
             name: { type: [string, 'null'] }
+            kind: { type: string, enum: [accommodation, event_space] }
         roomCategories:
           type: array
           description: Room categories the price applies to. Empty for a misc price that applies to every room category.
@@ -1548,6 +1575,13 @@ components:
             properties:
               id: { type: [integer, 'null'] }
               name: { type: [string, 'null'] }
+              kind:
+                type: string
+                enum: [accommodation, event_space]
+                description: >-
+                  `event_space` rooms (seminar room, hall) are booked per day: a "night" of such a
+                  booking is a day, and the end date is the day after the last day. A price serves
+                  either kind, never both.
         origins:
           type: array
           items:
@@ -1605,6 +1639,8 @@ components:
         pricingModel: { type: string, enum: [per_person_night, per_room_night, flat] }
         unitPrice: { type: number, description: 'The amount of the price row after price rules or a day price; equals baseUnitPrice when neither applies.' }
         baseUnitPrice: { type: number, description: 'The stored amount of the price row.' }
+        includedPersons: { type: [integer, 'null'], description: 'Persons the room price includes when the row charges a surcharge for further persons; null otherwise.' }
+        extraPersonSurcharge: { type: [number, 'null'], description: 'Surcharge per further person and night after price rules or a day price, already part of `perNight`; null without one.' }
         adjustmentPercent: { type: number, description: 'Total change by price rules or a day price in percent; 0 when neither applies.' }
         priceRules:
           type: array
@@ -1657,6 +1693,10 @@ components:
           properties:
             id: { type: [integer, 'null'] }
             name: { type: [string, 'null'] }
+            kind:
+              type: string
+              enum: [accommodation, event_space]
+              description: For `event_space` the nights are days and `endDate` is the day after the last day.
         startDate: { type: string, format: date }
         endDate: { type: string, format: date, description: 'Departure date, exclusive.' }
         nightCount: { type: integer }
@@ -1760,6 +1800,7 @@ components:
                 properties:
                   id: { type: [integer, 'null'] }
                   name: { type: [string, 'null'] }
+                  kind: { type: string, enum: [accommodation, event_space] }
               roomCategories:
                 type: array
                 description: Room categories the extra applies to. Empty when it applies to every room category.
@@ -1768,6 +1809,7 @@ components:
                   properties:
                     id: { type: [integer, 'null'] }
                     name: { type: [string, 'null'] }
+                    kind: { type: string, enum: [accommodation, event_space] }
         extrasTotal: { type: number, description: 'Sum of the mandatory extras.' }
         touristTax:
           type: [object, 'null']

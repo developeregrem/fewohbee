@@ -16,54 +16,56 @@ class Price implements ContentTranslatable
 {
     use ContentTranslationsTrait;
 
+    /** @var int|'new'|null */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private int|string|null $id = null;
+    /** @var int|float|numeric-string|null Keep the assigned representation, including DBAL decimal strings. */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private $price;
+    private int|float|string|null $price = null;
     /** @var float|numeric-string|null Keep DBAL strings intact to avoid false updates after hydration. */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     private float|string|null $vat = null;
     #[ORM\Column(type: 'string', length: 100)]
-    private $description;
+    private ?string $description = null;
     #[ORM\Column(type: 'smallint', nullable: true)]
-    private $numberOfPersons;
+    private int|string|null $numberOfPersons = null;
     #[ORM\Column(type: 'smallint', nullable: true)]
-    private $minStay;
+    private int|string|null $minStay = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $active;
+    private ?bool $active = null;
     #[ORM\Column(type: 'date', nullable: true)]
-    private $seasonStart;
+    private ?\DateTime $seasonStart = null;
     #[ORM\Column(type: 'date', nullable: true)]
-    private $seasonEnd;
+    private ?\DateTime $seasonEnd = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $monday;
+    private ?bool $monday = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $tuesday;
+    private ?bool $tuesday = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $wednesday;
+    private ?bool $wednesday = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $thursday;
+    private ?bool $thursday = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $friday;
+    private ?bool $friday = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $saturday;
+    private ?bool $saturday = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $sunday;
+    private ?bool $sunday = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $allDays;
+    private ?bool $allDays = null;
     #[ORM\Column(type: 'smallint')]
-    private $type;
+    private int|string|null $type = null;
     /** @var Collection<int, ReservationOrigin> */
     #[ORM\ManyToMany(targetEntity: ReservationOrigin::class, inversedBy: 'prices')]
     #[ORM\JoinTable(name: 'prices_has_reservation_origins')]
-    private $reservationOrigins;
+    private Collection $reservationOrigins;
     /** @var Collection<int, PricePeriod> */
     #[ORM\OneToMany(targetEntity: 'App\Entity\PricePeriod', mappedBy: 'price', orphanRemoval: true, cascade: ['persist'])]
-    private $pricePeriods;
+    private Collection $pricePeriods;
     #[ORM\Column(type: 'boolean')]
-    private $allPeriods;
+    private bool $allPeriods;
     /**
      * Room categories this price is bound to. Apartment prices need at least one; for misc prices
      * an empty collection means "applies to every room category".
@@ -74,11 +76,18 @@ class Price implements ContentTranslatable
     #[ORM\JoinTable(name: 'prices_has_room_categories')]
     private Collection $roomCategories;
     #[ORM\Column(type: 'boolean')]
-    private $includesVat;
+    private bool $includesVat;
     #[ORM\Column(type: 'boolean')]
-    private $isFlatPrice;
+    private bool $isFlatPrice;
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isPerRoom;
+    /**
+     * Charge per night for every guest beyond numberOfPersons. Set, it widens a per-room price from
+     * exactly numberOfPersons to every party up to the room's beds, the price including up to
+     * numberOfPersons; null keeps the exact match.
+     */
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
+    private ?string $extraPersonSurcharge = null;
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $isDefaultActiveInReservationCreation;
 
@@ -107,9 +116,6 @@ class Price implements ContentTranslatable
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?AccountingAccount $revenueAccount = null;
 
-    /**
-     * Constructor.
-     */
     public function __construct()
     {
         $this->reservationOrigins = new ArrayCollection();
@@ -130,12 +136,14 @@ class Price implements ContentTranslatable
         return ['description'];
     }
 
-    public function getId()
+    /** @return int|'new'|null */
+    public function getId(): int|string|null
     {
         return $this->id;
     }
 
-    public function getPrice()
+    /** @return int|float|numeric-string|null */
+    public function getPrice(): int|float|string|null
     {
         return $this->price;
     }
@@ -145,22 +153,22 @@ class Price implements ContentTranslatable
         return null === $this->vat ? null : (float) $this->vat;
     }
 
-    public function getDescription()
+    public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    public function getNumberOfPersons()
+    public function getNumberOfPersons(): int|string|null
     {
         return $this->numberOfPersons;
     }
 
-    public function getMinStay()
+    public function getMinStay(): int|string|null
     {
         return $this->minStay;
     }
 
-    public function getActive()
+    public function getActive(): ?bool
     {
         return $this->active;
     }
@@ -175,52 +183,54 @@ class Price implements ContentTranslatable
         return $this->seasonEnd;
     }
 
-    public function getMonday()
+    public function getMonday(): ?bool
     {
         return $this->monday;
     }
 
-    public function getTuesday()
+    public function getTuesday(): ?bool
     {
         return $this->tuesday;
     }
 
-    public function getWednesday()
+    public function getWednesday(): ?bool
     {
         return $this->wednesday;
     }
 
-    public function getThursday()
+    public function getThursday(): ?bool
     {
         return $this->thursday;
     }
 
-    public function getFriday()
+    public function getFriday(): ?bool
     {
         return $this->friday;
     }
 
-    public function getSaturday()
+    public function getSaturday(): ?bool
     {
         return $this->saturday;
     }
 
-    public function getSunday()
+    public function getSunday(): ?bool
     {
         return $this->sunday;
     }
 
-    public function getType()
+    public function getType(): int|string|null
     {
         return $this->type;
     }
 
-    public function setId($id): void
+    /** @param int|'new' $id */
+    public function setId(int|string $id): void
     {
         $this->id = $id;
     }
 
-    public function setPrice($price): void
+    /** @param int|float|numeric-string $price */
+    public function setPrice(int|float|string $price): void
     {
         $this->price = $price;
     }
@@ -230,92 +240,87 @@ class Price implements ContentTranslatable
         $this->vat = $vat;
     }
 
-    public function setDescription($description): void
+    public function setDescription(string $description): void
     {
         $this->description = $description;
     }
 
-    public function setNumberOfPersons($numberOfPersons): void
+    public function setNumberOfPersons(int|string|null $numberOfPersons): void
     {
         $this->numberOfPersons = $numberOfPersons;
     }
 
-    public function setMinStay($minStay): void
+    public function setMinStay(int|string|null $minStay): void
     {
         $this->minStay = $minStay;
     }
 
-    public function setActive($active): void
+    public function setActive(?bool $active): void
     {
         $this->active = $active;
     }
 
-    public function setSeasonStart($seasonStart): void
+    public function setSeasonStart(?\DateTime $seasonStart): void
     {
         $this->seasonStart = $seasonStart;
     }
 
-    public function setSeasonEnd($seasonEnd): void
+    public function setSeasonEnd(?\DateTime $seasonEnd): void
     {
         $this->seasonEnd = $seasonEnd;
     }
 
-    public function setMonday($monday): void
+    public function setMonday(?bool $monday): void
     {
         $this->monday = $monday;
     }
 
-    public function setTuesday($tuesday): void
+    public function setTuesday(?bool $tuesday): void
     {
         $this->tuesday = $tuesday;
     }
 
-    public function setWednesday($wednesday): void
+    public function setWednesday(?bool $wednesday): void
     {
         $this->wednesday = $wednesday;
     }
 
-    public function setThursday($thursday): void
+    public function setThursday(?bool $thursday): void
     {
         $this->thursday = $thursday;
     }
 
-    public function setFriday($friday): void
+    public function setFriday(?bool $friday): void
     {
         $this->friday = $friday;
     }
 
-    public function setSaturday($saturday): void
+    public function setSaturday(?bool $saturday): void
     {
         $this->saturday = $saturday;
     }
 
-    public function setSunday($sunday): void
+    public function setSunday(?bool $sunday): void
     {
         $this->sunday = $sunday;
     }
 
-    public function setType($type): void
+    public function setType(int|string|null $type): void
     {
         $this->type = $type;
     }
 
-    public function getAllDays()
+    public function getAllDays(): ?bool
     {
         return $this->allDays;
     }
 
-    public function setAllDays($allDays): void
+    public function setAllDays(?bool $allDays): void
     {
         $this->allDays = $allDays;
     }
 
-    /**
-     * Add reservationOrigins.
-     *
-     * @return Price
-     */
-    public function addReservationOrigin(ReservationOrigin $reservationOrigins)
+    public function addReservationOrigin(ReservationOrigin $reservationOrigins): self
     {
         if (!$this->reservationOrigins->contains($reservationOrigins)) {
             $this->reservationOrigins[] = $reservationOrigins;
@@ -324,10 +329,7 @@ class Price implements ContentTranslatable
         return $this;
     }
 
-    /**
-     * Remove reservationOrigins.
-     */
-    public function removeReservationOrigin(ReservationOrigin $reservationOrigins)
+    public function removeReservationOrigin(ReservationOrigin $reservationOrigins): self
     {
         if ($this->reservationOrigins->contains($reservationOrigins)) {
             $this->reservationOrigins->removeElement($reservationOrigins);
@@ -336,12 +338,8 @@ class Price implements ContentTranslatable
         return $this;
     }
 
-    /**
-     * Get reservationOrigins.
-     *
-     * @return Collection<int, ReservationOrigin>
-     */
-    public function getReservationOrigins()
+    /** @return Collection<int, ReservationOrigin> */
+    public function getReservationOrigins(): Collection
     {
         return $this->reservationOrigins;
     }
@@ -437,6 +435,27 @@ class Price implements ContentTranslatable
         return $this->roomCategories;
     }
 
+    /**
+     * A price serves either accommodation or event spaces, so that "night" or "day" in its
+     * labels is unambiguous. Without categories a misc price applies to every room.
+     */
+    public function mixesRoomKinds(): bool
+    {
+        $kinds = [];
+        foreach ($this->roomCategories as $category) {
+            $kinds[$category->getKind()->value] = true;
+        }
+
+        return \count($kinds) > 1;
+    }
+
+    /** Charged per day: every assigned category is an event space. */
+    public function isForEventSpaces(): bool
+    {
+        return !$this->roomCategories->isEmpty()
+            && $this->roomCategories->forAll(static fn (int $key, RoomCategory $category): bool => $category->isEventSpace());
+    }
+
     public function addRoomCategory(RoomCategory $roomCategory): self
     {
         if (!$this->roomCategories->contains($roomCategory)) {
@@ -490,6 +509,26 @@ class Price implements ContentTranslatable
         $this->isPerRoom = $isPerRoom;
 
         return $this;
+    }
+
+    public function getExtraPersonSurcharge(): ?string
+    {
+        return $this->extraPersonSurcharge;
+    }
+
+    public function setExtraPersonSurcharge(int|float|string|null $surcharge): self
+    {
+        $this->extraPersonSurcharge = null === $surcharge || '' === $surcharge
+            ? null
+            : number_format((float) $surcharge, 2, '.', '');
+
+        return $this;
+    }
+
+    /** Whether guests beyond numberOfPersons are billed through the surcharge (per-room prices only). */
+    public function hasExtraPersonSurcharge(): bool
+    {
+        return $this->isPerRoom && null !== $this->extraPersonSurcharge;
     }
 
     /** Whether a portal brokers this service along with the stay, see the property. */

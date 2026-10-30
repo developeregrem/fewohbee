@@ -8,7 +8,6 @@ use App\Entity\Workflow;
 use App\Repository\WorkflowRepository;
 use App\Workflow\Action\WorkflowActionRegistry;
 use App\Workflow\Condition\WorkflowConditionRegistry;
-use App\Workflow\Trigger\WorkflowTriggerRegistry;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -16,7 +15,6 @@ class WorkflowEngine
 {
     public function __construct(
         private readonly WorkflowRepository $workflowRepository,
-        private readonly WorkflowTriggerRegistry $triggerRegistry,
         private readonly WorkflowConditionRegistry $conditionRegistry,
         private readonly WorkflowActionRegistry $actionRegistry,
         private readonly WorkflowLogService $logService,

@@ -9,6 +9,7 @@ use App\Entity\InvoicePosition;
 use App\Entity\Role;
 use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Field\ChoiceFormField;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -79,6 +80,75 @@ final class InvoiceMiscPositionFormTest extends WebTestCase
         self::assertTrue($stored->getIsFlatPrice());
         self::assertSame(1, $stored->getAmount());
         self::assertSame(20.0, $stored->getTotalPriceRaw());
+    }
+
+    #[DataProvider('missingRequiredFields')]
+    public function testMissingRequiredValueShowsAFieldErrorAndKeepsTheSavedPosition(string $field): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createInvoiceUser());
+        $position = $this->createPositionOnNewInvoice(false, 3);
+        $id = $position->getId();
+        $crawler = $client->request('GET', $this->editUrl($position));
+        $form = $crawler->filter('form[name="invoice_misc_position"]')->form();
+        $form['invoice_misc_position['.$field.']'] = '';
+
+        $crawler = $client->submit($form);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('#invoice_misc_position_'.$field.'.is-invalid'));
+        $em = static::getContainer()->get(ManagerRegistry::class)->getManager();
+        $em->clear();
+        $stored = $em->getRepository(InvoicePosition::class)->find($id);
+        self::assertInstanceOf(InvoicePosition::class, $stored);
+        self::assertSame(3, $stored->getAmount());
+        self::assertSame('20.00', $stored->getPrice());
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function missingRequiredFields(): iterable
+    {
+        yield 'quantity' => ['amount'];
+        yield 'price' => ['price'];
+    }
+
+    #[DataProvider('largePrices')]
+    public function testLargePricesAreSavedWithoutThousandsSeparators(string $action, string $price): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createInvoiceUser());
+        $existing = $this->createPositionOnNewInvoice(false, 3);
+        $invoiceId = $existing->getInvoice()->getId();
+        $url = 'create' === $action
+            ? sprintf('/invoices/%d/new/miscellaneous', $invoiceId)
+            : $this->editUrl($existing);
+        $crawler = $client->request('GET', $url);
+        $form = $crawler->filter('form[name="invoice_misc_position"]')->form();
+        $form['invoice_misc_position[description]'] = 'Decimal price regression';
+        $form['invoice_misc_position[amount]'] = '2';
+        $form['invoice_misc_position[price]'] = $price;
+        $form['invoice_misc_position[vat]'] = '7';
+
+        $client->submit($form);
+
+        self::assertResponseIsSuccessful();
+        $em = static::getContainer()->get(ManagerRegistry::class)->getManager();
+        $em->clear();
+        $stored = $em->getRepository(InvoicePosition::class)->findOneBy([
+            'invoice' => $invoiceId,
+            'description' => 'Decimal price regression',
+        ]);
+        self::assertInstanceOf(InvoicePosition::class, $stored);
+        self::assertSame($price, $stored->getPrice());
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function largePrices(): iterable
+    {
+        yield 'create positive price' => ['create', '1234.56'];
+        yield 'create deduction' => ['create', '-1234.56'];
+        yield 'edit positive price' => ['edit', '1234.56'];
+        yield 'edit deduction' => ['edit', '-1234.56'];
     }
 
     private function editUrl(InvoicePosition $position): string

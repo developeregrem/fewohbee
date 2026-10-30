@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Attribute\TemplateIgnore;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\Translation\ContentTranslatable;
 use App\Entity\Translation\ContentTranslationsTrait;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -39,6 +41,7 @@ class Appartment implements ContentTranslatable
     private Collection $reservations;
     #[ORM\ManyToOne(targetEntity: 'App\Entity\RoomCategory', inversedBy: 'apartments')]
     #[ORM\JoinColumn(nullable: true)]
+    #[Assert\NotNull(message: 'appartment.category.required')]
     private ?RoomCategory $roomCategory = null;
     #[ORM\OneToOne(mappedBy: 'apartment', targetEntity: CalendarSync::class, cascade: ['persist', 'remove'])]
     private CalendarSync $calendarSync;
@@ -158,6 +161,19 @@ class Appartment implements ContentTranslatable
         $this->roomCategory = $roomCategory;
 
         return $this;
+    }
+
+    /** An event space is booked per day; a room without category is accommodation. */
+    public function isEventSpace(): bool
+    {
+        return true === $this->roomCategory?->isEventSpace();
+    }
+
+    /** Templates use isEventSpace(): an enum cannot be printed. */
+    #[TemplateIgnore]
+    public function getKind(): RoomCategoryKind
+    {
+        return $this->roomCategory?->getKind() ?? RoomCategoryKind::ACCOMMODATION;
     }
 
     public function getCalendarSync(): ?CalendarSync

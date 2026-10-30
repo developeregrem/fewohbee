@@ -201,6 +201,21 @@ final class McpServerTest extends WebTestCase
         self::assertSame(McpToolCallOutcome::DENIED, $this->latestAudit('get_property_overview')?->getOutcome());
     }
 
+    public function testPropertyOverviewNamesTheKindOfEachRoomCategory(): void
+    {
+        $this->configureMcp(enabled: true);
+        [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::RESERVATIONS_READ]);
+
+        $result = $this->callTool($token, 'get_property_overview');
+
+        self::assertFalse($result['isError'] ?? false);
+        $categories = $result['structuredContent']['roomCategories'];
+        self::assertNotEmpty($categories);
+        foreach ($categories as $category) {
+            self::assertContains($category['kind'], ['accommodation', 'event_space']);
+        }
+    }
+
     public function testScopeDoesNotExceedTheOwnersRoles(): void
     {
         $this->configureMcp(enabled: true);
