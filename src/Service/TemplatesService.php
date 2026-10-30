@@ -214,7 +214,7 @@ class TemplatesService
             $params = $this->renderParamsResolver->resolve($template, $param);
 
             $hostTypeName = $template->getTemplateType()?->getName();
-            $text = $this->resolveTemplateIncludes($template->getText(), $hostTypeName);
+            $text = $this->resolveTemplateIncludes($template->getText(), $hostTypeName, locale: $template->getLocale());
             $str = $this->replaceTwigSyntax($text);
             $templateStr = $this->twig->createTemplate($str);
 
@@ -226,8 +226,9 @@ class TemplatesService
      * Render raw template content using the pseudo-twig syntax replacements.
      *
      * @param array<string, mixed> $params
+     * @param string|null          $locale Language of the template the text belongs to, for its includes
      */
-    public function renderTemplateString(string $templateText, array $params, ?string $hostTypeName = null): string
+    public function renderTemplateString(string $templateText, array $params, ?string $hostTypeName = null, ?string $locale = null): string
     {
         $wasStrictVariables = $this->twig->isStrictVariables();
 
@@ -237,7 +238,7 @@ class TemplatesService
                 $this->twig->enableStrictVariables();
             }
 
-            $text = $this->resolveTemplateIncludes($templateText, $hostTypeName);
+            $text = $this->resolveTemplateIncludes($templateText, $hostTypeName, locale: $locale);
             $str = $this->replaceTwigSyntax($text);
             $templateStr = $this->twig->createTemplate($str);
 
@@ -873,6 +874,7 @@ class TemplatesService
      *
      * Compatibility rules:
      * - TEMPLATE_FILE_PDF can be embedded into any template
+     * - TEMPLATE_GENERAL_EMAIL can be embedded into any mail template
      * - Otherwise, only templates sharing the same base type are allowed
      *   (e.g. TEMPLATE_RESERVATION_PDF ↔ TEMPLATE_RESERVATION_EMAIL)
      *
@@ -880,8 +882,10 @@ class TemplatesService
      * @param string|null $hostTypeName The template type name of the host template (for compatibility checks)
      * @param int         $depth        Current recursion depth
      * @param int[]       $visitedIds   IDs already resolved in this chain (cycle detection)
+     * @param string|null $locale       Language of the host template: an embedded template contributes
+     *                                  its variant in that language, else its own text
      */
-    public function resolveTemplateIncludes(string $text, ?string $hostTypeName = null, int $depth = 0, array $visitedIds = []): string
+    public function resolveTemplateIncludes(string $text, ?string $hostTypeName = null, int $depth = 0, array $visitedIds = [], ?string $locale = null): string
     {
         if ($depth >= self::MAX_INCLUDE_DEPTH) {
             return $text;
@@ -889,7 +893,7 @@ class TemplatesService
 
         return preg_replace_callback(
             '/<span\b(?=[^>]*\bclass="[^"]*\btemplate-include\b[^"]*")(?=[^>]*\bdata-template-id="(\d+)")[^>]*>.*?<\/span>/is',
-            function (array $matches) use ($hostTypeName, $depth, $visitedIds): string {
+            function (array $matches) use ($hostTypeName, $depth, $visitedIds, $locale): string {
                 $templateId = (int) $matches[1];
 
                 if (in_array($templateId, $visitedIds, true)) {
@@ -906,10 +910,10 @@ class TemplatesService
                     throw new \RuntimeException($this->translator->trans('templates.include.error.incompatible', ['%name%' => $included->getName(), '%type%' => $includedTypeName]));
                 }
 
-                $includedText = $included->getText() ?? '';
+                $includedText = $included->variantFor($locale)->getText() ?? '';
                 $visitedIds[] = $templateId;
 
-                return $this->resolveTemplateIncludes($includedText, $hostTypeName, $depth + 1, $visitedIds);
+                return $this->resolveTemplateIncludes($includedText, $hostTypeName, $depth + 1, $visitedIds, $locale);
             },
             $text
         ) ?? $text;
@@ -918,12 +922,18 @@ class TemplatesService
     /**
      * Check if a template type is compatible for inclusion into a host template.
      *
-     * TEMPLATE_FILE_PDF is always allowed. Otherwise the base type must match
+     * TEMPLATE_FILE_PDF is always allowed. TEMPLATE_GENERAL_EMAIL is allowed in every mail
+     * template: it is rendered without a reservation or invoice, so its text (a signature, say)
+     * does not depend on the host. Otherwise the base type must match
      * (e.g. TEMPLATE_RESERVATION_PDF and TEMPLATE_RESERVATION_EMAIL share "RESERVATION").
      */
     public function isTemplateIncludeCompatible(string $hostTypeName, string $includedTypeName): bool
     {
         if ('TEMPLATE_FILE_PDF' === $includedTypeName) {
+            return true;
+        }
+
+        if ('TEMPLATE_GENERAL_EMAIL' === $includedTypeName && str_ends_with($hostTypeName, '_EMAIL')) {
             return true;
         }
 
@@ -945,16 +955,23 @@ class TemplatesService
     /**
      * Return templates that can be embedded into a template of the given type.
      *
+     * Variants are left out: an embedded template follows the language of its host by itself
+     * (see resolveTemplateIncludes()). For the same reason a variant cannot embed the template it
+     * translates, that would be embedding itself.
+     *
      * @return Template[]
      */
     public function getEmbeddableTemplates(TemplateType $hostType, ?int $excludeTemplateId = null): array
     {
-        $allTemplates = $this->em->getRepository(Template::class)->findAll();
+        $repository = $this->em->getRepository(Template::class);
+        $excluded = null !== $excludeTemplateId ? $repository->find($excludeTemplateId) : null;
+        $excludedId = ($excluded?->getBaseTemplate() ?? $excluded)?->getId();
+        $allTemplates = $repository->findAll();
         $hostTypeName = $hostType->getName();
         $result = [];
 
         foreach ($allTemplates as $template) {
-            if (null !== $excludeTemplateId && $template->getId() === $excludeTemplateId) {
+            if ($template->isVariant() || (null !== $excludedId && $template->getId() === $excludedId)) {
                 continue;
             }
             $includedTypeName = $template->getTemplateType()?->getName() ?? '';
