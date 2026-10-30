@@ -4,92 +4,79 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Entity\AppSettings;
 use App\Entity\Customer;
-use App\Entity\CustomerAddresses;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Repository\ReservationRepository;
-use App\Repository\TemplateRepository;
+use App\Service\AppSettingsService;
 use App\Service\Reservation\ReservationConfirmationService;
 use App\Workflow\Action\SendTemplateEmailAction;
+use App\Workflow\Attachment\ResolvedAttachmentSet;
+use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Uid\Uuid;
 
 final class ReservationConfirmationServiceTest extends TestCase
 {
-    public function testWithoutADefaultMailTemplateNothingCanBeSent(): void
+    public function testWithoutAMailTemplateInTheSettingsThereIsNothingToPrepare(): void
     {
-        $confirmation = $this->service([
-            'TEMPLATE_RESERVATION_EMAIL' => [$this->template('Buchungsbestätigung')],
-            'TEMPLATE_RESERVATION_PDF' => [],
-        ])->prepare($this->reservationWithBookerEmail());
+        $service = $this->service(new AppSettings());
 
-        self::assertNull($confirmation->emailTemplate);
-        self::assertFalse($confirmation->canBeSent());
+        self::assertNull($service->emailTemplate());
+        self::assertNull($service->prepare($this->reservation(1)));
     }
 
-    public function testTheDefaultTemplatesAreTakenWithTheBaseTemplateOverItsLanguageVariant(): void
+    public function testTheMailTemplateIsTakenInTheBookersLanguage(): void
     {
-        $mail = $this->template('Buchungsbestätigung', default: true);
-        $variant = $this->template('Booking confirmation')->setLocale('en')->setBaseTemplate($mail);
-        $pdf = $this->template('Bestätigung PDF', default: true);
+        $mail = (new Template())->setName('Buchungsbestätigung');
+        $variant = (new Template())->setName('Booking confirmation')->setLocale('en')->setBaseTemplate($mail);
+        $mail->getVariants()->add($variant);
+        $confirmation = $this->service((new AppSettings())->setConfirmationTemplate($mail))->prepare($this->reservation(1, locale: 'en'));
 
-        $confirmation = $this->service([
-            'TEMPLATE_RESERVATION_EMAIL' => [$variant, $mail],
-            'TEMPLATE_RESERVATION_PDF' => [$this->template('Anderes PDF'), $pdf],
-        ])->prepare($this->reservationWithBookerEmail());
-
-        self::assertSame($mail, $confirmation->emailTemplate);
-        self::assertSame($pdf, $confirmation->pdfTemplate);
-        self::assertTrue($confirmation->canBeSent());
+        self::assertSame($variant, $confirmation?->emailTemplate);
     }
 
-    public function testHiddenTemplatesNeverCountEvenAsDefault(): void
+    public function testTheClickedRoomComesFirstFollowedByTheRestOfTheBooking(): void
     {
-        $confirmation = $this->service([
-            'TEMPLATE_RESERVATION_EMAIL' => [$this->template('Briefkopf', default: true)->setHidden(true)],
-            'TEMPLATE_RESERVATION_PDF' => [$this->template('Briefkopf PDF', default: true)->setHidden(true)],
-        ])->prepare($this->reservationWithBookerEmail());
+        $group = Uuid::v4();
+        $earlier = $this->reservation(1, $group);
+        $clicked = $this->reservation(2, $group);
+        $later = $this->reservation(3, $group);
 
-        self::assertNull($confirmation->emailTemplate);
-        self::assertNull($confirmation->pdfTemplate);
+        $confirmation = $this->service(
+            (new AppSettings())->setConfirmationTemplate((new Template())->setName('Buchungsbestätigung')),
+            [$earlier, $clicked, $later],
+        )->prepare($clicked);
+
+        self::assertNotNull($confirmation);
+        self::assertSame([$clicked, $earlier, $later], $confirmation->reservations);
+        self::assertSame([], $confirmation->attachmentIds);
     }
 
-    private function template(string $name, bool $default = false): Template
+    private function reservation(int $id, ?Uuid $group = null, ?string $locale = null): Reservation
     {
-        $template = (new Template())->setName($name);
-        $template->setIsDefault($default);
-
-        return $template;
-    }
-
-    private function reservationWithBookerEmail(): Reservation
-    {
-        $address = new CustomerAddresses();
-        $address->setEmail('gast@example.com');
         $booker = new Customer();
-        $booker->addCustomerAddress($address);
+        $booker->setLocale($locale);
         $reservation = new Reservation();
+        (new \ReflectionProperty(Reservation::class, 'id'))->setValue($reservation, $id);
         $reservation->setBooker($booker);
+        $reservation->setBookingGroupUuid($group);
 
         return $reservation;
     }
 
-    /**
-     * @param array<string, list<Template>> $templatesByType
-     */
-    private function service(array $templatesByType): ReservationConfirmationService
+    /** @param Reservation[] $bookingGroup */
+    private function service(AppSettings $settings, array $bookingGroup = []): ReservationConfirmationService
     {
-        $templateRepository = $this->createStub(TemplateRepository::class);
-        $templateRepository->method('loadByTypeName')
-            ->willReturnCallback(static fn (array $names): array => $templatesByType[$names[0]] ?? []);
-        $em = $this->createStub(EntityManagerInterface::class);
-        $em->method('getRepository')->willReturn($templateRepository);
+        $appSettings = $this->createStub(AppSettingsService::class);
+        $appSettings->method('getSettings')->willReturn($settings);
+        $reservations = $this->createStub(ReservationRepository::class);
+        $reservations->method('findByBookingGroupUuid')->willReturn($bookingGroup);
+        $resolver = $this->createStub(WorkflowAttachmentResolver::class);
+        $resolver->method('resolve')->willReturn(new ResolvedAttachmentSet());
 
-        return new ReservationConfirmationService(
-            $this->createStub(ReservationRepository::class),
-            $em,
-            $this->createStub(SendTemplateEmailAction::class),
-        );
+        return new ReservationConfirmationService($appSettings, $reservations, $resolver, $this->createStub(EntityManagerInterface::class), $this->createStub(SendTemplateEmailAction::class));
     }
 }

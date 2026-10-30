@@ -3554,21 +3554,20 @@ export default class extends Controller {
     }
 
     /**
-     * "Send" in the confirmation preview: the response is the refreshed reservation dialog. With
-     * several addresses the form carries the picked one.
+     * "Confirmation" in the reservation details: the server prepares the mail and its attachments
+     * and answers with the mail editor, or sends it right away and answers with the details
+     * dialog. A button of the address menu carries the picked address.
      */
-    sendConfirmation(event) {
+    openConfirmationAction(event) {
         event.preventDefault();
-        const form = event.currentTarget;
-        const data = new FormData(form);
-        // Sending takes a moment (PDF and mail); a second click would send a second mail
-        form.querySelectorAll('button[type="submit"]').forEach((button) => { button.disabled = true; });
-        // The answer is the reservation dialog again, no longer the preview
-        setModalTitle(this.translate('reservation.details'));
+        const trigger = event.currentTarget;
+        // Sending right away takes a moment (PDFs and mail); a second click would send a second mail
+        trigger.disabled = true;
+        setModalTitle(trigger.dataset.title || '');
         httpRequest({
-            url: form.action,
+            url: trigger.dataset.url,
             method: 'POST',
-            data,
+            data: { _token: trigger.dataset.token, email: trigger.dataset.email || '' },
             target: this.modalContent,
         });
     }

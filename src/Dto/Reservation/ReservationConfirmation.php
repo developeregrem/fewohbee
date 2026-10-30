@@ -8,26 +8,23 @@ use App\Entity\Reservation;
 use App\Entity\Template;
 
 /**
- * What the one-click booking confirmation of a reservation sends: to whom, with which templates
- * and for which rooms of the booking.
+ * A booking confirmation prepared for the mail editor: the template in the booker's language,
+ * the rooms of the booking and the attachments already stored as file correspondences.
  */
 final readonly class ReservationConfirmation
 {
     /**
-     * @param list<string>  $recipients   the booker's addresses; with several the user picks one
-     * @param Reservation[] $reservations the whole booking, ordered by arrival
+     * @param Reservation[]          $reservations  the whole booking, the clicked reservation first
+     * @param list<array<int, int>>  $attachmentIds per attachment the file correspondence of each
+     *                                              reservation, keyed by reservation ID, as the
+     *                                              session key templateAttachmentIds holds them
+     * @param list<string>           $warnings      attachments left out, with the reason
      */
     public function __construct(
-        public array $recipients,
-        public ?Template $emailTemplate,
-        public ?Template $pdfTemplate,
+        public Template $emailTemplate,
         public array $reservations,
+        public array $attachmentIds,
+        public array $warnings,
     ) {
-    }
-
-    /** A confirmation needs an address and a mail template; the PDF is optional. */
-    public function canBeSent(): bool
-    {
-        return [] !== $this->recipients && null !== $this->emailTemplate;
     }
 }

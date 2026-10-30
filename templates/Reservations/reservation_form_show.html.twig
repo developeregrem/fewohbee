@@ -46,30 +46,35 @@
             </div>
         </div>
         {% endif %}
-        {# Opens the confirmation as it would go out; sending happens from there. With several
+        {# Opens the booking confirmation from the general settings in the mail editor, or sends it
+           right away when the settings say so; the answer is then this dialog again. With several
            addresses the booker's address is picked first, as for the check-in invitation. #}
-        {% set confirmationEmails = reservation.booker ? reservation.booker.emails : [] %}
-        {% if confirmationEmails|length > 1 %}
-            <div class="dropup me-auto">
-                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        {% if confirmationEnabled|default(false) and is_granted('ROLE_RESERVATIONS') %}
+            {% set confirmationEmails = reservation.booker ? reservation.booker.emails : [] %}
+            {% set confirmationButton = {
+                'data-action': 'reservations#openConfirmationAction',
+                'data-url': path('reservations.confirmation.open', {'id': reservation.id}),
+                'data-token': csrf_token('reservation-confirmation-' ~ reservation.id),
+                'data-title': (confirmationSendsImmediately|default(false) ? 'reservation.details' : 'reservation.confirmation.title')|trans,
+            } %}
+            {% if confirmationEmails|length > 1 %}
+                <div class="dropup me-auto">
+                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-paper-plane me-1"></i> {{ 'reservation.confirmation.button'|trans }}
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for email in confirmationEmails %}
+                            <li><button type="button" class="dropdown-item text-break" data-email="{{ email }}"
+                                        {% for name, value in confirmationButton %} {{ name }}="{{ value }}"{% endfor %}><i class="fas fa-envelope fa-fw me-1"></i>{{ email }}</button></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% else %}
+                <button type="button" class="btn btn-secondary me-auto"
+                        {% for name, value in confirmationButton %} {{ name }}="{{ value }}"{% endfor %}>
                     <i class="fas fa-paper-plane me-1"></i> {{ 'reservation.confirmation.button'|trans }}
                 </button>
-                <ul class="dropdown-menu">
-                    {% for email in confirmationEmails %}
-                        <li><button type="button" class="dropdown-item text-break"
-                                    data-action="reservations#openModalContentAction"
-                                    data-url="{{ path('reservations.confirmation.preview', {'id': reservation.id, 'email': email}) }}"
-                                    data-title="{{ 'reservation.confirmation.title'|trans }}"><i class="fas fa-envelope fa-fw me-1"></i>{{ email }}</button></li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% else %}
-            <button type="button" class="btn btn-secondary me-auto"
-                    data-action="reservations#openModalContentAction"
-                    data-url="{{ path('reservations.confirmation.preview', {'id': reservation.id}) }}"
-                    data-title="{{ 'reservation.confirmation.title'|trans }}">
-                <i class="fas fa-paper-plane me-1"></i> {{ 'reservation.confirmation.button'|trans }}
-            </button>
+            {% endif %}
         {% endif %}
         {# Confirmed in a popover; reservations_controller closes the dialog and reloads the table #}
         <button type="button" class="btn btn-outline-danger ms-auto"

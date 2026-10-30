@@ -8,124 +8,137 @@ use App\Dto\Reservation\ReservationConfirmation;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Repository\ReservationRepository;
-use App\Repository\TemplateRepository;
-use App\Workflow\Action\ComposedEmail;
+use App\Service\AppSettingsService;
 use App\Workflow\Action\SendTemplateEmailAction;
 use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Sends the booking confirmation of a reservation with one click: the default reservation mail
- * template to the booker, with the default reservation PDF attached when there is one. Only
- * templates explicitly marked as default count; without a default mail template nothing is sent,
- * since whichever template came first by name could be a text nobody meant for guests.
- * Which text fits (private or business, one room or several) is up to the templates.
+ * The booking confirmation of a reservation, with the mail template and attachments chosen in
+ * the general settings: either prepared for the mail editor, where the user reviews and sends it
+ * like any other conversation, or sent right away when the settings say so.
  */
 final class ReservationConfirmationService
 {
     public function __construct(
+        private readonly AppSettingsService $appSettings,
         private readonly ReservationRepository $reservations,
+        private readonly WorkflowAttachmentResolver $attachmentResolver,
         private readonly EntityManagerInterface $em,
         private readonly SendTemplateEmailAction $sendTemplateEmail,
     ) {
     }
 
-    public function prepare(Reservation $reservation): ReservationConfirmation
+    /** The mail template from the settings; null switches the confirmation button off. */
+    public function emailTemplate(): ?Template
     {
-        return new ReservationConfirmation(
-            $reservation->getBooker()?->getEmails() ?? [],
-            $this->defaultTemplate('TEMPLATE_RESERVATION_EMAIL'),
-            $this->defaultTemplate('TEMPLATE_RESERVATION_PDF'),
-            $this->bookingGroup($reservation),
-        );
+        return $this->appSettings->getSettings()->getConfirmationTemplate();
+    }
+
+    /** Whether the button sends the confirmation right away instead of opening the editor. */
+    public function sendsImmediately(): bool
+    {
+        return $this->appSettings->getSettings()->isConfirmationSendImmediately();
     }
 
     /**
-     * Renders the confirmation exactly as send() would, in the booker's language, without
-     * sending or recording anything. The PDF is rendered too, so a broken PDF shows up here.
-     * $email as for send().
+     * Sends the confirmation for the whole booking without the editor and records the mail and
+     * its attachments in the conversations of every room. $email picks one of the booker's
+     * addresses; null takes the first. Unlike prepare(), a missing attachment stops the mail,
+     * since nobody sees it before it goes out.
      *
-     * @throws WorkflowSkippedException as for send()
-     * @throws \RuntimeException        when a template does not render, with a message for the user
+     * @throws \LogicException          when no mail template is set
+     * @throws WorkflowSkippedException when the booker has no address (or not $email) or an
+     *                                  attachment cannot be rendered; the message is meant for the user
+     * @throws \RuntimeException        when the mail template does not render, with a message for the user
      */
-    public function preview(Reservation $reservation, ?string $email = null): ComposedEmail
+    public function send(Reservation $reservation, ?string $email = null): void
     {
-        $confirmation = $this->prepare($reservation);
+        $settings = $this->appSettings->getSettings();
+        $template = $settings->getConfirmationTemplate() ?? throw new \LogicException('No confirmation template is set.');
 
-        return $this->sendTemplateEmail->compose($this->config($confirmation, $email), $reservation, ['allReservations' => $confirmation->reservations]);
-    }
-
-    /**
-     * Sends the confirmation for the whole booking and records the mail in the conversations of
-     * every room. $email picks one of the booker's addresses; null takes the first. Returns the
-     * summary of what was sent.
-     *
-     * @throws WorkflowSkippedException when the booker has no address, no mail template is the default or the
-     *                                  PDF cannot be rendered; the message is meant for the user
-     * @throws \RuntimeException        when a template does not render, with a message for the user
-     */
-    public function send(Reservation $reservation, ?string $email = null): string
-    {
-        $confirmation = $this->prepare($reservation);
-
-        return $this->sendTemplateEmail->execute($this->config($confirmation, $email), $reservation, ['allReservations' => $confirmation->reservations]);
-    }
-
-    /**
-     * Action config shared by preview and send, so the preview shows what goes out.
-     *
-     * @return array<string, mixed>
-     */
-    private function config(ReservationConfirmation $confirmation, ?string $email): array
-    {
-        $attachments = [];
-        if (null !== $confirmation->pdfTemplate) {
-            $attachments[] = [
-                'type' => WorkflowAttachmentResolver::TYPE_PDF_TEMPLATE,
-                'templateId' => $confirmation->pdfTemplate->getId(),
-            ];
-        }
-
-        return [
-            'templateId' => $confirmation->emailTemplate?->getId() ?? 0,
+        $this->sendTemplateEmail->execute([
+            'templateId' => $template->getId(),
             'recipientType' => 'booker_email',
             'bookerEmail' => $email,
-            'attachments' => $attachments,
-            // A confirmation without the promised PDF is worse than none.
+            'attachments' => $this->attachmentItems($settings->getConfirmationAttachments()),
             'attachmentPolicy' => WorkflowAttachmentResolver::POLICY_REQUIRE_ALL,
-        ];
+        ], $reservation, ['allReservations' => $this->bookingGroup($reservation)]);
     }
 
     /**
-     * All rooms booked together with $reservation, or just $reservation for a single booking.
+     * Picks the templates in the booker's language and stores the configured attachments as
+     * file correspondences of every room of the booking, as adding them by hand in the editor
+     * does. They stay in the conversations even when the mail is not sent. An attachment that
+     * does not render is left out and reported in the warnings.
+     *
+     * Returns null when no mail template is set.
+     *
+     * @throws WorkflowSkippedException when the attachments together are too large to send
+     */
+    public function prepare(Reservation $reservation): ?ReservationConfirmation
+    {
+        $settings = $this->appSettings->getSettings();
+        $template = $settings->getConfirmationTemplate();
+        if (null === $template) {
+            return null;
+        }
+
+        $locale = $reservation->getBooker()?->getLocale();
+        $reservations = $this->bookingGroup($reservation);
+        $items = $this->attachmentItems($settings->getConfirmationAttachments());
+        $resolved = $this->attachmentResolver->resolve($items, $reservation, $reservations, WorkflowAttachmentResolver::POLICY_SKIP_MISSING, 0, $locale);
+
+        $attachmentIds = [];
+        foreach ($resolved->attachments as $attachment) {
+            $files = [];
+            foreach ($reservations as $groupReservation) {
+                $file = $this->attachmentResolver->createFileCorrespondence($attachment, $groupReservation);
+                if (null !== $file) {
+                    $this->em->persist($file);
+                    $files[(int) $groupReservation->getId()] = $file;
+                }
+            }
+            $this->em->flush();
+            if ([] !== $files) {
+                $attachmentIds[] = array_map(static fn ($file): int => (int) $file->getId(), $files);
+            }
+        }
+
+        return new ReservationConfirmation($template->variantFor($locale), $reservations, $attachmentIds, $resolved->warnings);
+    }
+
+    /**
+     * The attachment templates as items for WorkflowAttachmentResolver.
+     *
+     * @param iterable<Template> $templates
+     *
+     * @return list<array{type: string, templateId: ?int}>
+     */
+    private function attachmentItems(iterable $templates): array
+    {
+        $items = [];
+        foreach ($templates as $template) {
+            $items[] = ['type' => WorkflowAttachmentResolver::TYPE_PDF_TEMPLATE, 'templateId' => $template->getId()];
+        }
+
+        return $items;
+    }
+
+    /**
+     * All rooms booked together with $reservation, $reservation first so the editor addresses
+     * its booker and returns to its details; just $reservation for a single booking.
      *
      * @return Reservation[]
      */
     private function bookingGroup(Reservation $reservation): array
     {
         $groupUuid = $reservation->getBookingGroupUuid();
-        $group = null !== $groupUuid ? $this->reservations->findByBookingGroupUuid($groupUuid) : [];
+        $others = null !== $groupUuid
+            ? array_filter($this->reservations->findByBookingGroupUuid($groupUuid), static fn (Reservation $other): bool => $other->getId() !== $reservation->getId())
+            : [];
 
-        return [] !== $group ? $group : [$reservation];
-    }
-
-    /**
-     * The template of a type marked as default, or null when none is. Hidden templates and
-     * language variants never count: the base template is chosen here, and
-     * SendTemplateEmailAction swaps in the booker's variant when sending.
-     */
-    private function defaultTemplate(string $typeName): ?Template
-    {
-        /** @var TemplateRepository $repository */
-        $repository = $this->em->getRepository(Template::class);
-
-        foreach ($repository->loadByTypeName([$typeName]) as $template) {
-            if ($template->getIsDefault() && !$template->isHidden() && !$template->isVariant()) {
-                return $template;
-            }
-        }
-
-        return null;
+        return [$reservation, ...array_values($others)];
     }
 }

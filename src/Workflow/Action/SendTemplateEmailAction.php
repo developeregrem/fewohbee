@@ -134,16 +134,7 @@ class SendTemplateEmailAction implements WorkflowActionInterface
         ];
     }
 
-    /**
-     * Renders the mail as execute() would send it, without sending or recording anything; for a
-     * preview before sending.
-     *
-     * @param array<string, mixed> $config  as for execute()
-     * @param array<string, mixed> $context as for execute()
-     *
-     * @throws WorkflowSkippedException when template, recipient or a required attachment is missing
-     */
-    public function compose(array $config, mixed $entity, array $context): ComposedEmail
+    public function execute(array $config, mixed $entity, array $context): string
     {
         $templateId = (int) ($config['templateId'] ?? 0);
         if ($templateId <= 0) {
@@ -200,19 +191,6 @@ class SendTemplateEmailAction implements WorkflowActionInterface
             (int) ($config['invoicePdfTemplateId'] ?? 0),
             $guestLocale,
         );
-
-        return new ComposedEmail($recipient, $subject, $rendered, $template, $attachmentSet, $reservations);
-    }
-
-    public function execute(array $config, mixed $entity, array $context): string
-    {
-        $composed = $this->compose($config, $entity, $context);
-        $recipient = $composed->recipient;
-        $subject = $composed->subject;
-        $rendered = $composed->body;
-        $template = $composed->template;
-        $attachmentSet = $composed->attachments;
-        $reservations = $composed->reservations;
 
         $this->mailService->sendHTMLMail($recipient, $subject, $rendered, $attachmentSet->mailAttachments());
 
