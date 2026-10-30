@@ -91,6 +91,7 @@ final class OpenApiSpecTest extends KernelTestCase
         }
     }
 
+    /** @return array<string, mixed> */
     private function loadSpec(): array
     {
         self::bootKernel();

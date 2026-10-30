@@ -332,7 +332,7 @@ class OperationsReportService
                 'roomNumber' => '' !== $roomNumber ? $roomNumber : '-',
                 'roomLabel' => $roomLabel,
                 'guest' => $this->resolveReservationGuestLabel($reservation),
-                'persons' => $reservation->getPersons() ?? '-',
+                'persons' => $reservation->getPersons(),
                 'start' => $reservation->getStartDate(),
                 'end' => $reservation->getEndDate(),
                 'period' => $reservation->getStartDate()->format('d.m.Y').' - '.$reservation->getEndDate()->format('d.m.Y'),
@@ -447,9 +447,9 @@ class OperationsReportService
                     continue;
                 }
                 $cells[] = [
-                    'occupancyLabelKey' => (string) ($cell['occupancyLabelKey'] ?? ''),
+                    'occupancyLabelKey' => (string) $cell['occupancyLabelKey'],
                     'statusLabelKey' => (string) ($cell['statusLabelKey'] ?? ''),
-                    'guests' => (string) ($cell['guests'] ?? ''),
+                    'guests' => (string) $cell['guests'],
                 ];
             }
 

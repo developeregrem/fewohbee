@@ -156,7 +156,7 @@ class WorkflowController extends AbstractController
         }
 
         return new JsonResponse([
-            'entities' => array_values($results),
+            'entities' => $results,
             'total' => count($results),
         ]);
     }

@@ -279,11 +279,13 @@ final class TouristTaxServiceTest extends TestCase
         return new TouristTaxService($taxRepo, $catRepo);
     }
 
+    /** @param array<int, int> $guestCounts */
     private function makeReservation(array $guestCounts): Reservation
     {
         return $this->makeReservationWithDates($guestCounts, '2026-06-01', '2026-06-03');
     }
 
+    /** @param array<int, int> $guestCounts */
     private function makeReservationWithDates(array $guestCounts, string $start, string $end): Reservation
     {
         $r = new Reservation();

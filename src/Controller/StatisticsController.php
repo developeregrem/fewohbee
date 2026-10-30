@@ -41,9 +41,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[Route('/statistics')]
 class StatisticsController extends AbstractController
 {
-    /** @var int */
-    private $perPage = 15;
-
     /**
      * Index Action start page.
      */

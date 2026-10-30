@@ -462,6 +462,7 @@ final class BookingJournalControllerTest extends WebTestCase
         return $this->createUserWithRoles(['ROLE_CASHJOURNAL']);
     }
 
+    /** @param list<string> $roleCodes */
     private function createUserWithRoles(array $roleCodes): User
     {
         $container = static::getContainer();

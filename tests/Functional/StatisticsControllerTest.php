@@ -16,6 +16,7 @@ use App\Entity\ReservationStatus;
 use App\Entity\Role;
 use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
+use App\Entity\User;
 use App\Repository\ReservationRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -333,7 +334,7 @@ final class StatisticsControllerTest extends WebTestCase
     /**
      * @param string[] $roleCodes
      */
-    private function createUserWithRoles(array $roleCodes)
+    private function createUserWithRoles(array $roleCodes): User
     {
         $container = static::getContainer();
         $doctrine = $container->get(ManagerRegistry::class);

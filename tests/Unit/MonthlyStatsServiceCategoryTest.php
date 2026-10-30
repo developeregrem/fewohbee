@@ -25,6 +25,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Verifies the guestCategory-aware tourism buckets introduced in Phase 4a.
+ *
+ * @phpstan-import-type BuiltMetrics from MonthlyStatsService
  */
 final class MonthlyStatsServiceCategoryTest extends TestCase
 {
@@ -144,6 +146,8 @@ final class MonthlyStatsServiceCategoryTest extends TestCase
 
     /**
      * @param Reservation[] $reservations
+     *
+     * @return BuiltMetrics
      */
     private function buildMetrics(array $reservations, int $defaultStatusId): array
     {
@@ -193,6 +197,10 @@ final class MonthlyStatsServiceCategoryTest extends TestCase
         return $payload['metrics'];
     }
 
+    /**
+     * @param array<int, int> $guestCounts
+     * @param list<Customer> $customers
+     */
     private function makeReservation(
         string $start,
         string $end,

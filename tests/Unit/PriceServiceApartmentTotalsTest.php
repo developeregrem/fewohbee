@@ -142,6 +142,10 @@ final class PriceServiceApartmentTotalsTest extends TestCase
         return $c;
     }
 
+    /**
+     * @param list<GuestCategory> $categories
+     * @param list<GuestCategoryModifier> $modifiers
+     */
     private function makeServiceWithCategories(Price $price, array $categories, array $modifiers): PriceService
     {
         $catRepo = $this->createStub(GuestCategoryRepository::class);

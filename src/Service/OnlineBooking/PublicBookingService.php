@@ -444,7 +444,7 @@ class PublicBookingService
      *   typeKey: string,
      *   maxGuests: int,
      *   availableCount: int,
-     *   occupancyOptions: array,
+     *   occupancyOptions: array<int|string, array{persons?: int}>,
      *   occupancyAvailableCounts?: array<int, int>
      * }> $availability
      */

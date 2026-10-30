@@ -203,14 +203,14 @@ class ReservationTableService
             $dow = (int) $day->format('N');
             $dateKey = $day->format('Y-m-d');
             $decoration = $decorations[$dateKey] ?? null;
-            $entries = $decoration?->calendarEntries ?? [];
+            $entries = $decoration->calendarEntries ?? [];
 
             $columns[] = new DayColumn(
                 date: $dateKey,
                 dayOfMonth: (int) $day->format('j'),
                 isoDayOfWeek: $dow,
                 isWeekend: $dow >= 6,
-                holidays: $decoration?->holidays ?? [],
+                holidays: $decoration->holidays ?? [],
                 calendarEntries: $entries,
                 accentColors: array_map(static fn (DayCalendarEntry $e) => $e->color, $entries),
                 newEntryUrl: $decoration?->newEntryUrl,

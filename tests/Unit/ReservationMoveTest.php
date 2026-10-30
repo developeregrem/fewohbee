@@ -116,6 +116,7 @@ final class ReservationMoveTest extends TestCase
         $em->method('getRepository')->willReturnCallback(static fn (string $class): EntityRepository => match ($class) {
             Appartment::class => $apartmentRepository,
             ReservationStatus::class => $statusRepository,
+            default => throw new \LogicException('Unexpected repository request: '.$class),
         });
         $em->expects(self::never())->method('persist');
         $em->expects(self::never())->method('flush');
@@ -165,6 +166,7 @@ final class ReservationMoveTest extends TestCase
         $em->method('getRepository')->willReturnCallback(static fn (string $class): EntityRepository => match ($class) {
             Appartment::class => $apartmentRepository,
             ReservationStatus::class => $statusRepository,
+            default => throw new \LogicException('Unexpected repository request: '.$class),
         });
         $em->expects(self::once())->method('persist')->with($reservation);
         $em->expects(self::once())->method('flush');

@@ -876,7 +876,7 @@ class ReservationServiceController extends AbstractController
             'hasActiveTouristTax' => count($reservations) > 0
                 ? $touristTaxService->hasActiveTaxForSubsidiary($reservations[0]->getAppartment()?->getObject())
                 : false,
-            'guestCategoriesById' => $guestCategoriesById ?? [],
+            'guestCategoriesById' => $guestCategoriesById,
             'nightRates' => array_merge(...array_map(static fn (Reservation $reservation): array => $ps->getNightRates($reservation), $reservations)),
         ]);
     }
@@ -1297,11 +1297,8 @@ class ReservationServiceController extends AbstractController
                     $rs->updateReservationCustomers($reservation, $customer, $tab);
                 } else {
                     $customersInReservation = $requestStack->getSession()->get('customersInReservation');
-                    $customerIsAlreadyInReservation = false;
-                    if (!$customerIsAlreadyInReservation) {
-                        $customersInReservation[] = ['id' => $customer->getId(), 'appartmentId' => $request->request->get('appartmentId')];
-                        $requestStack->getSession()->set('customersInReservation', $customersInReservation);
-                    }
+                    $customersInReservation[] = ['id' => $customer->getId(), 'appartmentId' => $request->request->get('appartmentId')];
+                    $requestStack->getSession()->set('customersInReservation', $customersInReservation);
                 }
             }
         }

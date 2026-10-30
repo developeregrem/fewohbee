@@ -84,13 +84,18 @@ final class RoomCategoryImageServiceTest extends TestCase
         $service->upload($this->createRoomCategoryWithId(5), $file);
     }
 
-    public function testDeleteAllForCategoryHandlesEmptyStorage(): void
+    public function testDeleteAllForMissingCategoryPreservesOtherFiles(): void
     {
-        $service = $this->createService(new InMemoryFilesystemAdapter());
+        $adapter = new InMemoryFilesystemAdapter();
+        $fs = new Filesystem($adapter);
+        $fs->write('5/photo.jpg', 'unrelated-image');
+        $service = $this->createService($adapter);
         $category = $this->createRoomCategoryWithId(99);
 
         $service->deleteAllForCategory($category);
-        self::assertTrue(true);
+
+        self::assertFalse($fs->directoryExists('99'));
+        self::assertSame('unrelated-image', $fs->read('5/photo.jpg'));
     }
 
     public function testDeleteAllForCategoryRemovesAllFilesInCategoryDir(): void

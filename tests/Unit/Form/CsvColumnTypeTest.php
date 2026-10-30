@@ -22,6 +22,7 @@ final class CsvColumnTypeTest extends TestCase
         self::assertSame($index, CsvColumnType::lettersToIndex($letters));
     }
 
+    /** @return iterable<int, array{int, string}> */
     public static function indexLetterPairs(): iterable
     {
         yield [0, 'A'];
