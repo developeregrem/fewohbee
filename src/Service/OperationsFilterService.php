@@ -90,7 +90,9 @@ class OperationsFilterService
     /**
      * Normalize selected categories (arrival, departure, inhouse).
      *
-     * @return string[]
+     * @param array<array-key, mixed> $selected Raw request or session entries
+     *
+     * @return list<string>
      */
     public function normalizeCategories(array $selected): array
     {
@@ -122,8 +124,9 @@ class OperationsFilterService
 
     /**
      * Resolve an array filter value with session fallback.
+     * Raw keys and values are preserved; callers normalize their filter-specific contents.
      *
-     * @return array<int, string>
+     * @return array<array-key, mixed>
      */
     public function resolveFilterArray(
         Request $request,
@@ -135,7 +138,7 @@ class OperationsFilterService
             $value = $request->query->all($queryKey);
             $session->set($sessionKey, $value);
 
-            return is_array($value) ? $value : [];
+            return $value;
         }
 
         $stored = $session->get($sessionKey, []);

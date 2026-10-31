@@ -451,6 +451,153 @@ final class TemplatesServiceTest extends TestCase
         self::assertSame($input, $output);
     }
 
+    #[DataProvider('generalEmailHosts')]
+    public function testIsTemplateIncludeCompatibleGeneralEmailFitsMailTemplatesOnly(string $hostTypeName, bool $compatible): void
+    {
+        self::assertSame($compatible, $this->createService()->isTemplateIncludeCompatible($hostTypeName, 'TEMPLATE_GENERAL_EMAIL'));
+    }
+
+    /** @return iterable<string, array{string, bool}> */
+    public static function generalEmailHosts(): iterable
+    {
+        yield 'general mail' => ['TEMPLATE_GENERAL_EMAIL', true];
+        yield 'reservation mail' => ['TEMPLATE_RESERVATION_EMAIL', true];
+        yield 'invoice mail' => ['TEMPLATE_INVOICE_EMAIL', true];
+        yield 'newsletter' => ['TEMPLATE_NEWSLETTER_EMAIL', true];
+        yield 'reservation PDF' => ['TEMPLATE_RESERVATION_PDF', false];
+        yield 'invoice PDF' => ['TEMPLATE_INVOICE_PDF', false];
+    }
+
+    public function testIsTemplateIncludeCompatibleKeepsTypedMailsInTheirBaseType(): void
+    {
+        $service = $this->createService();
+
+        self::assertFalse($service->isTemplateIncludeCompatible('TEMPLATE_INVOICE_EMAIL', 'TEMPLATE_RESERVATION_EMAIL'));
+        self::assertFalse($service->isTemplateIncludeCompatible('TEMPLATE_GENERAL_EMAIL', 'TEMPLATE_RESERVATION_EMAIL'));
+    }
+
+    public function testResolveTemplateIncludesEmbedsGeneralMailIntoInvoiceMail(): void
+    {
+        $signature = $this->makeTemplate(63, 'Signatur', '<p>Max Mustermann</p>', 'TEMPLATE_GENERAL_EMAIL');
+        $service = $this->createServiceWithTemplates([63 => $signature]);
+
+        $output = $service->resolveTemplateIncludes($this->includeSpan(63, 'Signatur'), 'TEMPLATE_INVOICE_EMAIL');
+
+        self::assertSame('<p>Max Mustermann</p>', $output);
+    }
+
+    public function testResolveTemplateIncludesUsesVariantInHostLanguage(): void
+    {
+        $signature = $this->makeTemplate(63, 'Signatur', '<p>Viele Grüße</p>', 'TEMPLATE_GENERAL_EMAIL');
+        $this->makeVariant($signature, 64, 'en', '<p>Kind regards</p>');
+        $service = $this->createServiceWithTemplates([63 => $signature]);
+
+        $output = $service->resolveTemplateIncludes($this->includeSpan(63, 'Signatur'), 'TEMPLATE_RESERVATION_EMAIL', locale: 'en');
+
+        self::assertSame('<p>Kind regards</p>', $output);
+    }
+
+    public function testResolveTemplateIncludesKeepsEmbeddedTextWithoutVariantInHostLanguage(): void
+    {
+        $signature = $this->makeTemplate(63, 'Signatur', '<p>Viele Grüße</p>', 'TEMPLATE_GENERAL_EMAIL');
+        $this->makeVariant($signature, 64, 'en', '<p>Kind regards</p>');
+        $service = $this->createServiceWithTemplates([63 => $signature]);
+
+        $output = $service->resolveTemplateIncludes($this->includeSpan(63, 'Signatur'), 'TEMPLATE_RESERVATION_EMAIL', locale: 'fr');
+
+        self::assertSame('<p>Viele Grüße</p>', $output);
+    }
+
+    public function testResolveTemplateIncludesKeepsEmbeddedTextForHostWithoutLanguage(): void
+    {
+        $signature = $this->makeTemplate(63, 'Signatur', '<p>Viele Grüße</p>', 'TEMPLATE_GENERAL_EMAIL');
+        $this->makeVariant($signature, 64, 'en', '<p>Kind regards</p>');
+        $service = $this->createServiceWithTemplates([63 => $signature]);
+
+        $output = $service->resolveTemplateIncludes($this->includeSpan(63, 'Signatur'), 'TEMPLATE_RESERVATION_EMAIL');
+
+        self::assertSame('<p>Viele Grüße</p>', $output);
+    }
+
+    public function testResolveTemplateIncludesKeepsLanguageForNestedIncludes(): void
+    {
+        $inner = $this->makeTemplate(2, 'Inner', '<b>Innen</b>', 'TEMPLATE_FILE_PDF');
+        $this->makeVariant($inner, 12, 'en', '<b>Inside</b>');
+        $outer = $this->makeTemplate(3, 'Outer', '<div>'.$this->includeSpan(2, 'Inner').'</div>', 'TEMPLATE_FILE_PDF');
+        $service = $this->createServiceWithTemplates([2 => $inner, 3 => $outer]);
+
+        $output = $service->resolveTemplateIncludes($this->includeSpan(3, 'Outer'), 'TEMPLATE_RESERVATION_PDF', locale: 'en');
+
+        self::assertSame('<div><b>Inside</b></div>', $output);
+    }
+
+    public function testResolveTemplateIncludesDetectsCycleThroughVariant(): void
+    {
+        $host = $this->makeTemplate(1, 'Host', '', 'TEMPLATE_FILE_PDF');
+        $hostVariant = $this->makeVariant($host, 11, 'en', $this->includeSpan(2, 'Embedded'));
+        $embedded = $this->makeTemplate(2, 'Embedded', '<p>Ohne Zyklus</p>', 'TEMPLATE_FILE_PDF');
+        $this->makeVariant($embedded, 12, 'en', $this->includeSpan(1, 'Host'));
+        $service = $this->createServiceWithTemplates([1 => $host, 2 => $embedded]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessageMatches('/circular/');
+
+        $service->resolveTemplateIncludes((string) $hostVariant->getText(), 'TEMPLATE_FILE_PDF', locale: 'en');
+    }
+
+    public function testRenderTemplateEmbedsVariantInLanguageOfVariantHost(): void
+    {
+        $signature = $this->makeTemplate(63, 'Signatur', '<p>Viele Grüße</p>', 'TEMPLATE_GENERAL_EMAIL');
+        $this->makeVariant($signature, 64, 'en', '<p>Kind regards</p>');
+        $host = $this->makeTemplate(1, 'Mail', '<p>Hallo</p>'.$this->includeSpan(63, 'Signatur'), 'TEMPLATE_RESERVATION_EMAIL');
+        $hostVariant = $this->makeVariant($host, 2, 'en', '<p>Hello</p>'.$this->includeSpan(63, 'Signatur'));
+        $service = $this->createServiceWithTemplates([1 => $host, 2 => $hostVariant, 63 => $signature]);
+
+        self::assertSame('<p>Hallo</p><p>Viele Grüße</p>', $service->renderTemplate(1, null));
+        self::assertSame('<p>Hello</p><p>Kind regards</p>', $service->renderTemplate(2, null));
+    }
+
+    public function testRenderTemplateStringEmbedsVariantInGivenLanguage(): void
+    {
+        $signature = $this->makeTemplate(63, 'Signatur', '<p>Viele Grüße</p>', 'TEMPLATE_GENERAL_EMAIL');
+        $this->makeVariant($signature, 64, 'en', '<p>Kind regards</p>');
+        $service = $this->createServiceWithTemplates([63 => $signature]);
+
+        $output = $service->renderTemplateString($this->includeSpan(63, 'Signatur'), [], 'TEMPLATE_RESERVATION_EMAIL', 'en');
+
+        self::assertSame('<p>Kind regards</p>', $output);
+    }
+
+    public function testGetEmbeddableTemplatesOffersGeneralMailInMailHostsOnly(): void
+    {
+        $signature = $this->makeTemplate(63, 'Signatur', '<p>Grüße</p>', 'TEMPLATE_GENERAL_EMAIL');
+        $service = $this->createServiceWithTemplates([63 => $signature]);
+
+        self::assertSame([$signature], $service->getEmbeddableTemplates($this->makeType('TEMPLATE_INVOICE_EMAIL')));
+        self::assertSame([], $service->getEmbeddableTemplates($this->makeType('TEMPLATE_INVOICE_PDF')));
+    }
+
+    public function testGetEmbeddableTemplatesLeavesOutVariants(): void
+    {
+        $signature = $this->makeTemplate(63, 'Signatur', '<p>Grüße</p>', 'TEMPLATE_GENERAL_EMAIL');
+        $variant = $this->makeVariant($signature, 64, 'en', '<p>Regards</p>');
+        $service = $this->createServiceWithTemplates([63 => $signature, 64 => $variant]);
+
+        self::assertSame([$signature], $service->getEmbeddableTemplates($this->makeType('TEMPLATE_RESERVATION_EMAIL')));
+    }
+
+    public function testGetEmbeddableTemplatesLeavesOutTheEditedTemplateAndWhatItTranslates(): void
+    {
+        $edited = $this->makeTemplate(1, 'Mail', '<p>Hallo</p>', 'TEMPLATE_GENERAL_EMAIL');
+        $variant = $this->makeVariant($edited, 2, 'en', '<p>Hello</p>');
+        $other = $this->makeTemplate(3, 'Signatur', '<p>Grüße</p>', 'TEMPLATE_GENERAL_EMAIL');
+        $service = $this->createServiceWithTemplates([1 => $edited, 2 => $variant, 3 => $other]);
+        $hostType = $this->makeType('TEMPLATE_GENERAL_EMAIL');
+
+        self::assertSame([$other], $service->getEmbeddableTemplates($hostType, 1));
+        self::assertSame([$other], $service->getEmbeddableTemplates($hostType, 2));
+    }
+
     // ─── Export image embedding (S3 migration gap) ──────────────────────────────
 
     public function testPrepareImagesEmbedsLegacyLocalExportImageFromStorage(): void
@@ -823,6 +970,8 @@ final class TemplatesServiceTest extends TestCase
         $repo = $this->createStub(TemplateRepository::class);
         $repo->method('find')
             ->willReturnCallback(static fn (int|string $id) => $templates[$id] ?? null);
+        $repo->method('findAll')
+            ->willReturn(array_values($templates));
 
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getRepository')
@@ -886,5 +1035,29 @@ final class TemplatesServiceTest extends TestCase
         $template->setParams('{}');
 
         return $template;
+    }
+
+    private function makeVariant(Template $base, int $id, string $locale, string $text): Template
+    {
+        $variant = $this->makeTemplate($id, $base->getName().' ('.$locale.')', $text, (string) $base->getTemplateType()?->getName());
+        $variant->setLocale($locale);
+        $variant->setBaseTemplate($base);
+        $base->getVariants()->add($variant);
+
+        return $variant;
+    }
+
+    private function makeType(string $name): TemplateType
+    {
+        $type = new TemplateType();
+        $type->setName($name);
+
+        return $type;
+    }
+
+    /** The markup the editor stores for an embedded template. */
+    private function includeSpan(int $id, string $name): string
+    {
+        return '<span data-template-id="'.$id.'" class="template-include" contenteditable="false">'.$name.'</span>';
     }
 }

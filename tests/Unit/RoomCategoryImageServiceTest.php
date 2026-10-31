@@ -11,6 +11,7 @@ use App\Service\Storage\ImageUrlGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Filesystem;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -41,6 +42,82 @@ final class RoomCategoryImageServiceTest extends TestCase
         $service = $this->createService(new InMemoryFilesystemAdapter());
         $image = $this->createImageWithCategory(7, 'test.jpg');
         self::assertSame('/resources/images/room-categories/7/medium_test.jpg', $service->getPublicUrl($image));
+    }
+
+    #[DataProvider('supportedImageFormats')]
+    public function testUploadPreservesFormatAcrossAllVariants(string $mime, string $extension): void
+    {
+        $file = $this->createImageUpload($extension);
+        $adapter = new InMemoryFilesystemAdapter();
+        $fs = new Filesystem($adapter);
+        $validator = $this->createStub(ValidatorInterface::class);
+        $validator->method('validate')->willReturn(new ConstraintViolationList());
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::once())->method('persist')->with(self::isInstanceOf(RoomCategoryImage::class));
+        $em->expects(self::once())->method('flush');
+        $service = new RoomCategoryImageService(
+            $fs,
+            $this->createUrlGenerator(),
+            $validator,
+            $this->createStub(TranslatorInterface::class),
+            $em,
+        );
+
+        try {
+            $image = $service->upload($this->createRoomCategoryWithId(5), $file);
+
+            foreach (['' => [400, 200], 'medium_' => [400, 200], 'thumb_' => [300, 150]] as $prefix => [$width, $height]) {
+                $data = $fs->read('5/'.$prefix.$image->getFilename());
+                $info = getimagesizefromstring($data);
+                self::assertNotFalse($info);
+                self::assertSame($mime, $info['mime']);
+                self::assertSame($width, $info[0]);
+                self::assertSame($height, $info[1]);
+            }
+        } finally {
+            if (is_file($file->getPathname())) {
+                unlink($file->getPathname());
+            }
+        }
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function supportedImageFormats(): iterable
+    {
+        yield 'JPEG' => ['image/jpeg', 'jpg'];
+        yield 'PNG' => ['image/png', 'png'];
+        yield 'WebP' => ['image/webp', 'webp'];
+    }
+
+    public function testUnsupportedImageDoesNotWriteFilesOrPersistAnEntity(): void
+    {
+        $file = $this->createImageUpload('gif');
+        $fs = new Filesystem(new InMemoryFilesystemAdapter());
+        // Exercise the processing boundary even if a validator accepts the file.
+        $validator = $this->createStub(ValidatorInterface::class);
+        $validator->method('validate')->willReturn(new ConstraintViolationList());
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::never())->method('persist');
+        $em->expects(self::never())->method('flush');
+        $service = new RoomCategoryImageService(
+            $fs,
+            $this->createUrlGenerator(),
+            $validator,
+            $this->createStub(TranslatorInterface::class),
+            $em,
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Unsupported image type: image/gif');
+
+        try {
+            $service->upload($this->createRoomCategoryWithId(5), $file);
+        } finally {
+            self::assertSame([], $fs->listContents('', true)->toArray());
+            if (is_file($file->getPathname())) {
+                unlink($file->getPathname());
+            }
+        }
     }
 
     public function testUploadRejectsUnsafeDimensionsBeforeGdDecode(): void
@@ -84,13 +161,18 @@ final class RoomCategoryImageServiceTest extends TestCase
         $service->upload($this->createRoomCategoryWithId(5), $file);
     }
 
-    public function testDeleteAllForCategoryHandlesEmptyStorage(): void
+    public function testDeleteAllForMissingCategoryPreservesOtherFiles(): void
     {
-        $service = $this->createService(new InMemoryFilesystemAdapter());
+        $adapter = new InMemoryFilesystemAdapter();
+        $fs = new Filesystem($adapter);
+        $fs->write('5/photo.jpg', 'unrelated-image');
+        $service = $this->createService($adapter);
         $category = $this->createRoomCategoryWithId(99);
 
         $service->deleteAllForCategory($category);
-        self::assertTrue(true);
+
+        self::assertFalse($fs->directoryExists('99'));
+        self::assertSame('unrelated-image', $fs->read('5/photo.jpg'));
     }
 
     public function testDeleteAllForCategoryRemovesAllFilesInCategoryDir(): void
@@ -137,6 +219,44 @@ final class RoomCategoryImageServiceTest extends TestCase
         self::assertFalse($fs->fileExists('5/photo.jpg'));
         self::assertFalse($fs->fileExists('5/medium_photo.jpg'));
         self::assertFalse($fs->fileExists('5/thumb_photo.jpg'));
+    }
+
+    private function createImageUpload(string $extension): UploadedFile
+    {
+        if (!extension_loaded('gd')) {
+            self::markTestSkipped('GD is required for the image-processing cases.');
+        }
+        $encoder = match ($extension) {
+            'jpg' => 'imagejpeg',
+            'png' => 'imagepng',
+            'webp' => 'imagewebp',
+            'gif' => 'imagegif',
+            default => throw new \InvalidArgumentException('Unknown test image extension.'),
+        };
+        if (!function_exists($encoder)) {
+            self::markTestSkipped('GD does not provide the '.$extension.' encoder.');
+        }
+        $path = tempnam(sys_get_temp_dir(), 'fewohbee-image-test-');
+        if (false === $path) {
+            self::fail('Could not create a temporary image file.');
+        }
+        $image = imagecreatetruecolor(400, 200);
+        if (false === $image) {
+            unlink($path);
+            self::fail('Could not create the synthetic test image.');
+        }
+        $written = match ($extension) {
+            'jpg' => imagejpeg($image, $path),
+            'png' => imagepng($image, $path),
+            'webp' => imagewebp($image, $path),
+            'gif' => imagegif($image, $path),
+        };
+        if (!$written) {
+            unlink($path);
+            self::fail('Could not write the synthetic test image.');
+        }
+
+        return new UploadedFile($path, 'synthetic.'.$extension, null, null, true);
     }
 
     private function createService(InMemoryFilesystemAdapter $adapter): RoomCategoryImageService

@@ -203,18 +203,20 @@ class AvailabilityService
      * $excludingReservationId leaves one reservation out of the booked rooms, e.g. to judge
      * the occupancy a booking found without counting the booking itself.
      *
+     * Without a category the scope is the accommodation: event spaces count only when their
+     * own category is asked for, so they never change the occupancy of the house.
+     *
      * @return array<string, array{rooms: int, booked: int, blocked: int, available: int}> keyed by Y-m-d
      *                                                                                      (nights from $from up to, excluding, $toExclusive)
      */
     public function getRoomNightsPerDay(string|int $objectId, ?int $roomCategoryId, \DateTimeImmutable $from, \DateTimeImmutable $toExclusive, ?int $excludingReservationId = null): array
     {
-        $rooms = $this->appartmentRepository->findAllByProperty($objectId);
-        if (null !== $roomCategoryId) {
-            $rooms = array_filter(
-                $rooms,
-                static fn (Appartment $room): bool => $room->getRoomCategory()?->getId() === $roomCategoryId
-            );
-        }
+        $rooms = array_filter(
+            $this->appartmentRepository->findAllByProperty($objectId),
+            null !== $roomCategoryId
+                ? static fn (Appartment $room): bool => $room->getRoomCategory()?->getId() === $roomCategoryId
+                : static fn (Appartment $room): bool => !$room->isEventSpace(),
+        );
         $roomIdSet = array_flip(array_map(static fn (Appartment $room) => $room->getId(), $rooms));
         $totalRooms = count($roomIdSet);
 
@@ -291,7 +293,7 @@ class AvailabilityService
     }
 
     /**
-     * Blocked room and bed counts per night for the statistics module.
+     * Blocked room and bed counts per night for the statistics module; event spaces are left out.
      *
      * @return array<string, array{rooms: int, beds: int}> keyed by Y-m-d
      */
@@ -301,6 +303,9 @@ class AvailabilityService
         $spans = [];
         foreach ($this->roomBlockRepository->findForPeriod($from, $toExclusive, $objectId) as $block) {
             $room = $block->getAppartment();
+            if ($room->isEventSpace()) {
+                continue;
+            }
             $bedsByRoomId[$room->getId()] = (int) $room->getBedsMax();
             $spans[] = [
                 'appartmentId' => $room->getId(),

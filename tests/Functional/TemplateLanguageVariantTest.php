@@ -81,6 +81,38 @@ final class TemplateLanguageVariantTest extends WebTestCase
         self::assertNotNull($this->reload($base)->getId());
     }
 
+    public function testPreviewEmbedsTheVariantInTheLanguageOfTheHost(): void
+    {
+        $client = $this->authenticatedClient();
+        $signature = $this->createGeneralMail('Signatur', '<p>Viele Grüße</p>');
+        $this->createGeneralMail('Signatur (Englisch)', '<p>Kind regards</p>', $signature, 'en');
+        $include = '<span data-template-id="'.$signature->getId().'" class="template-include" contenteditable="false">Signatur</span>';
+        $mail = $this->createGeneralMail('Mail', '<p>Hallo</p>'.$include);
+        $mailVariant = $this->createGeneralMail('Mail (Englisch)', '<p>Hello</p>'.$include, $mail, 'en');
+
+        self::assertSame('<p>Hallo</p><p>Viele Grüße</p>', $this->previewHtml($client, $mail));
+        self::assertSame('<p>Hello</p><p>Kind regards</p>', $this->previewHtml($client, $mailVariant));
+    }
+
+    public function testEmbeddableListOffersAGeneralMailInOtherMailTypesWithoutItsVariants(): void
+    {
+        $client = $this->authenticatedClient();
+        $signature = $this->createGeneralMail('Signatur', '<p>Viele Grüße</p>');
+        $this->createGeneralMail('Signatur (Englisch)', '<p>Kind regards</p>', $signature, 'en');
+
+        $names = static function (KernelBrowser $client, int $typeId): array {
+            $client->request('GET', '/settings/templates/embeddable/'.$typeId);
+            self::assertResponseIsSuccessful();
+
+            return array_column(json_decode((string) $client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR), 'name');
+        };
+
+        $inInvoiceMail = $names($client, $this->templateTypeId('TEMPLATE_INVOICE_EMAIL'));
+        self::assertContains('Signatur', $inInvoiceMail);
+        self::assertNotContains('Signatur (Englisch)', $inInvoiceMail);
+        self::assertNotContains('Signatur', $names($client, $this->templateTypeId('TEMPLATE_INVOICE_PDF')));
+    }
+
     protected function tearDown(): void
     {
         if (null !== self::$kernel) {
@@ -113,6 +145,36 @@ final class TemplateLanguageVariantTest extends WebTestCase
         $this->templateIds[] = (int) $template->getId();
 
         return $template;
+    }
+
+    private function createGeneralMail(string $name, string $text, ?Template $base = null, ?string $locale = null): Template
+    {
+        $em = $this->em();
+        $type = $em->getRepository(TemplateType::class)->find($this->templateTypeId('TEMPLATE_GENERAL_EMAIL'));
+
+        $template = new Template();
+        $template->setName($name)->setTemplateType($type)->setText($text)->setIsDefault(false)->setLocale($locale)->setBaseTemplate($base);
+        $base?->getVariants()->add($template);
+        $em->persist($template);
+        $em->flush();
+        $this->templateIds[] = (int) $template->getId();
+
+        return $template;
+    }
+
+    private function templateTypeId(string $name): int
+    {
+        $type = $this->em()->getRepository(TemplateType::class)->findOneBy(['name' => $name]) ?? throw new \RuntimeException('Template type missing.');
+
+        return (int) $type->getId();
+    }
+
+    private function previewHtml(KernelBrowser $client, Template $template): string
+    {
+        $client->request('POST', '/settings/templates/'.$template->getId().'/preview/render', [], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+        self::assertResponseIsSuccessful();
+
+        return (string) (json_decode((string) $client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR)['html'] ?? '');
     }
 
     private function reload(Template $template): Template

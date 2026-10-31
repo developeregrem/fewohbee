@@ -65,6 +65,7 @@ online_booking:
     selected_subsidiaries: "Selected subsidiaries"
     selected_subsidiaries_hint: "Only these subsidiaries are considered for public booking availability."
     rooms_mode: "Rooms"
+    rooms_mode_event_spaces: "Event spaces cannot be booked online yet, not even with \"All\". They are therefore not listed."
     selected_rooms: "Selected rooms"
     selected_rooms_hint: "Only these rooms can be booked online. This is applied in addition to the subsidiary filter."
     theme_primary: "Button color"

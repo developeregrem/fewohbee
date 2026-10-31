@@ -34,7 +34,8 @@ reservation.flash.update.success: 'Reservierung wurde erfolgreich bearbeitet.'
 reservation.flash.update.toomuchcustomers: 'Es können nicht mehr Gäste zugewiesen werden!'
 reservation.move.success: 'Reservierung wurde erfolgreich verschoben.'
 reservation.move.error: 'Die Reservierung konnte nicht verschoben werden.'
-reservation.move.capacity: 'Das gewählte Zimmer hat nicht genügend Betten für diese Reservierung.'
+reservation.move.capacity: 'Das gewählte Zimmer ist für die Personenzahl dieser Reservierung zu klein.'
+reservation.move.other_kind: 'Ein Veranstaltungsraum lässt sich nur mit einem anderen Veranstaltungsraum tauschen, eine Unterkunft nur mit einer Unterkunft.'
 reservation.move.hint: 'Auf ein freies Feld ziehen, um diese Reservierung zu verschieben.'
 reservation.invoice: Rechnung
 reservation.invoices: Rechnungen
@@ -64,6 +65,7 @@ reservation.select.customer.search.input.placeholder: Nachname
 reservation.startdate: Von
 reservation.status: Status
 reservation.table.calendarweek: KW
+reservation.table.event_space_days: 'wird pro Tag gebucht'
 reservation.table.reload: Aktualisieren
 reservation.table.settings.all: alle
 reservation.table.settings.country: Anzeigeland
@@ -203,6 +205,9 @@ reservation.price.rules_applied: 'Angepasst durch'
 reservation.price.rules_nights: '{1}1 Nacht|]1,Inf[%count% Nächte'
 reservation.price.day_price: Tagespreis
 reservation.summary.nights: '{0}0 Nächte|{1}1 Nacht|]1,Inf[%count% Nächte'
+reservation.summary.days: '{0}0 Tage|{1}1 Tag|]1,Inf[%count% Tage'
+reservation.event_space.period: '%days% bis einschließlich %date%'
+reservation.event_space.end_help: 'Bei Veranstaltungsräumen ist „Bis“ der letzte Tag.'
 reservation.summary.persons: '{0}0 Personen|{1}1 Person|]1,Inf[%count% Personen'
 reservation.summary.call: Anrufen
 reservation.details.stay: Aufenthalt
@@ -221,3 +226,5 @@ reservation.selected.reservations: 'Ausgewählte Reservierungen'
 reservation.filter.by_period: 'Nach Zeitraum'
 reservation.filter.by_guest: 'Nach Gast'
 reservation.correspondences.empty: 'Noch keine Konversationen.'
+reservation.origin.missing: 'Bevor du eine Reservierung anlegen kannst, muss in den Einstellungen eine Reservierungsherkunft angelegt sein.'
+reservation.flash.origin.required: 'Wähle eine gültige Reservierungsherkunft aus. Falls noch keine vorhanden ist, lege zuerst eine in den Einstellungen an.'

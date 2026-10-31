@@ -151,12 +151,15 @@
             {# Room info for first row of each apartment #}
             {% if not row.isSubRow %}
                 {% set roomInfo = 'appartment.bedsmax'|trans ~ ": " ~ row.apartment.bedsMax %}
+                {% if row.apartment.eventSpace %}
+                    {% set roomInfo = 'category.kind.event_space'|trans ~ ', ' ~ 'reservation.table.event_space_days'|trans ~ '<br>' ~ roomInfo %}
+                {% endif %}
                 {% if row.apartment.multipleOccupancy %}
                     {% set roomInfo = roomInfo ~ ' <i class="fa-solid fa-users" title="' ~ 'apartment.multiple.occupancy.text'|trans ~ '"></i>' %}
                 {% endif %}
             {% endif %}
 
-            <tr data-appartment="{{ row.apartment.id }}"{% if row.isSubRow %} class="border-top-0"{% endif %}>
+            <tr data-appartment="{{ row.apartment.id }}"{% if row.apartment.eventSpace %} data-event-space="1"{% endif %}{% if row.isSubRow %} class="border-top-0"{% endif %}>
                 {% if row.isSubRow %}
                     <td></td>
                 {% else %}
@@ -170,6 +173,8 @@
                         }) }}" title="{{ 'reservation.table.view.yearly'|trans }}">
                             {{ row.apartmentLabel }}
                         </a>
+                        {# Event spaces are booked by the day: whole cells instead of arrival and departure halves #}
+                        {% if row.apartment.eventSpace %}<i class="fa-solid fa-people-roof text-secondary small" aria-label="{{ 'category.kind.event_space'|trans }}"></i>{% endif %}
                     </td>
                 {% endif %}
 

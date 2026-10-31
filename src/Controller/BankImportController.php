@@ -297,9 +297,6 @@ class BankImportController extends AbstractController
         }
 
         $rawSplits = $request->request->all('splits');
-        if (!is_array($rawSplits)) {
-            $rawSplits = [];
-        }
 
         $splitCount = 0;
         $state = $drafts->update($state->sessionImportId, function (ImportState $state) use ($idx, $rawSplits, &$splitCount): void {
@@ -466,7 +463,7 @@ class BankImportController extends AbstractController
             return new JsonResponse(['error' => 'unknown_action'], Response::HTTP_BAD_REQUEST);
         }
         $indices = $request->request->all('indices');
-        $indices = array_map('intval', is_array($indices) ? $indices : []);
+        $indices = array_map('intval', $indices);
 
         $touched = 0;
         $state = $drafts->update($state->sessionImportId, static function (ImportState $state) use ($indices, $field, $value, &$touched): void {
@@ -606,9 +603,6 @@ class BankImportController extends AbstractController
     private function buildConditionsFromRequest(Request $request, array $line): array
     {
         $fields = $request->request->all('conditionFields');
-        if (!is_array($fields)) {
-            return [];
-        }
 
         $conditions = [];
         foreach ($fields as $field) {
@@ -655,7 +649,7 @@ class BankImportController extends AbstractController
         if (BankImportRule::ACTION_MODE_SPLIT === $mode) {
             $rawSplits = $request->request->all('splits');
             $splits = [];
-            foreach (is_array($rawSplits) ? $rawSplits : [] as $piece) {
+            foreach ($rawSplits as $piece) {
                 if (!is_array($piece)) {
                     continue;
                 }

@@ -138,7 +138,7 @@ class PriceServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $componentErrors = $ps->validateComponents($price);
+                $componentErrors = $ps->validate($price);
                 if (!empty($componentErrors)) {
                     $error = true;
                     foreach ($componentErrors as $key) {
@@ -195,7 +195,7 @@ class PriceServiceController extends AbstractController
                 // stop auto commit of doctrine with invalid field values
                 $em->clear();
             } else {
-                $componentErrors = $ps->validateComponents($price);
+                $componentErrors = $ps->validate($price);
                 if (!empty($componentErrors)) {
                     $error = true;
                     foreach ($componentErrors as $key) {

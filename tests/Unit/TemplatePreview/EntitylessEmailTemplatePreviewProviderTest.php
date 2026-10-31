@@ -35,6 +35,7 @@ final class EntitylessEmailTemplatePreviewProviderTest extends TestCase
         self::assertFalse($provider->supportsPreview($this->createTemplate('TEMPLATE_INVOICE_EMAIL')));
     }
 
+    /** @return iterable<string, array{string}> */
     public static function supportedTemplateTypes(): iterable
     {
         yield 'general email' => ['TEMPLATE_GENERAL_EMAIL'];

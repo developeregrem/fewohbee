@@ -9,6 +9,7 @@ use App\Entity\CalendarSyncImport;
 use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\ArrayParameterType;
@@ -76,12 +77,15 @@ class ReservationRepository extends ServiceEntityRepository
     private function createTableQueryBuilder(string $statusMode): QueryBuilder
     {
         $qb = $this->createQueryBuilder('u')
-            ->addSelect('booker', 'addr', 'invoice', 'origin', 'calImport', 'rs')
+            ->addSelect('booker', 'addr', 'invoice', 'origin', 'calImport', 'rs', 'tableRoom', 'tableCategory')
             ->leftJoin('u.booker', 'booker')
             ->leftJoin('booker.customerAddresses', 'addr')
             ->leftJoin('u.invoices', 'invoice')
             ->leftJoin('u.reservationOrigin', 'origin')
-            ->leftJoin('u.calendarSyncImport', 'calImport');
+            ->leftJoin('u.calendarSyncImport', 'calImport')
+            // The kind of room decides between nights and days in the popover.
+            ->leftJoin('u.appartment', 'tableRoom')
+            ->leftJoin('tableRoom.roomCategory', 'tableCategory');
 
         $this->applyBlockingStatusFilter($qb, 'u', $statusMode);
         if ('all' === $statusMode) {
@@ -364,7 +368,7 @@ class ReservationRepository extends ServiceEntityRepository
      *
      * @return array<array{appartmentId: int, startDate: string, endDate: string}>
      */
-    public function loadBlockingSpansForPeriod(\DateTimeInterface $start, \DateTimeInterface $end, string|int $objectId = 'all', ?int $roomCategoryId = null, ?\DateTimeInterface $bookedBefore = null, ?int $excludingReservationId = null): array
+    public function loadBlockingSpansForPeriod(\DateTimeInterface $start, \DateTimeInterface $end, string|int $objectId = 'all', ?int $roomCategoryId = null, ?\DateTimeInterface $bookedBefore = null, ?int $excludingReservationId = null, bool $accommodationOnly = false): array
     {
         $qb = $this
             ->createQueryBuilder('u')
@@ -392,6 +396,9 @@ class ReservationRepository extends ServiceEntityRepository
         if (null !== $excludingReservationId) {
             $qb->andWhere('u.id <> :excludingId')
                 ->setParameter('excludingId', $excludingReservationId);
+        }
+        if ($accommodationOnly) {
+            AppartmentRepository::restrictToAccommodation($qb, 'a');
         }
 
         $this->applyBlockingStatusFilter($qb, 'u');
@@ -474,6 +481,8 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Guests staying in the accommodation on a day; event spaces are left out.
+     *
      * @param string $day Date string bound to the occupancy comparison
      * @param int|string|null $objectId Subsidiary ID, or 'all' for every subsidiary
      * @param array<int|string> $reservationStatus Status IDs, including query-string values; empty selects blocking statuses
@@ -482,27 +491,18 @@ class ReservationRepository extends ServiceEntityRepository
      */
     public function loadUtilizationForDay($day, $objectId, array $reservationStatus = [])
     {
-        if ('all' === $objectId) {
-            $qb = $this->createQueryBuilder('u')
+        $qb = $this->createQueryBuilder('u')
             ->select('SUM(u.persons)')
+            ->join('u.appartment', 'a')
             ->where(':day >= u.startDate and (:day < u.endDate or (:day = u.startDate and u.startDate = u.endDate))')
             ->andWhere('u.isConflict = 0')
             ->andWhere('u.isConflictIgnored = 0')
-            // ->andWhere('u.status=1')
-            // ->addGroupBy('u.persons')
             ->setParameter('day', $day);
-        } else {
-            $qb = $this->createQueryBuilder('u')
-            ->select('SUM(u.persons)')
-            ->where('a.object = :objId and :day >= u.startDate and (:day < u.endDate or (:day = u.startDate and u.startDate = u.endDate))')
-            ->andWhere('u.isConflict = 0')
-            ->andWhere('u.isConflictIgnored = 0')
-            // ->andWhere('u.status=1')
-            ->join('u.appartment', 'a')
-            // ->addGroupBy('u.persons')
-            ->setParameter('day', $day)
-            ->setParameter('objId', $objectId);
+        if ('all' !== $objectId) {
+            $qb->andWhere('a.object = :objId')
+                ->setParameter('objId', $objectId);
         }
+        AppartmentRepository::restrictToAccommodation($qb, 'a');
 
         try {
             $this->applyReservationStatusFilter($qb, $reservationStatus, 'u');
@@ -541,7 +541,8 @@ class ReservationRepository extends ServiceEntityRepository
      * @param int|string|null $objectId Subsidiary ID, or 'all' for every subsidiary
      * @param array<int|string>|null $reservationStatus Null leaves statuses unfiltered; empty selects blocking statuses
      *
-     * @return list<Reservation> Reservations overlapping the month; turnovers at its boundaries are excluded
+     * @return list<Reservation> Accommodation reservations overlapping the month (event spaces are left out);
+     *                           turnovers at its boundaries are excluded
      */
     public function loadReservationsForMonth($month, $year, $objectId, ?array $reservationStatus = [])
     {
@@ -565,6 +566,7 @@ class ReservationRepository extends ServiceEntityRepository
             $qb->andWhere('a.object = :objId')
               ->setParameter('objId', $objectId);
         }
+        AppartmentRepository::restrictToAccommodation($qb, 'a');
 
         try {
             $this->applyReservationStatusFilter($qb, $reservationStatus, 'u');
@@ -576,6 +578,8 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Accommodation reservations per origin; event spaces are left out like in the other statistics.
+     *
      * @param string $start Inclusive lower date bound
      * @param string $end Inclusive upper date bound
      * @param int|string|null $objectId Subsidiary ID, or 'all' for every subsidiary
@@ -585,31 +589,21 @@ class ReservationRepository extends ServiceEntityRepository
      */
     public function loadOriginStatisticForPeriod($start, $end, $objectId, ?array $reservationStatus = [])
     {
-        if ('all' === $objectId) {
-            $qb = $this->createQueryBuilder('u')
+        $qb = $this->createQueryBuilder('u')
             ->select('ro.id, COUNT(u.id) as origins')
             ->join('u.reservationOrigin', 'ro')
+            ->join('u.appartment', 'a')
             ->where('u.startDate >= :start and u.endDate <= :end')
             ->andWhere('u.isConflict = 0')
             ->andWhere('u.isConflictIgnored = 0')
-            // ->andWhere('u.status=1')
             ->addGroupBy('u.reservationOrigin')
             ->setParameter('start', $start)
             ->setParameter('end', $end);
-        } else {
-            $qb = $this->createQueryBuilder('u')
-            ->select('ro.id, COUNT(u.id) as origins')
-            ->join('u.reservationOrigin', 'ro')
-            ->where('a.object = :objId and u.startDate >= :start and u.endDate <= :end')
-            ->andWhere('u.isConflict = 0')
-            ->andWhere('u.isConflictIgnored = 0')
-            // ->andWhere('u.status=1')
-            ->join('u.appartment', 'a')
-            ->addGroupBy('u.reservationOrigin')
-            ->setParameter('start', $start)
-            ->setParameter('end', $end)
-            ->setParameter('objId', $objectId);
+        if ('all' !== $objectId) {
+            $qb->andWhere('a.object = :objId')
+                ->setParameter('objId', $objectId);
         }
+        AppartmentRepository::restrictToAccommodation($qb, 'a');
 
         try {
             $this->applyReservationStatusFilter($qb, $reservationStatus, 'u');
@@ -618,6 +612,19 @@ class ReservationRepository extends ServiceEntityRepository
         } catch (NoResultException $ex) {
             return 0;
         }
+    }
+
+    /** Whether any reservation books a room of the category. */
+    public function existsForRoomCategory(RoomCategory $category): bool
+    {
+        return [] !== $this->createQueryBuilder('u')
+            ->select('u.id')
+            ->join('u.appartment', 'a')
+            ->where('a.roomCategory = :category')
+            ->setParameter('category', $category)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getScalarResult();
     }
 
     /**

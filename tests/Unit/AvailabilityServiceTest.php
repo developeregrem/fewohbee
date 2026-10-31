@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use App\Entity\Appartment;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\Reservation;
 use App\Entity\RoomBlock;
 use App\Entity\Subsidiary;
@@ -228,6 +229,46 @@ final class AvailabilityServiceTest extends TestCase
 
         // roomB (blocked, other category) must not affect the count; only roomA is in scope
         self::assertSame(['2026-08-01' => 1], $result);
+    }
+
+    public function testRoomNightsWithoutCategoryLeaveEventSpacesOut(): void
+    {
+        $hall = new \App\Entity\RoomCategory();
+        (new \ReflectionProperty(\App\Entity\RoomCategory::class, 'id'))->setValue($hall, 9);
+        $hall->setKind(RoomCategoryKind::EVENT_SPACE);
+        $room = self::makeRoom(1);
+        $festsaal = self::makeRoom(2)->setRoomCategory($hall);
+
+        $reservationRepo = $this->createStub(ReservationRepository::class);
+        $reservationRepo->method('loadBlockingSpansForPeriod')->willReturn([
+            ['appartmentId' => 2, 'startDate' => '2026-08-01', 'endDate' => '2026-08-02'],
+        ]);
+        $blockRepo = $this->createStub(RoomBlockRepository::class);
+        $blockRepo->method('findForPeriod')->willReturn([]);
+        $apartmentRepo = $this->createStub(AppartmentRepository::class);
+        $apartmentRepo->method('findAllByProperty')->willReturn([$room, $festsaal]);
+
+        $service = new AvailabilityService($reservationRepo, $blockRepo, $apartmentRepo);
+        $from = new \DateTimeImmutable('2026-08-01');
+        $to = new \DateTimeImmutable('2026-08-02');
+
+        // The booked hall changes neither the rooms nor the occupancy of the house ...
+        self::assertSame(['2026-08-01' => ['rooms' => 1, 'booked' => 0, 'blocked' => 0, 'available' => 1]], $service->getRoomNightsPerDay('all', null, $from, $to));
+        // ... but counts when its own category is asked for.
+        self::assertSame(['2026-08-01' => ['rooms' => 1, 'booked' => 1, 'blocked' => 0, 'available' => 0]], $service->getRoomNightsPerDay('all', 9, $from, $to));
+    }
+
+    public function testBlockedPerDayLeavesEventSpacesOut(): void
+    {
+        $hall = (new \App\Entity\RoomCategory())->setKind(RoomCategoryKind::EVENT_SPACE);
+        $festsaal = self::makeRoom(2)->setRoomCategory($hall);
+
+        $blockRepo = $this->createStub(RoomBlockRepository::class);
+        $blockRepo->method('findForPeriod')->willReturn([self::makeBlock($festsaal, '2026-08-01', '2026-08-02')]);
+
+        $service = new AvailabilityService($this->createStub(ReservationRepository::class), $blockRepo, $this->createStub(AppartmentRepository::class));
+
+        self::assertSame(['2026-08-01' => ['rooms' => 0, 'beds' => 0]], $service->getBlockedPerDay('all', new \DateTimeImmutable('2026-08-01'), new \DateTimeImmutable('2026-08-02')));
     }
 
     public function testGetBlockedPerDayClipsToWindow(): void

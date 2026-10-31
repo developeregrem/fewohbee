@@ -7,6 +7,13 @@
                 <span class="me-auto">
                     <span class="fw-semibold">{{ appartment.number }} · {{ appartment.description }}</span>
                     <span class="d-block small text-body-secondary">{{ 'appartment.bedsmax'|trans }}: {{ appartment.bedsmax }}</span>
+                    {# The same "to" means the last day here, so name the days this room gets booked for #}
+                    {% if appartment.eventSpace %}
+                        <span class="d-block small text-body-secondary">
+                            <i class="fa-solid fa-people-roof"></i> {{ 'category.kind.event_space'|trans }}:
+                            {{ 'reservation.event_space.period'|trans({'%days%': 'reservation.summary.days'|trans({'%count%': period.start.diff(period.end).days + 1}), '%date%': period.end|date('d.m.Y')}) }}
+                        </span>
+                    {% endif %}
                 </span>
                 <i class="fas fa-chevron-down text-body-secondary"></i>
             </a>

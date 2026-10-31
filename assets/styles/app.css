@@ -216,6 +216,19 @@ body {
     font-size: 0.9rem;
 }
 
+/* Reservation popover: grow with the content within the viewport;
+   long contact values and remarks wrap instead of overflowing. */
+.reservation-bar-popover {
+    --bs-popover-max-width: min(32rem, calc(100vw - 1rem));
+    width: max-content;
+    overflow-wrap: anywhere;
+}
+
+.reservation-bar-popover a {
+    color: inherit;
+    text-decoration: none;
+}
+
 .form-switch > .form-check-input {
     margin-top: .25em;
     margin-right: .75em;
@@ -399,8 +412,8 @@ body.reservations-week-layout #reservation-table {
     width: 100%;
 }
 
-/* Rooms are stretched to fill the screen in the normal and the week view
-   (stretchRoomRows), keep the bars level with the room names */
+/* A few rooms grow moderately in normal view; five or more rooms and week
+   view fill the available height. Keep the bars level with the room names. */
 #reservation-table tbody td {
     vertical-align: middle;
 }

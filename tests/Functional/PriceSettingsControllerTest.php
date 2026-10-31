@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** HTTP and persistence coverage for prices bound to several room categories, including the conflict check. */
 final class PriceSettingsControllerTest extends WebTestCase
@@ -347,6 +348,75 @@ final class PriceSettingsControllerTest extends WebTestCase
     }
 
     /** Removes the prices created by these examples from the prepared test database. */
+    public function testSurchargeForFurtherPersonsIsSavedForAPerRoomPrice(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+
+        $this->postPrice($client, 'surcharge', 2, [$single], overrides: ['extra-person-surcharge-new' => '15,50']);
+
+        self::assertResponseIsSuccessful();
+        $price = $this->findPrice('surcharge');
+        self::assertSame('15.50', $price?->getExtraPersonSurcharge());
+
+        // Elsewhere the number of persons is matched exactly, so form and list say "up to".
+        $translator = self::getContainer()->get(TranslatorInterface::class);
+        $form = $client->request('GET', sprintf('/settings/prices/%d/get', $price->getId()));
+        self::assertSame($translator->trans('price.numberofpersons.scope.up_to'), trim($form->filter('#number-of-persons-scope-'.$price->getId())->text()));
+        $list = $client->request('GET', '/settings/prices/');
+        self::assertStringContainsString($translator->trans('price.numberofpersons.up_to_count', ['%count%' => self::PERSONS]), $list->filter('body')->text());
+    }
+
+    public function testSurchargeIsDroppedForAPricePerPerson(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+
+        $this->postPrice($client, 'per-person', 2, [$single], overrides: [
+            'calculation-type-new' => 'per_person',
+            'extra-person-surcharge-new' => '15',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        $price = $this->findPrice('per-person');
+        self::assertNotNull($price);
+        self::assertNull($price->getExtraPersonSurcharge());
+    }
+
+    public function testASurchargePriceServesEveryPartyUntilAnExactPriceExists(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+        $this->postPrice($client, 'base', 2, [$single], overrides: ['extra-person-surcharge-new' => '15']);
+
+        self::assertSame([self::PREFIX.'base'], $this->apartmentPriceDescriptions($single, self::PERSONS + 2));
+        // The base price includes up to its number of persons, so a smaller party pays it as well.
+        self::assertSame([self::PREFIX.'base'], $this->apartmentPriceDescriptions($single, self::PERSONS - 1));
+
+        $this->postPrice($client, 'exact', 2, [$single], overrides: ['number-of-persons-new' => (string) (self::PERSONS + 2)]);
+        $this->postPrice($client, 'exact-small', 2, [$single], overrides: ['number-of-persons-new' => (string) (self::PERSONS - 1)]);
+
+        self::assertSame([self::PREFIX.'exact', self::PREFIX.'base'], $this->apartmentPriceDescriptions($single, self::PERSONS + 2));
+        self::assertSame([self::PREFIX.'exact-small', self::PREFIX.'base'], $this->apartmentPriceDescriptions($single, self::PERSONS - 1));
+    }
+
+    public function testTheClosestSurchargePriceBelowThePartyComesBeforeOneAbove(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+        $this->postPrice($client, 'small', 2, [$single], overrides: ['extra-person-surcharge-new' => '15']);
+        $this->postPrice($client, 'large', 2, [$single], overrides: [
+            'extra-person-surcharge-new' => '5',
+            'number-of-persons-new' => (string) (self::PERSONS + 4),
+        ]);
+
+        // Between both bases the party exceeds the small one and pays its surcharge.
+        self::assertSame([self::PREFIX.'small', self::PREFIX.'large'], $this->apartmentPriceDescriptions($single, self::PERSONS + 1));
+        self::assertSame([self::PREFIX.'large', self::PREFIX.'small'], $this->apartmentPriceDescriptions($single, self::PERSONS + 5));
+        // Below both bases the closest one applies.
+        self::assertSame([self::PREFIX.'small', self::PREFIX.'large'], $this->apartmentPriceDescriptions($single, self::PERSONS - 1));
+    }
+
     protected function tearDown(): void
     {
         if (null !== self::$kernel) {
@@ -414,6 +484,31 @@ final class PriceSettingsControllerTest extends WebTestCase
             static fn (Price $price): string => (string) $price->getDescription(),
             self::getContainer()->get(PriceRepository::class)->findMiscPrices($reservation),
         );
+    }
+
+    /**
+     * Descriptions of the room prices, in priority order, for a party in a room of the category.
+     *
+     * @return list<string>
+     */
+    private function apartmentPriceDescriptions(int $categoryId, int $persons): array
+    {
+        $em = $this->em();
+        $em->clear();
+        $reservation = new Reservation();
+        $reservation->setAppartment($em->getRepository(Appartment::class)->findOneBy(['roomCategory' => $categoryId]));
+        $reservation->setReservationOrigin($em->getRepository(ReservationOrigin::class)->findOneBy([]));
+        $reservation->setPersons($persons);
+        $reservation->setStartDate(new \DateTime('+400 days'));
+        $reservation->setEndDate(new \DateTime('+413 days'));
+
+        return array_values(array_filter(
+            array_map(
+                static fn (Price $price): string => (string) $price->getDescription(),
+                self::getContainer()->get(PriceRepository::class)->findApartmentPrices($reservation, self::MIN_STAY),
+            ),
+            static fn (string $description): bool => str_starts_with($description, self::PREFIX),
+        ));
     }
 
     /** @return array{0: int, 1: int} ids of the two sample room categories */

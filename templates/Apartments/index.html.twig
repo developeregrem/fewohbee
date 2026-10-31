@@ -48,7 +48,7 @@
                         {% endif %}
                         <tr{% if not apartment.active %} class="table-secondary text-muted"{% endif %}>
                             <td>{{ apartment.number }}</td>
-                            <td>{{ apartment.description }}{% if apartment.multipleOccupancy %} <i class="fa-solid fa-users" title="{{ 'apartment.multiple.occupancy.text'|trans }}"></i>{% endif %}</td>
+                            <td>{{ apartment.description }}{% if apartment.multipleOccupancy %} <i class="fa-solid fa-users" title="{{ 'apartment.multiple.occupancy.text'|trans }}"></i>{% endif %}{% if apartment.isEventSpace %} <i class="fa-solid fa-people-roof text-secondary" title="{{ 'category.kind.event_space'|trans }}" aria-label="{{ 'category.kind.event_space'|trans }}"></i>{% endif %}</td>
                             <td>{{ apartment.bedsmax }}</td>
                             <td class="text-center">
                                 {% if apartment.active %}

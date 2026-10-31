@@ -6,8 +6,10 @@ namespace App\Tests\Unit;
 
 use App\Entity\Appartment;
 use App\Entity\Enum\GuestStatisticalGroup;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\GuestCategory;
 use App\Entity\Reservation;
+use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
 use App\Entity\TouristTax;
 use App\Entity\TouristTaxRate;
@@ -19,6 +21,33 @@ use PHPUnit\Framework\TestCase;
 
 final class TouristTaxServiceTest extends TestCase
 {
+    #[DataProvider('incompleteStayDates')]
+    public function testIncompleteDatesCannotSilentlyProduceAnEmptyTaxCalculation(bool $withStart, bool $withEnd): void
+    {
+        $reservation = new Reservation();
+        if ($withStart) {
+            $reservation->setStartDate(new \DateTime('2026-06-01'));
+        }
+        if ($withEnd) {
+            $reservation->setEndDate(new \DateTime('2026-06-03'));
+        }
+        $taxes = $this->createMock(TouristTaxRepository::class);
+        $taxes->expects(self::never())->method('findActiveForSubsidiaryInRange');
+        $service = new TouristTaxService($taxes, $this->createStub(GuestCategoryRepository::class));
+
+        $this->expectException(\TypeError::class);
+
+        $service->calculateForReservation($reservation);
+    }
+
+    /** @return iterable<string, array{bool, bool}> */
+    public static function incompleteStayDates(): iterable
+    {
+        yield 'both dates missing' => [false, false];
+        yield 'start missing' => [false, true];
+        yield 'end missing' => [true, false];
+    }
+
     public function testWaivedReturnsEmpty(): void
     {
         $r = $this->makeReservation([1 => 2]);
@@ -59,6 +88,16 @@ final class TouristTaxServiceTest extends TestCase
         $childRow = $rows[1];
         self::assertSame(3.0, $childRow->total());
         self::assertSame('children', $childRow->reportGroup);
+    }
+
+    public function testEventSpaceIsChargedNoTouristTax(): void
+    {
+        $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);
+        $tax = $this->makeTax('Kurtaxe', false, [[$adult, '3.00', null]]);
+        $r = $this->makeReservation([1 => 2]);
+        $r->getAppartment()->setRoomCategory((new RoomCategory())->setKind(RoomCategoryKind::EVENT_SPACE));
+
+        self::assertSame([], $this->makeService([$tax], [$adult])->calculateForReservation($r));
     }
 
     public function testAppliesOnlyToAdultFiltersChildren(): void
@@ -267,11 +306,13 @@ final class TouristTaxServiceTest extends TestCase
         return new TouristTaxService($taxRepo, $catRepo);
     }
 
+    /** @param array<int, int> $guestCounts */
     private function makeReservation(array $guestCounts): Reservation
     {
         return $this->makeReservationWithDates($guestCounts, '2026-06-01', '2026-06-03');
     }
 
+    /** @param array<int, int> $guestCounts */
     private function makeReservationWithDates(array $guestCounts, string $start, string $end): Reservation
     {
         $r = new Reservation();

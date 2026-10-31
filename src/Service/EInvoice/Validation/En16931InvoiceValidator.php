@@ -23,11 +23,8 @@ class En16931InvoiceValidator implements EInvoiceValidatorInterface
         }
         // Invoice::getDate() is typed non-nullable and throws on an unset date, so guard the access.
         try {
-            $hasDate = $invoice->getDate() instanceof \DateTimeInterface;
+            $invoice->getDate();
         } catch (\TypeError) {
-            $hasDate = false;
-        }
-        if (!$hasDate) {
             $violations[] = new EInvoiceViolation('invoiceDate', 'invoice.einvoice.violation.invoiceDate', EInvoiceFixLocation::INVOICE);
         }
 

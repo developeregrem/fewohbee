@@ -37,7 +37,7 @@
                                                         {% for res in reservations %}
                                                         <tr class="{{ res.reservationStatus and res.reservationStatus.code == 'canceled_noshow' ? 'text-muted' : '' }}">
                                                             <td>{{ res.startDate|date('d.m.y') }}</td>
-                                                            <td>{{ res.endDate|date('d.m.y') }}</td>
+                                                            <td>{{ (res.eventSpace ? res.lastDay : res.endDate)|date('d.m.y') }}</td>
                                                             <td>{{ res.amount }}</td>
                                                             <td>{{ res.appartment ? res.appartment.number ~ ' ' ~ res.appartment.description : '–' }}</td>
                                                             <td>{{ res.reservationStatus ? res.reservationStatus|display_name : '–' }}</td>

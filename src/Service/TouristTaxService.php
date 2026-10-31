@@ -74,22 +74,24 @@ class TouristTaxService implements ResetInterface
     }
 
     /**
+     * Calculate tourist tax using the reservation's required stay dates.
+     *
      * @return TouristTaxBreakdown[]
+     *
+     * @throws \TypeError if required stay dates have not been populated
      */
     public function calculateForReservation(
         Reservation $reservation,
         ?\DateTimeInterface $rangeStart = null,
         ?\DateTimeInterface $rangeEnd = null,
     ): array {
-        if ($reservation->isKurtaxeWaived()) {
+        // Event spaces host no overnight guests, so there is no tourist tax to charge.
+        if ($reservation->isKurtaxeWaived() || true === $reservation->getAppartment()?->isEventSpace()) {
             return [];
         }
 
         $start = $reservation->getStartDate();
         $end = $reservation->getEndDate();
-        if (!$start instanceof \DateTimeInterface || !$end instanceof \DateTimeInterface) {
-            return [];
-        }
         $totalNights = max(1, (int) $start->diff($end)->format('%a'));
 
         $lastNightDate = (clone $start)->modify('+'.($totalNights - 1).' days');

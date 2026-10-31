@@ -51,7 +51,7 @@ final class ReservationTools
     #[McpTool(
         name: 'search_reservations',
         title: 'Search reservations',
-        description: 'Finds reservations that touch a date range (at most 180 days), optionally filtered by property, room, status or type. Guest names and remarks are only included when the access token may share guest data.',
+        description: 'Finds reservations that touch a date range (at most 180 days), optionally filtered by property, room, status or type. Guest names and remarks are only included when the access token may share guest data. For a room of kind "event_space" the nights are days and the departure is the day after the last day.',
         annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
     )]
     #[McpRequiresScope(ApiScope::RESERVATIONS_READ)]
@@ -204,7 +204,7 @@ final class ReservationTools
     #[McpTool(
         name: 'get_occupancy_forecast',
         title: 'Occupancy forecast',
-        description: 'Room counts per night for a period (at most 366 nights): active rooms, rooms booked by a reservation that blocks the room, rooms blocked without a reservation, and free rooms, with totals and the room occupancy in percent (booked nights of the rooms that are not blocked). For all properties, one property or one room category.',
+        description: 'Room counts per night for a period (at most 366 nights): active rooms, rooms booked by a reservation that blocks the room, rooms blocked without a reservation, and free rooms, with totals and the room occupancy in percent (booked nights of the rooms that are not blocked). For all properties, one property or one room category; without a category event spaces are left out.',
         annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
     )]
     #[McpRequiresScope(ApiScope::RESERVATIONS_READ)]

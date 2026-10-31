@@ -110,7 +110,7 @@ class PriceQuoteService
                 'description' => $apartment->getDescription(),
             ],
             object: ['id' => $object->getId(), 'name' => $object->getName()],
-            roomCategory: null !== $category ? ['id' => $category->getId(), 'name' => $category->getName()] : null,
+            roomCategory: null !== $category ? ['id' => $category->getId(), 'name' => $category->getName(), 'kind' => $category->getKind()->value] : null,
             startDate: $start->format('Y-m-d'),
             endDate: $end->format('Y-m-d'),
             nightCount: $nightCount,

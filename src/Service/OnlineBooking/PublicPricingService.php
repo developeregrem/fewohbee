@@ -343,7 +343,7 @@ class PublicPricingService
 
         $validDays = 0;
         for ($i = 1; $i <= $nights; ++$i) {
-            if (isset($pricesPerDay[$i]) && null !== $pricesPerDay[$i]) {
+            if (isset($pricesPerDay[$i])) {
                 ++$validDays;
             }
         }

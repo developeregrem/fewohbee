@@ -183,6 +183,12 @@ class PriceRepository extends ServiceEntityRepository
     /**
      * Find apartment prices for a reservation. The Array is already ordered by priority.
      *
+     * A price matches the exact number of persons. A per-room price with a surcharge for every further
+     * person serves any party: up to its number of persons for the base price, beyond it plus the
+     * surcharge. Within the same season and minimum stay, the exact price comes first, then a
+     * surcharge price whose base lies below the party, then one whose base lies above it, each
+     * the closest first.
+     *
      * @return Price[]
      */
     public function findApartmentPrices(Reservation $reservation, int $stays)
@@ -190,12 +196,17 @@ class PriceRepository extends ServiceEntityRepository
         $q = $this->getFindBaseQuery($reservation)
                 /* workaround to have prices with no period at the end of the result list */
             ->addSelect('CASE WHEN p.allPeriods = true THEN 1 ELSE 0 END as HIDDEN start_is_null')
+            ->addSelect('CASE WHEN p.numberOfPersons = :nop THEN 0 WHEN p.numberOfPersons < :nop THEN 1 ELSE 2 END as HIDDEN surcharge_match')
+            ->addSelect('ABS(p.numberOfPersons - :nop) as HIDDEN surcharge_distance')
                 /* select only room type */
             ->andWhere('p.type = 2')
                 /* make sure that all room specific fields match */
-            ->andWhere(':rc MEMBER OF p.roomCategories AND p.numberOfPersons = :nop AND p.minStay <= :ms')
+            ->andWhere(':rc MEMBER OF p.roomCategories AND p.minStay <= :ms')
+            ->andWhere('p.numberOfPersons = :nop OR (p.isPerRoom = true AND p.extraPersonSurcharge IS NOT NULL)')
             ->addOrderBy('start_is_null', \SortDirection::Ascending)
             ->addOrderBy('p.minStay', \SortDirection::Descending)
+            ->addOrderBy('surcharge_match', \SortDirection::Ascending)
+            ->addOrderBy('surcharge_distance', \SortDirection::Ascending)
             ->setParameter('rc', $reservation->getAppartment()->getRoomCategory())
             ->setParameter('nop', $reservation->getPersons())
             ->setParameter('ms', $stays);
@@ -279,7 +290,8 @@ class PriceRepository extends ServiceEntityRepository
                 /* select only prices for the given reservation origin */
             ->setParameter('start', $reservation->getStartDate())
             ->setParameter('end', $reservation->getEndDate())
-            ->setParameter('roid', $reservation->getReservationOrigin()->getId());
+            // Legacy reservations can lack an origin; the inner join then matches no prices.
+            ->setParameter('roid', $reservation->getReservationOrigin()?->getId());
 
         return $q;
     }
@@ -455,8 +467,8 @@ class PriceRepository extends ServiceEntityRepository
     /**
      * The occupancies (numberOfPersons) a room category actually has active apartment
      * prices for. The rate calendar iterates these instead of guessing 1..bedsMax:
-     * findApartmentPrices() matches numberOfPersons exactly, so any other value yields
-     * no price at all.
+     * findApartmentPrices() matches numberOfPersons exactly, so without a surcharge price
+     * any other value yields no price at all.
      *
      * @return int[] ascending
      */

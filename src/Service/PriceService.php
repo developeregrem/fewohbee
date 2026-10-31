@@ -271,6 +271,13 @@ class PriceService implements ResetInterface
             $price->setMinStay(null);
         }
 
+        // Only a per-room price bills further persons; for any other price the field is
+        // disabled in the form, and a stale value must not survive a change of the type.
+        $surcharge = str_replace(',', '.', trim((string) $request->request->get('extra-person-surcharge-'.$id, '')));
+        $price->setExtraPersonSurcharge(2 == $price->getType() && $price->getIsPerRoom() && is_numeric($surcharge)
+            ? max(0.0, (float) $surcharge)
+            : null);
+
         $this->setComponents($request, $price, $id);
 
         $revenueAccountId = $request->request->get('revenue-account-'.$id);
@@ -344,6 +351,19 @@ class PriceService implements ResetInterface
                 $price->removeComponent($existing);
             }
         }
+    }
+
+    /**
+     * Validates a price before it is saved. Returns a list of translation keys describing each
+     * error; an empty array means the price is valid.
+     *
+     * @return list<string>
+     */
+    public function validate(Price $price): array
+    {
+        $errors = $price->mixesRoomKinds() ? ['price.flash.mixed_room_kinds'] : [];
+
+        return [...$errors, ...$this->validateComponents($price)];
     }
 
     /**
@@ -699,7 +719,11 @@ class PriceService implements ResetInterface
                 : [];
             $adjustment = $adjustments[$night->format('Y-m-d')] ?? null;
             if (null !== $adjustment && null !== $this->dynamicRates && !$rate->isFlatPrice && 0.0 !== round($adjustment->percent, 2)) {
-                $rate = $rate->adjusted($this->dynamicRates->apply($rate->unit, $adjustment), RateAdjustment::from($rate->unit, $adjustment));
+                $rate = $rate->adjusted(
+                    $this->dynamicRates->apply($rate->unit, $adjustment),
+                    RateAdjustment::from($rate->unit, $adjustment),
+                    null !== $rate->extraPersonSurcharge ? $this->dynamicRates->apply($rate->extraPersonSurcharge, $adjustment) : null,
+                );
             }
             $rates[$i] = $rate;
         }
@@ -853,7 +877,8 @@ class PriceService implements ResetInterface
      * percentage-based tourist taxes (Dresden/Berlin city tax models).
      *
      * Per-head pricing: sum(count × unit_with_modifier) per night.
-     * Flat-price / per-room: basePrice once per night (occupancy-independent).
+     * Flat-price: basePrice once per night (occupancy-independent).
+     * Per-room: basePrice plus the surcharge for every person beyond the included ones.
      *
      * @return array<string, float> keyed by Y-m-d, value = apartment total in the requested base
      */
@@ -867,8 +892,11 @@ class PriceService implements ResetInterface
             if (null === $price || null === $rate) {
                 continue;
             }
-            if ($rate->isFlatPrice || $rate->isPerRoom) {
+            if ($rate->isFlatPrice) {
                 $stored = (float) $rate->unit;
+            } elseif ($rate->isPerRoom) {
+                $stored = (float) $rate->unit
+                    + (null !== $rate->extraPersonSurcharge ? $rate->surchargeTotal($reservation->getPersons()) : 0.0);
             } else {
                 // Mirror the apartment invoice row: numberOfPersons × per-head,
                 // then apply modifier deltas (only for occupancy-counted, non-adult

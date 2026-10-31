@@ -177,6 +177,7 @@ invoice.misc.package.hint: 'Dieses Paket wird beim Speichern in mehrere Position
 invoice.tourist_tax.heading: Beherbergungsabgaben
 invoice.apartment_modifier.heading: 'Aufschläge / Ermäßigungen'
 invoice.apartment_modifier.position: '%category% — %modifier% (%nights% × %count%)'
+invoice.apartment_extra_person.position: 'Aufschlag je weitere Person (%nights% × %count%)'
 invoice.apartment_modifier.label.surcharge_absolute: 'Aufschlag %value%'
 invoice.apartment_modifier.label.discount_percent: 'Rabatt %value%%'
 invoice.apartment_modifier.label.flat_rate: 'Pauschalpreis %value%'

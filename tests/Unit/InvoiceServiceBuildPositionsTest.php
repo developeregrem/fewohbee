@@ -7,6 +7,8 @@ namespace App\Tests\Unit;
 use App\Dto\Pricing\NightRate;
 use App\Entity\Appartment;
 use App\Entity\AppSettings;
+use App\Entity\Enum\RoomCategoryKind;
+use App\Entity\InvoiceAppartment;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\RoomCategory;
@@ -146,6 +148,54 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
         self::assertSame('2026-03-27', $positions[1]->getStartDate()->format('Y-m-d'));
         self::assertSame('2026-03-28', $positions[1]->getEndDate()->format('Y-m-d'));
         self::assertSame(70.0, (float) $positions[1]->getPrice());
+    }
+
+    public function testPositionOfAnEventSpaceRemembersItsKindAndLastDay(): void
+    {
+        $price = $this->createApartmentPrice(1, 300.0, isPerRoom: true);
+        // Event on Mar 25 and 26, stored with the exclusive end Mar 27
+        $reservation = $this->createReservation(1, 40, '2026-03-25', '2026-03-27');
+        $reservation->getAppartment()?->getRoomCategory()?->setKind(RoomCategoryKind::EVENT_SPACE);
+
+        $priceService = $this->createStub(PriceService::class);
+        $priceService->method('getNightRates')
+            ->willReturn($this->nightRates('2026-03-25', [$price, $price]));
+
+        $positions = $this->createService($priceService)->buildAppartmentPositions($reservation);
+
+        self::assertCount(1, $positions);
+        self::assertTrue($positions[0]->isEventSpace());
+        self::assertSame('2026-03-26', $positions[0]->getLastDay()->format('Y-m-d'));
+        // 2 days for the room
+        self::assertSame(2, $positions[0]->getAmount());
+    }
+
+    public function testPositionOfAccommodationIsNoEventSpace(): void
+    {
+        $price = $this->createApartmentPrice(1, 50.0);
+        $reservation = $this->createReservation(1, 2, '2026-03-25', '2026-03-27');
+
+        $priceService = $this->createStub(PriceService::class);
+        $priceService->method('getNightRates')
+            ->willReturn($this->nightRates('2026-03-25', [$price, $price]));
+
+        self::assertFalse($this->createService($priceService)->buildAppartmentPositions($reservation)[0]->isEventSpace());
+    }
+
+    public function testLastDayOfAPositionIsTypedAndStoredAsTheDayAfter(): void
+    {
+        $position = new InvoiceAppartment();
+        $position->setStartDate(new \DateTime('2026-03-25'));
+        $position->setLastDay(new \DateTime('2026-03-25'));
+
+        self::assertSame('2026-03-26', $position->getEndDate()->format('Y-m-d'));
+        self::assertSame('2026-03-25', $position->getLastDay()->format('Y-m-d'));
+    }
+
+    public function testLastDayOfAReservationNeverPrecedesItsStart(): void
+    {
+        self::assertSame('2026-03-26', $this->createReservation(1, 2, '2026-03-25', '2026-03-27')->getLastDay()->format('Y-m-d'));
+        self::assertSame('2026-03-25', $this->createReservation(1, 2, '2026-03-25', '2026-03-25')->getLastDay()->format('Y-m-d'));
     }
 
     // ─── prefillMiscPositions (same-day) ───────────────────────────────

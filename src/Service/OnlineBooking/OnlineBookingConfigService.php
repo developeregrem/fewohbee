@@ -137,8 +137,6 @@ class OnlineBookingConfigService
             return false;
         }
 
-        $config->setAllowedEmbeddingOrigins($this->legacyFrameAncestors);
-
-        return null !== $config->getAllowedEmbeddingOrigins();
+        return null !== $config->setAllowedEmbeddingOrigins($this->legacyFrameAncestors)->getAllowedEmbeddingOrigins();
     }
 }

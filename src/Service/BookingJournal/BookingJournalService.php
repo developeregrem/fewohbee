@@ -360,6 +360,8 @@ class BookingJournalService
 
     /**
      * Build template render params for Kassenbuch PDF export.
+     *
+     * @return array{journal: BookingBatch|null}
      */
     public function buildTemplateRenderParams(int $batchId): array
     {

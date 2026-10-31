@@ -12,6 +12,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Form\Extension\Validator\ValidatorExtension;
+use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\Forms;
 use Symfony\Component\Validator\Validation;
 
@@ -104,6 +105,42 @@ final class InvoiceApartmentPositionTypeTest extends TestCase
         self::assertSame($empty ? [] : ['001' => '001', 2 => '2'], $form->get('number')->getConfig()->getOption('choices'));
         self::assertSame($empty ? [] : [1 => 1, 2 => 2, 3 => 3], $form->get('persons')->getConfig()->getOption('choices'));
         self::assertSame($empty ? [] : [1 => 1, 2 => 2, 3 => 3, 4 => 4], $form->get('beds')->getConfig()->getOption('choices'));
+    }
+
+    public function testPositionOfAnEventSpaceAsksForMaximumPeopleAndTheLastDay(): void
+    {
+        $room = new Appartment();
+        $room->setNumber('HALL');
+        $room->setDescription('Hall');
+        $room->setBedsMax(3);
+        $reservation = new Reservation();
+        $reservation->setAppartment($room);
+        $reservation->setPersons(3);
+        $position = (new InvoiceAppartment())->setEventSpace(true);
+        $form = $this->formFactory()->create(InvoiceApartmentPositionType::class, $position, ['reservations' => [$reservation]]);
+
+        self::assertSame('appartment.bedsmax', $form->get('beds')->getConfig()->getOption('label'));
+        self::assertSame([1 => 1, 2 => 2, 3 => 3], $form->get('beds')->getConfig()->getOption('choices'));
+
+        $form->submit(['number' => 'HALL', 'description' => 'Hall', 'beds' => '3', 'persons' => '3',
+            'startDate' => '2031-06-07', 'endDate' => '2031-06-07', 'price' => '500', 'vat' => '19']);
+
+        self::assertSame(3, $position->getBeds());
+        self::assertSame('2031-06-08', $position->getEndDate()->format('Y-m-d'));
+    }
+
+    public function testPositionOfAccommodationAsksForBeds(): void
+    {
+        $form = $this->formFactory()->create(InvoiceApartmentPositionType::class, new InvoiceAppartment(), ['reservations' => []]);
+
+        self::assertSame('invoice.appartment.position.beds', $form->get('beds')->getConfig()->getOption('label'));
+    }
+
+    private function formFactory(): FormFactoryInterface
+    {
+        return Forms::createFormFactoryBuilder()
+            ->addExtension(new ValidatorExtension(Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator()))
+            ->getFormFactory();
     }
 
     /** @return iterable<string, array{bool, bool}> */
