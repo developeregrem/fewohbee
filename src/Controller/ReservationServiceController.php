@@ -48,6 +48,7 @@ use App\Service\PriceService;
 use App\Service\Pricing\PricePromiseService;
 use App\Service\ReservationObject;
 use App\Service\ReservationPeriodService;
+use App\Service\Reservation\ReservationMailRecipientResolver;
 use App\Service\ReservationService;
 use App\Service\ReservationTableDecorationService;
 use App\Service\ReservationTableService;
@@ -1590,7 +1591,7 @@ class ReservationServiceController extends AbstractController
      * @return Response
      */
     #[Route('/select/template/{id}', name: 'reservations.select.template.preview', methods: ['POST'])]
-    public function previewTemplateAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, TemplatesService $ts, Request $request, ReservationService $rs, int $id)
+    public function previewTemplateAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, TemplatesService $ts, Request $request, ReservationService $rs, ReservationMailRecipientResolver $recipients, int $id)
     {
         $em = $doctrine->getManager();
         $inProcess = $request->request->get('inProcess');
@@ -1632,6 +1633,7 @@ class ReservationServiceController extends AbstractController
             'attachmentIds' => $requestStack->getSession()->get('templateAttachmentIds'),
             'attachments' => $attachments,
             'emailDraft' => $emailDraft,
+            'defaultRecipient' => $recipients->defaultRecipient($reservations),
         ]);
     }
 

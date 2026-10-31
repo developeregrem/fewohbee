@@ -258,6 +258,7 @@ templates.editor.snippets.sidebar: Bausteine
 templates.editor.tab.edit: Bearbeiten
 templates.editor.tab.preview: Vorschau
 templates.recipient: Empfänger
+templates.recipient.from_invoice: 'Empfänger auf die E-Mail der Rechnung %number% geändert.'
 templates.savefile.success: 'Datei wurde erfolgreich gespeichert.'
 templates.savefile.reservations.required: 'Wähle mindestens eine Reservierung aus, bevor du die Datei speicherst.'
 templates.select.reservations: 'Reservierung auswählen'
