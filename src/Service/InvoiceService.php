@@ -360,11 +360,8 @@ class InvoiceService
     {
         // Invoice::getDate() is typed non-nullable and throws when the date is unset.
         try {
-            $hasDate = $invoice->getDate() instanceof \DateTimeInterface;
+            $invoice->getDate();
         } catch (\TypeError) {
-            $hasDate = false;
-        }
-        if (!$hasDate) {
             $invoice->setDate(new \DateTime());
         }
 
@@ -1052,7 +1049,7 @@ class InvoiceService
                     // with the same price id but a total amount if the same price category occurs more than once
                     if (array_key_exists($key, $tmpMiscArr)) {
                         // add amount to an existing one only when it is not flat price or for another reservation (same flat price only once per reservation)
-                        if (!$price->getIsFlatPrice() || ($price->getIsFlatPrice() && $tmpMiscArr[$key]['reservationId'] !== $reservation->getId())) {
+                        if (!$price->getIsFlatPrice() || $tmpMiscArr[$key]['reservationId'] !== $reservation->getId()) {
                             $tmpMiscArr[$key]['amount'] += $amount;
                             $tmpMiscArr[$key]['reservationId'] = $reservation->getId();
                         }
