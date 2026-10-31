@@ -3599,6 +3599,25 @@ export default class extends Controller {
         });
     }
 
+    /**
+     * "Confirmation" in the reservation details: the server prepares the mail and its attachments
+     * and answers with the mail editor, or sends it right away and answers with the details
+     * dialog. A button of the address menu carries the picked address.
+     */
+    openConfirmationAction(event) {
+        event.preventDefault();
+        const trigger = event.currentTarget;
+        // Sending right away takes a moment (PDFs and mail); a second click would send a second mail
+        trigger.disabled = true;
+        setModalTitle(trigger.dataset.title || '');
+        httpRequest({
+            url: trigger.dataset.url,
+            method: 'POST',
+            data: { _token: trigger.dataset.token, email: trigger.dataset.email || '' },
+            target: this.modalContent,
+        });
+    }
+
     initHtmlEditor() {
         const textarea = document.getElementById('editor1');
         if (!textarea || textarea.dataset.editorInitialized === 'true') {

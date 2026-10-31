@@ -236,3 +236,9 @@ reservation.filter.by_guest: 'By guest'
 reservation.correspondences.empty: 'No conversations yet.'
 reservation.origin.missing: Before you can create a reservation, a reservation origin must be added in the settings.
 reservation.flash.origin.required: Select a valid reservation origin. If none exists yet, create one in the settings first.
+reservation.confirmation.button: 'Confirmation'
+reservation.confirmation.title: 'Send confirmation'
+reservation.confirmation.sent: 'The confirmation was sent.'
+reservation.confirmation.not_sent: 'The confirmation was not sent: %reason%'
+reservation.confirmation.failed: 'The confirmation could not be sent. Check the e-mail settings.'
+reservation.confirmation.no_recipient: 'The booker has no e-mail address.'

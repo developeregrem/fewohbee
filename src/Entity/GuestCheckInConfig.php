@@ -84,6 +84,11 @@ class GuestCheckInConfig implements ContentTranslatable
     #[Assert\Length(max: 2000)]
     private ?string $privacyText = null;
 
+    /** Mail the reservation dialog sends as invitation by hand; without one there is no such button. */
+    #[ORM\ManyToOne(targetEntity: Template::class)]
+    #[ORM\JoinColumn(name: 'invitation_template_id', nullable: true, onDelete: 'SET NULL')]
+    private ?Template $invitationTemplate = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
 
@@ -250,6 +255,18 @@ class GuestCheckInConfig implements ContentTranslatable
     public function setPrivacyText(?string $privacyText): self
     {
         $this->privacyText = self::normalizeNullableString($privacyText);
+
+        return $this;
+    }
+
+    public function getInvitationTemplate(): ?Template
+    {
+        return $this->invitationTemplate;
+    }
+
+    public function setInvitationTemplate(?Template $invitationTemplate): self
+    {
+        $this->invitationTemplate = $invitationTemplate;
 
         return $this;
     }

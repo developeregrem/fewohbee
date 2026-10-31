@@ -64,6 +64,8 @@ class GuestCheckInReviewService
             'invitation' => GuestCheckInStatus::OPEN === $status && null === $unavailableReason ? [
                 'workflows' => $this->invitationService->findInvitationWorkflows(),
                 'sentAt' => $this->invitationService->lastSentAt($reservation),
+                'template' => $this->invitationService->invitationTemplate(),
+                'recipients' => $reservation->getBooker()?->getEmails() ?? [],
             ] : null,
             'review' => GuestCheckInStatus::SUBMITTED === $status && null !== $payload
                 ? $this->review($reservation, $payload, $maySeeGlobalCandidates)

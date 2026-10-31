@@ -11,13 +11,16 @@ use App\Repository\GuestCheckInRepository;
 use App\Service\GuestCheckIn\GuestCheckInApplyService;
 use App\Service\GuestCheckIn\GuestCheckInDeskService;
 use App\Service\GuestCheckIn\GuestCheckInExtrasConflictException;
+use App\Service\GuestCheckIn\GuestCheckInInvitationMailer;
 use App\Service\GuestCheckIn\GuestCheckInLinkService;
 use App\Service\GuestCheckIn\GuestCheckInNoGuestSlotException;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -114,6 +117,29 @@ final class GuestCheckInController extends AbstractController
             $checkIn->discard();
             $em->flush();
             $this->addFlash('success', 'guest_checkin.discard.success');
+        }
+
+        return $this->showReservation($reservation);
+    }
+
+    /** Sends the invitation template from the check-in settings to the booker. */
+    #[Route('/invite', name: 'reservations.guest_checkin.invite', methods: ['POST'])]
+    public function invite(Request $request, Reservation $reservation, GuestCheckInInvitationMailer $mailer, LoggerInterface $logger): Response
+    {
+        if (!$this->isCsrfTokenValid(self::tokenId($reservation), $request->request->getString('_token'))) {
+            $this->addFlash('warning', 'guest_checkin.tab.invalid_token');
+        } else {
+            try {
+                $mailer->send($reservation, $request->request->getString('email') ?: null);
+                $this->addFlash('success', 'guest_checkin.invite.sent');
+            } catch (TransportExceptionInterface $e) {
+                // The transport message may name the recipient, so it stays out of the log.
+                $logger->error('Online check-in invitation could not be sent', ['reservation_id' => $reservation->getId(), 'exception' => $e::class]);
+                $this->addFlash('danger', 'guest_checkin.invite.failed');
+            } catch (\RuntimeException $e) {
+                // WorkflowSkippedException and template errors both carry a message meant for the user.
+                $this->addFlash('warning', $this->translator->trans('guest_checkin.invite.not_sent', ['%reason%' => $e->getMessage()]));
+            }
         }
 
         return $this->showReservation($reservation);

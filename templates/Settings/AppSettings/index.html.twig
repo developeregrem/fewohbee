@@ -74,6 +74,19 @@
                 </div>
             </div>
 
+            {# -- Booking confirmation -- #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-paper-plane text-primary me-2"></i>{{ 'app_settings.section.confirmation'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.confirmation_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {{ form_row(form.confirmationTemplate) }}
+                    {{ form_row(form.confirmationAttachments) }}
+                    {{ form_row(form.confirmationSendImmediately) }}
+                </div>
+            </div>
+
             {# -- Guests -- #}
             <div class="card mb-3">
                 <div class="card-header">

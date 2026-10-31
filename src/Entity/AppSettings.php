@@ -6,6 +6,8 @@ namespace App\Entity;
 
 use App\Entity\Enum\PriceRounding;
 use App\Repository\AppSettingsRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -141,11 +143,36 @@ class AppSettings
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $guestLocales = null;
 
+    /**
+     * Mail the "Confirmation" button of the reservation dialog opens for editing; without one
+     * there is no such button. Language variants follow the booker's language.
+     */
+    #[ORM\ManyToOne(targetEntity: Template::class)]
+    #[ORM\JoinColumn(name: 'confirmation_template_id', nullable: true, onDelete: 'SET NULL')]
+    private ?Template $confirmationTemplate = null;
+
+    /**
+     * PDF templates attached to that mail up front; the user can still remove them or add others.
+     *
+     * @var Collection<int, Template>
+     */
+    #[ORM\ManyToMany(targetEntity: Template::class)]
+    #[ORM\JoinTable(name: 'app_settings_confirmation_attachments')]
+    #[ORM\JoinColumn(name: 'app_settings_id', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'template_id', onDelete: 'CASCADE')]
+    #[ORM\OrderBy(['name' => 'ASC'])]
+    private Collection $confirmationAttachments;
+
+    /** Whether the confirmation button sends the mail right away instead of opening it for editing. */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $confirmationSendImmediately = false;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
 
     public function __construct()
     {
+        $this->confirmationAttachments = new ArrayCollection();
         $this->updatedAt = new \DateTime('now');
     }
 
@@ -159,6 +186,52 @@ class AppSettings
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getConfirmationTemplate(): ?Template
+    {
+        return $this->confirmationTemplate;
+    }
+
+    public function setConfirmationTemplate(?Template $confirmationTemplate): self
+    {
+        $this->confirmationTemplate = $confirmationTemplate;
+
+        return $this;
+    }
+
+    public function isConfirmationSendImmediately(): bool
+    {
+        return $this->confirmationSendImmediately;
+    }
+
+    public function setConfirmationSendImmediately(bool $confirmationSendImmediately): self
+    {
+        $this->confirmationSendImmediately = $confirmationSendImmediately;
+
+        return $this;
+    }
+
+    /** @return Collection<int, Template> */
+    public function getConfirmationAttachments(): Collection
+    {
+        return $this->confirmationAttachments;
+    }
+
+    public function addConfirmationAttachment(Template $template): self
+    {
+        if (!$this->confirmationAttachments->contains($template)) {
+            $this->confirmationAttachments->add($template);
+        }
+
+        return $this;
+    }
+
+    public function removeConfirmationAttachment(Template $template): self
+    {
+        $this->confirmationAttachments->removeElement($template);
+
+        return $this;
     }
 
     public function getCurrency(): string

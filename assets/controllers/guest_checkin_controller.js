@@ -13,7 +13,7 @@ import { enableDeletePopover } from '../js/utils.js';
  */
 /* stimulusFetch: 'lazy' */
 export default class extends Controller {
-    static targets = ['linkBox', 'url', 'qrBox', 'qr', 'qrDownload', 'error', 'regenerateBox', 'person', 'room', 'overflow', 'moreOptions', 'confirm'];
+    static targets = ['linkBox', 'url', 'qrBox', 'qr', 'qrDownload', 'error', 'regenerateBox', 'linkHint', 'person', 'room', 'overflow', 'moreOptions', 'confirm'];
     static values = {
         linkUrl: String,
         regenerateUrl: String,
@@ -156,14 +156,17 @@ export default class extends Controller {
         });
     }
 
-    /** Sends a form of the tab (confirm, desk check-in) and shows the dialog the server returns. */
+    /**
+     * Sends a form of the tab (confirm, desk check-in, invitation) and shows the dialog the server
+     * returns. The clicked button's value goes along: it is the address picked for the invitation.
+     */
     post(event) {
         event.preventDefault();
         const form = event.target.closest('form');
         request({
             url: form.action,
             method: 'POST',
-            data: new FormData(form),
+            data: new FormData(form, event.submitter ?? null),
             target: document.getElementById('modal-content-ajax'),
         });
     }
@@ -180,6 +183,7 @@ export default class extends Controller {
                 this.urlTarget.value = data.url;
                 this.qrTarget.src = data.qr;
                 this.qrDownloadTarget.href = data.qr;
+                this.linkHintTarget.classList.remove('d-none');
                 onShown();
             },
             onError: (message) => {
