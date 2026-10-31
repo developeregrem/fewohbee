@@ -10,54 +10,32 @@ use Doctrine\ORM\Mapping as ORM;
 class MailCorrespondence extends Correspondence
 {
     #[ORM\Column(type: 'string', length: 100)]
-    protected $recipient;
+    protected ?string $recipient = null;
     #[ORM\Column(type: 'string', length: 200)]
-    protected $subject;
+    protected ?string $subject = null;
 
-    /**
-     * Set recipient.
-     *
-     * @param string $recipient
-     *
-     * @return MailCorrespondence
-     */
-    public function setRecipient($recipient)
+    /** @return $this */
+    public function setRecipient(string $recipient): static
     {
         $this->recipient = $recipient;
 
         return $this;
     }
 
-    /**
-     * Get recipient.
-     *
-     * @return string
-     */
-    public function getRecipient()
+    public function getRecipient(): ?string
     {
         return $this->recipient;
     }
 
-    /**
-     * Set subject.
-     *
-     * @param string $subject
-     *
-     * @return MailCorrespondence
-     */
-    public function setSubject($subject)
+    /** @return $this */
+    public function setSubject(string $subject): static
     {
         $this->subject = $subject;
 
         return $this;
     }
 
-    /**
-     * Get subject.
-     *
-     * @return string
-     */
-    public function getSubject()
+    public function getSubject(): ?string
     {
         return $this->subject;
     }

@@ -19,14 +19,19 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class StatisticsService
 {
-    private $em;
-
-    public function __construct(EntityManagerInterface $em)
-    {
-        $this->em = $em;
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+    ) {
     }
 
-    public function loadUtilizationForYear($objectId, $year, $beds, array $reservationStatus = [])
+    /**
+     * @param int|string|null $objectId Subsidiary ID, or 'all' for every subsidiary
+     * @param int|string $beds Bed count, including database SUM strings; callers handle empty inventory
+     * @param array<int|string> $reservationStatus Reservation status IDs, including query-string values
+     *
+     * @return list<float> Monthly utilization from January through December
+     */
+    public function loadUtilizationForYear(int|string|null $objectId, int $year, int|string $beds, array $reservationStatus = []): array
     {
         $data = [];
         // each month of the year
@@ -71,6 +76,8 @@ class StatisticsService
 
     /**
      * Calculates the turnover for the given period based on invoices.
+     *
+     * @param array<int|string> $status Invoice status values, including query-string values
      */
     private function loadTurnover(InvoiceService $is, \DateTimeInterface $start, \DateTimeInterface $end, array $status): float
     {
@@ -98,6 +105,7 @@ class StatisticsService
         return $turnover;
     }
 
+    /** @param array<int|string> $status Invoice status values, including query-string values */
     public function loadTurnoverForYear(InvoiceService $is, int $year, array $status): float
     {
         $start = new \DateTime($year.'-01-01');
@@ -106,6 +114,11 @@ class StatisticsService
         return $this->loadTurnover($is, $start, $end, $status);
     }
 
+    /**
+     * @param array<int|string> $status Invoice status values, including query-string values
+     *
+     * @return list<float> Monthly gross turnover from January through December
+     */
     public function loadTurnoverForMonth(InvoiceService $is, int $year, array $status): array
     {
         $result = [];
@@ -121,6 +134,8 @@ class StatisticsService
 
     /**
      * Calculate turnover for a single month using the invoice status filter.
+     *
+     * @param array<int|string> $status Invoice status values, including query-string values
      */
     public function loadTurnoverForSingleMonth(InvoiceService $is, int $year, int $month, array $status): float
     {

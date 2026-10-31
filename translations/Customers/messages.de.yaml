@@ -1,0 +1,61 @@
+CUSTOMER_ADDRESS_TYPE_ADDITIONAL: weitere
+CUSTOMER_ADDRESS_TYPE_BUSINESS: geschäftlich
+CUSTOMER_ADDRESS_TYPE_PRIVATE: privat
+customer.action: Aktion
+customer.additional: 'weitere Angaben'
+customer.address: Adresse
+customer.address.add: 'neue Anschrift hinzufügen'
+customer.address.delete: 'Anschrift entfernen'
+customer.addresstype: Typ
+customer.birthday: Geburtsdatum
+customer.nationality: Staatsangehörigkeit
+customer.nationality_unknown: 'Keine Angabe'
+customer.locale: 'Sprache für Mails'
+customer.locale_help: 'Automatische Mails an diesen Gast nutzen die Sprachvariante der Vorlage, wenn es eine gibt.'
+customer.city: Stadt
+customer.company: Firma
+customer.contact: Kontakt
+customer.contactdata: Kontaktdaten
+customer.count.books: 'Anzahl Buchungen'
+customer.country: Land
+customer.delete.ask: 'Diesen Gast wirklich löschen? Hinweis: Alle bisherigen Buchungen wurden dann von einem "gelöschten" Gast getätigt.'
+customer.details: Gastdetails
+customer.email: E-Mail
+Family: Familie
+customer.fax: Fax
+customer.firstname: Vorname
+customer.flash.create.success: 'Gast wurde erfolgreich angelegt.'
+customer.flash.delete.error.still.in.use: 'Gast kann nicht gelöscht werden, da er noch in einer zukünftigen oder aktuellen Reservierung verwendet wird.'
+customer.flash.delete.success: 'Gast wurde erfolgreich gelöscht.'
+customer.flash.edit.success: 'Gast wurde erfolgreich bearbeitet.'
+customer.id.number: Ausweisnummer
+customer.id.type.driving_licence: Führerschein
+customer.id.type.name: Ausweistyp
+customer.id.type.national_id: Ausweis
+customer.id.type.passport: Reisepass
+customer.lastname: Nachname
+customer.mobilephone: Mobil
+Mr: Herr
+Ms: Frau
+customer.person: Person
+customer.phone: Festnetz
+customer.remark: Bemerkungen
+customer.salutation: Anrede
+customer.search.addresses: 'Anschriften suchen…'
+customer.template: Vorlage
+customer.zip: PLZ
+customer.buyerVatId: 'USt-IdNr. (Käufer)'
+customer.invoiceEmail.label: 'E-Mail für Rechnungen'
+customer.invoiceEmail.placeholder: 'nur, wenn abweichend'
+customer.buyerReference.label: Kundenreferenz
+customer.buyerReference.placeholder: 'z.B. Leitweg-ID'
+customer.buyerReference.hint: 'Ein vom Gast zugewiesener und für interne Lenkungszwecke benutzter Bezeichner, auch als Leitweg-ID bekannt.'
+customer.cardNumber: Kartennummer
+customer.cardNumber.hint: 'Bitte hier nur die letzten 4-6 Ziffern der Kartennummer eintragen, niemals die vollständige Nummer.'
+customer.cardHolder.label: Karteninhaber
+customer.cardHolder.hint: 'Das Feld Karteninhaber (optional) und Kartennummer (Pflicht) sind Bestandtteil der Zahlungsmethode Kartenzahlung.'
+customer.accountIBAN.label: IBAN
+customer.accountIBAN.hint: 'Die IBAN und Mandatsreferenznummer muss bei der Zahlungsmethode Lastschrift ausgefüllt werden.'
+customer.mandateReference.label: Mandatsreferenznr.
+customer.reservation.history: Reservierungshistorie
+customer.reservation.history.empty: 'Keine Reservierungen vorhanden.'

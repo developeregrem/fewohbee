@@ -18,6 +18,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -61,9 +62,14 @@ final class ProfileController extends AbstractController
             $credentials = $this->credentialRepository->findByUserHandle((string) $user->getId());
         }
 
+        $session = $request->getSession();
+        if (!$session instanceof FlashBagAwareSessionInterface) {
+            throw new \LogicException('The profile requires a session supporting flash messages.');
+        }
+
         // Consume the one-time token flash here: the global flash loop in base.html.twig
         // would otherwise render (and thereby consume) it as a plain alert.
-        $newApiToken = $request->getSession()->getFlashBag()->get('api_token_plain');
+        $newApiToken = $session->getFlashBag()->get('api_token_plain');
         $newApiToken = $newApiToken[0] ?? null;
         $newApiTokenEntity = null !== $newApiToken ? $this->apiTokenRepository->findOneByHash(ApiTokenService::hash($newApiToken)) : null;
         $mcpActive = $this->mcpSettings->isActive();

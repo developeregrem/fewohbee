@@ -7,6 +7,8 @@ namespace App\Tests\Unit;
 use App\Dto\Pricing\NightRate;
 use App\Entity\Appartment;
 use App\Entity\AppSettings;
+use App\Entity\Enum\RoomCategoryKind;
+use App\Entity\InvoiceAppartment;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\RoomCategory;
@@ -148,6 +150,54 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
         self::assertSame(70.0, (float) $positions[1]->getPrice());
     }
 
+    public function testPositionOfAnEventSpaceRemembersItsKindAndLastDay(): void
+    {
+        $price = $this->createApartmentPrice(1, 300.0, isPerRoom: true);
+        // Event on Mar 25 and 26, stored with the exclusive end Mar 27
+        $reservation = $this->createReservation(1, 40, '2026-03-25', '2026-03-27');
+        $reservation->getAppartment()?->getRoomCategory()?->setKind(RoomCategoryKind::EVENT_SPACE);
+
+        $priceService = $this->createStub(PriceService::class);
+        $priceService->method('getNightRates')
+            ->willReturn($this->nightRates('2026-03-25', [$price, $price]));
+
+        $positions = $this->createService($priceService)->buildAppartmentPositions($reservation);
+
+        self::assertCount(1, $positions);
+        self::assertTrue($positions[0]->isEventSpace());
+        self::assertSame('2026-03-26', $positions[0]->getLastDay()->format('Y-m-d'));
+        // 2 days for the room
+        self::assertSame(2, $positions[0]->getAmount());
+    }
+
+    public function testPositionOfAccommodationIsNoEventSpace(): void
+    {
+        $price = $this->createApartmentPrice(1, 50.0);
+        $reservation = $this->createReservation(1, 2, '2026-03-25', '2026-03-27');
+
+        $priceService = $this->createStub(PriceService::class);
+        $priceService->method('getNightRates')
+            ->willReturn($this->nightRates('2026-03-25', [$price, $price]));
+
+        self::assertFalse($this->createService($priceService)->buildAppartmentPositions($reservation)[0]->isEventSpace());
+    }
+
+    public function testLastDayOfAPositionIsTypedAndStoredAsTheDayAfter(): void
+    {
+        $position = new InvoiceAppartment();
+        $position->setStartDate(new \DateTime('2026-03-25'));
+        $position->setLastDay(new \DateTime('2026-03-25'));
+
+        self::assertSame('2026-03-26', $position->getEndDate()->format('Y-m-d'));
+        self::assertSame('2026-03-25', $position->getLastDay()->format('Y-m-d'));
+    }
+
+    public function testLastDayOfAReservationNeverPrecedesItsStart(): void
+    {
+        self::assertSame('2026-03-26', $this->createReservation(1, 2, '2026-03-25', '2026-03-27')->getLastDay()->format('Y-m-d'));
+        self::assertSame('2026-03-25', $this->createReservation(1, 2, '2026-03-25', '2026-03-25')->getLastDay()->format('Y-m-d'));
+    }
+
     // ─── prefillMiscPositions (same-day) ───────────────────────────────
 
     public function testPrefillMiscPositionsSameDayPerPerson(): void
@@ -205,6 +255,24 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
         self::assertCount(1, $positions);
         // 2 nights × 2 persons = 4
         self::assertSame(4, $positions[0]->getAmount());
+    }
+
+    public function testMiscPositionsAreOrderedByName(): void
+    {
+        // An extra that only starts on the second night used to follow the ones of the first.
+        $parking = $this->createMiscPrice(1006, false);
+        $parking->setDescription('Parking');
+        $breakfast = $this->createMiscPrice(1007, false);
+        $breakfast->setDescription('Breakfast');
+        $reservation = $this->createReservation(2006, 2, '2026-03-25', '2026-03-27');
+
+        $priceService = $this->createStub(PriceService::class);
+        $priceService->method('getPricesForReservationDays')
+            ->willReturn([0 => null, 1 => [$parking], 2 => [$parking, $breakfast]]);
+
+        $positions = $this->createService($priceService)->buildMiscPositions([$reservation]);
+
+        self::assertSame(['Breakfast', 'Parking'], array_map(static fn ($position): string => (string) $position->getDescription(), $positions));
     }
 
     public function testAMiscPositionInheritsWhetherAPortalBrokersIt(): void

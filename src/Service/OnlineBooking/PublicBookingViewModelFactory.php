@@ -9,6 +9,7 @@ use App\Entity\Appartment;
 use App\Entity\OnlineBookingConfig;
 use App\Exception\PublicBookingException;
 use App\Repository\GuestCategoryRepository;
+use App\Service\Localization\ContentTranslator;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Intl\Countries;
@@ -32,7 +33,27 @@ class PublicBookingViewModelFactory
         private readonly PublicBookingRequestMapper $requestMapper,
         private readonly GuestCategoryRepository $guestCategoryRepository,
         private readonly LoggerInterface $logger,
+        private readonly ?ContentTranslator $contentTranslator = null,
     ) {
+    }
+
+    /**
+     * Country preselected for the booker: the region of the browser language (en-GB → GB),
+     * else the country named like the installation language (de → DE). Empty when neither
+     * is a country.
+     */
+    public function defaultCountry(Request $request): string
+    {
+        foreach ($request->getLanguages() as $language) {
+            $region = (string) \Locale::getRegion($language);
+            if ('' !== $region && Countries::exists($region)) {
+                return $region;
+            }
+        }
+
+        $installationCountry = mb_strtoupper($request->getDefaultLocale());
+
+        return Countries::exists($installationCountry) ? $installationCountry : '';
     }
 
     /**
@@ -78,7 +99,7 @@ class PublicBookingViewModelFactory
             'selectedQty' => [],
             // Same extraction the submit path uses, so a redisplayed form always
             // shows exactly what the guest typed.
-            'booker' => $this->requestMapper->mapBooker($request, mb_strtoupper($request->getLocale()))->toArray(),
+            'booker' => $this->requestMapper->mapBooker($request, $this->defaultCountry($request))->toArray(),
             'roomTotalFormatted' => null,
             'roomPriceBreakdown' => [],
             'modifierBreakdown' => [],
@@ -127,7 +148,7 @@ class PublicBookingViewModelFactory
 
             $icon = $category->getStatisticalGroup()->publicIcon();
             for ($i = 0; $i < $count; ++$i) {
-                $icons[] = ['icon' => $icon, 'label' => (string) $category->getName()];
+                $icons[] = ['icon' => $icon, 'label' => (string) ($this->contentTranslator?->text($category, 'name') ?? $category->getName())];
             }
         }
 

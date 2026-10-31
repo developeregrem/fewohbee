@@ -64,6 +64,20 @@ final class PriceServiceApartmentTotalsTest extends TestCase
         self::assertEqualsWithDelta(128.4, $grossTotals['2026-06-01'], 0.01);
     }
 
+    public function testPerRoomAddsTheSurchargeForFurtherPersons(): void
+    {
+        // 80 € gross per room for 2 persons, +15 € for each further one: 4 persons → 110 € gross.
+        $price = $this->makePrice('80.00', includesVat: true, vat: 7.0, flat: false, perRoom: true);
+        $price->setExtraPersonSurcharge('15.00');
+        $service = $this->makeService($price);
+        $reservation = $this->reservation();
+        $reservation->setPersons(4);
+
+        $grossTotals = $service->getApartmentTotalsPerNight($reservation, PercentageBase::GROSS);
+
+        self::assertSame(['2026-06-01' => 110.0, '2026-06-02' => 110.0], $grossTotals);
+    }
+
     public function testZeroVatTreatsNetAndGrossEqually(): void
     {
         $price = $this->makePrice('100.00', includesVat: true, vat: 0.0, flat: false, perRoom: false);
@@ -128,6 +142,10 @@ final class PriceServiceApartmentTotalsTest extends TestCase
         return $c;
     }
 
+    /**
+     * @param list<GuestCategory> $categories
+     * @param list<GuestCategoryModifier> $modifiers
+     */
     private function makeServiceWithCategories(Price $price, array $categories, array $modifiers): PriceService
     {
         $catRepo = $this->createStub(GuestCategoryRepository::class);

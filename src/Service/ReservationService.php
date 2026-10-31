@@ -29,6 +29,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class ReservationService
@@ -182,6 +183,11 @@ class ReservationService
         }
     }
 
+    /**
+     * Returns the stored selection without reindexing its keys or converting ID values.
+     *
+     * @return array<int|string>
+     */
     public function getSelectedReservationIds(): array
     {
         return $this->requestStack->getSession()->get(self::SESSION_SELECTED_RESERVATIONS, []);
@@ -215,8 +221,15 @@ class ReservationService
         return in_array($reservationId, $this->getSelectedReservationIds(), true);
     }
 
-    public function isAppartmentAlreadyBookedInCreationProcess($reservations, Appartment $apartment, \DateTimeInterface $start, \DateTimeInterface $end)
-    {
+    /**
+     * @param array<ReservationObject> $reservations
+     */
+    public function isAppartmentAlreadyBookedInCreationProcess(
+        array $reservations,
+        Appartment $apartment,
+        \DateTimeInterface $start,
+        \DateTimeInterface $end,
+    ): bool {
         foreach ($reservations as $reservation) {
             if ($apartment->getId() == $reservation->getAppartmentId()) {
                 $startReservation = strtotime($reservation->getStart());
@@ -249,17 +262,18 @@ class ReservationService
     }
 
     /**
-     * Returns a list of apartments that can be selected (free) for the given period.
+     * Returns a list of apartments that can be selected (free) for the period typed into the admin
+     * form: $end is the departure day, for an event space its last day.
+     *
+     * @param bool|null $eventSpace null for every room, true for event spaces only, false for accommodation only
      *
      * @return list<Appartment>
      *
      * @throws InvalidReservationPeriodException when the period is unsafe to process
      */
-    public function getAvailableApartments(\DateTimeInterface $start, \DateTimeInterface $end, ?Appartment $apartment = null, string $propertyId = 'all'): array
+    public function getAvailableApartments(\DateTimeInterface $start, \DateTimeInterface $end, ?Appartment $apartment = null, string $propertyId = 'all', ?bool $eventSpace = null): array
     {
-        $period = $this->reservationPeriodService->validate($start, $end);
-        $start = $period->start;
-        $end = $period->end;
+        $input = $this->reservationPeriodService->validate($start, $end);
 
         if ($apartment instanceof Appartment) {
             $propertyId = $apartment->getObject()->getId();
@@ -270,25 +284,21 @@ class ReservationService
         } else {
             $appartments = $this->em->getRepository(Appartment::class)->findBy(['object' => $propertyId, 'active' => true]);
         }
-        $availableApartments = [];
-        foreach ($appartments as $ap) {
-            $available = $this->isApartmentAvailable($start, $end, $ap, 0);
-            if ($available) {
-                $availableApartments[] = $ap;
-            }
-        }
-
         $newReservationsInformationArray = $this->requestStack->getSession()->get('reservationInCreation', []);
-
-        // during creation process remove reservation that is already in session
-        if (0 != count($newReservationsInformationArray)) {
-            foreach ($availableApartments as $apartment) {
-                if (!$this->isAppartmentAlreadyBookedInCreationProcess($newReservationsInformationArray, $apartment, $start, $end)) {
-                    $result[] = $apartment;
-                }
+        foreach ($appartments as $ap) {
+            if (null !== $eventSpace && $ap->isEventSpace() !== $eventSpace) {
+                continue;
             }
-        } else {
-            $result = $availableApartments;
+            $period = $this->reservationPeriodService->forRoom($input, $ap);
+            if (!$this->isApartmentAvailable($period->start, $period->end, $ap, 0)) {
+                continue;
+            }
+            // during creation process remove reservation that is already in session
+            if (0 !== count($newReservationsInformationArray)
+                && $this->isAppartmentAlreadyBookedInCreationProcess($newReservationsInformationArray, $ap, $period->start, $period->end)) {
+                continue;
+            }
+            $result[] = $ap;
         }
 
         return $result;
@@ -313,14 +323,16 @@ class ReservationService
     /**
      * Rebuilds transient reservation entities from the reservation-creation session.
      *
-     * @param list<ReservationObject> $newReservationsInformationArray
+     * @param array<ReservationObject> $newReservationsInformationArray Selection keys can be sparse after removing a room
      *
      * @return list<Reservation>
      *
      * @throws InvalidReservationPeriodException when a stored period is invalid
      */
-    public function createReservationsFromReservationInformationArray($newReservationsInformationArray, ?Customer $customer = null)
-    {
+    public function createReservationsFromReservationInformationArray(
+        array $newReservationsInformationArray,
+        ?Customer $customer = null,
+    ): array {
         $reservations = [];
 
         foreach ($newReservationsInformationArray as $reservationInformation) {
@@ -375,14 +387,17 @@ class ReservationService
         return $status instanceof ReservationStatus ? (int) $status->getId() : 1;
     }
 
-    public function setCustomerInReservationInformationArray(&$newReservationsInformationArray, Customer $customer): void
-    {
+    /** @param array<ReservationObject> $newReservationsInformationArray */
+    public function setCustomerInReservationInformationArray(
+        array &$newReservationsInformationArray,
+        Customer $customer,
+    ): void {
         foreach ($newReservationsInformationArray as $reservationInformation) {
             $reservationInformation->setCustomerId($customer->getId());
         }
     }
 
-    public function deleteReservation($id)
+    public function deleteReservation(int|string $id): bool
     {
         $reservation = $this->em->getRepository(Reservation::class)->find($id);
 
@@ -412,14 +427,10 @@ class ReservationService
     {
         $apartmentId = $request->request->get('aid');
         $status = $request->request->get('status');
-        $period = $this->reservationPeriodService->parse(
+        $input = $this->reservationPeriodService->parse(
             $request->request->getString('from'),
             $request->request->getString('end'),
         );
-        // Keep mutable DateTime instances here for compatibility with the existing
-        // update pipeline; moveReservation() normalizes them before persistence.
-        $start = \DateTime::createFromInterface($period->start);
-        $end = \DateTime::createFromInterface($period->end);
 
         $guestCountsRaw = $request->request->get('guestCounts', '{}');
         $guestCounts = is_string($guestCountsRaw) ? (json_decode($guestCountsRaw, true) ?: []) : [];
@@ -438,6 +449,13 @@ class ReservationService
         if (!$apartment instanceof Appartment || !$reservationStatus instanceof ReservationStatus) {
             return false;
         }
+
+        // "To" is the last day for an event space; a room of the other kind is refused by moveReservation().
+        $period = $this->reservationPeriodService->forRoom($input, $apartment);
+        // Keep mutable DateTime instances here for compatibility with the existing
+        // update pipeline; moveReservation() normalizes them before persistence.
+        $start = \DateTime::createFromInterface($period->start);
+        $end = \DateTime::createFromInterface($period->end);
 
         // Occupancy data is needed for the availability check below. Keep its
         // previous state so a rejected move leaves the managed entity untouched.
@@ -514,6 +532,12 @@ class ReservationService
         $startDate = \DateTime::createFromInterface($period->start);
         $endDate = \DateTime::createFromInterface($period->end);
 
+        // Days and nights are stored alike, so a move to the other kind of room would silently
+        // turn the last day of an event into a departure day or the other way round.
+        if (!$this->isSameKindOfRoom($reservation, $apartment)) {
+            return false;
+        }
+
         if (!$this->availabilityService->isRoomAvailable(
             $apartment,
             $startDate,
@@ -540,6 +564,16 @@ class ReservationService
     }
 
     /**
+     * A reservation stays with its kind of room: an event space only moves to another event space,
+     * accommodation only to accommodation. A reservation without a room yet may go anywhere.
+     */
+    public function isSameKindOfRoom(Reservation $reservation, Appartment $apartment): bool
+    {
+        return !$reservation->getAppartment() instanceof Appartment
+            || $reservation->isEventSpace() === $apartment->isEventSpace();
+    }
+
+    /**
      * Check if an apartment is available for the given time.
      *
      * @throws InvalidReservationPeriodException when the period is unsafe to process
@@ -557,13 +591,13 @@ class ReservationService
         );
     }
 
-    public function updateReservationCustomers($reservation, $customer, $tab): void
+    public function updateReservationCustomers(Reservation $reservation, Customer $customer, string $tab): void
     {
         if ('booker' === $tab) {
             $reservation->setBooker($customer);
             $this->em->persist($reservation);
             $this->em->flush();
-            $this->requestStack->getSession()->getFlashBag()->add('success', 'reservation.flash.update.success');
+            $this->addFlash('success', 'reservation.flash.update.success');
         } elseif ('guest' === $tab && count($reservation->getCustomers()) < $reservation->getTotalGuests()) {
             // check if customer is already in list
             $isAlreadyInList = false;
@@ -580,13 +614,23 @@ class ReservationService
                 $reservation->addCustomer($customer);
                 $this->em->persist($reservation);
                 $this->em->flush();
-                $this->requestStack->getSession()->getFlashBag()->add('success', 'reservation.flash.update.success');
+                $this->addFlash('success', 'reservation.flash.update.success');
             } else {
-                $this->requestStack->getSession()->getFlashBag()->add('warning', 'reservation.flash.update.customeralreadyinlist');
+                $this->addFlash('warning', 'reservation.flash.update.customeralreadyinlist');
             }
         } else {
-            $this->requestStack->getSession()->getFlashBag()->add('warning', 'reservation.flash.update.toomuchcustomers');
+            $this->addFlash('warning', 'reservation.flash.update.toomuchcustomers');
         }
+    }
+
+    private function addFlash(string $type, string $message): void
+    {
+        $session = $this->requestStack->getSession();
+        if (!$session instanceof FlashBagAwareSessionInterface) {
+            throw new \LogicException('Reservation feedback requires a session supporting flash messages.');
+        }
+
+        $session->getFlashBag()->add($type, $message);
     }
 
     /**
@@ -614,9 +658,12 @@ class ReservationService
     }
 
     /**
-     * Returns an array of prices for reservations in creation.
+     * Rebuilds and returns the miscellaneous invoice positions for reservations in creation.
+     * The session list is replaced on each call and also includes any tourist-tax positions.
      *
-     * @return type
+     * @param array<Reservation> $reservations
+     *
+     * @return list<\App\Entity\InvoicePosition>
      */
     public function getMiscPricesInCreation(InvoiceService $is, array $reservations, PriceService $ps, RequestStack $requestStack): array
     {
@@ -652,10 +699,14 @@ class ReservationService
 
     /**
      * Adds the given prices to the reservations.
+     * Preserves the reservation array's keys and entity instances.
      *
-     * @return array
+     * @param Collection<int, Price> $prices
+     * @param array<Reservation> $reservations
+     *
+     * @return array<Reservation>
      */
-    private function setPricesToReservations(Collection $prices, array $reservations)
+    private function setPricesToReservations(Collection $prices, array $reservations): array
     {
         foreach ($reservations as $reservation) {
             foreach ($prices as $price) {
@@ -668,10 +719,11 @@ class ReservationService
 
     /**
      * Based on given Reservation IDs the coresponding Invoices will be returned.
+     * Shared invoices may appear more than once, once for each selected reservation.
      *
-     * @return array
+     * @return list<\App\Entity\Invoice>
      */
-    public function getInvoicesForReservationsInProgress()
+    public function getInvoicesForReservationsInProgress(): array
     {
         $ids = $this->getSelectedReservationIds();
         $totalInvoices = [];
@@ -691,6 +743,20 @@ class ReservationService
 
     /**
      * Collects the sum of all prices for the given reservations, e.g. to be used in templates.
+     * Raw sums stay integer zero when their position list is empty.
+     *
+     * @param array<Reservation> $reservations
+     *
+     * @return array{
+     *     sumApartmentRaw: int|float,
+     *     sumMiscRaw: int|float,
+     *     totalPriceRaw: int|float,
+     *     sumApartment: string,
+     *     sumMisc: string,
+     *     totalPrice: string,
+     *     apartmentPositions: list<\App\Entity\InvoiceAppartment>,
+     *     miscPositions: list<\App\Entity\InvoicePosition>
+     * }
      */
     private function getTotalPricesForTemplate(array $reservations): array
     {

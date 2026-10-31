@@ -1,0 +1,286 @@
+TEMPLATE_CASHJOURNAL_PDF: 'PDF Buchungsjournal'
+TEMPLATE_FILE_PDF: 'PDF Datei'
+TEMPLATE_GDPR_PDF: 'PDF für DSGVO Export'
+TEMPLATE_GENERAL_EMAIL: 'E-Mail Vorlage Allgemein'
+TEMPLATE_NEWSLETTER_EMAIL: 'E-Mail Newsletter'
+TEMPLATE_INVOICE_EMAIL: 'E-Mail Vorlage für Rechnungen'
+TEMPLATE_INVOICE_PDF: 'PDF Rechnung'
+TEMPLATE_RESERVATION_EMAIL: 'E-Mail Vorlage für Reservierungen'
+TEMPLATE_RESERVATION_PDF: 'PDF Vorlage für Reservierungen'
+TEMPLATE_OPERATIONS_PDF: 'PDF Vorlage für Betriebsberichte'
+TEMPLATE_REGISTRATION_PDF: 'PDF Meldeschein'
+templates.editor.operations.header_footer: 'Kopf- und Fußzeile für Berichte'
+templates.editor.operations.header_footer.desc: 'Standard-Header/-Footer mit Zeitraum und Filtern'
+templates.editor.operations.reservations_table: 'Alle Reservierungen im Zeitraum'
+templates.editor.operations.reservations_table.desc: 'Minimale Tabelle mit Zimmer, Gast, Personen und Zeitraum'
+templates.editor.operations.housekeeping_day: 'Tagesbelegung (Tabelle)'
+templates.editor.operations.housekeeping_day.desc: 'Tagesansicht mit Belegung, Status, Zuweisung und Notiz'
+templates.editor.operations.housekeeping_week: 'Wochenbelegung (Tabelle)'
+templates.editor.operations.housekeeping_week.desc: 'Wochenraster mit Belegung, Status und Gästezahl'
+templates.operations.housekeeping_day: 'Housekeeping Tagesansicht'
+templates.operations.housekeeping_week: 'Housekeeping Wochenansicht'
+templates.operations.frontdesk_checklist: 'Rezeption Checkliste'
+templates.operations.meals_checklist: Mahlzeiten
+templates.operations.management_monthly_summary: 'Monatsreport Kennzahlen'
+templates.operations.tourist_tax_monthly: 'Monatsabrechnung Beherbergungsabgaben'
+templates.operations.import.title: 'Keine Vorlagen für Betriebsberichte vorhanden.'
+templates.operations.import.text: 'Möchten Sie die Standardvorlagen jetzt importieren?'
+templates.operations.import.button: 'Vorlagen importieren'
+templates.operations.import.success: 'Vorlagen wurden importiert.'
+templates.operations.import.failed: 'Vorlagen konnten nicht importiert werden.'
+templates.operations.import.already_present: 'Vorlagen für Betriebsberichte sind bereits vorhanden.'
+templates.operations.import.missing_type: 'Template-Typ für Betriebsberichte wurde nicht gefunden.'
+templates.add: 'Vorlage hinzufügen'
+templates.fonts.open: 'Eigene Schriften verwalten'
+templates.fonts.title: 'Eigene PDF-Schriften'
+templates.fonts.description: 'Lade eigene Schriftdateien hoch. FewohBee erkennt Familie und vorhandene Schnitte automatisch und stellt Familien mit regulärem Schnitt im Editor für PDF-Vorlagen bereit.'
+templates.fonts.empty: 'Es sind noch keine eigenen Schriften installiert.'
+templates.fonts.upload.label: Schriftdateien
+templates.fonts.upload.help: 'Wähle eine oder mehrere TTF- oder kompatible OTF-Dateien aus. Lade neben dem regulären Schnitt auch die benötigten fetten und kursiven Schnitte hoch.'
+templates.fonts.upload.button: 'Schriften hochladen'
+templates.fonts.license_hint: 'Mit dem Hochladen einer Schrift bestätigst du, dass sie im Rahmen ihrer Lizenzbedingungen verwendet und in PDF-Dokumente eingebettet werden darf. FewohBee selbst prüft die Lizenzbedingungen nicht.'
+templates.fonts.style.r: Regulär
+templates.fonts.style.b: Fett
+templates.fonts.style.i: Kursiv
+templates.fonts.style.bi: 'Fett kursiv'
+templates.fonts.missing_regular: 'Regulärer Schnitt fehlt'
+templates.fonts.delete.ask: 'Diese Schriftfamilie löschen?'
+templates.fonts.delete.hint: 'Die Schrift steht für neue PDFs nicht mehr zur Verfügung. Bestehende Vorlagen verwenden dann eine Ersatzschrift.'
+templates.fonts.flash.no_file: 'Wähle mindestens eine Schriftdatei aus.'
+templates.fonts.flash.uploaded: '{1} Eine Schriftdatei wurde installiert.|]1,Inf[ %count% Schriftdateien wurden installiert.'
+templates.fonts.flash.upload_failed: '„%filename%“ konnte nicht installiert werden: %reason%'
+templates.fonts.flash.deleted: 'Die Schriftfamilie wurde gelöscht.'
+templates.fonts.flash.not_found: 'Die Schriftfamilie ist nicht mehr vorhanden.'
+templates.fonts.validation.upload: 'Der Upload wurde nicht vollständig übertragen.'
+templates.fonts.validation.size: 'Die Schriftdatei ist leer oder größer als 10 MB.'
+templates.fonts.validation.extension: 'Es werden nur TTF- und OTF-Dateien unterstützt.'
+templates.fonts.validation.mime: 'Die hochgeladene Datei wird nicht als Schrift erkannt.'
+templates.fonts.validation.invalid: 'Die Datei ist keine unterstützte Unicode-TrueType-Schrift.'
+templates.fonts.validation.storage: 'Der Schriftenspeicher ist nicht beschreibbar. Prüfe die Berechtigungen der Installation.'
+templates.attachment: Anhang
+templates.attachment.notfound: 'Der Anhang konnte nicht gefunden werden.'
+templates.correspondence.created: Datum
+templates.correspondence.delete.ok: 'Eintrag erfolgreich gelöscht.'
+templates.correspondence.name: Name
+templates.correspondence.notfound: 'Der Eintrag konnte nicht gefunden werden.'
+templates.default: 'Standardvorlage für Typ'
+templates.hidden: 'Eingebettete Vorlage'
+templates.hidden.tooltip: 'Aktiv: Vorlage ist zum Einbetten in andere Vorlagen gedacht und erscheint deshalb nicht in der Vorlagenauswahl.'
+templates.flash.payment_means.conflict: '„%name%“ ist bereits die Standardvorlage für %means%. Entferne dort erst die Zuordnung.'
+templates.flash.payment_means.no_unbound: 'Eine Rechnungsvorlage muss ohne Zahlungsmethode bleiben – sie gilt für alle übrigen Rechnungen.'
+templates.payment_means: 'Standardvorlage für Zahlungsmethode'
+templates.payment_means.all: 'Keine – für alle übrigen Rechnungen'
+templates.payment_means.tooltip: 'Rechnungen mit dieser Zahlungsmethode werden automatisch mit dieser Vorlage erstellt.'
+templates.delete.ask: 'Vorlage wirklich löschen?'
+templates.description: 'Vorlagen für eMails, Rechnungen usw.'
+templates.edit: 'Vorlage bearbeiten'
+templates.editor.address: Anschrift
+templates.editor.appartment.positions: 'Liste der Zimmerpositionen'
+templates.editor.appartment.positions.desc: 'Fügt eine Tabelle mit allen Zimmerpositionen einschließlich Zeitraum, Menge, Einzelpreis, Mehrwertsteuer und Gesamtpreis ein.'
+templates.editor.brutto: 'Gesamt Brutto'
+templates.editor.brutto.desc: 'Gibt die Bruttogesamtsumme der Rechnung aus.'
+templates.editor.city: Stadt
+templates.editor.company: Firma
+templates.editor.firstname: Vorname
+templates.editor.footer: Fußzeile
+templates.editor.footer.desc: 'Fügt eine Fußzeile hinzu, die auf jeder Seite am unteren Rand der Seite erscheint.'
+templates.editor.invoice.date: Rechnungsdatum
+templates.editor.invoice.date.desc: 'Gibt das Rechnungsdatum im Format Tag.Monat.Jahr aus.'
+templates.editor.invoice.number: Rechnungsnummer
+templates.editor.invoice.number.desc: 'Gibt die Rechnungsnummer aus.'
+templates.editor.lastname: Nachname
+templates.editor.misc.positions: 'Liste der Sonstigepositionen'
+templates.editor.misc.positions.desc: 'Fügt eine Tabelle mit allen sonstigen Rechnungspositionen ein. Beherbergungsabgaben sowie Aufschläge und Ermäßigungen sind ausgenommen, da sie eigene Snippets haben.'
+templates.editor.apartment_modifier.positions: 'Liste der Aufschläge / Ermäßigungen'
+templates.editor.apartment_modifier.positions.desc: 'Fügt eine Tabelle mit allen Aufschlag- und Ermäßigungspositionen ein. Die Tabelle wird nur angezeigt, wenn entsprechende Positionen auf der Rechnung vorhanden sind.'
+templates.editor.origin_name: 'Portal mit Gebühren (Name)'
+templates.editor.origin_name.desc: 'Fügt den Namen des Portals ein, also der Reservierungsherkunft der Buchung (z. B. Booking.com). Die Angabe erscheint nur, wenn für diese Reservierungsherkunft eine Kommission oder Zahlungsgebühr hinterlegt ist, und entfällt z. B. bei Direktbuchungen.'
+templates.editor.origin_commission: OTA-Kommission
+templates.editor.origin_commission.desc: 'Fügt die Kommission des Buchungsportals als Betrag ein. Die Angabe entfällt, wenn keine Kommission anfällt oder die Reservierungen der Rechnung zu unterschiedlichen Sätzen gebucht wurden.'
+templates.editor.origin_payment_fee: OTA-Zahlungsgebühr
+templates.editor.origin_payment_fee.desc: 'Fügt die Zahlungsgebühr des Buchungsportals als Betrag ein. Die Angabe entfällt, wenn keine Zahlungsgebühr anfällt oder sich die Reservierungen der Rechnung in Satz oder Zahlungsweg unterscheiden.'
+templates.editor.tourist_tax.positions: 'Liste der Beherbergungsabgabe'
+templates.editor.opening_hours: 'Öffnungszeiten der Niederlassung'
+templates.editor.check_in_times: 'Check-in-Zeiten des Betriebs'
+templates.editor.guest_checkin_link: 'Link zum Online-Check-in'
+templates.editor.guest_checkin_link.desc: 'Link, über den der Gast vor der Anreise Anreisezeit und Meldedaten angibt. Jede Reservierung bekommt ihren eigenen Link. Der Absatz entfällt, solange der Online-Check-in ausgeschaltet ist, bei stornierten Reservierungen und nach der Abreise.'
+templates.editor.guest_checkin_qr: 'QR-Code zum Online-Check-in'
+templates.editor.guest_checkin_qr.desc: 'QR-Code des Online-Check-in-Links, z. B. für eine ausgedruckte Buchungsbestätigung. Die Zahl ist die Bildauflösung in Pixeln. Der Code entfällt immer dann, wenn auch der Link entfällt.'
+templates.editor.check_in_times.desc: 'Gibt Check-in-Fenster und Check-out-Zeit des Betriebs als eine Zeile aus, z. B. „Check-in 17:00–20:00 Uhr · Check-out bis 10:00 Uhr“. Das sind Hausregeln, nicht die Anreisezeit dieser Reservierung. Der Absatz entfällt, wenn keine Zeiten hinterlegt sind.'
+templates.editor.opening_hours.desc: 'Gibt die wöchentlichen Öffnungszeiten der Niederlassung als eine Zeile aus, z. B. „Mo.–Fr. 08:00–12:00, 16:00–19:00". Sind keine Zeiten hinterlegt, entfällt der Absatz.'
+templates.editor.payment_qr: 'Zahlungs-QR-Code (GiroCode)'
+templates.editor.payment_qr.desc: 'Fügt einen QR-Code ein, der in der Banking-App des Zahlenden eine SEPA-Überweisung vorausfüllt. Die Zahl ist die Auflösung des Bildes in Pixeln; wie groß es auf der Seite erscheint, bestimmt die Breite des Bildes, die du am Ziehpunkt einstellst. Der Code erscheint nur, wenn in den Rechnungseinstellungen eine Bankverbindung hinterlegt ist und die Installation in Euro rechnet.'
+templates.editor.payment_due_date: Fälligkeitsdatum
+templates.editor.payment_due_date.desc: 'Fügt das Fälligkeitsdatum der Rechnung ein. Es wird beim Erstellen aus dem Zahlungsziel in den Rechnungseinstellungen vorbelegt und lässt sich pro Rechnung ändern; gedrucktes Datum und E-Rechnung stimmen immer überein. Hat die Rechnung kein Fälligkeitsdatum, entfällt die Zeile.'
+templates.editor.tourist_tax.positions.desc: 'Fügt eine Tabelle mit allen Beherbergungsabgabe-/Kurtaxe-Positionen ein. Die Tabelle wird nur angezeigt, wenn entsprechende Positionen auf der Rechnung vorhanden sind.'
+templates.editor.misc.total: 'Gesamtpreis aller Sonstigepositionen'
+templates.editor.misc.total.desc: 'Gibt den Gesamtpreis aller sonstigen Positionen aus.'
+templates.editor.netto: 'Gesamt Netto'
+templates.editor.netto.desc: 'Gibt die Nettogesamtsumme der Rechnung aus.'
+templates.editor.phone: Telefon
+templates.editor.price.sum: Gesamtpreis
+templates.editor.price.sum.desc: 'Gibt den Gesamtpreis aller Zimmer- und sonstigen Positionen aus.'
+templates.editor.price.total: 'Gesamtpreis aller Zimmerpositionen'
+templates.editor.price.total.desc: 'Gibt den Gesamtpreis aller Zimmerpositionen aus.'
+templates.editor.remarks: Bemerkungen
+templates.editor.vat: 'enthaltene MwSt.'
+templates.editor.vat.desc: 'Fügt eine Tabelle ein, die die Nettobeträge nach Mehrwertsteuersatz aufschlüsselt.'
+templates.editor.zip: PLZ
+templates.flash.create.success: 'Vorlage erfolgreich angelegt.'
+templates.flash.delete.inuse.reservations: 'Vorlage kann nicht gelöscht werden, da sie in vorhandenen Konversationen genutzt wird.'
+templates.flash.delete.success: 'Vorlage erfolgreich gelöscht.'
+templates.flash.delete.has_variants: 'Die Vorlage hat Sprachvarianten. Lösche zuerst die Sprachvarianten.'
+templates.flash.variant.created: 'Sprachvariante angelegt. Übersetze jetzt Text und Betreff.'
+templates.flash.variant.invalid: 'Für diese Sprache kann keine Sprachvariante angelegt werden.'
+templates.variant.add: 'Sprachvariante anlegen'
+templates.variant.badge: Sprachvariante
+templates.variant.of: 'Sprachvariante von „%name%“. Automatische Mails an Gäste in dieser Sprache nutzen sie statt der Vorlage.'
+templates.variant.delete_hint: 'Lösche zuerst die Sprachvarianten dieser Vorlage.'
+templates.flash.edit.success: 'Vorlage erfolgreich bearbeitet.'
+templates.name: Name
+templates.notfound: 'Es konnte keine Vorlage gefunden werden. Stelle bitte sicher, dass ein Template für die ausgewählte Aktion existiert.'
+templates.params: PDF-Layout
+templates.params.help: 'Ausrichtung und Ränder für erzeugte PDFs (alle Ränder in mm).'
+templates.params.orientation: Ausrichtung
+templates.params.orientation.portrait: 'Hochformat (P)'
+templates.params.orientation.landscape: 'Querformat (L)'
+templates.params.format: Seitenformat
+templates.params.margin_top: 'Oberer Rand (mm)'
+templates.params.margin_bottom: 'Unterer Rand (mm)'
+templates.params.margin_left: 'Linker Rand (mm)'
+templates.params.margin_right: 'Rechter Rand (mm)'
+templates.params.margin_header: 'Header-Rand (mm)'
+templates.params.margin_footer: 'Footer-Rand (mm)'
+templates.preview: Vorschau
+templates.preview.context: Vorschau-Kontext
+templates.preview.render: 'Vorschau erzeugen'
+templates.preview.render.error.generic: 'Template konnte nicht gerendert werden. Bitte Platzhalter und Template-Logik prüfen.'
+templates.preview.render.error.syntax: 'Template-Syntaxfehler. Bitte Schleifen, Bedingungen und Platzhalter prüfen.'
+templates.preview.render.error.variable: 'Variable "%variable%" nicht gefunden.'
+templates.preview.render.error.filter: 'Filter "%filter%" ist nicht verfügbar.'
+templates.preview.render.error.property: 'Attribut "%property%" wurde auf "%class%" nicht gefunden.'
+templates.preview.result: Vorschau-Ergebnis
+templates.preview.empty: 'Bitte Kontext auswählen und Vorschau erzeugen.'
+templates.preview.noprovider: 'Für diesen Vorlagentyp ist keine Vorschau verfügbar.'
+templates.preview.noprovider.help: 'Für diesen Vorlagentyp ist die Vorschau noch nicht implementiert.'
+templates.preview.invoice.number: Rechnungsnummer
+templates.preview.invoice.number.placeholder: 'z. B. 2026-0001'
+templates.preview.invoice.number.help: 'Eine vorhandene Rechnungsnummer eingeben oder leer lassen für Beispieldaten.'
+templates.preview.invoice.notfound: 'Rechnung "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.'
+templates.preview.reservation: Reservierungs-IDs
+templates.preview.reservation.placeholder: 'z. B. 101, 102'
+templates.preview.reservation.help: 'Eine oder mehrere Reservierungs-IDs (kommagetrennt) eingeben oder leer lassen für Beispieldaten.'
+templates.preview.reservation.notfound: 'Reservierungen "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.'
+templates.preview.date_start: Startdatum
+templates.preview.date_end: Enddatum
+templates.preview.subsidiary: Betrieb
+templates.preview.subsidiary.all: 'Alle Betriebe'
+templates.preview.occupancy: Belegungstypen
+templates.preview.cashjournal.year: Jahr
+templates.preview.cashjournal.year.placeholder: 'z. B. 2026'
+templates.preview.cashjournal.year.help: 'Jahr numerisch eingeben.'
+templates.preview.cashjournal.month: Monat
+templates.preview.cashjournal.month.placeholder: 1-12
+templates.preview.cashjournal.month.help: 'Monat numerisch von 1 bis 12 eingeben.'
+templates.preview.cashjournal.notfound: 'Buchungsperiode "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.'
+templates.preview.gdpr.customer_id: Kunden-ID
+templates.preview.gdpr.customer_id.placeholder: 'z. B. 42'
+templates.preview.gdpr.customer_id.help: 'Eine vorhandene Kunden-ID eingeben oder leer lassen für neueste/Beispieldaten.'
+templates.preview.gdpr.customer_notfound: 'Kunde "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.'
+templates.preview.download_pdf: 'PDF herunterladen'
+templates.preview.snippet.booker_firstname: 'Bucher Vorname'
+templates.preview.snippet.booker_lastname: 'Bucher Nachname'
+templates.preview.snippet.reservation_dates: Reservierungszeitraum
+templates.preview.snippet.reservation_total: 'Reservierung Gesamtbetrag'
+templates.preview.snippet.reservation_loop: Reservierungs-Wiederholungsblock
+templates.preview.snippet.reservation_apartment_positions_row: 'Tabelle Reservierungspositionen'
+templates.preview.snippet.reservation_misc_positions_line: 'Zeile Zusatzpositionen'
+templates.preview.snippet.invoice_number: Rechnungsnummer
+templates.preview.snippet.invoice_date: Rechnungsdatum
+templates.preview.snippet.invoice_totals: Rechnungssummen
+templates.preview.snippet.invoice_positions: 'Tabelle Rechnungspositionen'
+templates.preview.snippet.invoice_appartments: 'Tabelle Apartmentpositionen'
+templates.preview.snippet.operations_period: Berichtszeitraum
+templates.preview.snippet.operations_dayviews: 'Tagesübersicht Wiederholungsblock'
+templates.preview.snippet.bookingjournal.month: Journalmonat
+templates.preview.snippet.bookingjournal.year: Journaljahr
+templates.preview.snippet.bookingjournal.period: Buchungsperiode
+templates.preview.snippet.bookingjournal.entries_count: 'Anzahl Buchungen'
+templates.preview.snippet.bookingjournal.positions: 'Tabelle Buchungsjournal'
+templates.preview.snippet.gdpr.general_name: Kundenname
+templates.preview.snippet.gdpr.general_birthday: 'Geburtsdatum Kunde'
+templates.preview.snippet.gdpr.general_nationality: 'Staatsangehörigkeit Kunde'
+templates.preview.snippet.gdpr.general_id_document: 'Ausweisdokument Kunde'
+templates.preview.snippet.gdpr.general_remark: 'Bemerkung Kunde'
+templates.preview.snippet.gdpr.addresses: 'Adressblock (Wiederholung)'
+templates.preview.snippet.gdpr.reservations: 'Übernachtungsblock (Wiederholung)'
+templates.preview.snippet.pdf_header: 'PDF Kopfzeile'
+templates.preview.snippet.pdf_footer: 'PDF Fußzeile'
+templates.editor.toolbar.bold: Fett
+templates.editor.toolbar.italic: Kursiv
+templates.editor.toolbar.underline: Unterstreichen
+templates.editor.toolbar.bullets: Aufzählung
+templates.editor.toolbar.ordered: 'Nummerierte Liste'
+templates.editor.toolbar.link: 'Link einfügen'
+templates.editor.toolbar.table: 'Tabelle einfügen'
+templates.editor.toolbar.image: 'Bild einfügen'
+templates.editor.toolbar.image_email_unsupported: 'Bilder werden nur in PDF-Vorlagen unterstützt'
+templates.editor.toolbar.table_row_add: 'Zeile hinzufügen'
+templates.editor.toolbar.table_row_delete: 'Zeile löschen'
+templates.editor.toolbar.table_col_add: 'Spalte hinzufügen'
+templates.editor.toolbar.table_col_delete: 'Spalte löschen'
+templates.editor.toolbar.table_delete: 'Tabelle löschen'
+templates.editor.toolbar.font_family: Schriftart
+templates.editor.toolbar.font_size: Schriftgröße
+templates.editor.toolbar.align_left: Linksbündig
+templates.editor.toolbar.align_center: Zentriert
+templates.editor.toolbar.align_right: Rechtsbündig
+templates.editor.toolbar.beautify: 'Code formatieren'
+templates.editor.toolbar.code: Code
+templates.editor.toolbar.visual: Visual
+templates.editor.toolbar.variable: 'Variable einfügen'
+templates.editor.variable_picker.title: 'Variable einfügen'
+templates.editor.variable_picker.insert_loop: 'Schleife einfügen'
+templates.editor.alert.protected_content: 'Dieses Template enthält Twig-Syntax oder erweiterte Direktiven und kann nur im Code-Modus bearbeitet werden.'
+templates.editor.alert.table_row_required: 'Bitte zuerst den Cursor in die gewünschte Tabellenzeile setzen.'
+templates.editor.row.repeat_toggle: 'Zeile wiederholen'
+templates.editor.row.repeat_collection: 'Collection (z. B. apartmentPositions)'
+templates.editor.row.repeat_as: 'Item-Variable (z. B. position)'
+templates.editor.row.repeat_key: 'Key-Variable (optional)'
+templates.editor.row.repeat_clear: 'Wiederholung entfernen'
+templates.editor.row.repeat_hint: 'Wiederholung für die ausgewählte Tabellenzeile konfigurieren.'
+templates.editor.row.if_toggle: 'Bedingte Zeile'
+templates.editor.row.if_condition: 'Bedingung (z. B. reservation.persons > 1)'
+templates.editor.row.if_clear: 'Bedingung entfernen'
+templates.editor.snippets.placeholder: 'Baustein einfügen'
+templates.editor.snippets.insert: Einfügen
+templates.editor.snippets.sidebar: Bausteine
+templates.editor.tab.edit: Bearbeiten
+templates.editor.tab.preview: Vorschau
+templates.recipient: Empfänger
+templates.recipient.from_invoice: 'Empfänger auf die E-Mail der Rechnung %number% geändert.'
+templates.savefile.success: 'Datei wurde erfolgreich gespeichert.'
+templates.savefile.reservations.required: 'Wähle mindestens eine Reservierung aus, bevor du die Datei speicherst.'
+templates.select.reservations: 'Reservierung auswählen'
+templates.select.template: 'Vorlage auswählen'
+templates.sendemail.preview: 'Nachricht versenden'
+templates.sendemail.success: 'Die Nachricht wurde erfolgreich versendet.'
+templates.subject: Betreff
+templates.subject.help: 'Platzhalter wie [[ reservation1.booker.lastname ]] sind möglich. Bleibt das Feld leer, wird der Name als Betreff verwendet.'
+templates.title: Vorlagen
+templates.editor.template_includes: Vorlagen
+templates.include.error.circular: 'Zirkuläre Vorlageneinbindung erkannt (ID: %id%)'
+templates.include.error.notfound: 'Eingebundene Vorlage nicht gefunden (ID: %id%)'
+templates.include.error.incompatible: 'Vorlage "%name%" (%type%) ist nicht kompatibel mit diesem Vorlagentyp'
+templates.type: Vorlagentyp
+templates.guest_checkin_invitation.name: 'Einladung zum Online-Check-in'
+templates.journal.name: Buchungsjournal
+templates.preview.snippet.pdf_header.desc: 'Fügt eine Kopfzeile hinzu, die auf jeder PDF-Seite am oberen Rand erscheint.'
+templates.preview.snippet.bookingjournal.positions.desc: 'Fügt eine Tabelle mit allen Buchungen des gewählten Monats und ihren Konten, Beträgen und Belegen ein.'
+templates.preview.snippet.gdpr.addresses.desc: 'Fügt für jede gespeicherte Kundenadresse einen Block mit Anschrift und Kontaktdaten ein.'
+templates.preview.snippet.gdpr.reservations.desc: 'Fügt für jede Reservierung einen Block mit Aufenthalt, Buchungsquelle, Gästezahl und Rechnungen ein.'
+templates.editor.reservation.appartment_positions.desc: 'Fügt eine Tabelle mit allen gebuchten Zimmern, Aufenthaltszeiträumen, Gästezahlen und Preisen ein.'
+templates.editor.reservation.misc_positions.desc: 'Fügt alle zusätzlichen Reservierungspositionen mit Beschreibung und Gesamtpreis zeilenweise ein.'
+templates.send: Senden
+templates.file.label: Bezeichnung
+templates.correspondence.delete.ask: 'Dieses Dokument wirklich löschen?'

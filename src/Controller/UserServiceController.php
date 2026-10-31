@@ -94,6 +94,7 @@ class UserServiceController extends AbstractController
         ]);
     }
 
+    /** @param int|string $id Route ID, including numeric strings */
     #[Route('/{id}/delete', name: 'users.delete.user', methods: ['GET', 'DELETE'])]
     public function deleteUserAction(Request $request, $id, UserService $us, User $user): Response
     {

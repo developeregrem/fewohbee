@@ -1,0 +1,113 @@
+{#
+    Translation inputs below a base field, for forms with a ContentTranslationsType child.
+
+    {% import 'common/content_translations.html.twig' as contentTranslations %}
+    {{ form_row(form.name) }}
+    {{ contentTranslations.inputs(form.translations, 'name') }}
+
+    Collapsed by default; the badges show which languages are filled. Opens by itself when a
+    translation has an error. `horizontal: false` for forms that put labels above the inputs.
+    `editorAttr` copies an attribute such as a rich-text editor marker onto the inputs.
+#}
+{% macro inputs(translations, field, options = {}) %}
+    {% if translations.children|length == 0 %}
+        {% do translations.setRendered %}
+    {% else %}
+        {% set horizontal = options.horizontal ?? true %}
+        {% set collapseId = translations.vars.id ~ '_' ~ field ~ '_collapse' %}
+        {% set base = translations.parent[field].vars.value ?? '' %}
+        {% set hasErrors = false %}
+        {% for localeForm in translations.children %}
+            {% if not localeForm[field].vars.valid %}{% set hasErrors = true %}{% endif %}
+        {% endfor %}
+        <div class="{{ horizontal ? 'row mb-3 mt-n2' : 'mb-3 mt-n2' }}">
+            <div class="{{ horizontal ? 'col-sm offset-sm-4' : '' }}">
+                <a class="small text-decoration-none" data-bs-toggle="collapse" href="#{{ collapseId }}" role="button"
+                   aria-expanded="{{ hasErrors ? 'true' : 'false' }}" aria-controls="{{ collapseId }}">
+                    <i class="fas fa-language me-1"></i>{{ 'content_translations.toggle'|trans }}
+                    {% for locale, localeForm in translations.children %}
+                        {% set filled = localeForm[field].vars.value is not empty %}
+                        <span class="badge {{ filled ? 'text-bg-success' : 'text-bg-light border' }} ms-1"
+                              title="{{ (filled ? 'content_translations.filled' : 'content_translations.missing')|trans({'%language%': language_name(locale, false)}) }}">
+                            {{- locale|upper -}}
+                            {% if filled %}<i class="fas fa-check ms-1"></i>{% endif %}
+                        </span>
+                    {% endfor %}
+                </a>
+                <div class="collapse{{ hasErrors ? ' show' : '' }}" id="{{ collapseId }}">
+                    <div class="border-start ps-3 pt-2 mt-1">
+                        {% for locale, localeForm in translations.children %}
+                            {% set input = localeForm[field] %}
+                            {% set attr = input.vars.attr %}
+                            {% if base is not empty and input.vars.block_prefixes|filter(p => p in ['text', 'textarea'])|length > 0 and options.editorAttr is not defined %}
+                                {% set plainBase = base|striptags %}
+                                {% set attr = attr|merge({placeholder: plainBase|length > 120 ? plainBase|slice(0, 120) ~ '…' : plainBase}) %}
+                            {% endif %}
+                            {% if options.editorAttr is defined %}
+                                {% set attr = attr|merge(options.editorAttr) %}
+                            {% endif %}
+                            <div class="mb-2">
+                                {{ form_label(input, null, {label_attr: {class: 'form-label small mb-1'}}) }}
+                                {{ form_widget(input, {attr: attr}) }}
+                                {{ form_errors(input) }}
+                            </div>
+                        {% endfor %}
+                        <div class="form-text mt-0">{{ 'content_translations.fallback_hint'|trans({'%language%': language_name(base_locale(), false)}) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endmacro %}
+
+{#
+    Same inputs for hand-built forms. Fields are named `<name>[<locale>][<field>]` and read back
+    with ContentTranslator::applySubmitted().
+#}
+{% macro rawInputs(name, entity, field, options = {}) %}
+    {% set locales = guest_extra_locales() %}
+    {% if locales|length > 0 %}
+        {% set horizontal = options.horizontal ?? false %}
+        {% set collapseId = (name ~ '_' ~ field ~ '_collapse')|replace({'[': '_', ']': ''}) %}
+        {% set base = options.base ?? '' %}
+        {% set translations = entity ? entity.contentTranslations : {} %}
+        <div class="{{ horizontal ? 'row mb-3 mt-n2' : 'mb-3 mt-n2' }}">
+            <div class="{{ horizontal ? (options.offsetClass ?? 'col-sm offset-sm-4') : '' }}">
+                <a class="small text-decoration-none" data-bs-toggle="collapse" href="#{{ collapseId }}" role="button"
+                   aria-expanded="false" aria-controls="{{ collapseId }}">
+                    <i class="fas fa-language me-1"></i>{{ 'content_translations.toggle'|trans }}
+                    {% for locale in locales %}
+                        {% set filled = (translations[locale][field] ?? '') is not empty %}
+                        <span class="badge {{ filled ? 'text-bg-success' : 'text-bg-light border' }} ms-1"
+                              title="{{ (filled ? 'content_translations.filled' : 'content_translations.missing')|trans({'%language%': language_name(locale, false)}) }}">
+                            {{- locale|upper -}}
+                            {% if filled %}<i class="fas fa-check ms-1"></i>{% endif %}
+                        </span>
+                    {% endfor %}
+                </a>
+                <div class="collapse" id="{{ collapseId }}">
+                    <div class="border-start ps-3 pt-2 mt-1">
+                        {% for locale in locales %}
+                            {% set inputId = collapseId ~ '_' ~ locale %}
+                            <div class="mb-2">
+                                <label class="form-label small mb-1" for="{{ inputId }}">{{ language_name(locale, false) }}</label>
+                                {% if options.textarea ?? false %}
+                                    <textarea class="form-control" id="{{ inputId }}" name="{{ name }}[{{ locale }}][{{ field }}]" lang="{{ locale }}"
+                                              rows="{{ options.rows ?? 3 }}"
+                                              {% if options.maxLength is defined %}maxlength="{{ options.maxLength }}"{% endif %}
+                                              {% if base is not empty %}placeholder="{{ base|length > 120 ? base|slice(0, 120) ~ '…' : base }}"{% endif %}>{{ translations[locale][field] ?? '' }}</textarea>
+                                {% else %}
+                                    <input type="text" class="form-control" id="{{ inputId }}" name="{{ name }}[{{ locale }}][{{ field }}]" lang="{{ locale }}"
+                                           value="{{ translations[locale][field] ?? '' }}"
+                                           {% if options.maxLength is defined %}maxlength="{{ options.maxLength }}"{% endif %}
+                                           {% if base is not empty %}placeholder="{{ base|length > 120 ? base|slice(0, 120) ~ '…' : base }}"{% endif %}>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        <div class="form-text mt-0">{{ 'content_translations.fallback_hint'|trans({'%language%': language_name(base_locale(), false)}) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endmacro %}

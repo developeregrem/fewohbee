@@ -14,7 +14,7 @@
             <tr>
                 <td>{{ appartment.number }} - {{ appartment.description }} ({{ 'invoice.appartment.persons'|trans({'%count%': appartment.persons }) }})
                     <br/>{{ appartment.startDate|date('d.m.Y') }}
-                    - {{ appartment.endDate|date('d.m.Y') }}{{ positionMacros.folded_numbers(appartment) }}</td>
+                    - {{ (appartment.eventSpace ? appartment.lastDay : appartment.endDate)|date('d.m.Y') }}{{ positionMacros.folded_numbers(appartment) }}</td>
                 <td class="text-end d-none d-lg-table-cell">{{ appartment.amount }}</td>
                 <td class="text-end d-none d-lg-table-cell">{{ appartment.price|number_format(2, ',', '.') }}</td>
                 <td class="text-end d-none d-lg-table-cell">

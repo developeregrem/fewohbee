@@ -59,6 +59,8 @@ final readonly class InvoiceDto
                 'description' => $apartment->getDescription(),
                 'startDate' => $apartment->getStartDate()->format('Y-m-d'),
                 'endDate' => $apartment->getEndDate()->format('Y-m-d'),
+                // An event space is booked per day: endDate is the day after its last day, amount counts days.
+                'eventSpace' => $apartment->isEventSpace(),
                 'beds' => (int) $apartment->getBeds(),
                 'persons' => (int) $apartment->getPersons(),
                 'amount' => $apartment->getAmount(),

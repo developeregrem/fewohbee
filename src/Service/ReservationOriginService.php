@@ -18,26 +18,20 @@ use App\Entity\ReservationOrigin;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 
 class ReservationOriginService
 {
-    private $em;
-    private $requestStack;
-
-    public function __construct(EntityManagerInterface $em, RequestStack $requestStack)
-    {
-        $this->em = $em;
-        $this->requestStack = $requestStack;
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly RequestStack $requestStack,
+    ) {
     }
 
     /**
      * Extract form data and return ReservationOrigin object.
-     *
-     * @param string $id
-     *
-     * @return ReservationOrigin
      */
-    public function getOriginFromForm(Request $request, $id = 'new')
+    public function getOriginFromForm(Request $request, int|string $id = 'new'): ReservationOrigin
     {
         $origin = new ReservationOrigin();
         if ('new' !== $id) {
@@ -101,10 +95,8 @@ class ReservationOriginService
      * The HTML fields carry min, max and step, which is a courtesy rather than
      * a guarantee - they are trivially bypassed, and what arrives here has to
      * stand on its own.
-     *
-     * @param string $id
      */
-    public function findSurchargeValueError(Request $request, $id, ReservationOrigin $origin): ?string
+    public function findSurchargeValueError(Request $request, int|string $id, ReservationOrigin $origin): ?string
     {
         if (!$request->request->get('surcharge-enabled-'.$id)) {
             return null;
@@ -132,10 +124,8 @@ class ReservationOriginService
 
     /**
      * Delete origin if its not used in reservations.
-     *
-     * @return bool
      */
-    public function deleteOrigin(ReservationOrigin $origin)
+    public function deleteOrigin(ReservationOrigin $origin): bool
     {
         if (0 == count($origin->getReservations())) {
             $this->em->remove($origin);
@@ -144,7 +134,12 @@ class ReservationOriginService
             return true;
         }
 
-        $this->requestStack->getSession()->getFlashBag()->add('warning', 'reservationorigin.flash.delete.inuse.reservations');
+        $session = $this->requestStack->getSession();
+        if (!$session instanceof FlashBagAwareSessionInterface) {
+            throw new \LogicException('Reservation origin feedback requires a session supporting flash messages.');
+        }
+
+        $session->getFlashBag()->add('warning', 'reservationorigin.flash.delete.inuse.reservations');
 
         return false;
     }

@@ -15,17 +15,17 @@ class PostalCodeData
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     #[ORM\Column(type: 'string', length: 2)]
-    private $countryCode;
+    private ?string $countryCode = null;
     #[ORM\Column(type: 'string', length: 20)]
-    private $postalCode;
+    private ?string $postalCode = null;
     #[ORM\Column(type: 'string', length: 180)]
-    private $placeName;
+    private ?string $placeName = null;
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
-    private $stateName;
+    private ?string $stateName = null;
     #[ORM\Column(type: 'string', length: 20, nullable: true)]
-    private $stateNameShort;
+    private ?string $stateNameShort = null;
 
     public function getId(): ?int
     {

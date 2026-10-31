@@ -388,7 +388,7 @@ class BookingJournalController extends AbstractController
                 'return' => $return,
                 'page' => $request->query->get('page', 1),
             ]),
-            'reference_date' => $entry->getDate() ?? new \DateTime(),
+            'reference_date' => $entry->getDate(),
             'cashbook_mode' => $cashbookMode,
             'active_preset' => $activePreset,
         ];

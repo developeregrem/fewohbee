@@ -7,7 +7,6 @@ namespace App\Tests\Unit;
 use App\Entity\ReservationStatus;
 use App\Service\DisplayNameResolver;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Translation\Loader\XliffFileLoader;
 use Symfony\Component\Translation\Loader\YamlFileLoader;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -114,16 +113,12 @@ final class DisplayNameResolverTest extends TestCase
      */
     private function catalogue(string $locale): array
     {
-        $base = \dirname(__DIR__, 2).'/translations/ReservationStatus/messages.'.$locale;
+        $file = \dirname(__DIR__, 2).'/translations/ReservationStatus/messages.'.$locale.'.yaml';
 
-        if (is_file($base.'.yaml')) {
-            return (new YamlFileLoader())->load($base.'.yaml', $locale)->all('messages');
+        if (!is_file($file)) {
+            self::fail("No ReservationStatus translation file for locale '{$locale}'.");
         }
 
-        if (is_file($base.'.xlf')) {
-            return (new XliffFileLoader())->load($base.'.xlf', $locale)->all('messages');
-        }
-
-        self::fail("No ReservationStatus translation file for locale '{$locale}'.");
+        return (new YamlFileLoader())->load($file, $locale)->all('messages');
     }
 }

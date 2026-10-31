@@ -164,9 +164,7 @@ class FirstRunCommand extends Command
         // A fresh installation has nothing to announce: stamping the current version
         // keeps the "what's new" modal from greeting the operator on day one.
         $user->setLastSeenVersion($this->releaseNotes->getCurrentVersion());
-        if (isset($createdRoles['ROLE_ADMIN'])) {
-            $user->addRole($createdRoles['ROLE_ADMIN']);
-        }
+        $user->addRole($createdRoles['ROLE_ADMIN']);
         $this->em->persist($user);
         $io->note('User and Roles created.');
 

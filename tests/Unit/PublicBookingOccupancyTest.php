@@ -16,6 +16,7 @@ use App\Dto\PublicBooking\RoomTotal;
 use App\Service\OnlineBooking\PublicPricingService;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -24,7 +25,9 @@ use PHPUnit\Framework\TestCase;
 final class PublicBookingOccupancyTest extends TestCase
 {
     private PublicBookingService $service;
+    /** @var AppartmentRepository&Stub */
     private AppartmentRepository $appartmentRepository;
+    /** @var PublicAvailabilityService&Stub */
     private PublicAvailabilityService $availabilityService;
 
     protected function setUp(): void

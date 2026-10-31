@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Reservation;
@@ -29,6 +30,23 @@ class OperationsReportService
      *
      * @param string[] $occupancyTypes
      * @param int[]    $statusIds
+     *
+     * @return array{
+     *     filters: array{
+     *         start: \DateTimeImmutable,
+     *         end: \DateTimeImmutable,
+     *         subsidiary: Subsidiary|null,
+     *         occupancyTypes: string[],
+     *         statusIds: int[]
+     *     },
+     *     rangeView: array<string, mixed>,
+     *     dayViews: array<string, array<string, mixed>>,
+     *     reservations: Reservation[],
+     *     occupancyLabels: array<string, string>,
+     *     statusLabels: array<string, string>,
+     *     simple: array<string, mixed>,
+     *     invoiceStatusLabels: array<int, string>
+     * }
      */
     public function buildReportData(
         \DateTimeImmutable $start,
@@ -59,6 +77,9 @@ class OperationsReportService
 
     /**
      * Build all operations report variables required by template rendering.
+     * Preserves supplied variables and adds statistics or tourist-tax data only when needed.
+     *
+     * @return array<array-key, mixed>
      */
     public function buildTemplateRenderParams(Template $template, mixed $param): array
     {
@@ -89,6 +110,8 @@ class OperationsReportService
 
     /**
      * Quick check if the template references statistics data.
+     *
+     * @param array<array-key, mixed> $param
      */
     private function shouldIncludeStatistics(Template $template, array $param): bool
     {
@@ -101,6 +124,8 @@ class OperationsReportService
 
     /**
      * Quick check if the template references tourist-tax data.
+     *
+     * @param array<array-key, mixed> $param
      */
     private function shouldIncludeTouristTax(Template $template, array $param): bool
     {
@@ -113,9 +138,19 @@ class OperationsReportService
 
     /**
      * Build statistics payload using monthly snapshot metrics for the date range.
-     */
-    /**
+     *
      * @param int[] $statusIds
+     *
+     * @return array{
+     *     range: array{start: \DateTimeImmutable, end: \DateTimeImmutable},
+     *     countryNames: array<string, string>,
+     *     months: list<array{
+     *         year: int,
+     *         month: int,
+     *         metrics: array<string, mixed>,
+     *         warnings: list<array<string, mixed>>
+     *     }>
+     * }
      */
     private function buildStatisticsPayload(
         \DateTimeImmutable $start,
@@ -254,7 +289,7 @@ class OperationsReportService
      * Build normalized reservation rows used by multiple simple report views.
      *
      * @param array<string, mixed>  $rangeView
-     * @param array<string, string> $invoiceStatusLabels
+     * @param array<int, string>    $invoiceStatusLabels
      *
      * @return array<int, array<string, mixed>>
      */
@@ -297,7 +332,7 @@ class OperationsReportService
                 'roomNumber' => '' !== $roomNumber ? $roomNumber : '-',
                 'roomLabel' => $roomLabel,
                 'guest' => $this->resolveReservationGuestLabel($reservation),
-                'persons' => $reservation->getPersons() ?? '-',
+                'persons' => $reservation->getPersons(),
                 'start' => $reservation->getStartDate(),
                 'end' => $reservation->getEndDate(),
                 'period' => $reservation->getStartDate()->format('d.m.Y').' - '.$reservation->getEndDate()->format('d.m.Y'),
@@ -412,9 +447,9 @@ class OperationsReportService
                     continue;
                 }
                 $cells[] = [
-                    'occupancyLabelKey' => (string) ($cell['occupancyLabelKey'] ?? ''),
+                    'occupancyLabelKey' => (string) $cell['occupancyLabelKey'],
                     'statusLabelKey' => (string) ($cell['statusLabelKey'] ?? ''),
-                    'guests' => (string) ($cell['guests'] ?? ''),
+                    'guests' => (string) $cell['guests'],
                 ];
             }
 
@@ -498,7 +533,7 @@ class OperationsReportService
 
         $mealsRows = [];
         foreach (($rangeView['apartments'] ?? []) as $apartment) {
-            if (!method_exists($apartment, 'getId')) {
+            if (!$apartment instanceof Appartment) {
                 continue;
             }
             $apartmentId = $apartment->getId();
@@ -552,7 +587,7 @@ class OperationsReportService
     /**
      * Reusable map from invoice status values to translation keys.
      *
-     * @return array<string, string>
+     * @return array<int, string>
      */
     private function getInvoiceStatusLabels(): array
     {

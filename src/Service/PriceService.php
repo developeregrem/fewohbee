@@ -34,6 +34,7 @@ use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
 use App\Repository\GuestCategoryModifierRepository;
 use App\Repository\GuestCategoryRepository;
+use App\Service\Localization\ContentTranslator;
 use App\Service\Pricing\DynamicRateResolver;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -43,7 +44,7 @@ use Symfony\Contracts\Service\ResetInterface;
 
 class PriceService implements ResetInterface
 {
-    private $em;
+    private readonly EntityManagerInterface $em;
 
     /**
      * Guest categories and the modifiers valid on a night are configuration: pricing asks for the
@@ -64,6 +65,7 @@ class PriceService implements ResetInterface
         private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
         private readonly ?GuestCategoryModifierRepository $modifierRepository = null,
         private readonly ?DynamicRateResolver $dynamicRates = null,
+        private readonly ?ContentTranslator $contentTranslator = null,
     ) {
         $this->em = $em;
     }
@@ -109,7 +111,10 @@ class PriceService implements ResetInterface
         return $this->modifiersPerNight[$night->format('Y-m-d')] ??= $this->modifierRepository->findActiveOn($night);
     }
 
-    public function getPriceFromForm(Request $request, $id = 'new')
+    /**
+     * Populates a price from the submitted fields; missing stored prices are not handled here.
+     */
+    public function getPriceFromForm(Request $request, int|string $id = 'new'): Price
     {
         $price = new Price();
 
@@ -118,6 +123,8 @@ class PriceService implements ResetInterface
         }
 
         $price->setDescription($request->request->get('description-'.$id));
+        // Guest-language names of extras; the whitelist and length cut happen in applySubmitted().
+        $this->contentTranslator?->applySubmitted($price, $request->request->all()['translations-'.$id] ?? null, ['description' => 100]);
         $price->setPrice(str_replace(',', '.', $request->request->get('price-'.$id)));
         $price->setVat((float) str_replace(',', '.', $request->request->get('vat-'.$id)));
         $price->setType($request->request->get('type-'.$id));
@@ -150,9 +157,7 @@ class PriceService implements ResetInterface
             $noDaySelected = true;
 
             if (null != $request->request->get('monday-'.$id)) {
-                if ($noDaySelected) {
-                    $noDaySelected = false;
-                }
+                $noDaySelected = false;
                 $price->setMonday(true);
             } else {
                 $price->setMonday(false);
@@ -266,6 +271,13 @@ class PriceService implements ResetInterface
             $price->setMinStay(null);
         }
 
+        // Only a per-room price bills further persons; for any other price the field is
+        // disabled in the form, and a stale value must not survive a change of the type.
+        $surcharge = str_replace(',', '.', trim((string) $request->request->get('extra-person-surcharge-'.$id, '')));
+        $price->setExtraPersonSurcharge(2 == $price->getType() && $price->getIsPerRoom() && is_numeric($surcharge)
+            ? max(0.0, (float) $surcharge)
+            : null);
+
         $this->setComponents($request, $price, $id);
 
         $revenueAccountId = $request->request->get('revenue-account-'.$id);
@@ -287,7 +299,7 @@ class PriceService implements ResetInterface
      * Sync price components (packages) from the POSTed form fields. When "is-package" is not set,
      * any existing components are removed.
      */
-    private function setComponents(Request $request, Price $price, $id): void
+    private function setComponents(Request $request, Price $price, int|string $id): void
     {
         // Packages are currently only supported for misc prices (type=1). Clear otherwise.
         $isPackage = 1 === (int) $price->getType() && null != $request->request->get('is-package-'.$id);
@@ -300,11 +312,11 @@ class PriceService implements ResetInterface
             return;
         }
 
-        $descriptions = $request->request->all('component-desc-'.$id) ?? [];
-        $vats = $request->request->all('component-vat-'.$id) ?? [];
-        $types = $request->request->all('component-type-'.$id) ?? [];
-        $values = $request->request->all('component-value-'.$id) ?? [];
-        $accounts = $request->request->all('component-account-'.$id) ?? [];
+        $descriptions = $request->request->all('component-desc-'.$id);
+        $vats = $request->request->all('component-vat-'.$id);
+        $types = $request->request->all('component-type-'.$id);
+        $values = $request->request->all('component-value-'.$id);
+        $accounts = $request->request->all('component-account-'.$id);
         $remainderIdx = $request->request->get('component-remainder-'.$id, '');
 
         $keys = array_keys($descriptions);
@@ -342,8 +354,23 @@ class PriceService implements ResetInterface
     }
 
     /**
+     * Validates a price before it is saved. Returns a list of translation keys describing each
+     * error; an empty array means the price is valid.
+     *
+     * @return list<string>
+     */
+    public function validate(Price $price): array
+    {
+        $errors = $price->mixesRoomKinds() ? ['price.flash.mixed_room_kinds'] : [];
+
+        return [...$errors, ...$this->validateComponents($price)];
+    }
+
+    /**
      * Validates a price's package components. Returns a list of translation keys describing
      * each error; an empty array means the price is valid (or is not a package at all).
+     *
+     * @return list<string>
      */
     public function validateComponents(Price $price): array
     {
@@ -480,11 +507,13 @@ class PriceService implements ResetInterface
         return array_values(array_filter($results));
     }
 
+    /** @return list<Price>|null */
     public function getActiveMiscellaneousPrices(): ?array
     {
         return $this->em->getRepository(Price::class)->getActiveMiscellaneousPrices();
     }
 
+    /** @return list<Price>|null */
     public function getActiveAppartmentPrices(): ?array
     {
         return $this->em->getRepository(Price::class)->getActiveAppartmentPrices();
@@ -575,6 +604,7 @@ class PriceService implements ResetInterface
      * @return array<int, list<Price>|null>
      *
      * @throws \App\Exception\InvalidReservationPeriodException when the reservation period is unsafe to process
+     * @throws \LogicException when a price period has no start or end date
      */
     public function getPricesForReservationDays(Reservation $reservation, int $type, ?Collection $prices = null): array
     {
@@ -614,7 +644,12 @@ class PriceService implements ResetInterface
                 foreach ($periods as $pricePeriod) {
                     // prices are already sorted by priority, therefore we can accept the first matching one
                     // first we need to check if the current date is in between the price season
-                    if ($this->isDateBetween($curDate, $pricePeriod->getStart(), $pricePeriod->getEnd())) {
+                    $periodStart = $pricePeriod->getStart();
+                    $periodEnd = $pricePeriod->getEnd();
+                    if (null === $periodStart || null === $periodEnd) {
+                        throw new \LogicException('Price periods must have a start and end date.');
+                    }
+                    if ($this->isDateBetween($curDate, $periodStart, $periodEnd)) {
                         // second, we need to check if the weekday match
                         if ($this->isWeekDayMatch($price, $curDate)) {
                             $result[$i][] = $price;
@@ -684,7 +719,11 @@ class PriceService implements ResetInterface
                 : [];
             $adjustment = $adjustments[$night->format('Y-m-d')] ?? null;
             if (null !== $adjustment && null !== $this->dynamicRates && !$rate->isFlatPrice && 0.0 !== round($adjustment->percent, 2)) {
-                $rate = $rate->adjusted($this->dynamicRates->apply($rate->unit, $adjustment), RateAdjustment::from($rate->unit, $adjustment));
+                $rate = $rate->adjusted(
+                    $this->dynamicRates->apply($rate->unit, $adjustment),
+                    RateAdjustment::from($rate->unit, $adjustment),
+                    null !== $rate->extraPersonSurcharge ? $this->dynamicRates->apply($rate->extraPersonSurcharge, $adjustment) : null,
+                );
             }
             $rates[$i] = $rate;
         }
@@ -838,7 +877,8 @@ class PriceService implements ResetInterface
      * percentage-based tourist taxes (Dresden/Berlin city tax models).
      *
      * Per-head pricing: sum(count × unit_with_modifier) per night.
-     * Flat-price / per-room: basePrice once per night (occupancy-independent).
+     * Flat-price: basePrice once per night (occupancy-independent).
+     * Per-room: basePrice plus the surcharge for every person beyond the included ones.
      *
      * @return array<string, float> keyed by Y-m-d, value = apartment total in the requested base
      */
@@ -852,8 +892,11 @@ class PriceService implements ResetInterface
             if (null === $price || null === $rate) {
                 continue;
             }
-            if ($rate->isFlatPrice || $rate->isPerRoom) {
+            if ($rate->isFlatPrice) {
                 $stored = (float) $rate->unit;
+            } elseif ($rate->isPerRoom) {
+                $stored = (float) $rate->unit
+                    + (null !== $rate->extraPersonSurcharge ? $rate->surchargeTotal($reservation->getPersons()) : 0.0);
             } else {
                 // Mirror the apartment invoice row: numberOfPersons × per-head,
                 // then apply modifier deltas (only for occupancy-counted, non-adult
@@ -999,13 +1042,15 @@ class PriceService implements ResetInterface
     }
 
     /**
-     * Will look for uniqe prices that are valid for the given reservations.
+     * Returns prices in first-seen order, deduplicated by object identity across days and reservations.
      *
-     * @return Collection
+     * @param array<Reservation> $reservations
+     *
+     * @return Collection<int, Price>
      */
-    public function getUniquePricesForReservations(array $reservations, int $type)
+    public function getUniquePricesForReservations(array $reservations, int $type): Collection
     {
-        $uniquePrices = new ArrayCollection();
+        $uniquePrices = [];
         foreach ($reservations as $reservation) {
             $pricesPerDay = $this->getPricesForReservationDays($reservation, $type);
             foreach ($pricesPerDay as $day => $prices) {
@@ -1013,17 +1058,17 @@ class PriceService implements ResetInterface
                     continue;
                 }
                 foreach ($prices as $price) {
-                    if (!$uniquePrices->contains($price)) {
+                    if (!in_array($price, $uniquePrices, true)) {
                         $uniquePrices[] = $price;
                     }
                 }
             }
         }
 
-        return $uniquePrices;
+        return new ArrayCollection($uniquePrices);
     }
 
-    private function isDateBetween(\DateTime $cur, \DateTime $start, \DateTime $end)
+    private function isDateBetween(\DateTimeInterface $cur, \DateTimeInterface $start, \DateTimeInterface $end): bool
     {
         if (($cur >= $start) && ($cur <= $end)) {
             return true;
@@ -1032,19 +1077,17 @@ class PriceService implements ResetInterface
         return false;
     }
 
-    private function isWeekDayMatch(Price $price, \DateTime $curr)
+    private function isWeekDayMatch(Price $price, \DateTime $curr): bool
     {
         return $price->coversWeekday($curr);
     }
 
     /**
-     * Helper funtion to set posted reservation origins.
-     *
-     * @param type $id
+     * Synchronizes the submitted reservation origins for a price.
      */
-    private function setOrigins(Request $request, Price $price, $id): void
+    private function setOrigins(Request $request, Price $price, int|string $id): void
     {
-        $origins = $request->request->all('origin-'.$id) ?? [];
+        $origins = $request->request->all('origin-'.$id);
         $allAddedOrigins = new ArrayCollection();
 
         $originsDb = $this->em->getRepository(ReservationOrigin::class)->findById($origins);
@@ -1090,18 +1133,16 @@ class PriceService implements ResetInterface
 
     /**
      * Helper function to set posted periods, if a period exists the existing one is used otherwise a new one is created.
-     *
-     * @param type $id
      */
-    private function setPeriods(Request $request, Price $price, $id): void
+    private function setPeriods(Request $request, Price $price, int|string $id): void
     {
         $allAddedPeriods = new ArrayCollection();
-        $periodIds = array_unique($request->request->all('period-'.$id) ?? []);
+        $periodIds = array_unique($request->request->all('period-'.$id));
         // loop over all posted periods (new and existing ones)
         foreach ($periodIds as $id) {
-            $starts = $request->request->all('periodstart-'.$id) ?? [];
-            $ends = $request->request->all('periodend-'.$id) ?? [];
-            $descriptions = $request->request->all('perioddescription-'.$id) ?? [];
+            $starts = $request->request->all('periodstart-'.$id);
+            $ends = $request->request->all('periodend-'.$id);
+            $descriptions = $request->request->all('perioddescription-'.$id);
 
             foreach ($starts as $key => $start) {
                 if ('new' !== $id) {

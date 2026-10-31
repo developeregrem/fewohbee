@@ -156,7 +156,7 @@ class WorkflowController extends AbstractController
         }
 
         return new JsonResponse([
-            'entities' => array_values($results),
+            'entities' => $results,
             'total' => count($results),
         ]);
     }
@@ -381,7 +381,11 @@ class WorkflowController extends AbstractController
         return $options;
     }
 
-    /** @param array<string, mixed> $field */
+    /**
+     * @param array<string, mixed> $field
+     *
+     * @return array<string, mixed> Schema field with translated labels and otherwise preserved metadata
+     */
     private function translateField(array $field): array
     {
         if (isset($field['label'])) {
@@ -551,6 +555,20 @@ class WorkflowController extends AbstractController
         ]);
     }
 
+    /**
+     * Identifier, number and status values follow the entity's dynamic getter contracts.
+     *
+     * @return array{
+     *     id: mixed,
+     *     startDate?: string,
+     *     endDate?: string,
+     *     room?: string,
+     *     booker?: string,
+     *     number?: mixed,
+     *     date?: string,
+     *     status?: mixed
+     * }
+     */
     private function serializePreviewEntity(object $entity): array
     {
         $data = ['id' => method_exists($entity, 'getId') ? $entity->getId() : null];

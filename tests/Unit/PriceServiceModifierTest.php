@@ -269,6 +269,7 @@ final class PriceServiceModifierTest extends TestCase
     }
 
     /**
+     * @param array<int, int> $guestCounts
      * @param int $minFullPayers threshold of the booked room's category; 0 books no room
      */
     private function makeReservation(array $guestCounts, int $minFullPayers = 0): Reservation

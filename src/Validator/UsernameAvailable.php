@@ -18,7 +18,7 @@ use Symfony\Component\Validator\Constraint;
 
 class UsernameAvailable extends Constraint
 {
-    public $message = 'form.username.na';
+    public string $message = 'form.username.na';
 
     // #[HasNamedArguments]
     public function __construct(public string $oldUsername = '', ?array $groups = null, mixed $payload = null)

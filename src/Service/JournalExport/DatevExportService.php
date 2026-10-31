@@ -163,6 +163,7 @@ class DatevExportService implements BookingExportInterface
         return $this->validateWithSettings($batch, null);
     }
 
+    /** @return list<string> */
     public function validateWithSettings(BookingBatch $batch, ?AccountingSettings $settings): array
     {
         $warnings = $this->buildSettingsWarnings($settings);
@@ -445,6 +446,7 @@ class DatevExportService implements BookingExportInterface
         return [];
     }
 
+    /** @param list<string> $fields */
     private function serializeDataLine(array $fields): string
     {
         $serialized = [];

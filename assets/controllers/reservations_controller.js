@@ -133,6 +133,14 @@ export default class extends Controller {
                 if(target.matches('select[name="object"]')) {
                     this.setLocalTableSetting('object', 'reservation-settings-show-object');
                 }
+                if (target.matches('#holidaySubdivision')) {
+                    this.setLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
+                }
+                // A new country first reloads its subdivisions (listener on the
+                // settings modal below), which then reloads the table
+                if (target.matches('#holidayCountry')) {
+                    return;
+                }
                 this.getNewTable();
             }
         });
@@ -1218,7 +1226,16 @@ export default class extends Controller {
         }
 
         this.setLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
-        this.setLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
+        // On page load the subdivision field still holds the server default and
+        // the stored one is restored once the fields are loaded. A changed
+        // country starts over with all of its subdivisions.
+        if (!initial) {
+            const subdivisionField = document.getElementById('holidaySubdivision');
+            if (subdivisionField) {
+                subdivisionField.value = 'all';
+            }
+            localStorage.setItem('reservations-table-holidaysubdivision', 'all');
+        }
 
         httpRequest({
             url,
@@ -1229,10 +1246,15 @@ export default class extends Controller {
             onComplete: () => { 
                 if (initial) {
                     this.getLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
+                    // A stored subdivision the country doesn't offer leaves the select empty
+                    const subdivisionField = document.getElementById('holidaySubdivision');
+                    if (subdivisionField && subdivisionField.value === '') {
+                        subdivisionField.value = 'all';
+                    }
                     this.getLocalTableSetting('object', 'reservation-settings-show-object');
                     this.getLocalTableSetting('showCalendarEntries', 'reservation-settings-show-calendar-entries', 'checkbox');
-                    this.getNewTable();
                 }
+                this.getNewTable();
                 this.updateDisplaySettingsOnChange();
             }
         });
@@ -1882,10 +1904,12 @@ export default class extends Controller {
     }
 
     /**
-     * Normal and week view: spreads the free space below the table over the rooms, so a
-     * short room list fills the screen instead of leaving it half empty. Each
-     * room gets the same share; a room split into several lines divides its
-     * share among them. The reservation bars grow along with their row.
+     * Spreads the free space below the table over the visible rooms. Normal
+     * view caps rows at twice their natural height for one or two rooms,
+     * gradually uses more space for three or four, and fills it from five.
+     * Week view always fills the available height.
+     * Each room gets the same share; a room split into several lines divides
+     * its share among them. The reservation bars grow along with their row.
      */
     stretchRoomRows() {
         const table = document.getElementById('reservation-table');
@@ -1908,15 +1932,21 @@ export default class extends Controller {
             - parseFloat(getComputedStyle(table).marginBottom) - 1;
         const rowsPerRoom = new Map();
         rows.forEach((row) => rowsPerRoom.set(row.dataset.appartment, (rowsPerRoom.get(row.dataset.appartment) || 0) + 1));
-        if (!(free > 0) || rowsPerRoom.size === 0) {
+        const roomCount = rowsPerRoom.size;
+        if (!(free > 0) || roomCount === 0) {
             return;
         }
-        const perRoom = free / rowsPerRoom.size;
+        const perRoom = free / roomCount;
+        const fillShare = this.isWeekLayout() ? 1 : Math.min(1, Math.max(0, (roomCount - 2) / 3));
         // Rounded down: fractional heights add up past the container and bring back a scrollbar.
         // The bars grow by the same factor as their row, so they keep their proportions.
         rows.forEach((row) => {
             const height = row.getBoundingClientRect().height;
-            const stretched = Math.floor(height + perRoom / rowsPerRoom.get(row.dataset.appartment));
+            const fillHeight = height + perRoom / rowsPerRoom.get(row.dataset.appartment);
+            const cappedHeight = Math.min(fillHeight, height * 2);
+            const stretched = Math.floor(fillShare === 1
+                ? fillHeight
+                : cappedHeight + (fillHeight - cappedHeight) * fillShare);
             row.style.height = `${stretched}px`;
             if (barHeight) {
                 row.style.setProperty('--week-bar-height', `${Math.floor(barHeight * stretched / height)}px`);
@@ -2018,6 +2048,10 @@ export default class extends Controller {
             const cell = event.target.closest('td');
             // cellIndex 0 is the sticky room-name column, never a date target.
             if (!row || !cell || cell.cellIndex === 0) {
+                return null;
+            }
+            // A booking stays with its kind of room: no event space row for a stay and vice versa.
+            if (draggedReservation && row.dataset.eventSpace !== draggedReservation.closest('tr')?.dataset.eventSpace) {
                 return null;
             }
 
@@ -2149,9 +2183,10 @@ export default class extends Controller {
         // Reservation bars of the table (.reservation-inner) and days of the
         // annual view (.reservation-popover): with a mouse the popover stays
         // while the pointer moves onto it, so its phone and e-mail links can be
-        // clicked; on touch screens a first tap shows it (openReservationAction)
+        // clicked; on touch screens a first tap shows it (openReservationAction).
+        // The width follows the longest line, see "Reservation popover" in app.css
         const bars = '.reservation-inner, .reservation-popover';
-        $(bars).popover({ placement: 'top', html: true, trigger: 'manual' });
+        $(bars).popover({ placement: 'top', html: true, trigger: 'manual', customClass: 'reservation-bar-popover' });
         if (this.isDesktopWeekMode()) {
             this.initHoverPopovers(this.tableContainer?.querySelectorAll(bars) ?? []);
         }
@@ -2161,6 +2196,7 @@ export default class extends Controller {
 
         this.initClickPopoverDismissal();
         this.initCalendarEntryModal();
+        this.initPopoverLinkModal();
     }
 
     /**
@@ -2244,6 +2280,38 @@ export default class extends Controller {
                 return;
             }
             setModalTitle(this.translate('calendar_entry.modal.title'));
+            httpRequest({
+                url: trigger.getAttribute('href'),
+                method: 'GET',
+                target: modalContent,
+            });
+            $('#modalCenter').modal('show');
+        });
+    }
+
+    // Invoice numbers, arrival/departure times and remarks in a reservation's
+    // popover open their existing dialogs. Same plain click interceptor and
+    // live modal lookup as initCalendarEntryModal; the dialog title comes from
+    // the link's title attribute, which the popover sanitizer keeps.
+    // Opening the dialog hides the popover
+    // (setTablePopoversEnabled).
+    initPopoverLinkModal() {
+        if (document._reservationPopoverLinkModalBound) {
+            return;
+        }
+        document._reservationPopoverLinkModalBound = true;
+
+        document.addEventListener('click', (event) => {
+            const trigger = event.target.closest('.js-invoice-link, .js-reservation-meta-link');
+            if (!trigger) {
+                return;
+            }
+            event.preventDefault();
+            const modalContent = document.getElementById('modal-content-ajax');
+            if (!modalContent) {
+                return;
+            }
+            setModalTitle(trigger.getAttribute('title') || '');
             httpRequest({
                 url: trigger.getAttribute('href'),
                 method: 'GET',

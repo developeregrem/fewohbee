@@ -19,6 +19,7 @@ use App\Dto\PublicBooking\RoomTotal;
 use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -272,15 +273,30 @@ final class PublicBookingGuestCountsTest extends TestCase
         return $service;
     }
 
+    /** @var PublicAvailabilityService&Stub */
     private PublicAvailabilityService $_currentAvailabilityStub;
+    /** @var AppartmentRepository&Stub */
     private AppartmentRepository $_currentAppartmentRepo;
 
+    /**
+     * @param list<array{
+     *     typeKey: string,
+     *     typeLabel: string,
+     *     typeDescription: string|null,
+     *     maxGuests: int,
+     *     availableCount: int,
+     *     roomIds: list<int>,
+     *     subsidiaryIds: list<int>,
+     *     occupancyOptions: array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>
+     * }> $availability
+     */
     private function availabilityServiceMock(PublicBookingService $svc, array $availability): void
     {
         // The stub from makeService captured the availability service.
         $this->_currentAvailabilityStub->method('getAvailability')->willReturn($availability);
     }
 
+    /** @param list<int> $roomIds */
     private function roomMock(PublicBookingService $svc, array $roomIds): void
     {
         $rooms = [];

@@ -78,7 +78,11 @@ class ReservationHasInvoiceCondition implements WorkflowConditionInterface
         return false;
     }
 
-    /** @return Reservation[] */
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return Reservation[]
+     */
     private function resolveReservations(Reservation $entity, array $context): array
     {
         $group = $context['allReservations'] ?? [];

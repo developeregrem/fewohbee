@@ -27,7 +27,8 @@ class CashJournal
     private $isClosed;
     #[ORM\Column(type: 'boolean')]
     private $isBooked;
-    #[ORM\OneToMany(targetEntity: 'CashJournalEntry', mappedBy: 'cashJournal', cascade: ['remove'])]
+    /** @var \Doctrine\Common\Collections\Collection<int, CashJournalEntry> */
+    #[ORM\OneToMany(targetEntity: CashJournalEntry::class, mappedBy: 'cashJournal', cascade: ['remove'])]
     #[ORM\OrderBy(['date' => \SortDirection::Ascending])]
     private $cashJournalEntries;
 
@@ -161,7 +162,7 @@ class CashJournal
     /**
      * Set isClosed.
      *
-     * @return CashJournal
+     * @return $this
      */
     public function setIsClosed(bool $isClosed): static
     {
@@ -181,7 +182,7 @@ class CashJournal
     /**
      * Set isBooked.
      *
-     * @return CashJournal
+     * @return $this
      */
     public function setIsBooked(bool $isBooked): static
     {
@@ -221,7 +222,7 @@ class CashJournal
     /**
      * Get cashJournalEntries.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return \Doctrine\Common\Collections\Collection<int, CashJournalEntry>
      */
     public function getCashJournalEntries()
     {

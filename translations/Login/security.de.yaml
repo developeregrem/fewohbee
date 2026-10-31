@@ -1,0 +1,13 @@
+login:
+  oidc:
+    error:
+      already_linked: 'Dieser Benutzer ist bereits mit einem anderen SSO-Konto verknüpft. Bitte wende dich an deinen Administrator.'
+      ambiguous: 'Diese E-Mail-Adresse ist mehreren Benutzern zugeordnet. Bitte wende dich an deinen Administrator.'
+      disabled: 'Die SSO-Anmeldung ist derzeit nicht verfügbar. Bitte wende dich an deinen Administrator.'
+      email_unverified: 'Deine E-Mail-Adresse ist beim Identity Provider nicht bestätigt. Eine Anmeldung ist deshalb nicht möglich.'
+      inactive: 'Dieser Benutzer ist deaktiviert.'
+      no_match: 'Zu diesem Konto gibt es keinen Benutzer in FewohBee. Bitte lass dich von deinem Administrator anlegen.'
+      password_disabled: 'Die Anmeldung mit Passwort ist deaktiviert. Bitte melde dich über SSO an.'
+      provider: 'Die Anmeldung wurde abgebrochen.'
+      state: 'Die Anmeldung ist abgelaufen oder wurde unterbrochen. Bitte versuche es noch einmal.'
+      token: 'Die Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es noch einmal.'

@@ -12,6 +12,8 @@ use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * Repository for querying housekeeping status entries.
+ *
+ * @extends ServiceEntityRepository<RoomDayStatus>
  */
 class RoomDayStatusRepository extends ServiceEntityRepository
 {

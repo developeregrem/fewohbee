@@ -8,6 +8,7 @@ use App\Controller\ReservationServiceController;
 use App\Service\ReservationObject;
 use App\Service\ReservationService;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -59,9 +60,13 @@ final class ReservationServiceControllerOptionsTest extends TestCase
         $request->setSession($session);
 
         $controller = new ReservationServiceController($this->createStub(\App\Service\AppSettingsService::class));
+        $requestStack = $this->makeRequestStack($request);
+        $container = new Container();
+        $container->set('request_stack', $requestStack);
+        $controller->setContainer($container);
         $response = $controller->modifyAppartmentOptionsAction(
             $this->makeKernel(),
-            $this->makeRequestStack($request),
+            $requestStack,
             $request,
             $this->createStub(ReservationService::class),
         );

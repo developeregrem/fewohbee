@@ -213,4 +213,12 @@ final class PublicPricingServiceTest extends TestCase
 
         self::assertSame([], $options);
     }
+
+    public function testAmountsAreGroupedLikeThePageLanguage(): void
+    {
+        self::assertSame('1.234,50', PublicPricingService::formatAmount(1234.5, 'de'));
+        self::assertSame('1,234.50', PublicPricingService::formatAmount(1234.5, 'en'));
+        // Without a language the pages keep their German grouping.
+        self::assertSame('1.234,50', PublicPricingService::formatAmount(1234.5));
+    }
 }

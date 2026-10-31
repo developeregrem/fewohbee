@@ -109,7 +109,7 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
                 'description' => 'templates.editor.check_in_times.desc',
                 'group' => 'Reservation',
                 'complexity' => 'easy',
-                'content' => "<p data-if=\"check_in_times(reservation1.appartment.object)\">[[ check_in_times(reservation1.appartment.object) ]]</p>\n<p data-if=\"reservation1.appartment.object.checkInNote\">[[ reservation1.appartment.object.checkInNote ]]</p>",
+                'content' => "<p data-if=\"check_in_times(reservation1.appartment.object)\">[[ check_in_times(reservation1.appartment.object) ]]</p>\n<p data-if=\"reservation1.appartment.object.checkInNote\">[[ reservation1.appartment.object|localized('checkInNote') ]]</p>",
             ],
             [
                 'id' => 'reservation.guest_checkin_link',
@@ -132,7 +132,8 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
                 'label' => 'customer.salutation',
                 'group' => 'Reservation',
                 'complexity' => 'simple',
-                'content' => '[[ reservation1.booker.salutation ]]',
+                // In the language of the template, so a language variant greets in its language.
+                'content' => '[[ reservation1.booker.salutation|salutation_label ]]',
             ],
             [
                 'id' => 'reservation.booker.lastname',
@@ -349,8 +350,8 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
         $status->setContrastColor('#ffffff');
 
         $reservation = new Reservation();
-        $reservation->setStartDate(new \DateTimeImmutable('today'));
-        $reservation->setEndDate(new \DateTimeImmutable('today +3 days'));
+        $reservation->setStartDate(new \DateTime('today'));
+        $reservation->setEndDate(new \DateTime('today +3 days'));
         $reservation->setPersons(2);
         $reservation->setBooker($customer);
         $reservation->setAppartment($appartment);

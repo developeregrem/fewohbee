@@ -27,6 +27,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\BrowserKit\Cookie as BrowserKitCookie;
 use Symfony\Component\DomCrawler\Field\ChoiceFormField;
+use Symfony\Component\DomCrawler\Form;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\Uid\Uuid;
 
@@ -61,7 +62,8 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
             ->setNationalityMode(GuestCheckInFieldMode::REQUIRED)
             ->setIdDocumentMode(GuestCheckInFieldMode::OPTIONAL)
             ->setContactMode(GuestCheckInFieldMode::OPTIONAL)
-            ->setCompanionsMode(GuestCheckInFieldMode::OPTIONAL);
+            ->setCompanionsMode(GuestCheckInFieldMode::OPTIONAL)
+            ->setCompanyMode(GuestCheckInFieldMode::HIDDEN);
         $this->em()->getRepository(AppSettings::class)->findOneBy([])?->setPublicBaseUrl('https://fewohbee.example.com');
         $this->em()->flush();
     }
@@ -88,8 +90,8 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
             }
             $connection->executeStatement('DELETE FROM customers WHERE id = ?', [$customerId]);
         }
-        $connection->executeStatement('UPDATE guest_check_in_config SET enabled = 0, extras_enabled = 1');
-        $connection->executeStatement('UPDATE app_settings SET public_base_url = NULL');
+        $connection->executeStatement("UPDATE guest_check_in_config SET enabled = 0, extras_enabled = 1, translations = NULL, company_mode = 'hidden'");
+        $connection->executeStatement('UPDATE app_settings SET public_base_url = NULL, guest_locales = NULL');
         parent::tearDown();
     }
 
@@ -168,7 +170,7 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
 
         $form = $crawler->filter('form[name="guest_check_in"]')->form();
         $form['guest_check_in[arrivalTime]'] = '18:00';
-        $form['guest_check_in[mainGuest][salutation]'] = 'Ms';
+        $form['guest_check_in[mainGuest][salutation]'] = 'Frau';
         $form['guest_check_in[mainGuest][firstname]'] = 'Anna';
         $form['guest_check_in[mainGuest][lastname]'] = 'Müller';
         $form['guest_check_in[mainGuest][birthday]'] = '1980-05-01';
@@ -179,7 +181,7 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         $form['guest_check_in[mainGuest][country]'] = 'AT';
         $form['guest_check_in[mainGuest][idType]'] = 'customer.id.type.passport';
         $form['guest_check_in[mainGuest][idNumber]'] = 'P1234567';
-        $form['guest_check_in[companions][0][salutation]'] = 'Mr';
+        $form['guest_check_in[companions][0][salutation]'] = 'Herr';
         $form['guest_check_in[companions][0][firstname]'] = 'Max';
         $form['guest_check_in[companions][0][lastname]'] = 'Müller';
         $form['guest_check_in[companions][0][birthday]'] = '1982-02-02';
@@ -192,7 +194,8 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertSame(GuestCheckInStatus::SUBMITTED, $checkIn->getStatus());
         self::assertSame('P1234567', $checkIn->getPayload()['mainGuest']['idNumber'] ?? null);
         self::assertSame('Max', $checkIn->getPayload()['companions'][0]['firstname'] ?? null);
-        self::assertSame('Mr', $checkIn->getPayload()['companions'][0]['salutation'] ?? null);
+        // The stored wording, whatever language the guest read the form in.
+        self::assertSame('Herr', $checkIn->getPayload()['companions'][0]['salutation'] ?? null);
 
         $stored = $this->em()->find(Reservation::class, $reservation->getId());
         self::assertSame('18:00', $stored?->getArrivalTime()?->format('H:i'));
@@ -209,6 +212,37 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertStringNotContainsString('P1234567', $crawler->html());
         self::assertSelectorNotExists('form[name="guest_check_in"]');
         self::assertSelectorExists('.fhb-actions a[href*="edit=1"]');
+    }
+
+    public function testCompanyDetailsAreOnlyAskedWhenOfferedAndNeedAName(): void
+    {
+        $reservation = $this->createReservation();
+        $path = $this->linkPath($reservation);
+        $this->verify($path, 'Müller');
+        $crawler = $this->client->followRedirect();
+        self::assertCount(0, $crawler->filter('[name="guest_check_in[mainGuest][company]"]'), 'Off by default.');
+
+        $config = $this->em()->getRepository(GuestCheckInConfig::class)->findOneBy([]) ?? throw new \RuntimeException('Config row missing.');
+        $config->setCompanyMode(GuestCheckInFieldMode::OPTIONAL);
+        $this->em()->flush();
+        $crawler = $this->client->request('GET', $path);
+        self::assertSelectorExists('details.fhb-gci-address:not([open]) [name="guest_check_in[mainGuest][company]"]');
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $this->fillMainGuest($form);
+        $form['guest_check_in[mainGuest][vatId]'] = 'DE123456789';
+        $crawler = $this->client->submit($form);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorExists('details.fhb-gci-address[open] [name="guest_check_in[mainGuest][company]"].is-invalid');
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $form['guest_check_in[mainGuest][company]'] = 'Muster GmbH';
+        $this->client->submit($form);
+        self::assertResponseStatusCodeSame(303);
+        $this->em()->clear();
+        self::assertSame(['name' => 'Muster GmbH', 'vatId' => 'DE123456789', 'address' => null], $this->checkIn()->getPayload()['mainGuest']['company'] ?? null);
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.fhb-gci-checklist', 'Muster GmbH');
     }
 
     public function testCompanionWithOnlyACountryOnFileNeedsNoAddress(): void
@@ -361,7 +395,9 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertSame('1980-05-01', $value('guest_check_in[mainGuest][birthday]'));
         self::assertSame('Graz', $value('guest_check_in[mainGuest][city]'));
         self::assertSame('Lena', $value('guest_check_in[companions][0][firstname]'));
-        self::assertSame('Mr', $crawler->filter('[name="guest_check_in[companions][0][salutation]"] option[selected]')->attr('value'));
+        $selected = $crawler->filter('[name="guest_check_in[companions][0][salutation]"] option[selected]');
+        self::assertSame('Herr', $selected->attr('value'));
+        self::assertSame('Mr', trim($selected->text()), 'Read in the language of the page.');
         self::assertSame('', (string) $value('guest_check_in[mainGuest][idNumber]'));
         self::assertStringNotContainsString('P99887766', $crawler->html());
         self::assertStringContainsString('•••766', $crawler->html());
@@ -413,12 +449,13 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertSelectorExists('.fhb-gci-extra-choice.form-switch input.form-check-input');
         self::assertSelectorNotExists('.fhb-gci-extra-choice label');
         self::assertSelectorTextContains('.fhb-gci-extra-name', 'Breakfast');
-        self::assertSelectorTextContains('.fhb-gci-extra-price', '30,00');
+        // The test browser asks for English, so the amount is grouped the English way.
+        self::assertSelectorTextContains('.fhb-gci-extra-price', '30.00');
         self::assertSelectorExists('.fhb-gci-extra-choice input[value="'.$this->extraPriceId.':30.00"]');
 
         $form = $crawler->filter('form[name="guest_check_in"]')->form();
         $form['guest_check_in[arrivalTime]'] = '18:00';
-        $form['guest_check_in[mainGuest][salutation]'] = 'Ms';
+        $form['guest_check_in[mainGuest][salutation]'] = 'Frau';
         $form['guest_check_in[mainGuest][firstname]'] = 'Anna';
         $form['guest_check_in[mainGuest][lastname]'] = 'Müller';
         $form['guest_check_in[mainGuest][birthday]'] = '1980-05-01';
@@ -593,6 +630,42 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertSelectorTextContains('html', 'Bitte bestätigen Sie zuerst Ihre Buchung');
     }
 
+    public function testOnlyTheLanguagesOfferedToGuestsCanBeChosen(): void
+    {
+        $this->em()->getRepository(AppSettings::class)->findOneBy([])?->setGuestLocales(['de']);
+        $this->em()->flush();
+        $path = $this->linkPath($this->createReservation());
+
+        $crawler = $this->client->request('GET', $path.'?lang=en', server: ['HTTP_ACCEPT_LANGUAGE' => 'en-GB']);
+
+        self::assertSelectorExists('html[lang="de"]');
+        self::assertCount(0, $crawler->filter('.fhb-gci-lang [lang="en"]'));
+    }
+
+    public function testIntroTextIsShownInTheGuestLanguage(): void
+    {
+        $config = $this->em()->getRepository(GuestCheckInConfig::class)->findOneBy([]) ?? throw new \RuntimeException('Config row missing.');
+        $previousIntro = $config->getIntroText();
+        $config->setIntroText('Schön, dass Sie kommen.');
+        $config->setContentTranslations(['en' => ['introText' => 'Glad you are coming.']]);
+        $this->em()->flush();
+        $path = $this->linkPath($this->createReservation());
+
+        try {
+            $this->verify($path.'?lang=en', 'Müller');
+            $this->client->request('GET', $path.'?lang=en');
+
+            $content = (string) $this->client->getResponse()->getContent();
+            self::assertStringContainsString('Glad you are coming.', $content);
+            self::assertStringNotContainsString('Schön, dass Sie kommen.', $content);
+
+            $this->client->request('GET', $path.'?lang=de');
+            self::assertStringContainsString('Schön, dass Sie kommen.', (string) $this->client->getResponse()->getContent());
+        } finally {
+            $this->em()->getConnection()->executeStatement('UPDATE guest_check_in_config SET intro_text = ?', [$previousIntro]);
+        }
+    }
+
     public function testCancelledReservationHasNoCheckIn(): void
     {
         $reservation = $this->createReservation();
@@ -622,6 +695,19 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(429);
         self::assertSame([], $this->client->getResponse()->headers->getCookies());
+    }
+
+    /** The fields the setup of this test makes required for the main guest. */
+    private function fillMainGuest(Form $form): void
+    {
+        $form['guest_check_in[mainGuest][firstname]'] = 'Anna';
+        $form['guest_check_in[mainGuest][lastname]'] = 'Müller';
+        $form['guest_check_in[mainGuest][birthday]'] = '1980-05-01';
+        $form['guest_check_in[mainGuest][nationality]'] = 'AT';
+        $form['guest_check_in[mainGuest][street]'] = 'Hauptstraße 1';
+        $form['guest_check_in[mainGuest][zip]'] = '1010';
+        $form['guest_check_in[mainGuest][city]'] = 'Wien';
+        $form['guest_check_in[mainGuest][country]'] = 'AT';
     }
 
     private function verify(string $path, string $lastname): void

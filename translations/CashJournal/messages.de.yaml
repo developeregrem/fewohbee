@@ -1,0 +1,8 @@
+journal.entry.add: 'Eintrag hinzufügen'
+journal.entry.date: Datum
+journal.entry.edit: 'Eintrag bearbeiten'
+journal.entry.remark: Bemerkung
+journal.month: Monat
+journal.positions: Positionen
+journal.positions.desc: 'Fügt eine Tabelle hinzu mit allen Kassenblattpositionen. Bei einem Export werden alle Zeilen sichtbar, hier in der Vorlage ist nur eine sichtbar.'
+journal.year: Jahr

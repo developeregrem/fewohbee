@@ -2,28 +2,30 @@ category:
   acronym: Kürzel
   action: Aktion
   delete:
-    ask: Möchten Sie diese Kategorie wirklich löschen?
-  details: Details / öffentliche Beschreibung
-  description: Verwaltung der Zimmerkategorien
-  min_full_payers: Mindestanzahl Vollzahler
-  min_full_payers.help: >-
-    Anzahl Gäste, die immer den vollen Personenpreis zahlen, bevor Preisanpassungen
-    je Gästekategorie (z. B. Kinderrabatte) greifen. Beispiel: 2 → Rabatte greifen
-    erst ab 3 Personen. 0 = keine Mindestanzahl.
+    ask: 'Möchten Sie diese Kategorie wirklich löschen?'
+  details: 'Details / öffentliche Beschreibung'
+  description: 'Verwaltung der Zimmerkategorien'
+  min_full_payers: 'Mindestanzahl Vollzahler'
+  min_full_payers.help: 'Anzahl Gäste, die immer den vollen Personenpreis zahlen, bevor Preisanpassungen je Gästekategorie (z. B. Kinderrabatte) greifen. Beispiel: 2 → Rabatte greifen erst ab 3 Personen. 0 = keine Mindestanzahl.'
+  kind: Raumart
+  kind.accommodation: Unterkunft
+  kind.accommodation.help: 'Für Zimmer und Ferienwohnungen: wird pro Nacht gebucht und zählt in Auslastung, Übernachtungen und Kurtaxe.'
+  kind.event_space: Veranstaltungsraum
+  kind.event_space.help: 'Für Seminarraum, Festsaal oder Außenfläche: wird pro Tag gebucht, zählt nicht in Auslastung, Übernachtungen und Kurtaxe und ist noch nicht online buchbar. Der Umsatz zählt mit.'
+  kind.has_reservations: 'Für diese Kategorie gibt es schon Reservierungen. Änderst du die Raumart, richten sich Statistik, Kurtaxe und neue Rechnungen danach.'
+  kind.error.mixed_prices: 'Die Raumart lässt sich nicht ändern, solange die Kategorie Preise mit Kategorien der anderen Raumart teilt: %prices%. Ordne diese Preise zuerst getrennt zu.'
   double: Doppelzimmer
   flash:
     create:
-      success: Kategorie wurde erfolgreich erstellt.
+      success: 'Kategorie wurde erfolgreich erstellt.'
     delete:
       error:
         still:
           in:
-            use: >-
-              Kategorie kann nicht gelöscht werden, da noch Zimmer oder
-              Preisbereiche zugeordnet sind.
-      success: Kategorie wurde erfolgreich gelöscht.
+            use: 'Kategorie kann nicht gelöscht werden, da noch Zimmer oder Preisbereiche zugeordnet sind.'
+      success: 'Kategorie wurde erfolgreich gelöscht.'
     edit:
-      success: Kategorie wurde erfolgreich bearbeitet.
+      success: 'Kategorie wurde erfolgreich bearbeitet.'
   name: Bezeichnung
   single: Einzelzimmer
   title: Zimmerkategorieverwaltung
@@ -38,18 +40,17 @@ category:
     outdoor: Allgemein
     other: Sonstiges
   images:
-    save_first: Bitte speichern Sie die Kategorie zuerst, bevor Sie Bilder hochladen.
-    upload: Bilder hochladen
-    set_primary: Als Hauptbild setzen
-    delete: Bild löschen
-    no_images: Noch keine Bilder hochgeladen.
-    hint: "Erlaubte Formate: JPEG, PNG, WebP. Maximal 10 MB und 20 Megapixel; Breite und Höhe dürfen jeweils höchstens 8.000 Pixel betragen. Bilder im Querformat werden empfohlen."
+    save_first: 'Bitte speichern Sie die Kategorie zuerst, bevor Sie Bilder hochladen.'
+    upload: 'Bilder hochladen'
+    set_primary: 'Als Hauptbild setzen'
+    delete: 'Bild löschen'
+    no_images: 'Noch keine Bilder hochgeladen.'
+    hint: 'Erlaubte Formate: JPEG, PNG, WebP. Maximal 10 MB und 20 Megapixel; Breite und Höhe dürfen jeweils höchstens 8.000 Pixel betragen. Bilder im Querformat werden empfohlen.'
     validation:
-      invalid: Das Bild konnte nicht verarbeitet werden. Bitte wählen Sie eine gültige Bilddatei.
-      file_size: Die Bilddatei ist zu groß. Erlaubt sind höchstens 10 MB.
-      format: Ungültige Bilddatei. Erlaubt sind JPEG, PNG und WebP.
-      resolution: Das Bild hat eine zu hohe Auflösung. Erlaubt sind höchstens 20 Megapixel; Breite und Höhe dürfen jeweils maximal 8.000 Pixel betragen. Bitte verkleinern Sie das Bild vor dem Upload.
-
+      invalid: 'Das Bild konnte nicht verarbeitet werden. Bitte wählen Sie eine gültige Bilddatei.'
+      file_size: 'Die Bilddatei ist zu groß. Erlaubt sind höchstens 10 MB.'
+      format: 'Ungültige Bilddatei. Erlaubt sind JPEG, PNG und WebP.'
+      resolution: 'Das Bild hat eine zu hohe Auflösung. Erlaubt sind höchstens 20 Megapixel; Breite und Höhe dürfen jeweils maximal 8.000 Pixel betragen. Bitte verkleinern Sie das Bild vor dem Upload.'
 amenity:
   wifi: WLAN
   tv: Fernseher
@@ -62,7 +63,7 @@ amenity:
   view_mountain: Bergblick
   view_lake: Seeblick
   view_garden: Gartenblick
-  private_bathroom: Eigenes Bad
+  private_bathroom: 'Eigenes Bad'
   shower: Dusche
   bathtub: Badewanne
   hairdryer: Föhn
@@ -74,7 +75,7 @@ amenity:
   kettle: Wasserkocher
   dishwasher: Geschirrspüler
   parking: Parkplatz
-  pets_allowed: Haustiere erlaubt
+  pets_allowed: 'Haustiere erlaubt'
   non_smoking: Nichtraucher
   accessible: Barrierefrei
-  crib_available: Babybett verfügbar
+  crib_available: 'Babybett verfügbar'

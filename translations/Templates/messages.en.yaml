@@ -163,6 +163,13 @@ templates.editor.zip: Zip code
 templates.flash.create.success: Template is successfully created.
 templates.flash.delete.inuse.reservations: Template cannot be deleted because it is used in existing reservations.
 templates.flash.delete.success: Template successfully deleted.
+templates.flash.delete.has_variants: "The template has language variants. Delete the language variants first."
+templates.flash.variant.created: "Language variant created. Now translate the text and the subject."
+templates.flash.variant.invalid: "No language variant can be created for this language."
+templates.variant.add: "Add language variant"
+templates.variant.badge: "Language variant"
+templates.variant.of: "Language variant of “%name%”. Automatic mails to guests in this language use it instead of the template."
+templates.variant.delete_hint: "Delete the language variants of this template first."
 templates.flash.edit.success: Template successfully updated.
 templates.name: Name
 templates.notfound: No template could be found. Please ensure a template exists for the selected action.
@@ -269,6 +276,7 @@ templates.editor.toolbar.variable: Insert variable
 templates.editor.variable_picker.title: Insert variable
 templates.editor.variable_picker.insert_loop: Insert loop
 templates.editor.alert.protected_content: This template contains Twig syntax or advanced directives and can only be edited in code mode.
+templates.editor.alert.table_row_required: Place the cursor in the table row first.
 templates.editor.row.repeat_toggle: Repeat row
 templates.editor.row.repeat_collection: Collection (e.g. apartmentPositions)
 templates.editor.row.repeat_as: Item variable (e.g. position)
@@ -286,6 +294,7 @@ templates.editor.tab.preview: Preview
 templates.recipient: Recipient
 templates.recipient.from_invoice: Recipient changed to the email of invoice %number%.
 templates.savefile.success: File was successfully saved .
+templates.savefile.reservations.required: Select at least one reservation before saving the file.
 templates.select.reservations: Select reservation
 templates.select.template: Select template
 templates.sendemail.preview: Send message

@@ -69,6 +69,7 @@ price.flash.create.conflict: >-
 price.flash.create.success: The price was successfully created .
 price.flash.delete.success: Price category successfully deleted.
 price.flash.edit.success: The price was successfully processed.
+price.flash.mixed_room_kinds: 'A price applies either to accommodation or to event spaces. Select room categories of one kind of room only.'
 price.friday: Friday
 price.from: From
 price.inactive: Not active
@@ -85,12 +86,34 @@ price.visibility.label: Visibility & availability
 price.calculation_type.label: Calculation type
 price.calculation_type.flat: Flat price (per booking)
 price.calculation_type.per_person: Per night, per person
+price.calculation_type.per_person.day: 'Per day, per person'
 price.calculation_type.per_room: Per night, per room
+price.calculation_type.per_room.day: 'Per day, per room'
+price.calculation_type.per_person.help: 'Every guest pays this price. Guest category adjustments (e.g. for children) apply here.'
+price.calculation_type.per_room.help: 'The room costs this price, however many guests stay in it. Optionally with a surcharge per additional person.'
+price.calculation_type.per_room.help.day: 'The room costs this price per day, no matter how many persons use it. Optionally with a surcharge per additional person.'
+price.calculation_type.flat.help: 'A fixed amount per booking, regardless of nights and guests.'
+price.calculation_type.flat.help.day: 'A fixed amount per booking, regardless of days and persons.'
 price.minstay: Price applies from … nights
+price.minstay.day: 'Price valid from … days'
 price.miscellaneous: Other price
 price.monday: Monday
 price.numberofbeds: Number of beds
 price.numberofpersons: Number of persons
+price.numberofpersons.scope.exact: exactly
+price.numberofpersons.scope.up_to: 'up to'
+price.numberofpersons.help.exact: 'The price only applies when exactly this many persons are booked.'
+price.numberofpersons.help.up_to: 'The price also applies to fewer persons. Above it, the surcharge per additional person is added.'
+price.numberofpersons.up_to_count: 'up to %count%'
+price.extra_person_surcharge: 'Surcharge per additional person'
+price.extra_person_surcharge.disabled: 'Only for the calculation type "Per night, per room".'
+price.extra_person_surcharge.disabled.day: 'Only for the calculation type "Per day, per room".'
+price.extra_person_surcharge.exact: 'Amount added for every person above the number of persons. Leave empty if the price applies to exactly this number of persons only.'
+price.extra_person_surcharge.example: 'Every further person up to the number of beds costs the surcharge. Example for %persons% persons: %base% + 2 × %surcharge% = %total% per night.'
+price.extra_person_surcharge.example.day: 'Every further person up to the maximum number of persons of the room costs the surcharge. Example for %persons% persons: %base% + 2 × %surcharge% = %total% per day.'
+price.extra_person_surcharge.short: '+%amount% per additional person'
+price.extra_person_surcharge.unit: '%currency% per night'
+price.extra_person_surcharge.unit.day: '%currency% per day'
 price.origin: Origin
 price.price: Price
 price.saturday: Saturday

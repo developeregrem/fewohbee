@@ -41,12 +41,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[Route('/statistics')]
 class StatisticsController extends AbstractController
 {
-    private $perPage = 15;
-
     /**
      * Index Action start page.
-     *
-     * @return mixed
      */
     #[Route('/utilization', name: 'statistics.utilization', methods: ['GET'])]
     public function utilizationAction(ManagerRegistry $doctrine, RequestStack $requestStack): Response
@@ -349,9 +345,6 @@ class StatisticsController extends AbstractController
         return $this->loadIndex('Statistics/turnover.html.twig', $doctrine, $requestStack);
     }
 
-    /**
-     * @return Response
-     */
     #[Route('/turnover/yearly', name: 'statistics.turnover.yearly', methods: ['GET'])]
     public function getTurnoverForYearAction(ManagerRegistry $doctrine, InvoiceService $is, StatisticsService $ss, RevenueForecastService $forecastService, TranslatorInterface $translator, Request $request): JsonResponse
     {
@@ -520,6 +513,8 @@ class StatisticsController extends AbstractController
     /**
      * General index page wich is the same for all statistics sites.
      *
+     * @param array<string, mixed> $extra Additional template variables
+     *
      * @throws \Exception
      */
     private function loadIndex(string $template, ManagerRegistry $doctrine, RequestStack $requestStack, array $extra = []): Response
@@ -530,8 +525,9 @@ class StatisticsController extends AbstractController
 
         $minStr = $em->getRepository(Reservation::class)->getMinEndDate();
         $maxStr = $em->getRepository(Reservation::class)->getMaxStartDate();
-        $minDate = new \DateTime($minStr);
-        $maxDate = new \DateTime($maxStr);
+        // Empty installations have no reservation dates; keep the year filters usable.
+        $minDate = new \DateTime($minStr ?? 'now');
+        $maxDate = new \DateTime($maxStr ?? 'now');
 
         return $this->render($template, array_merge([
             'objects' => $objects,
@@ -541,6 +537,13 @@ class StatisticsController extends AbstractController
         ], $extra));
     }
 
+    /**
+     * @param int|string $monthNumber Calendar month, including values returned by DateTime::format()
+     * @param string $pattern ICU date pattern
+     * @param string $locale
+     *
+     * @return string|false Localized label, or false when IntlDateFormatter cannot format it
+     */
     private function getLocalizedDate($monthNumber, $pattern, $locale)
     {
         $formatter = new \IntlDateFormatter($locale, \IntlDateFormatter::FULL, \IntlDateFormatter::FULL);

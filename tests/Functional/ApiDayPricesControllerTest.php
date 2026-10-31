@@ -105,7 +105,7 @@ final class ApiDayPricesControllerTest extends WebTestCase
         $body = $this->body(['+610 days' => 130.0]);
         $night = $body['nights'][0]['night'];
         $room = $this->room();
-        $manual = new DayPrice($room->getObject() ?? self::fail('Room without branch.'), $room->getRoomCategory() ?? self::fail('Room without category.'), new \DateTimeImmutable($night));
+        $manual = new DayPrice($room->getObject(), $room->getRoomCategory() ?? self::fail('Room without category.'), new \DateTimeImmutable($night));
         $manual->set(150.0, $body['persons'], DayPriceSource::MANUAL, null, new \DateTimeImmutable());
         $this->em()->persist($manual);
         $this->em()->flush();
@@ -160,7 +160,7 @@ final class ApiDayPricesControllerTest extends WebTestCase
         }
 
         return [
-            'objectId' => (int) $room->getObject()?->getId(),
+            'objectId' => (int) $room->getObject()->getId(),
             'roomCategoryId' => (int) $category->getId(),
             'persons' => $occupancies[0],
             'nights' => $nights,

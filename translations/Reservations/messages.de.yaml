@@ -1,0 +1,230 @@
+nav.customer.search: Suchen
+nav.reservation.add: 'Reservierung hinzufügen'
+reservation.add.another.appartment: 'Zimmer hinzufügen'
+reservation.appartment: 'Zimmer auswählen'
+reservation.appartment.available: 'verfügbare Zimmer'
+reservation.appartment.name: Zimmer
+reservation.arrivalTime: Ankunft
+reservation.button.change.customer: 'Gast zuweisen'
+reservation.button.changeBooker: 'neu zuweisen'
+reservation.button.create.invoice: 'Rechnung erstellen'
+reservation.button.show.invoice: 'Rechnung anzeigen'
+reservation.confirm: Bestätigt
+reservation.correspondences: Konversationen
+reservation.correspondences.available: 'vorhandene Konversationen'
+reservation.correspondences.reservation: 'Konversationen dieser Reservierung'
+reservation.customer: 'Gast auswählen'
+reservation.custumer.selected: 'Bereits ausgewählt:'
+reservation.days: Tage
+reservation.departureTime: Abreise
+reservation.delete.ask: 'Diese Reservierung wirklich löschen?'
+reservation.details: Reservierungsdetails
+reservation.tab.details: Details
+reservation.tab.guests: Gäste
+reservation.edit.change.appartment: 'neues Zimmer zuweisen'
+reservation.enddate: Bis
+reservation.flash.create.success: 'Reservierung wurde erfolgreich hinzugefügt.'
+reservation.flash.delete.customer.success: 'Der Gast wurde erfolgreich aus dem Zimmer gelöscht.'
+reservation.flash.delete.not.possible: 'Die Reservierung kann nicht mehr gelöscht werden (Besitzt sie bereits eine Rechnung?).'
+reservation.flash.delete.success: 'Reservierung wurde erfolgreich gelöscht.'
+reservation.flash.update.conflict: 'Bitte Zeitraum anpassen. Der gewählte Zeitraum steht im Konflikt mit einer anderen Reservierung dieses Zimmers.'
+reservation.flash.update.conflict.persons: 'Bitte Personenanzahl anpassen. Die Anzahl der Personen steht im Konflikt mit einer anderen Reservierung im gewählten Zeitraum.'
+reservation.flash.update.customeralreadyinlist: 'Der Kunde wurde bereits zu dem Zimmer hinzugefügt.'
+reservation.flash.update.success: 'Reservierung wurde erfolgreich bearbeitet.'
+reservation.flash.update.toomuchcustomers: 'Es können nicht mehr Gäste zugewiesen werden!'
+reservation.move.success: 'Reservierung wurde erfolgreich verschoben.'
+reservation.move.error: 'Die Reservierung konnte nicht verschoben werden.'
+reservation.move.capacity: 'Das gewählte Zimmer ist für die Personenzahl dieser Reservierung zu klein.'
+reservation.move.other_kind: 'Ein Veranstaltungsraum lässt sich nur mit einem anderen Veranstaltungsraum tauschen, eine Unterkunft nur mit einer Unterkunft.'
+reservation.move.hint: 'Auf ein freies Feld ziehen, um diese Reservierung zu verschieben.'
+reservation.invoice: Rechnung
+reservation.invoices: Rechnungen
+reservation.new.reservation.appartments.addmore: 'Zimmer der Reservierung hinzufügen'
+reservation.new.reservation.appartments.selected.heading: 'Ausgewählte Zimmer'
+reservation.no.selected.appartments: 'Keine Reservierung ausgewählt.'
+reservation.objects.all: 'Alle Niederlassungen'
+reservation.option: Option
+reservation.origin: Herkunft
+reservation.person: Person
+reservation.persons: Personen
+reservation.period.invalid_dates: 'Bitte gib ein gültiges An- und Abreisedatum ein.'
+reservation.period.end_before_start: 'Das Abreisedatum darf nicht vor dem Anreisedatum liegen.'
+reservation.period.too_long: 'Der gewählte Reservierungszeitraum ist zu lang.'
+reservation.preview.appartments.selected: 'Gewählte Zimmer'
+reservation.preview.booker: 'Reserviert durch'
+reservation.preview.contact: Kontakt
+reservation.preview.customer: Gast
+reservation.preview.customer.address: Adresse
+reservation.preview.customer.inroom: 'Gäste in diesem Zimmer'
+reservation.preview.customer.name: Name
+reservation.price: Preis
+reservation.prices.misc: Zusatzoptionen
+reservation.prices.preliminary: 'Die hier angezeigten Preise sind vorläufig und können von denen in der Rechnung abweichen.'
+reservation.prices.title: Buchungsoptionen
+reservation.select.customer.search.input.placeholder: Nachname
+reservation.startdate: Von
+reservation.status: Status
+reservation.table.calendarweek: KW
+reservation.table.event_space_days: 'wird pro Tag gebucht'
+reservation.table.reload: Aktualisieren
+reservation.table.settings.all: alle
+reservation.table.settings.country: Anzeigeland
+reservation.table.settings.displayMonth: 'Monatsnamen anzeigen'
+reservation.table.settings.displayWeek: 'Kalenderwoche anzeigen'
+reservation.table.settings.displayWeekday: 'Wochentage anzeigen'
+reservation.table.settings.general: Allgemein
+reservation.table.settings.holidays: 'Anzeige der Feiertage'
+reservation.table.settings.showCanceledOnly: 'Nur stornierte/No-Show anzeigen'
+reservation.table.settings.showCalendarEntries: 'Kalendereinträge anzeigen'
+reservation.table.settings.subdivision: Bundesland/Staat
+reservation.table.settings.title: Tabelleneigenschaften
+reservation.table.view.table: Tabellenansicht
+reservation.table.view.week: Wochenansicht
+reservation.table.view.yearly: Jahresansicht
+reservation.table.view.yearly.multiple.hint: 'Diese Ansicht ist nicht optimiert für Zimmer mit Mehrfachbelegung. Bitte die tabellarische Ansicht nutzen.'
+reservation.table.week.next: Weiterblättern
+reservation.table.week.previous: Zurückblättern
+reservation.table.weekday.monday: Mo
+reservation.table.weekday.tuesday: Di
+reservation.table.weekday.wednesday: Mi
+reservation.table.weekday.thursday: Do
+reservation.table.weekday.friday: Fr
+reservation.table.weekday.saturday: Sa
+reservation.table.weekday.sunday: So
+reservation.templates.availableprices: 'vorhandene Rechnungen'
+reservation.conflict.button: 'Importe prüfen'
+reservation.conflict.title: 'Importe prüfen'
+reservation.conflict.section.title: Konflikte
+reservation.conflict.hint: 'Konflikte müssen manuell gelöst werden, bevor sie übernommen werden können. In der Tabelle werden Reservierungen angezeigt, die sich mit vorhandenen Reservierungen überschneiden.'
+reservation.conflict.empty: 'Keine offenen Konflikte.'
+reservation.conflict.table.room: Zimmer
+reservation.conflict.table.period: Zeitraum
+reservation.conflict.table.source: Quelle
+reservation.conflict.table.actions: Aktionen
+reservation.conflict.action.ignore: Ignorieren
+reservation.conflict.action.ignore.title: 'Konflikt ignorieren'
+reservation.conflict.action.resolve: Übernehmen
+reservation.conflict.action.resolve.title: 'Konflikt übernehmen'
+reservation.conflict.ignore.confirm: 'Dieser Konflikt wird dauerhaft ignoriert.'
+reservation.conflict.resolve.failed: 'Konflikt überschneidet sich weiterhin mit einer Reservierung.'
+reservation.review.section.title: 'Zu prüfen'
+reservation.review.hint: 'Importierte Reservierungen ohne Gast müssen geprüft werden.'
+reservation.review.empty: 'Keine Reservierungen zu prüfen.'
+reservation.review.table.todo: Aufgabe
+reservation.review.table.actions: Aktionen
+reservation.review.todo: 'Gast hinzufügen und Personenanzahl prüfen.'
+reservation.booker.missing.short: 'Kein Gast hinterlegt'
+reservation.import.booker.missing: 'Noch kein Gast hinterlegt. Bitte Gast hinzufügen und die Personenanzahl ggf. anpassen.'
+reservation.kurtaxe.waived: 'Beherbergungsabgaben entfallen lassen'
+reservation.kurtaxe.waived.help: 'Aktivieren, wenn diese Buchung von Beherbergungsabgaben (Kurtaxe, Stadtsteuer) ausgenommen ist (z. B. dienstliche Übernachtung mit Befreiung).'
+roomblock.title: 'Zimmer sperren'
+roomblock.list.title: Sperrungen
+roomblock.list.empty: 'Keine Sperrungen im gewählten Zeitraum.'
+roomblock.filter.year: Jahr
+roomblock.filter.month: Monat
+roomblock.filter.all_months: 'Ganzes Jahr'
+roomblock.filter.subsidiary: Niederlassung
+roomblock.filter.all_subsidiaries: 'Alle Niederlassungen'
+roomblock.instead: 'Stattdessen sperren'
+roomblock.rooms: Zimmer
+roomblock.select_all: 'Alle auswählen'
+roomblock.search.placeholder: 'Zimmer suchen…'
+roomblock.room: Zimmer
+roomblock.period: Zeitraum
+roomblock.from: 'Gesperrt von'
+roomblock.to: 'Gesperrt bis'
+roomblock.to.hint: 'Ab diesem Tag ist das Zimmer wieder frei (wie ein Abreisetag).'
+roomblock.nights: Nächte
+roomblock.reason: Grund
+roomblock.note: Notiz
+roomblock.createdby: 'Angelegt von'
+roomblock.actions: Aktionen
+roomblock.submit: Sperren
+roomblock.source.manual: Manuell
+roomblock.flash.create.success: 'Die Sperrung wurde angelegt.'
+roomblock.flash.update.success: 'Die Sperrung wurde aktualisiert.'
+roomblock.flash.delete.success: 'Die Sperrung wurde gelöscht.'
+roomblock.flash.bulk_delete.success: 'Die ausgewählten Sperrungen wurden aufgehoben.'
+roomblock.bulk.selected: ausgewählt
+roomblock.bulk.delete: 'Ausgewählte aufheben'
+roomblock.bulk.confirm: 'Ausgewählte Sperrungen wirklich aufheben?'
+roomblock.bulk.confirm.yes: 'Ja, aufheben'
+roomblock.delete.ask: 'Sperrung wirklich löschen?'
+roomblock.conflict.heading: 'Sperrung nicht möglich – folgende Konflikte bestehen:'
+roomblock.conflict.reservation.line: 'Zimmer %room%: Buchung vom %from% bis %end%'
+roomblock.conflict.block.line: 'Zimmer %room%: bestehende Sperrung „%reason%“ vom %from% bis %end%'
+roomblock.error.period: 'Bitte einen gültigen Zeitraum von mindestens einer Nacht angeben.'
+roomblock.error.reason: 'Bitte einen Grund angeben.'
+roomblock.error.rooms: 'Bitte mindestens ein Zimmer auswählen.'
+reservation.calendar_reminder.button: Erinnerungen
+reservation.calendar_reminder.title: Kalender-Erinnerungen
+reservation.calendar_reminder.section.title: 'Einträge bestätigen'
+reservation.calendar_reminder.hint: 'Bestätigte Einträge bleiben dauerhaft erhalten.'
+reservation.calendar_reminder.today: Heute
+reservation.calendar_reminder.empty: 'Keine offenen Erinnerungen.'
+reservation.calendar_reminder.table.date: Datum
+reservation.calendar_reminder.table.entry: Eintrag
+reservation.calendar_reminder.table.actions: Aktionen
+reservation.calendar_reminder.action.confirm.title: Bestätigen
+calendar_entry.title_edit: 'Kalendereintrag bearbeiten'
+calendar_entry.title_new: 'Kalendereintrag hinzufügen'
+calendar_entry.modal.title: Kalendereintrag
+calendar_entry.calendar: Kalender
+calendar_entry.form.calendar: Kalender
+calendar_entry.form.date: Datum
+calendar_entry.form.date_to: Bis
+calendar_entry.form.date_to_help: 'Bis – ein Eintrag pro Tag'
+calendar_entry.form.date_to_too_far: 'Der Zeitraum darf nicht mehr als %max% Tage umfassen.'
+calendar_entry.form.end_time: Endzeit
+calendar_entry.form.end_time_until: 'Bis-Uhrzeit (optional)'
+calendar_entry.form.on_date: 'Am %date%'
+calendar_entry.form.change_date: 'anderes Datum oder mehrere Tage'
+calendar_entry.form.end_time_before_start: 'Die Endzeit muss nach der Startzeit liegen. 00:00 ist als Tagesende erlaubt.'
+calendar_entry.form.end_time_midnight_without_start: 'Eine Endzeit um 00:00 meint das Tagesende und braucht daher eine Startzeit. Ohne Startzeit den Termin ganztägig lassen.'
+calendar_entry.form.end_time_help: Optional
+calendar_entry.form.time: Uhrzeit
+calendar_entry.form.time_help: 'Leer = ganztägig'
+calendar_entry.time.range: '%start% - %end%'
+calendar_entry.time.until: '- %end%'
+calendar_entry.form.title: Titel
+calendar_entry.popover.new: '+ Neuer Termin'
+calendar_entry.confirmed_at: 'Erinnerung bestätigt am %datetime%'
+calendar_entry.sync_warning: 'Dieser Eintrag stammt aus einer ICS-Quelle. Solange er nicht bestätigt ist, werden Datum und Titel bei jedem Sync wieder auf den Wert aus der Quelle gesetzt.'
+calendar_entry.delete: Löschen
+calendar_entry.unconfirm: 'Bestätigung rückgängig machen'
+calendar_entry.flash.saved: 'Kalendereintrag gespeichert.'
+calendar_entry.flash.deleted: 'Kalendereintrag gelöscht.'
+reservation.price.changed: 'Der Preis dieser Buchung ändert sich von %before% auf %after%.'
+reservation.price.reprice.confirm: 'Heutige Preise übernehmen'
+reservation.price.reprice.invoiced: 'Für diese Buchung gibt es schon eine Rechnung, dort steht ihr Preis.'
+reservation.price.list_changed.title: 'Die Preise haben sich seit der Buchung geändert'
+reservation.price.list_changed.text: 'Diese Buchung behält ihre Preise vom %date% (%promised%). Mit den heutigen Preisen würde sie %current% kosten.'
+reservation.price.reprice.done: 'Die heutigen Preise wurden übernommen. Die Buchung kostet jetzt %total%.'
+reservation.prices.invoice_note: 'Diese Preise übernimmt die Rechnung. Dort kannst du sie bei Bedarf noch anpassen.'
+reservation.price.rules_applied: 'Angepasst durch'
+reservation.price.rules_nights: '{1}1 Nacht|]1,Inf[%count% Nächte'
+reservation.price.day_price: Tagespreis
+reservation.summary.nights: '{0}0 Nächte|{1}1 Nacht|]1,Inf[%count% Nächte'
+reservation.summary.days: '{0}0 Tage|{1}1 Tag|]1,Inf[%count% Tage'
+reservation.event_space.period: '%days% bis einschließlich %date%'
+reservation.event_space.end_help: 'Bei Veranstaltungsräumen ist „Bis“ der letzte Tag.'
+reservation.summary.persons: '{0}0 Personen|{1}1 Person|]1,Inf[%count% Personen'
+reservation.summary.call: Anrufen
+reservation.details.stay: Aufenthalt
+reservation.details.guest: Gastdaten
+reservation.summary.guest_menu: Gast
+reservation.summary.guest_edit: 'Gastdaten bearbeiten'
+reservation.summary.guest_change: 'Anderen Gast zuweisen'
+reservation.summary.change_booking: 'Buchung ändern'
+reservation.guests.room: 'Gäste · Zimmer %number%'
+reservation.guests.empty: 'Noch keine Gäste eingetragen.'
+reservation.edit.change_room: 'Zimmer wechseln'
+reservation.guests.remove: Entfernen
+reservation.guests.remove_ask: 'Gast aus der Reservierung entfernen?'
+reservation.new.create: 'Reservierung anlegen'
+reservation.selected.reservations: 'Ausgewählte Reservierungen'
+reservation.filter.by_period: 'Nach Zeitraum'
+reservation.filter.by_guest: 'Nach Gast'
+reservation.correspondences.empty: 'Noch keine Konversationen.'
+reservation.origin.missing: 'Bevor du eine Reservierung anlegen kannst, muss in den Einstellungen eine Reservierungsherkunft angelegt sein.'
+reservation.flash.origin.required: 'Wähle eine gültige Reservierungsherkunft aus. Falls noch keine vorhanden ist, lege zuerst eine in den Einstellungen an.'

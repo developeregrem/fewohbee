@@ -51,6 +51,8 @@ guest_checkin:
       idDocumentMode_help: "Art und Nummer des Ausweises des Hauptgastes."
       contactMode: "E-Mail und Telefon"
       contactMode_help: "Nützlich vor allem bei Buchungen über Portale, die keine Kontaktdaten übermitteln."
+      companyMode: "Unternehmensangaben für die Rechnung"
+      companyMode_help: "Unternehmen, USt-IdNr. und eine abweichende Rechnungsanschrift, z. B. für Geschäftsreisende. Die Angaben landen in einer Geschäftsanschrift des Hauptgastes und gehen so in seine Rechnungen ein."
       companionsMode: "Mitreisende erfassen"
       companionsMode_help: "Jede weitere Person der Buchung bekommt einen eigenen Block – mit Name, freiwilliger Anrede und, je nach Einstellung oben, Geburtsdatum und Staatsangehörigkeit."
     section_companions: "Mitreisende"
@@ -137,8 +139,14 @@ guest_checkin:
       email: "E-Mail"
       phone: "Telefon"
       message: "Nachricht an die Unterkunft (freiwillig)"
+      company: "Unternehmen"
+      vat_id: "USt-IdNr. (freiwillig)"
     submit: "Angaben senden"
     edit: "Angaben korrigieren"
+    company:
+      toggle: "Rechnung auf ein Unternehmen"
+      address_hint: "Die Rechnungsanschrift nur ausfüllen, wenn sie von Ihrer Anschrift oben abweicht."
+      address_required_hint: "Rechnungsanschrift des Unternehmens:"
     stay:
       title: "Ihr Aufenthalt"
       submitted: "Vielen Dank! Ihre Angaben sind bei uns angekommen. Die Unterkunft prüft sie vor Ihrer Anreise."
@@ -149,6 +157,7 @@ guest_checkin:
       arrival_time_open: "noch nicht angegeben"
       extras: "Zusatzleistungen"
       extra_requested: "angefragt"
+      invoice_to: "Rechnung an"
     closed: "Der Online-Check-in ist für diese Buchung nicht mehr möglich. Bitte wenden Sie sich direkt an die Unterkunft."
     privacy_link: "Datenschutzerklärung"
   tab:
@@ -223,6 +232,8 @@ guest_checkin:
     room_overflow: "Es sind mehr Personen als gebucht. Markiere, wer nicht mitreist, wähle bei einzelnen Personen „Nicht übernehmen“ oder erhöhe die Gästezahl der Reservierung. Erst dann lässt sich der Check-in bestätigen."
     room_now: "Im Zimmer"
     registration_print: "Meldeschein drucken"
+    invoice_address: "Rechnungsanschrift"
+    company_booker_hint: "Rechnungen gehen an den Bucher. Damit das Unternehmen auf der Rechnung steht, den Hauptgast als Bucher eintragen."
   apply:
     ambiguous_matches: "Es gibt mehrere passende Datensätze. Prüfe sie vor der Auswahl, damit keine Personen verwechselt oder doppelt angelegt werden."
     name_only_match: "Ein Gast mit diesem Namen ist vorhanden; ein bestätigender Abgleich über Geburtsdatum oder E-Mail fehlt. Prüfe den Datensatz vor der Auswahl."

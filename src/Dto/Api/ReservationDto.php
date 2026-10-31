@@ -13,9 +13,9 @@ use App\Entity\Reservation;
 final readonly class ReservationDto
 {
     /**
-     * @param array<string, int>                        $guestCounts
+     * @param array<int, int>                           $guestCounts guest category id => head count
      * @param array{id: int|null, name: string|null}    $status
-     * @param array{id: int|null, number: string|null, description: string|null} $apartment
+     * @param array{id: int|null, number: string|null, description: string|null, kind: string|null} $apartment
      * @param array{id: int|null, name: string|null}    $object
      * @param list<'arrival'|'departure'|'inhouse'>     $types
      * @param list<array<string, mixed>>|null           $invoices null when the token lacks the invoices scope
@@ -67,6 +67,8 @@ final readonly class ReservationDto
                 'id' => $apartment?->getId(),
                 'number' => $apartment?->getNumber(),
                 'description' => $apartment?->getDescription(),
+                // An event space is booked per day; endDate is the day after its last day.
+                'kind' => $apartment?->getKind()->value,
             ],
             object: ['id' => $object?->getId(), 'name' => $object?->getName()],
             origin: $reservation->getReservationOrigin()?->getName(),

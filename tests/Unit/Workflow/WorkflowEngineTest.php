@@ -11,7 +11,6 @@ use App\Workflow\Action\WorkflowActionInterface;
 use App\Workflow\Action\WorkflowActionRegistry;
 use App\Workflow\Condition\WorkflowConditionInterface;
 use App\Workflow\Condition\WorkflowConditionRegistry;
-use App\Workflow\Trigger\WorkflowTriggerRegistry;
 use App\Workflow\WorkflowEngine;
 use App\Workflow\WorkflowLogService;
 use App\Workflow\WorkflowSkippedException;
@@ -21,6 +20,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class WorkflowEngineTest extends TestCase
 {
+    /** @param list<array{type: string, config?: array<string, mixed>}> $conditions */
     private function makeWorkflow(
         string $triggerType = 'reservation.created',
         string $actionType = 'send_notification_email',
@@ -39,6 +39,7 @@ final class WorkflowEngineTest extends TestCase
         return $wf;
     }
 
+    /** @param list<Workflow> $workflows */
     private function makeEngine(
         array $workflows,
         WorkflowActionInterface $action,
@@ -56,7 +57,6 @@ final class WorkflowEngineTest extends TestCase
             $conditionRegistry->method('get')->willReturn($condition);
         }
 
-        $triggerRegistry = $this->createStub(WorkflowTriggerRegistry::class);
         $logService ??= $this->createStub(WorkflowLogService::class);
 
         $translator = $this->createStub(TranslatorInterface::class);
@@ -64,7 +64,6 @@ final class WorkflowEngineTest extends TestCase
 
         return new WorkflowEngine(
             $workflowRepo,
-            $triggerRegistry,
             $conditionRegistry,
             $actionRegistry,
             $logService,
@@ -159,7 +158,6 @@ final class WorkflowEngineTest extends TestCase
 
         $engine = new WorkflowEngine(
             $workflowRepo,
-            $this->createStub(WorkflowTriggerRegistry::class),
             $conditionRegistry,
             $this->createStub(WorkflowActionRegistry::class),
             $logService,
@@ -203,7 +201,6 @@ final class WorkflowEngineTest extends TestCase
 
         $engine = new WorkflowEngine(
             $workflowRepo,
-            $this->createStub(WorkflowTriggerRegistry::class),
             $conditionRegistry,
             $actionRegistry,
             $this->createStub(WorkflowLogService::class),
@@ -249,7 +246,6 @@ final class WorkflowEngineTest extends TestCase
 
         $engine = new WorkflowEngine(
             $workflowRepo,
-            $this->createStub(WorkflowTriggerRegistry::class),
             $this->createStub(WorkflowConditionRegistry::class),
             $actionRegistry,
             $this->createStub(WorkflowLogService::class),
@@ -290,7 +286,6 @@ final class WorkflowEngineTest extends TestCase
 
         $engine = new WorkflowEngine(
             $workflowRepo,
-            $this->createStub(WorkflowTriggerRegistry::class),
             $this->createStub(WorkflowConditionRegistry::class),
             $actionRegistry,
             $logService,
@@ -326,7 +321,6 @@ final class WorkflowEngineTest extends TestCase
 
         $engine = new WorkflowEngine(
             $workflowRepo,
-            $this->createStub(WorkflowTriggerRegistry::class),
             $this->createStub(WorkflowConditionRegistry::class),
             $actionRegistry,
             $logService,
@@ -362,7 +356,6 @@ final class WorkflowEngineTest extends TestCase
 
         $engine = new WorkflowEngine(
             $workflowRepo,
-            $this->createStub(WorkflowTriggerRegistry::class),
             $this->createStub(WorkflowConditionRegistry::class),
             $actionRegistry,
             $logService,

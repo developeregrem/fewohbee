@@ -13,6 +13,7 @@ use App\Service\AppSettingsService;
 use App\Service\CustomerService;
 use App\Service\InvoiceService;
 use App\Service\InvoiceSumCalculator;
+use App\Service\Localization\GuestLocaleService;
 use App\Service\OriginFeeCalculator;
 use App\Service\PriceService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -56,6 +57,7 @@ final class CustomerInvoiceEmailTest extends TestCase
             $this->createStub(EntityManagerInterface::class),
             $this->createStub(PostalCodeDataRepository::class),
             $this->createStub(GuestCheckInRepository::class),
+            $this->createStub(GuestLocaleService::class),
         );
 
         $customer = $service->getCustomerFromForm(new Request(request: [

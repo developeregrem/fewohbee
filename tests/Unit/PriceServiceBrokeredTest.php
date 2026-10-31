@@ -52,6 +52,7 @@ final class PriceServiceBrokeredTest extends TestCase
         // The service also resolves origins and categories against repositories.
         // findById() is one of Doctrine's magic finders and cannot be stubbed,
         // so this stands in and answers everything with nothing.
+        /** @extends EntityRepository<ReservationOrigin> */
         $repository = new class($this->createStub(EntityManagerInterface::class), new ClassMetadata(ReservationOrigin::class)) extends EntityRepository {
             /** @return array<int, object> */
             public function findById(mixed $ids): array
@@ -59,12 +60,17 @@ final class PriceServiceBrokeredTest extends TestCase
                 return [];
             }
 
+            /** @phpstan-pure */
             public function find(mixed $id, mixed $lockMode = null, mixed $lockVersion = null): ?object
             {
                 return null;
             }
 
-            /** @return array<int, object> */
+            /**
+             * @return array<int, ReservationOrigin>
+             *
+             * @phpstan-pure
+             */
             public function findAll(): array
             {
                 return [];

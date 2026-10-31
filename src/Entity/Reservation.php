@@ -24,33 +24,36 @@ class Reservation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private int|string|null $id = null;
     #[ORM\Column(name: 'start_date', type: 'date')]
-    private $startDate;
+    private ?\DateTime $startDate = null;
     #[ORM\Column(name: 'end_date', type: 'date')]
-    private $endDate;
+    private ?\DateTime $endDate = null;
     #[ORM\Column(type: 'smallint')]
-    private $persons;
+    private ?int $persons = null;
     #[ORM\Column(name: 'option_date', type: 'date', nullable: true)]
-    private $optionDate;
+    private ?\DateTime $optionDate = null;
     #[ORM\Column(type: 'text', nullable: true)]
-    private $remark;
+    private ?string $remark = null;
     #[ORM\Column(name: 'reservation_date', type: 'datetime')]
-    private $reservationDate;
-    #[ORM\ManyToMany(targetEntity: 'Invoice', inversedBy: 'reservations')]
+    private ?\DateTime $reservationDate = null;
+    /** @var Collection<int, Invoice> */
+    #[ORM\ManyToMany(targetEntity: Invoice::class, inversedBy: 'reservations')]
     #[ORM\JoinTable(name: 'reservations_has_invoices')]
-    private $invoices;
-    #[ORM\ManyToOne(targetEntity: 'Appartment', inversedBy: 'reservations')]
-    private $appartment;
-    #[ORM\ManyToMany(targetEntity: 'Customer', inversedBy: 'reservations')]
+    private Collection $invoices;
+    #[ORM\ManyToOne(targetEntity: Appartment::class, inversedBy: 'reservations')]
+    private ?Appartment $appartment = null;
+    /** @var Collection<int, Customer> */
+    #[ORM\ManyToMany(targetEntity: Customer::class, inversedBy: 'reservations')]
     #[ORM\JoinTable(name: 'reservations_has_customers')]
-    private $customers;
-    #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'bookedReservations')]
-    private $booker;
-    #[ORM\OneToMany(targetEntity: 'RegistrationBookEntry', mappedBy: 'reservation')]
-    private $registrationBookEntries;
-    #[ORM\ManyToOne(targetEntity: 'ReservationOrigin', inversedBy: 'reservations')]
-    private $reservationOrigin;
+    private Collection $customers;
+    #[ORM\ManyToOne(targetEntity: Customer::class, inversedBy: 'bookedReservations')]
+    private ?Customer $booker = null;
+    /** @var Collection<int, RegistrationBookEntry> */
+    #[ORM\OneToMany(targetEntity: RegistrationBookEntry::class, mappedBy: 'reservation')]
+    private Collection $registrationBookEntries;
+    #[ORM\ManyToOne(targetEntity: ReservationOrigin::class, inversedBy: 'reservations')]
+    private ?ReservationOrigin $reservationOrigin = null;
 
     /**
      * The portal's commission as it stood when this reservation was booked, in
@@ -94,15 +97,18 @@ class Reservation
      */
     #[ORM\Column(name: 'tourist_tax_collection', type: 'string', length: 16, enumType: PaymentCollection::class, nullable: true)]
     private ?PaymentCollection $touristTaxCollection = null;
-    #[ORM\OneToMany(targetEntity: 'Correspondence', mappedBy: 'reservation', cascade: ['remove'])]
-    private $correspondences;
+    /** @var Collection<int, Correspondence> */
+    #[ORM\OneToMany(targetEntity: Correspondence::class, mappedBy: 'reservation', cascade: ['remove'])]
+    private Collection $correspondences;
+    /** @var Collection<int, Price> */
     #[ORM\ManyToMany(targetEntity: Price::class)]
-    private $prices;
+    #[ORM\OrderBy(['description' => \SortDirection::Ascending, 'id' => \SortDirection::Ascending])]
+    private Collection $prices;
     #[ORM\ManyToOne(targetEntity: ReservationStatus::class, inversedBy: 'reservations')]
     #[ORM\JoinColumn(nullable: false)]
-    private $reservationStatus;
+    private ?ReservationStatus $reservationStatus = null;
     #[ORM\Column(type: 'uuid', unique: true)]
-    private $uuid;
+    private ?Uuid $uuid = null;
 
     #[ORM\Column(type: 'uuid', nullable: true)]
     private ?Uuid $bookingGroupUuid = null;
@@ -166,7 +172,7 @@ class Reservation
         $this->prices = new ArrayCollection();
     }
 
-    public function getId()
+    public function getId(): int|string|null
     {
         return $this->id;
     }
@@ -191,12 +197,12 @@ class Reservation
         return $this->optionDate;
     }
 
-    public function getRemark()
+    public function getRemark(): ?string
     {
         return $this->remark;
     }
 
-    public function getRemarkF()
+    public function getRemarkF(): string
     {
         return nl2br($this->remark ?? '');
     }
@@ -206,25 +212,39 @@ class Reservation
         return $this->reservationDate;
     }
 
-    /**
-     * @return Appartment|null
-     */
-    public function getAppartment()
+    public function getAppartment(): ?Appartment
     {
         return $this->appartment;
     }
 
-    public function setId($id): void
+    /** True when the booked room is an event space: the reservation then counts days, not nights. */
+    public function isEventSpace(): bool
+    {
+        return true === $this->appartment?->isEventSpace();
+    }
+
+    /**
+     * The last day of an event: the stored end is the day after it, so "Saturday to Saturday"
+     * is stored as Saturday to Sunday. Never before the start, also for same-day entries.
+     */
+    public function getLastDay(): \DateTime
+    {
+        $lastDay = (clone $this->endDate)->modify('-1 day');
+
+        return $lastDay < $this->startDate ? clone $this->startDate : $lastDay;
+    }
+
+    public function setId(int|string $id): void
     {
         $this->id = $id;
     }
 
-    public function setStartDate($startDate): void
+    public function setStartDate(\DateTime $startDate): void
     {
         $this->startDate = $startDate;
     }
 
-    public function setEndDate($endDate): void
+    public function setEndDate(\DateTime $endDate): void
     {
         $this->endDate = $endDate;
     }
@@ -234,37 +254,39 @@ class Reservation
         $this->persons = $persons;
     }
 
-    public function setOptionDate($optionDate): void
+    public function setOptionDate(?\DateTime $optionDate): void
     {
         $this->optionDate = $optionDate;
     }
 
-    public function setRemark($remark): void
+    public function setRemark(?string $remark): void
     {
         $this->remark = $remark;
     }
 
-    public function setReservationDate($reservationDate): void
+    public function setReservationDate(\DateTime $reservationDate): void
     {
         $this->reservationDate = $reservationDate;
     }
 
-    public function setAppartment($appartment): void
+    public function setAppartment(?Appartment $appartment): void
     {
         $this->appartment = $appartment;
     }
 
-    public function setCustomers($customers): void
+    /** @param Collection<int, Customer> $customers */
+    public function setCustomers(Collection $customers): void
     {
         $this->customers = $customers;
     }
 
-    public function setRegistrationBookEntries($registrationBookEntries): void
+    /** @param Collection<int, RegistrationBookEntry> $registrationBookEntries */
+    public function setRegistrationBookEntries(Collection $registrationBookEntries): void
     {
         $this->registrationBookEntries = $registrationBookEntries;
     }
 
-    public function addRegistrationBookEntry(RegistrationBookEntry $registrationBookEntry)
+    public function addRegistrationBookEntry(RegistrationBookEntry $registrationBookEntry): static
     {
         $this->registrationBookEntries[] = $registrationBookEntry;
 
@@ -276,81 +298,50 @@ class Reservation
         $this->registrationBookEntries->removeElement($registrationBookEntry);
     }
 
-    /**
-     * Add customers.
-     *
-     * @return Reservation
-     */
-    public function addCustomer(Customer $customers)
+    public function addCustomer(Customer $customers): static
     {
         $this->customers[] = $customers;
 
         return $this;
     }
 
-    /**
-     * Remove customers.
-     */
     public function removeCustomer(Customer $customers): void
     {
         $this->customers->removeElement($customers);
     }
 
-    /**
-     * Get customers.
-     *
-     * @return Collection
-     */
-    public function getCustomers()
+    /** @return Collection<int, Customer> */
+    public function getCustomers(): Collection
     {
         return $this->customers;
     }
 
-    /**
-     * Get registrationBookEntries.
-     *
-     * @return Collection
-     */
-    public function getRegistrationBookEntries()
+    /** @return Collection<int, RegistrationBookEntry> */
+    public function getRegistrationBookEntries(): Collection
     {
         return $this->registrationBookEntries;
     }
 
-    /**
-     * Set booker.
-     *
-     * @return Reservation
-     */
-    public function setBooker(?Customer $booker = null)
+    public function setBooker(?Customer $booker = null): static
     {
         $this->booker = $booker;
 
         return $this;
     }
 
-    /**
-     * Get booker.
-     *
-     * @return Customer|null
-     */
-    public function getBooker()
+    public function getBooker(): ?Customer
     {
         return $this->booker;
     }
 
-    public function getAmount()
+    public function getAmount(): int
     {
         $interval = $this->startDate->diff($this->endDate);
 
         return max(1, (int) $interval->format('%a'));
     }
 
-    /**
-     * Set reservationOrigin.
-     *
-     * @return Reservation
-     */
-    public function setReservationOrigin(?ReservationOrigin $reservationOrigin = null)
+    public function setReservationOrigin(?ReservationOrigin $reservationOrigin = null): static
     {
         // Pinned here rather than in each of the paths that create a reservation
         // - online booking, calendar import, the reservation form - because this
@@ -452,63 +443,39 @@ class Reservation
     }
 
     /**
-     * Get reservationOrigin.
-     *
      * Null for a booking that came in directly - the field is optional, and the
      * fee calculation leans on that.
-     *
-     * @return ReservationOrigin|null
      */
-    public function getReservationOrigin()
+    public function getReservationOrigin(): ?ReservationOrigin
     {
         return $this->reservationOrigin;
     }
 
-    /**
-     * Add correspondence.
-     *
-     * @return Reservation
-     */
-    public function addCorrespondence(Correspondence $correspondence)
+    public function addCorrespondence(Correspondence $correspondence): static
     {
         $this->correspondences[] = $correspondence;
 
         return $this;
     }
 
-    /**
-     * Remove correspondence.
-     */
     public function removeCorrespondence(Correspondence $correspondence): void
     {
         $this->correspondences->removeElement($correspondence);
     }
 
-    /**
-     * Get correspondences.
-     *
-     * @return Collection
-     */
-    public function getCorrespondences()
+    /** @return Collection<int, Correspondence> */
+    public function getCorrespondences(): Collection
     {
         return $this->correspondences;
     }
 
-    /**
-     * Add invoice.
-     *
-     * @return Reservation
-     */
-    public function addInvoice(Invoice $invoice)
+    public function addInvoice(Invoice $invoice): static
     {
         $this->invoices[] = $invoice;
 
         return $this;
     }
 
-    /**
-     * Remove invoice.
-     */
     public function removeInvoice(Invoice $invoice): void
     {
         $this->invoices->removeElement($invoice);
@@ -526,18 +493,14 @@ class Reservation
         return false;
     }
 
-    /**
-     * Get invoices.
-     *
-     * @return Collection
-     */
-    public function getInvoices()
+    /** @return Collection<int, Invoice> */
+    public function getInvoices(): Collection
     {
         return $this->invoices;
     }
 
     /**
-     * @return Collection|Price[]
+     * @return Collection<int, Price>
      */
     public function getPrices(): Collection
     {
@@ -682,7 +645,11 @@ class Reservation
         return $this->guestCounts;
     }
 
-    /** @param array<int, int> $guestCounts */
+    /**
+     * Normalize integer and numeric-string counts, discarding non-positive values.
+     *
+     * @param array<int, int|numeric-string> $guestCounts
+     */
     public function setGuestCounts(array $guestCounts): self
     {
         $normalized = [];

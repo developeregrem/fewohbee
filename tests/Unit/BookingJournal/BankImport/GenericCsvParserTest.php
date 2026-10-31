@@ -315,6 +315,49 @@ CSV;
         self::assertSame('2099-03-02', $result->lines[0]->bookDate->format('Y-m-d'));
     }
 
+    public function testBlankRowsKeepTransactionOrderSignsAndAmounts(): void
+    {
+        $stream = tmpfile();
+        if (false === $stream) {
+            self::fail('Could not create a temporary CSV file.');
+        }
+
+        try {
+            fwrite($stream, "Datum;Betrag;Zweck\r\n\r\n"
+                ."01.06.2031;-1.234,56;Ausgabe\r\n;;\r\n"
+                ."02.06.2031;12,34;Eingang\r\n\r\n");
+            $metadata = stream_get_meta_data($stream);
+            $profile = (new BankCsvProfile())
+                ->setName('Synthetic blank rows')
+                ->setDelimiter(';')
+                ->setEncoding('UTF-8')
+                ->setHeaderSkip(0)
+                ->setHasHeaderRow(true)
+                ->setColumnMap(['bookDate' => 0, 'amount' => 1, 'purpose' => 2])
+                ->setDateFormat('d.m.Y')
+                ->setAmountDecimalSeparator(',')
+                ->setAmountThousandsSeparator('.')
+                ->setDirectionMode(BankCsvProfile::DIRECTION_SIGNED);
+
+            $result = (new GenericCsvParser())->parse(new \SplFileInfo($metadata['uri']), $profile);
+
+            self::assertSame([], $result->warnings);
+            self::assertCount(2, $result->lines);
+            self::assertSame(
+                ['-1234.56', '12.34'],
+                array_map(static fn (StatementLineDto $line): string => $line->amount, $result->lines),
+            );
+            self::assertSame(
+                ['Ausgabe', 'Eingang'],
+                array_map(static fn (StatementLineDto $line): string => $line->purpose, $result->lines),
+            );
+            self::assertSame('2031-06-01', $result->lines[0]->bookDate->format('Y-m-d'));
+            self::assertSame('2031-06-02', $result->lines[1]->bookDate->format('Y-m-d'));
+        } finally {
+            fclose($stream);
+        }
+    }
+
     private function createDkbProfile(): BankCsvProfile
     {
         return (new BankCsvProfile())

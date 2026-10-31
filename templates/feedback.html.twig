@@ -1,5 +1,5 @@
 {% if error is not defined or error %}    
-    {% for type, flashMessages in app.flashes %}
+    {% for type, flashMessages in feedbackMessages is defined ? feedbackMessages : app.flashes %}
         {% for flashMessage in flashMessages %}
         <div class="row">
             <div class="col-md">

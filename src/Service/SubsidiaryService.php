@@ -15,19 +15,19 @@ namespace App\Service;
 
 use App\Entity\Appartment;
 use App\Entity\Subsidiary;
+use App\Service\Localization\ContentTranslator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 class SubsidiaryService
 {
-    private $em;
-
-    public function __construct(EntityManagerInterface $em)
-    {
-        $this->em = $em;
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly ?ContentTranslator $contentTranslator = null,
+    ) {
     }
 
-    public function getObjectFromForm(Request $request, $id = 'new')
+    public function getObjectFromForm(Request $request, int|string $id = 'new'): Subsidiary
     {
         $object = null;
 
@@ -46,6 +46,8 @@ class SubsidiaryService
         $object->setCheckInUntil($this->readTime($request, 'check-in-until-'.$id));
         $object->setCheckOutUntil($this->readTime($request, 'check-out-until-'.$id));
         $object->setCheckInNote($request->request->get('check-in-note-'.$id));
+        // The arrival note in further guest languages (online check-in); whitelisted in applySubmitted().
+        $this->contentTranslator?->applySubmitted($object, $request->request->all()['translations-'.$id] ?? null, ['checkInNote' => null]);
 
         return $object;
     }
@@ -62,10 +64,8 @@ class SubsidiaryService
      * is stored, never a date, so nothing has to be said about which day the end falls on.
      *
      * A lone $checkInFrom is fine too and means "from 17:00, no published end".
-     *
-     * @param int|string $id
      */
-    public function hasInvalidCheckInWindow(Request $request, $id): bool
+    public function hasInvalidCheckInWindow(Request $request, int|string $id): bool
     {
         $from = $this->readTime($request, 'check-in-from-'.$id);
         $until = $this->readTime($request, 'check-in-until-'.$id);
@@ -102,10 +102,8 @@ class SubsidiaryService
      * Subsidiary::setOpeningHours() drops such a range, which on its own would leave the
      * operator believing a lone "07:00" had been saved. The controller turns this into a
      * visible warning instead.
-     *
-     * @param int|string $id
      */
-    public function hasIncompleteOpeningHours(Request $request, $id): bool
+    public function hasIncompleteOpeningHours(Request $request, int|string $id): bool
     {
         foreach ($request->request->all('opening-hours-'.$id) as $ranges) {
             if (!is_array($ranges)) {
@@ -135,11 +133,9 @@ class SubsidiaryService
      * here and dropped by Subsidiary::setOpeningHours(), so normalisation lives in
      * exactly one spot.
      *
-     * @param int|string $id
-     *
      * @return array<int, list<array{0: string, 1: string}>>
      */
-    private function getOpeningHoursFromForm(Request $request, $id): array
+    private function getOpeningHoursFromForm(Request $request, int|string $id): array
     {
         $hours = [];
 
@@ -163,7 +159,7 @@ class SubsidiaryService
         return $hours;
     }
 
-    public function deleteObject(Subsidiary $object)
+    public function deleteObject(Subsidiary $object): bool
     {
         $appartments = $this->em->getRepository(Appartment::class)->findBy(['object' => $object]);
 

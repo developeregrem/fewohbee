@@ -110,6 +110,7 @@ final class GuestCheckInSettingsController extends AbstractController
             'extras' => $extras,
             'bookedExtras' => [],
             'existingRequestedExtras' => [],
+            'extraLabels' => array_column($extras, 'label', 'id'),
             'extrasChanged' => false,
             'canStartOtherGuest' => false,
             'otherGuestForm' => false,

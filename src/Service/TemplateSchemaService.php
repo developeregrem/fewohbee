@@ -37,7 +37,9 @@ class TemplateSchemaService
      *   - ['type' => 'date']                                → DateTimeInterface, inserted with |date()
      *   - ['type' => 'date', 'nullable' => true]            → date that may be missing, see dateNode()
      *
-     * @param array<string, array{class?: class-string, collection?: bool, type?: string, nullable?: bool}> $variableMap
+     * Class names are checked at runtime; missing or unknown classes become scalar nodes.
+     *
+     * @param array<string, array{class?: string, collection?: bool, type?: string, nullable?: bool}> $variableMap
      *
      * @return array<string, mixed> JSON-ready schema tree
      */
@@ -204,6 +206,8 @@ class TemplateSchemaService
      *
      * Uses Doctrine ORM attributes on the corresponding class property first,
      * then falls back to method return type analysis.
+     *
+     * @param \ReflectionClass<object> $refClass
      */
     private function resolveTargetClass(\ReflectionClass $refClass, \ReflectionMethod $method, string $propertyName): ?string
     {
@@ -268,6 +272,8 @@ class TemplateSchemaService
 
     /**
      * Check if a method returns a Doctrine Collection (indicating a to-many relation).
+     *
+     * @param \ReflectionClass<object> $refClass
      */
     private function isCollectionReturn(\ReflectionClass $refClass, \ReflectionMethod $method, string $propertyName): bool
     {
@@ -355,6 +361,8 @@ class TemplateSchemaService
     /**
      * Check if a class property has a Doctrine Column type of date/datetime.
      * Fallback for entities without PHP return type declarations.
+     *
+     * @param \ReflectionClass<object> $refClass
      */
     private function isDateProperty(\ReflectionClass $refClass, string $propertyName): bool
     {
@@ -405,6 +413,8 @@ class TemplateSchemaService
 
     /**
      * Resolve a possibly short entity class name to its FQCN.
+     *
+     * @param \ReflectionClass<object> $context
      */
     private function resolveEntityFQCN(string $name, \ReflectionClass $context): string
     {

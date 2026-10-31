@@ -340,6 +340,9 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
 
     /**
      * Build a minimal sample payload for invoice previews.
+     *
+     * @param array<string, mixed> $ctx
+     * @return array<string, mixed>
      */
     private function buildSampleParams(array $ctx = []): array
     {

@@ -12,6 +12,7 @@ appartment:
   bedsmax: Max. people
   bedsmin: Normal occupancy
   category: Room Category
+  category.missing: Create a room category in the settings before adding a room.
   delete:
     ask: Are you sure you want to delete this room?
   description: Description

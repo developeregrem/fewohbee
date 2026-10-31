@@ -155,6 +155,8 @@ class GuestCheckInReviewService
             'main' => $isMain,
             'name' => trim(self::text($submitted['firstname'] ?? null).' '.self::text($submitted['lastname'] ?? null)),
             'livesWithMain' => !$isMain && !\is_array($submitted['address'] ?? null),
+            // Invoices go to the booker, so a company of another main guest only counts once they book.
+            'hasCompany' => $isMain && \is_array($submitted['company'] ?? null),
             'differsFromBooker' => $isMain && null !== $booker && GuestCheckInPersonMatch::hasFullName($submitted)
                 && !GuestCheckInPersonMatch::likelySamePerson($submitted, $booker),
             'options' => $options,
@@ -204,6 +206,18 @@ class GuestCheckInReviewService
         if ($isMain) {
             $fields[] = ['customer.email', $submitted['email'] ?? null, $currentAddress?->getEmail(), false];
             $fields[] = ['customer.phone', $submitted['phone'] ?? null, $currentAddress?->getPhone(), false];
+        }
+        if ($isMain && \is_array($submitted['company'] ?? null)) {
+            // Compared with the business address of that company, which confirming writes to.
+            $company = $submitted['company'];
+            $companyName = self::text($company['name'] ?? null);
+            $current = null !== $target && null !== $companyName ? GuestCheckInApplyService::companyAddress($target, $companyName) : null;
+            $invoiceAddress = \is_array($company['address'] ?? null) ? $company['address'] : $address;
+            $fields[] = ['customer.company', $companyName, $current?->getCompany(), false];
+            $fields[] = ['customer.buyerVatId', $company['vatId'] ?? null, $current?->getBuyerVatId(), false];
+            $fields[] = ['guest_checkin.tab.invoice_address', self::addressLine($invoiceAddress), null !== $current ? self::addressLine([
+                'street' => $current->getAddress(), 'zip' => $current->getZip(), 'city' => $current->getCity(), 'country' => $current->getCountry(),
+            ]) : null, false];
         }
 
         $changes = ['new' => [], 'changed' => [], 'same' => []];
@@ -450,6 +464,15 @@ class GuestCheckInReviewService
             GuestCheckInLinkState::UNAVAILABLE === $state => 'guest_checkin.tab.unavailable_reservation',
             default => null,
         };
+    }
+
+    /** @param array<string, mixed> $address */
+    private static function addressLine(array $address): ?string
+    {
+        $cityLine = trim((self::text($address['zip'] ?? null) ?? '').' '.(self::text($address['city'] ?? null) ?? ''));
+        $line = implode(', ', array_filter([self::text($address['street'] ?? null), $cityLine, self::text($address['country'] ?? null)]));
+
+        return '' === $line ? null : $line;
     }
 
     private static function name(Customer $customer): string

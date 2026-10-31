@@ -20,9 +20,10 @@ use Doctrine\Common\Collections\ArrayCollection;
  * Per-night, per-occupancy view of which price row applies to a room category.
  *
  * The rate for a night is not a property of that night alone: findApartmentPrices()
- * filters candidates by minStay and matches numberOfPersons exactly, so "the price on
- * 1 September" only means something once the intended stay length and occupancy are
- * fixed. Both are explicit parameters here rather than assumptions.
+ * filters candidates by minStay and matches numberOfPersons exactly (or from below, for a
+ * per-room price with a surcharge for every further person), so "the price on 1 September"
+ * only means something once the intended stay length and occupancy are fixed. Both are
+ * explicit parameters here rather than assumptions.
  *
  * Costs one query per occupancy, not one per night: the candidate price rows for the
  * whole window are fetched once and PriceService then resolves each night against them
@@ -120,6 +121,14 @@ class RateCalendarService
         $unitPrice = null === $adjustment
             ? $baseUnitPrice
             : (float) $this->dynamicRates->apply(PricePromise::money($price->getPrice()), $adjustment);
+        // Price rules move the surcharge like the room price, as on the invoice.
+        $surcharge = null;
+        if ($price->hasExtraPersonSurcharge()) {
+            $surcharge = null === $adjustment
+                ? round((float) $price->getExtraPersonSurcharge(), 2)
+                : (float) $this->dynamicRates->apply((string) $price->getExtraPersonSurcharge(), $adjustment);
+        }
+        $extraPersons = null === $surcharge ? 0 : max(0, $occupancy - (int) $price->getNumberOfPersons());
 
         if ($price->getIsFlatPrice()) {
             // A flat price covers the whole stay, so there is no meaningful per-night
@@ -128,7 +137,7 @@ class RateCalendarService
             $perNight = null;
         } elseif ($price->getIsPerRoom()) {
             $pricingModel = 'per_room_night';
-            $perNight = $unitPrice;
+            $perNight = round($unitPrice + $extraPersons * (float) $surcharge, 2);
         } else {
             $pricingModel = 'per_person_night';
             $perNight = round($unitPrice * $occupancy, 2);
@@ -141,6 +150,8 @@ class RateCalendarService
             'pricingModel' => $pricingModel,
             'unitPrice' => $unitPrice,
             'baseUnitPrice' => $baseUnitPrice,
+            'includedPersons' => null === $surcharge ? null : (int) $price->getNumberOfPersons(),
+            'extraPersonSurcharge' => $surcharge,
             'adjustmentPercent' => null === $adjustment ? 0.0 : round($adjustment->percent, 2),
             'priceRules' => null === $adjustment ? [] : array_map(
                 static fn (PriceRule $rule): array => ['name' => $rule->getName(), 'percent' => $rule->getPercent()],

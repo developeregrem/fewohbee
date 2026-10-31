@@ -82,7 +82,7 @@ class RegistrationBookServiceController extends AbstractController
     /**
      * Loads the first modal page to add registration book entries and lists all reservations that are not in the book already.
      *
-     * @return type
+     * @return Response
      */
     #[Route('/showadd/reservations', name: 'registrationbook.showadd.reservations', methods: ['GET'])]
     public function showAddReservationsAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
@@ -93,7 +93,7 @@ class RegistrationBookServiceController extends AbstractController
         if ('' !== $start) {
             try {
                 $startDate = new \DateTime($start);
-            } catch (Exception $ex) {
+            } catch (\Exception $ex) {
                 $startDate = new \DateTime();
                 $startDate->sub(new \DateInterval('P30D'));
             }
@@ -231,7 +231,7 @@ class RegistrationBookServiceController extends AbstractController
     /**
      * delete entity.
      *
-     * @return string
+     * @return Response
      */
     #[Route('/{id}/delete', name: 'registrationbook.delete.origin', methods: ['DELETE'])]
     public function deleteAction(AuthorizationCheckerInterface $authChecker, RegistrationBookService $rbs, Request $request, int $id)

@@ -6,13 +6,16 @@ namespace App\Tests\Unit;
 
 use App\Dto\PriceBreakdown;
 use App\Dto\PriceBreakdownLine;
+use App\Entity\Appartment;
 use App\Entity\AppSettings;
 use App\Entity\Enum\GuestStatisticalGroup;
 use App\Entity\Enum\ModifierType;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\GuestCategory;
 use App\Entity\GuestCategoryModifier;
 use App\Entity\Price;
 use App\Entity\Reservation;
+use App\Entity\RoomCategory;
 use App\Service\AppSettingsService;
 use App\Service\InvoiceService;
 use App\Service\InvoiceSumCalculator;
@@ -127,6 +130,88 @@ final class InvoiceServiceApartmentModifierTest extends TestCase
         ];
 
         $service = $this->createService($r, $breakdowns);
+        self::assertSame([], $service->buildApartmentModifierPositions([$r]));
+    }
+
+    public function testPerRoomSurchargeBillsThePersonsBeyondTheIncludedOnes(): void
+    {
+        $base = $this->makePrice('80.00');
+        $base->setIsPerRoom(true);
+        $base->setNumberOfPersons(2);
+        $base->setExtraPersonSurcharge('15');
+
+        $r = new Reservation();
+        $r->setPersons(4);
+        $service = $this->createService($r, [$this->makeBreakdown($base, []), $this->makeBreakdown($base, [])]);
+
+        $positions = $service->buildApartmentModifierPositions([$r]);
+
+        self::assertCount(1, $positions);
+        self::assertSame(4, $positions[0]->getAmount()); // 2 nights × 2 further persons
+        self::assertSame('15.00', (string) $positions[0]->getPrice());
+        self::assertSame('apartment_modifier', $positions[0]->getPositionGroup());
+        self::assertStringStartsWith('invoice.apartment_extra_person.position:invoice.tourist_tax.position.nights:2', (string) $positions[0]->getDescription());
+    }
+
+    public function testPerRoomSurchargeOfAnEventSpaceNamesDays(): void
+    {
+        $base = $this->makePrice('500.00');
+        $base->setIsPerRoom(true);
+        $base->setNumberOfPersons(50);
+        $base->setExtraPersonSurcharge('5');
+        $hall = new Appartment();
+        $hall->setRoomCategory((new RoomCategory())->setKind(RoomCategoryKind::EVENT_SPACE));
+
+        $r = new Reservation();
+        $r->setAppartment($hall);
+        $r->setPersons(55);
+        $service = $this->createService($r, [$this->makeBreakdown($base, [])]);
+
+        $positions = $service->buildApartmentModifierPositions([$r]);
+
+        self::assertCount(1, $positions);
+        self::assertStringStartsWith('invoice.apartment_extra_person.position:reservation.summary.days:1', (string) $positions[0]->getDescription());
+    }
+
+    public function testPerRoomSurchargeIsNotChargedWithinTheIncludedPersons(): void
+    {
+        $base = $this->makePrice('80.00');
+        $base->setIsPerRoom(true);
+        $base->setNumberOfPersons(2);
+        $base->setExtraPersonSurcharge('15');
+
+        $r = new Reservation();
+        $r->setPersons(2);
+        $service = $this->createService($r, [$this->makeBreakdown($base, [])]);
+
+        self::assertSame([], $service->buildApartmentModifierPositions([$r]));
+    }
+
+    public function testASmallerPartyPaysTheBasePriceWithoutSurcharge(): void
+    {
+        $base = $this->makePrice('500.00');
+        $base->setIsPerRoom(true);
+        $base->setNumberOfPersons(50);
+        $base->setExtraPersonSurcharge('5');
+
+        $r = new Reservation();
+        $r->setPersons(30);
+        $service = $this->createService($r, [$this->makeBreakdown($base, [])]);
+
+        self::assertSame([], $service->buildApartmentModifierPositions([$r]));
+    }
+
+    public function testSurchargeOfAPricePerPersonIsIgnored(): void
+    {
+        // The form clears it, but a row may still carry one: only a per-room price bills further persons.
+        $base = $this->makePrice('40.00');
+        $base->setNumberOfPersons(2);
+        $base->setExtraPersonSurcharge('15');
+
+        $r = new Reservation();
+        $r->setPersons(4);
+        $service = $this->createService($r, [$this->makeBreakdown($base, [])]);
+
         self::assertSame([], $service->buildApartmentModifierPositions([$r]));
     }
 

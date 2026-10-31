@@ -40,13 +40,12 @@
 
                     <div class="col-sm-8">
                         <select name="salutation-{{ customer.id }}" class="form-select">
-                            {% for salutation in customer_salutations %}
-                                {% set translatedSalutation = salutation|trans %}
-                                <option value="{{ translatedSalutation }}"
-                                        {% if customer.salutation == translatedSalutation %}
+                            {% for salutation in salutation_choices(base_locale()) %}
+                                <option value="{{ salutation }}"
+                                        {% if customer.salutation == salutation %}
                                             selected
                                         {% endif %}>
-                                    {{ translatedSalutation }}
+                                    {{ salutation }}
                                 </option>
                             {% endfor %}
                         </select>
@@ -246,6 +245,23 @@
                         </select>
                     </div>
                 </div>
+                {% if guest_extra_locales()|length > 0 %}
+                    {# Mails to the guest pick the language variant of their template (SendTemplateEmailAction). #}
+                    {% set customerLocale = customer.locale ?? base_locale() %}
+                    <div class="row mt-3">
+                        <label for="locale-{{ customer.id }}"
+                               class="col-sm-4 col-form-label text-sm-end">{{ 'customer.locale'|trans }}</label>
+
+                        <div class="col-sm-8">
+                            <select class="form-select" id="locale-{{ customer.id }}" name="locale-{{ customer.id }}">
+                                {% for locale in guest_locales()|merge(customerLocale in guest_locales() ? [] : [customerLocale]) %}
+                                    <option value="{{ locale }}"{% if locale == customerLocale %} selected{% endif %}>{{ language_name(locale, false) }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">{{ 'customer.locale_help'|trans }}</div>
+                        </div>
+                    </div>
+                {% endif %}
                 <div class="row mt-3">
                     <label for="id-type-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-sm-end">{{ 'customer.id.type.name'|trans }}</label>

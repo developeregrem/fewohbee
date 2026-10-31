@@ -7,6 +7,7 @@ namespace App\Service\GuestCheckIn;
 use App\Entity\GuestCheckIn;
 use App\Entity\Reservation;
 use App\Repository\GuestCheckInRepository;
+use App\Service\Localization\GuestLocaleService;
 use App\Service\PublicUrlService;
 use Doctrine\ORM\EntityManagerInterface;
 use Endroid\QrCode\Builder\Builder;
@@ -61,7 +62,13 @@ class GuestCheckInLinkService
         $id = (int) $reservation->getId();
         if (!\array_key_exists($id, $this->urls)) {
             $selector = $this->repository->ensureSelector($id, $this->signer->newSelector(), $this->clock->now());
-            $this->urls[$id] = $this->publicUrlService->generate(self::ROUTE, ['token' => $this->signer->linkToken($selector)]);
+            $parameters = ['token' => $this->signer->linkToken($selector)];
+            // The page opens in the booker's language; without one it follows the browser.
+            $locale = $reservation->getBooker()?->getLocale();
+            if (null !== $locale) {
+                $parameters[GuestLocaleService::QUERY_PARAMETER] = $locale;
+            }
+            $this->urls[$id] = $this->publicUrlService->generate(self::ROUTE, $parameters);
         }
 
         return $this->urls[$id];

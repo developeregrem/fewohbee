@@ -7,6 +7,7 @@ namespace App\Service\GuestCheckIn;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Repository\PriceRepository;
+use App\Service\Localization\ContentTranslator;
 use App\Service\PriceService;
 use Doctrine\Common\Collections\ArrayCollection;
 
@@ -16,6 +17,7 @@ class GuestCheckInExtrasService
     public function __construct(
         private readonly PriceRepository $prices,
         private readonly PriceService $priceService,
+        private readonly ?ContentTranslator $contentTranslator = null,
     ) {
     }
 
@@ -23,7 +25,10 @@ class GuestCheckInExtrasService
      * A price can be attached only once to a reservation. Quantity and individual days are not
      * offered here, because Reservation::prices cannot persist either choice.
      *
-     * @return list<array{id: int, description: string, total: string, totalFormatted: string, booked: bool, price: Price}>
+     * `description` is the stored name (it goes into the snapshot for the host), `label` the
+     * name in the guest's language; the list is ordered by it.
+     *
+     * @return list<array{id: int, description: string, label: string, total: string, booked: bool, price: Price}>
      */
     public function available(Reservation $reservation): array
     {
@@ -67,12 +72,15 @@ class GuestCheckInExtrasService
             $result[] = [
                 'id' => (int) $price->getId(),
                 'description' => (string) $price->getDescription(),
+                'label' => (string) ($this->contentTranslator?->text($price, 'description') ?? $price->getDescription()),
                 'total' => number_format($total, 2, '.', ''),
-                'totalFormatted' => number_format($total, 2, ',', '.'),
                 'booked' => $booked,
                 'price' => $price,
             ];
         }
+
+        $collator = new \Collator(\Locale::getDefault());
+        usort($result, static fn (array $a, array $b): int => (int) $collator->compare($a['label'], $b['label']));
 
         return $result;
     }

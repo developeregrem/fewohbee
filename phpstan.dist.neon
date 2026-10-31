@@ -1,3 +1,6 @@
+includes:
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+
 parameters:
     level: 6
     paths:
@@ -6,4 +9,7 @@ parameters:
         - public/
         - src/
         - tests/
+    # Discover migration classes used by tests without analysing released migrations.
+    scanDirectories:
+        - migrations/
     treatPhpDocTypesAsCertain: false

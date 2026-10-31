@@ -258,7 +258,7 @@ class InvoiceSettingsType extends AbstractType
         }
     }
 
-    public function validateVatIDCountry($vatID, ExecutionContextInterface $context): void
+    public function validateVatIDCountry(?string $vatID, ExecutionContextInterface $context): void
     {
         if ($vatID) {
             $countryCode = substr($vatID, 0, 2);

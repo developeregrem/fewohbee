@@ -8,6 +8,7 @@ use App\Dto\BookingJournal\BankImport\ImportState;
 use App\Entity\BankImportRule;
 use App\Service\BookingJournal\BankImport\RuleActionApplicator;
 use App\Service\BookingJournal\BankImport\UserRegexCompiler;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class RuleActionApplicatorTest extends TestCase
@@ -55,6 +56,28 @@ final class RuleActionApplicatorTest extends TestCase
         self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
     }
 
+    /** @param array{taxRateId?: int|string|null} $taxAction */
+    #[DataProvider('assignTaxRateCases')]
+    public function testAssignActionPreservesOrReplacesExistingTaxRate(array $taxAction, int $expectedTaxRateId): void
+    {
+        $rule = $this->createRule(['mode' => BankImportRule::ACTION_MODE_ASSIGN] + $taxAction);
+        $line = $this->emptyLine(['userTaxRateId' => 41]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertSame($expectedTaxRateId, $line['userTaxRateId']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
+    }
+
+    /** @return iterable<string, array{array{taxRateId?: int|string|null}, int}> */
+    public static function assignTaxRateCases(): iterable
+    {
+        yield 'missing tax rate preserves assignment' => [[], 41];
+        yield 'null tax rate preserves assignment' => [['taxRateId' => null], 41];
+        yield 'integer tax rate replaces assignment' => [['taxRateId' => 19], 19];
+        yield 'numeric string tax rate replaces assignment' => [['taxRateId' => '19'], 19];
+    }
+
     public function testTemplatePlaceholdersIncludeInvoiceNumberAndDate(): void
     {
         $rule = $this->createRule([
@@ -91,6 +114,52 @@ final class RuleActionApplicatorTest extends TestCase
         self::assertSame('RE-2024-047', $line['userInvoiceNumber']);
         self::assertSame('Lieferantenrechnung RE-2024-047', $line['userRemark']);
         self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
+    }
+
+    /** @param 'invoice'|'amount' $extraction */
+    #[DataProvider('markerWithoutValueCases')]
+    public function testMarkerWithoutValueLeavesLinePending(string $extraction, string $purpose): void
+    {
+        $action = 'invoice' === $extraction
+            ? [
+                'mode' => BankImportRule::ACTION_MODE_ASSIGN,
+                'debitAccountId' => 42,
+                'invoiceNumberExtraction' => ['mode' => 'marker', 'marker' => 'Rechnung'],
+            ]
+            : [
+                'mode' => BankImportRule::ACTION_MODE_SPLIT,
+                'splits' => [
+                    ['amountSource' => 'purpose_marker', 'marker' => 'Gebuehr', 'debitAccountId' => 42],
+                    ['remainder' => true, 'debitAccountId' => 43],
+                ],
+            ];
+        $line = $this->emptyLine([
+            'purpose' => $purpose,
+            'amount' => '-100.00',
+            'userDebitAccountId' => 17,
+            'userInvoiceNumber' => 'MANUAL-42',
+        ]);
+
+        $this->applicator->apply($this->createRule($action), $line);
+
+        self::assertSame(ImportState::LINE_STATUS_PENDING, $line['status']);
+        self::assertSame([], $line['splits']);
+        self::assertSame(17, $line['userDebitAccountId']);
+        self::assertSame('MANUAL-42', $line['userInvoiceNumber']);
+        self::assertSame('-100.00', $line['amount']);
+        $warning = 'invoice' === $extraction
+            ? 'accounting.bank_import.rule.warning.invoice_marker_missing'
+            : 'accounting.bank_import.rule.warning.split_marker_missing';
+        self::assertSame($warning, $line['ruleWarning']['key']);
+    }
+
+    /** @return iterable<string, array{'invoice'|'amount', string}> */
+    public static function markerWithoutValueCases(): iterable
+    {
+        yield 'invoice marker at end' => ['invoice', 'Zahlung Rechnung'];
+        yield 'invoice marker followed by whitespace' => ['invoice', 'Zahlung Rechnung   '];
+        yield 'amount marker at end' => ['amount', 'Abrechnung Gebuehr'];
+        yield 'amount marker followed by whitespace' => ['amount', 'Abrechnung Gebuehr   '];
     }
 
     public function testInvoiceNumberRegexExtractionUsesFirstCaptureGroup(): void

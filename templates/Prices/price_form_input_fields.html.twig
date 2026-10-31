@@ -1,5 +1,11 @@
+{# Event spaces are charged per day: labels naming the unit switch with the selected categories. #}
+{% import _self as units %}
+{% set dayUnit = price.isForEventSpaces %}
+{% set examplePlaceholders = {'%persons%': '__PERSONS__', '%base%': '__BASE__ ' ~ currency_symbol, '%surcharge%': '__SURCHARGE__ ' ~ currency_symbol, '%total%': '__TOTAL__ ' ~ currency_symbol} %}
 <fieldset id="entry-form-fieldset-{{ price.id }}" {% if price.id != "new" %} disabled {% endif %}>
-    <div class="accordion" id="accordion" data-controller="price-components" data-price-components-price-id-value="{{ price.id }}">
+    <div class="accordion" id="accordion" data-controller="price-components price-occupancy" data-price-components-price-id-value="{{ price.id }}"
+         data-price-occupancy-example-value="{{ 'price.extra_person_surcharge.example'|trans(examplePlaceholders) }}"
+         data-price-occupancy-example-day-value="{{ 'price.extra_person_surcharge.example.day'|trans(examplePlaceholders) }}">
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingOne-{{ price.id }}">
                 <button type="button" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#collapseOne-{{ price.id }}" aria-expanded="true" aria-controls="collapseOne-{{ price.id }}">
@@ -17,12 +23,15 @@
                                    value="{{ price.description }}" required>
                         </div>
                     </div>
+                    {% import 'common/content_translations.html.twig' as contentTranslations %}
+                    {{ contentTranslations.rawInputs('translations-' ~ price.id, price, 'description', {horizontal: true, offsetClass: 'col-sm-8 offset-sm-4', base: price.description, maxLength: 100}) }}
                     <div class="row">
                         <label for="price-{{ price.id }}" class="col-sm-4 col-form-label text-sm-end">{{ 'price.price'|trans }} *</label>
 
                         <div class="col-sm-4">
                             <input type="text" class="form-control" name="price-{{ price.id }}"
-                                   value="{{ price.price|number_format(2, ',', '.') }}" required>
+                                   value="{{ price.price|number_format(2, ',', '.') }}" required
+                                   data-price-occupancy-target="price" data-action="input->price-occupancy#update">
                         </div>
                         <div class="col">
                             <div class="form-check form-switch mt-4">
@@ -85,9 +94,10 @@
                         <label for="category-{{ price.id }}" class="col-sm-4 col-form-label text-sm-end">{{ 'price.category'|trans }}{% if not isMiscPriceType %} *{% endif %}</label>
                         <div class="col-sm-8">
                             {% set selectedCategoryIds = price.roomCategories|map(category => category.id) %}
-                            <select id="category-{{ price.id }}" name="category-{{ price.id }}[]" class="form-select" multiple{% if not isMiscPriceType %} required{% endif %}>
+                            <select id="category-{{ price.id }}" name="category-{{ price.id }}[]" class="form-select" multiple{% if not isMiscPriceType %} required{% endif %}
+                                    data-price-occupancy-target="category" data-action="change->price-occupancy#update">
                                 {% for category in categories %}
-                                    <option value="{{ category.id }}"{% if category.id in selectedCategoryIds %} selected{% endif %}>{{ category.name }}</option>
+                                    <option value="{{ category.id }}"{% if category.id in selectedCategoryIds %} selected{% endif %}{% if category.isEventSpace %} data-event-space="1"{% endif %}>{{ category.name }}</option>
                                 {% endfor %}
                             </select>
                             <div class="form-text{% if not isMiscPriceType %} d-none{% endif %}" id="category-hint-{{ price.id }}"><i class="fas fa-info-circle"></i> {{ 'price.category.misc.hint'|trans }}</div>
@@ -99,18 +109,27 @@
                         <div class="col-sm-8">
                             <div class="form-check">
                                 <input type="radio" name="calculation-type-{{ price.id }}" id="calc-per-person-{{ price.id }}"
-                                       class="form-check-input" value="per_person"{% if calcType == 'per_person' %} checked{% endif %}>
-                                <label class="form-check-label" for="calc-per-person-{{ price.id }}">{{ 'price.calculation_type.per_person'|trans }}</label>
+                                       class="form-check-input" value="per_person"{% if calcType == 'per_person' %} checked{% endif %}
+                                       aria-describedby="calc-per-person-help-{{ price.id }}"
+                                       data-price-occupancy-target="calcType" data-action="change->price-occupancy#update">
+                                <label class="form-check-label" for="calc-per-person-{{ price.id }}">{{ units.text('price.calculation_type.per_person', dayUnit) }}</label>
+                                <div class="form-text mt-0" id="calc-per-person-help-{{ price.id }}">{{ 'price.calculation_type.per_person.help'|trans }}</div>
                             </div>
                             <div class="form-check">
                                 <input type="radio" name="calculation-type-{{ price.id }}" id="calc-per-room-{{ price.id }}"
-                                       class="form-check-input" value="per_room"{% if calcType == 'per_room' %} checked{% endif %}>
-                                <label class="form-check-label" for="calc-per-room-{{ price.id }}">{{ 'price.calculation_type.per_room'|trans }}</label>
+                                       class="form-check-input" value="per_room"{% if calcType == 'per_room' %} checked{% endif %}
+                                       aria-describedby="calc-per-room-help-{{ price.id }}"
+                                       data-price-occupancy-target="calcType" data-action="change->price-occupancy#update">
+                                <label class="form-check-label" for="calc-per-room-{{ price.id }}">{{ units.text('price.calculation_type.per_room', dayUnit) }}</label>
+                                <div class="form-text mt-0" id="calc-per-room-help-{{ price.id }}">{{ units.text('price.calculation_type.per_room.help', dayUnit) }}</div>
                             </div>
                             <div class="form-check">
                                 <input type="radio" name="calculation-type-{{ price.id }}" id="calc-flat-{{ price.id }}"
-                                       class="form-check-input" value="flat"{% if calcType == 'flat' %} checked{% endif %}>
+                                       class="form-check-input" value="flat"{% if calcType == 'flat' %} checked{% endif %}
+                                       aria-describedby="calc-flat-help-{{ price.id }}"
+                                       data-price-occupancy-target="calcType" data-action="change->price-occupancy#update">
                                 <label class="form-check-label" for="calc-flat-{{ price.id }}">{{ 'price.calculation_type.flat'|trans }}</label>
+                                <div class="form-text mt-0" id="calc-flat-help-{{ price.id }}">{{ units.text('price.calculation_type.flat.help', dayUnit) }}</div>
                             </div>
                         </div>
                     </div>
@@ -340,16 +359,44 @@
                 <div class="accordion-body">
                     <fieldset id="price-form-fieldset-type-appartment-{{ price.id }}" {% if price.id == "new" or price.type != 2 %} disabled {% endif %}>
                     <div class="row">
-                        <label for="inputNumberOfPersons"
+                        <label for="number-of-persons"
                                class="col-sm-4 col-form-label text-sm-end">{{ 'price.numberofpersons'|trans }} *</label>
 
                         <div class="col-sm-8">
-                            <input type="text" id="number-of-persons" class="form-control"
-                                   name="number-of-persons-{{ price.id }}" value="{{ price.numberofpersons }}">
+                            {# Elsewhere a number of persons is matched exactly; with a surcharge it is "up to", so the field says which. #}
+                            {% set upTo = price.hasExtraPersonSurcharge|default(false) %}
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-semibold text-nowrap" id="number-of-persons-scope-{{ price.id }}" data-price-occupancy-target="personsScope"
+                                      data-exact="{{ 'price.numberofpersons.scope.exact'|trans }}" data-up-to="{{ 'price.numberofpersons.scope.up_to'|trans }}">{{ (upTo ? 'price.numberofpersons.scope.up_to' : 'price.numberofpersons.scope.exact')|trans }}</span>
+                                <input type="text" id="number-of-persons" class="form-control"
+                                       name="number-of-persons-{{ price.id }}" value="{{ price.numberofpersons }}"
+                                       aria-describedby="number-of-persons-scope-{{ price.id }} number-of-persons-help-{{ price.id }}"
+                                       data-price-occupancy-target="persons" data-action="input->price-occupancy#update">
+                            </div>
+                            <div class="form-text" id="number-of-persons-help-{{ price.id }}" data-price-occupancy-target="personsHelp"
+                                 data-exact="{{ 'price.numberofpersons.help.exact'|trans }}" data-up-to="{{ 'price.numberofpersons.help.up_to'|trans }}">{{ (upTo ? 'price.numberofpersons.help.up_to' : 'price.numberofpersons.help.exact')|trans }}</div>
                         </div>
                     </div>
                     <div class="row">
-                        <label for="inputMinStay" class="col-sm-4 col-form-label text-sm-end">{{ 'price.minstay'|trans }} *</label>
+                        <label for="extra-person-surcharge-{{ price.id }}" class="col-sm-4 col-form-label text-sm-end">{{ 'price.extra_person_surcharge'|trans }}</label>
+
+                        <div class="col-sm-8">
+                            <div class="input-group">
+                                <input type="number" min="0" step="0.01" inputmode="decimal" class="form-control"
+                                       id="extra-person-surcharge-{{ price.id }}" name="extra-person-surcharge-{{ price.id }}"
+                                       value="{{ price.extraPersonSurcharge }}" aria-describedby="extra-person-surcharge-unit-{{ price.id }} extra-person-surcharge-help-{{ price.id }}"
+                                       data-price-occupancy-target="surcharge" data-action="input->price-occupancy#update">
+                                <span class="input-group-text" id="extra-person-surcharge-unit-{{ price.id }}">{{ units.text('price.extra_person_surcharge.unit', dayUnit, {'%currency%': currency_symbol}) }}</span>
+                            </div>
+                            <div class="form-text" id="extra-person-surcharge-help-{{ price.id }}">
+                                <span data-price-occupancy-target="disabledHint">{{ units.text('price.extra_person_surcharge.disabled', dayUnit) }}</span>
+                                <span data-price-occupancy-target="exactHint" class="d-none">{{ 'price.extra_person_surcharge.exact'|trans }}</span>
+                                <span data-price-occupancy-target="example" class="d-none"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label for="inputMinStay" class="col-sm-4 col-form-label text-sm-end">{{ units.text('price.minstay', dayUnit) }} *</label>
 
                         <div class="col-sm-8">
                             <input type="text" id="min-stay" class="form-control" name="min-stay-{{ price.id }}"
@@ -514,3 +561,8 @@
         <input type="hidden" name="period-{{ price.id }}[]" value="new" disabled />
     </div>
 </div>
+
+{# A text that names nights for accommodation and days for event spaces; "<key>.day" holds the day variant. #}
+{% macro text(key, dayUnit, params = {}) -%}
+    <span data-price-occupancy-target="unitText" data-night="{{ key|trans(params) }}" data-day="{{ (key ~ '.day')|trans(params) }}">{{ (dayUnit ? key ~ '.day' : key)|trans(params) }}</span>
+{%- endmacro %}

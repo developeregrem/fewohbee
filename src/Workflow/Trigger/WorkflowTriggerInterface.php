@@ -15,7 +15,12 @@ interface WorkflowTriggerInterface
     /** The entity class this trigger relates to, or null for non-entity triggers. */
     public function getEntityClass(): ?string;
 
-    /** Schema describing triggerConfig fields for the UI form builder. */
+    /**
+     * Schema describing triggerConfig fields for the UI form builder.
+     * Field definitions are ordered; their available keys and values depend on the field type.
+     *
+     * @return list<array<string, mixed>>
+     */
     public function getConfigSchema(): array;
 
     /** Whether this trigger is event-driven (true) or time-based/cron (false). */
@@ -27,6 +32,8 @@ interface WorkflowTriggerInterface
      * For event-driven triggers: returns recent entities of the trigger type.
      * For time-based triggers: returns entities that currently match the criteria.
      *
+     * @param array<string, mixed> $config Implementation-specific configuration values
+     *
      * @return object[]
      */
     public function findPreviewEntities(EntityManagerInterface $em, array $config, int $limit = 20): array;
@@ -34,6 +41,8 @@ interface WorkflowTriggerInterface
     /**
      * Find only the IDs of matching entities (used by the scheduler for efficient dedup filtering).
      * Returns an empty array for event-driven triggers.
+     *
+     * @param array<string, mixed> $config Implementation-specific configuration values
      *
      * @return int[]
      */

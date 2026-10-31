@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\AppSettings;
+use App\Entity\MailAttachment;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
@@ -35,6 +36,7 @@ class MailService
         return $this->mailEnabled;
     }
 
+    /** @param array<string, mixed> $parameter */
     public function sendTemplatedMail(string $to, string $subject, string $template, array $parameter = []): void
     {
         if (!$this->mailEnabled) {
@@ -59,6 +61,7 @@ class MailService
         $this->mailTransportFactory->createMailer($settings)->send($email);
     }
 
+    /** @param array<MailAttachment> $attachments */
     public function sendHTMLMail(string $to, string $subject, string $body, array $attachments = []): void
     {
         if (!$this->mailEnabled) {
@@ -81,7 +84,6 @@ class MailService
 
         $this->applyEnvelopeSettings($email, $settings, $fromMail);
 
-        /* @var $attachment \App\Entity\MailAttachment */
         foreach ($attachments as $attachment) {
             $email->attach(
                 $attachment->getBody(),

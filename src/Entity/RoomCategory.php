@@ -4,31 +4,43 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Attribute\TemplateIgnore;
+use App\Entity\Enum\RoomCategoryKind;
+use App\Entity\Translation\ContentTranslatable;
+use App\Entity\Translation\ContentTranslationsTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\RoomCategoryRepository')]
-class RoomCategory
+class RoomCategory implements ContentTranslatable
 {
+    use ContentTranslationsTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
-    private $name;
+    private ?string $name = null;
+    /** @var Collection<int, Appartment> */
     #[ORM\OneToMany(targetEntity: 'App\Entity\Appartment', mappedBy: 'roomCategory')]
-    private $apartments;
+    private Collection $apartments;
+    /** @var Collection<int, Price> */
     #[ORM\ManyToMany(targetEntity: 'App\Entity\Price', mappedBy: 'roomCategories')]
-    private $prices;
+    private Collection $prices;
     #[ORM\Column(type: 'string', length: 5, nullable: true)]
     #[Assert\Length(max: 5)]
-    private $acronym;
+    private ?string $acronym = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $details = null;
+
+    /** Accommodation (per night) or event space (per day), see RoomCategoryKind. */
+    #[ORM\Column(type: 'string', length: 20, enumType: RoomCategoryKind::class, options: ['default' => 'accommodation'])]
+    private RoomCategoryKind $kind = RoomCategoryKind::ACCOMMODATION;
 
     /** Standardized OTA room type code (e.g. "Double", "Twin", "Suite") — nullable, for future channel manager mapping */
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
@@ -46,13 +58,21 @@ class RoomCategory
     #[Assert\GreaterThanOrEqual(0)]
     private int $minFullPayers = 0;
 
-    /** Assigned amenities (e.g. WiFi, parking) — displayed as icons on the public booking page */
+    /**
+     * Assigned amenities (e.g. WiFi, parking) — displayed as icons on the public booking page
+     *
+     * @var Collection<int, Amenity>
+     */
     #[ORM\ManyToMany(targetEntity: Amenity::class, inversedBy: 'roomCategories')]
     #[ORM\JoinTable(name: 'room_category_amenity')]
     #[ORM\OrderBy(['category' => \SortDirection::Ascending, 'sortOrder' => \SortDirection::Ascending])]
     private Collection $amenities;
 
-    /** Uploaded images for this category — shown as gallery/hero on the public booking page */
+    /**
+     * Uploaded images for this category — shown as gallery/hero on the public booking page
+     *
+     * @var Collection<int, RoomCategoryImage>
+     */
     #[ORM\OneToMany(targetEntity: RoomCategoryImage::class, mappedBy: 'roomCategory', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['sortOrder' => \SortDirection::Ascending])]
     private Collection $images;
@@ -63,6 +83,11 @@ class RoomCategory
         $this->prices = new ArrayCollection();
         $this->amenities = new ArrayCollection();
         $this->images = new ArrayCollection();
+    }
+
+    public static function translatableFields(): array
+    {
+        return ['name', 'details'];
     }
 
     public function getId(): ?int
@@ -82,6 +107,25 @@ class RoomCategory
         return $this;
     }
 
+    /** Templates use isEventSpace(): an enum cannot be printed. */
+    #[TemplateIgnore]
+    public function getKind(): RoomCategoryKind
+    {
+        return $this->kind;
+    }
+
+    public function setKind(RoomCategoryKind $kind): self
+    {
+        $this->kind = $kind;
+
+        return $this;
+    }
+
+    public function isEventSpace(): bool
+    {
+        return RoomCategoryKind::EVENT_SPACE === $this->kind;
+    }
+
     public function getMinFullPayers(): int
     {
         return $this->minFullPayers;
@@ -95,7 +139,7 @@ class RoomCategory
     }
 
     /**
-     * @return Collection|Appartment[]
+     * @return Collection<int, Appartment>
      */
     public function getApartments(): Collection
     {
@@ -126,7 +170,7 @@ class RoomCategory
     }
 
     /**
-     * @return Collection|Price[]
+     * @return Collection<int, Price>
      */
     public function getPrices(): Collection
     {
@@ -190,7 +234,11 @@ class RoomCategory
         return $this;
     }
 
-    /** Returns all amenities assigned to this category, ordered by group and sortOrder */
+    /**
+     * Returns all amenities assigned to this category, ordered by group and sortOrder
+     *
+     * @return Collection<int, Amenity>
+     */
     public function getAmenities(): Collection
     {
         return $this->amenities;
@@ -214,7 +262,11 @@ class RoomCategory
         return $this;
     }
 
-    /** Returns all images for this category, ordered by sortOrder */
+    /**
+     * Returns all images for this category, ordered by sortOrder
+     *
+     * @return Collection<int, RoomCategoryImage>
+     */
     public function getImages(): Collection
     {
         return $this->images;
