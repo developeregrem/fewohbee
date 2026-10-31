@@ -81,7 +81,7 @@ guest_checkin:
     invitation_manage: "Automatisierungen verwalten"
     invitation_template: "Vorlage für die Einladung"
     invitation_template_none: "Keine"
-    invitation_template_help: "Diese E-Mail-Vorlage kannst du im Reiter „Online-Check-in“ einer Reservierung von Hand an den Bucher schicken. Ohne Auswahl gibt es dort keinen Knopf zum Senden."
+    invitation_template_help: "Diese E-Mail-Vorlage kannst du im Reiter „Online-Check-in“ einer Reservierung von Hand an den Bucher schicken. Ohne Auswahl gibt es dort keinen Button zum Senden."
   public:
     page_title: "Online-Check-in"
     language: "Sprache"
