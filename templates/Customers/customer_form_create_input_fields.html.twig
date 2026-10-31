@@ -178,6 +178,14 @@
                     </div>
                 </div>
                 <div class="row">
+                    <label for="invoiceemail-{{ customer.id }}"
+                           class="col-sm-4 col-form-label text-sm-end">{{ 'customer.invoiceEmail.label'|trans }}</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="invoiceemail-{{ customer.id }}[]"
+                               value="{{ address.invoiceEmail }}" placeholder="{{ 'customer.invoiceEmail.placeholder'|trans }}">
+                    </div>
+                </div>
+                <div class="row">
                     <label for="buyervatid-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-sm-end">{{ 'customer.buyerVatId'|trans }}</label>
                     <div class="col-sm-8">
