@@ -611,24 +611,26 @@ body.reservations-week-fit #flash-message-container {
     }
 }
 
-/* New reservation button on touch screens, phones and tablets alike (Reservations/index.html.twig):
-   round, at the bottom right above the table, in place of the button in the filter row, and
-   also in the full-screen week view. Same touch test as isDesktopWeekMode(). */
-.reservations-fab {
+/* Add button on touch screens, phones and tablets alike: round, at the bottom right above the
+   content, in place of the regular button (fab-add-inline). On the reservation overview it also
+   stays in the full-screen week view. Same touch test as isDesktopWeekMode(). */
+.fab-add {
     display: none;
 }
 
 @media not all and (hover: hover) and (pointer: fine) {
-    .reservations-fab {
-        display: inline-block;
+    .fab-add {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .reservations-add-inline {
+    .fab-add-inline {
         display: none;
     }
 }
 
-.reservations-fab {
+.fab-add {
     position: fixed;
     right: 1rem;
     bottom: calc(1rem + env(safe-area-inset-bottom));
@@ -650,8 +652,8 @@ body.reservations-week-fit #flash-message-container {
     line-height: 1;
 }
 
-.reservations-fab:hover,
-.reservations-fab:active {
+.fab-add:hover,
+.fab-add:active {
     border-color: rgba(var(--bs-body-bg-rgb), .6);
     background-color: rgba(var(--bs-body-bg-rgb), .45);
     color: var(--bs-body-color);
