@@ -628,6 +628,11 @@ body.reservations-week-fit #flash-message-container {
     .fab-add-inline {
         display: none;
     }
+
+    /* Room to scroll the last buttons of a page out from under the round button */
+    .fab-add-clearance {
+        padding-bottom: 5rem;
+    }
 }
 
 .fab-add {
