@@ -9,7 +9,10 @@ use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\RoomBlock;
 use App\Repository\RoomBlockRepository;
+use App\Service\Calendar\Entry\CalendarEntryTimeRules;
 use App\Service\Calendar\Sync\ApartmentCalendarExportService;
+use App\Service\Calendar\Sync\Ics\IcsEventSpanResolver;
+use App\Service\Calendar\Sync\Ics\IcsOccurrenceReader;
 use App\Service\DisplayNameResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -158,6 +161,48 @@ final class ApartmentCalendarExportServiceTest extends TestCase
         yield 'midnight is a recorded time' => [true, '00:00', '00:00', '2030-01-10', '2030-01-15', '20300109T230000Z', '20300114T230000Z'];
         yield 'only midnight arrival is recorded' => [true, '00:00', null, '2030-01-10', '2030-01-15', '20300109T230000Z', '20300114T230000Z'];
         yield 'only midnight departure is recorded' => [true, null, '00:00', '2030-01-10', '2030-01-15', '20300109T230000Z', '20300114T230000Z'];
+        yield 'same day with only arrival time runs to the end of the day' => [true, '14:00', null, '2030-01-10', '2030-01-10', '20300110T130000Z', '20300110T230000Z'];
+        yield 'same day with departure before arrival runs to the end of the day' => [true, '14:00', '10:00', '2030-01-10', '2030-01-10', '20300110T130000Z', '20300110T230000Z'];
+        yield 'same day with equal times runs to the end of the day' => [true, '14:00', '14:00', '2030-01-10', '2030-01-10', '20300110T130000Z', '20300110T230000Z'];
+        yield 'same day with only midnight departure covers the day' => [true, null, '00:00', '2030-01-10', '2030-01-10', '20300109T230000Z', '20300110T230000Z'];
+        yield 'same day across spring daylight-saving change' => [true, '14:00', null, '2030-03-31', '2030-03-31', '20300331T120000Z', '20300331T220000Z'];
+        yield 'same day keeps a later departure time' => [true, '10:00', '16:00', '2030-01-10', '2030-01-10', '20300110T090000Z', '20300110T150000Z'];
+        yield 'same day with only departure time starts at midnight' => [true, null, '16:00', '2030-01-10', '2030-01-10', '20300109T230000Z', '20300110T150000Z'];
+        yield 'same day without times covers the day' => [true, null, null, '2030-01-10', '2030-01-10', '20300110', '20300111'];
+        yield 'same day with times disabled covers the day' => [null, '14:00', null, '2030-01-31', '2030-01-31', '20300131', '20300201'];
+    }
+
+    #[DataProvider('sameDayExportCases')]
+    public function testSameDayStaySurvivesOurOwnCalendarImport(bool $exportTimes, ?string $arrivalTime): void
+    {
+        $apartment = new Appartment();
+        $apartment->setNumber('A1');
+        $sync = $apartment->getCalendarSync();
+        $sync->setExportReservationTimes($exportTimes);
+        $status = (new ReservationStatus())->setName('Booked');
+        $sync->addReservationStatus($status);
+        $reservation = new Reservation();
+        $reservation->setStartDate(new \DateTime('2030-01-10'));
+        $reservation->setEndDate(new \DateTime('2030-01-10'));
+        $reservation->setArrivalTime(null !== $arrivalTime ? new \DateTime('2000-01-01 '.$arrivalTime) : null)
+            ->setReservationStatus($status)
+            ->setUuid(Uuid::v4());
+        $apartment->addReservation($reservation);
+
+        $read = (new IcsOccurrenceReader())->readEvents($this->export($apartment), new \DateTimeZone('Europe/Berlin'));
+        self::assertCount(1, $read->occurrences);
+        $span = (new IcsEventSpanResolver(new CalendarEntryTimeRules()))->resolve($read->occurrences[0]);
+
+        self::assertNotNull($span);
+        self::assertCount(1, $span->dates);
+        self::assertSame('2030-01-10', $span->lastDate()->format('Y-m-d'));
+    }
+
+    /** @return iterable<string, array{bool, ?string}> */
+    public static function sameDayExportCases(): iterable
+    {
+        yield 'all-day' => [false, null];
+        yield 'with arrival time' => [true, '14:00'];
     }
 
     public function testRoomBlocksRemainAllDayWhenReservationTimesAreEnabled(): void

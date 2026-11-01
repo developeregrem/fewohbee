@@ -30,11 +30,12 @@ class TemplateRepository extends EntityRepository
     }
 
     /**
-     * @param list<string> $names Type-name LIKE patterns; empty keeps all visible templates with an assigned type
+     * @param list<string> $names           Type-name LIKE patterns; empty keeps all visible templates with an assigned type
+     * @param bool         $includeVariants False for a selection that names a template whatever the guest's language
      *
      * @return list<\App\Entity\Template>|null Matching templates, or null on NoResultException
      */
-    public function loadByTypeName($names)
+    public function loadByTypeName($names, bool $includeVariants = true)
     {
         $q = $this
             ->createQueryBuilder('t')
@@ -54,6 +55,9 @@ class TemplateRepository extends EntityRepository
 
         // Präfix-Filter
         $q->andWhere('t.hidden = false');
+        if (!$includeVariants) {
+            $q->andWhere('t.baseTemplate IS NULL');
+        }
 
         $templates = null;
         try {

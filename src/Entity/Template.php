@@ -308,16 +308,15 @@ class Template
     }
 
     /**
-     * The template to use for a guest speaking $locale: the variant in that language of this
-     * template (or of the template it translates), else this template itself.
+     * The template to use for a guest speaking $locale: the variant in that language, else the
+     * template it translates. Called on a variant it answers the same, so that a variant stored
+     * in a setting does not pass its language on to every other guest.
      */
     public function variantFor(?string $locale): Template
     {
-        if (null === $locale) {
-            return $this;
-        }
+        $base = $this->baseTemplate ?? $this;
 
-        return ($this->baseTemplate ?? $this)->getVariant($locale) ?? $this;
+        return (null !== $locale ? $base->getVariant($locale) : null) ?? $base;
     }
 
     public function isVariant(): bool
