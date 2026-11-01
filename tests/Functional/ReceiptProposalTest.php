@@ -294,12 +294,21 @@ final class ReceiptProposalTest extends WebTestCase
         $entriesBefore = $this->countEntries();
 
         $crawler = $this->client->request('GET', '/journal/receipts/'.$proposal);
-        preg_match('/name="_token" value="([^"]+)"/', (string) $crawler->filter('[data-popover="delete"]')->attr('data-bs-content'), $match);
+        // The confirmation popover only starts inside a controller that enables it.
+        $button = $crawler->filter('[data-controller~="booking-journal"] [data-popover="delete"]');
+        self::assertCount(1, $button);
+        preg_match('/name="_token" value="([^"]+)"/', (string) $button->attr('data-bs-content'), $match);
         $this->client->request('DELETE', '/journal/receipts/'.$proposal.'/discard', ['_token' => $match[1] ?? '']);
 
         self::assertResponseStatusCodeSame(204);
         self::assertSame(ReceiptProposalStatus::DISCARDED, $this->proposal($proposal)->getStatus());
         self::assertSame($entriesBefore, $this->countEntries());
+
+        // The popover reloads the page, which then reports the outcome without the button.
+        $crawler = $this->client->request('GET', '/journal/receipts/'.$proposal);
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('.alert-success'));
+        self::assertCount(0, $crawler->filter('[data-popover="delete"]'));
     }
 
     public function testOpenProposalsShowInTheJournalAndNeedTheCashJournalRole(): void
