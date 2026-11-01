@@ -182,10 +182,11 @@ class ReceiptProposalService
                 null,
                 500,
             ),
-            static fn (BookingEntry $entry): bool => !$entry->isOpeningBalance() && null !== self::paymentAccount($entry),
+            // Only a positive amount can have paid a receipt; the journal form also accepts 0.00.
+            static fn (BookingEntry $entry): bool => !$entry->isOpeningBalance() && null !== self::paymentAccount($entry) && $entry->getAmountFloat() > 0.0,
         );
 
-        $toSplit = array_map(static fn (BookingEntry $entry): ?int => $entry->getId(), $this->paymentCandidates($proposal));
+        $toSplit =array_map(static fn (BookingEntry $entry): ?int => $entry->getId(), $this->paymentCandidates($proposal));
         $entries = array_filter($entries, static fn (BookingEntry $entry): bool => !\in_array($entry->getId(), $toSplit, true));
 
         $found = [];

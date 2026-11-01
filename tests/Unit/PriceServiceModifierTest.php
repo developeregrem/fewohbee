@@ -55,6 +55,19 @@ final class PriceServiceModifierTest extends TestCase
         self::assertSame(250.0, $night->total());
     }
 
+    public function testDiscountFallingOnHalfACentIsRoundedToWholeCents(): void
+    {
+        $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);
+        $child = $this->makeCategory(2, GuestStatisticalGroup::CHILD);
+        $modifier = $this->makeModifier($child, ModifierType::DISCOUNT_PERCENT, '25');
+
+        $reservation = $this->makeReservation([1 => 1, 2 => 1]);
+        $service = $this->makeService([$adult, $child], [$modifier], $reservation, $this->makePrice('44.50'));
+
+        $night = $service->getPriceBreakdownForReservation($reservation)[0];
+        self::assertSame(33.38, $night->lines[1]->unitPrice);
+    }
+
     public function testFlatRateOverridesBasePrice(): void
     {
         $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);

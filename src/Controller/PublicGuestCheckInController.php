@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Dto\GuestCheckIn\GuestCheckInGuest;
 use App\Dto\GuestCheckIn\GuestCheckInSubmission;
 use App\Dto\GuestCheckIn\GuestCheckInVerification;
+use App\Entity\Enum\GuestCheckInFieldMode;
 use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\GuestCheckIn;
 use App\Form\GuestCheckInType;
@@ -130,7 +131,8 @@ final class PublicGuestCheckInController extends AbstractController
                 'companion_count' => $companionCount,
                 'stored_id_hint' => $otherGuestForm ? null : $this->formDataFactory->storedIdNumberHint($checkIn),
                 'extras' => $selectableExtras,
-                'action' => $this->pageUrl($request, $token, ['edit' => 1]),
+                // The other guest's form has to come back as such, or the POST is taken for the first guest.
+                'action' => $this->pageUrl($request, $token, $otherGuestForm ? ['edit' => 1, 'main' => 'other'] : ['edit' => 1]),
             ];
             $form = $this->createForm(GuestCheckInType::class, $formData, $formOptions);
             $form->handleRequest($request);
@@ -144,9 +146,17 @@ final class PublicGuestCheckInController extends AbstractController
                     return $this->unavailable(Response::HTTP_TOO_MANY_REQUESTS);
                 }
 
+                /** @var GuestCheckInSubmission $submission */
+                $submission = $form->getData();
+                // The form lets the field stay empty while a number is on file, without knowing whose it is.
+                if (GuestCheckInFieldMode::REQUIRED === $config->getIdDocumentMode()
+                    && null !== $formOptions['stored_id_hint']
+                    && null === $submission->mainGuest->idNumber
+                    && !$this->formDataFactory->keepsStoredIdNumber($checkIn, $submission->mainGuest)) {
+                    $form->get('mainGuest')->get('idNumber')->addError(new FormError($this->translator->trans('guest_checkin.id_number_other_person', [], 'validators')));
+                }
+
                 if ($form->isValid()) {
-                    /** @var GuestCheckInSubmission $submission */
-                    $submission = $form->getData();
                     try {
                         $this->submissionService->submit($checkIn, $submission, $locale, $config);
                         $this->rateLimiter->registerSubmission($checkIn->getSelector());

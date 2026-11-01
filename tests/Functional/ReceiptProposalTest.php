@@ -231,6 +231,20 @@ final class ReceiptProposalTest extends WebTestCase
         self::assertCount(2, $crawler->filter('.alert-warning tbody tr'));
     }
 
+    /** The journal form accepts 0.00; neither that nor a negative amount can have paid a receipt. */
+    public function testEntriesWithoutAPositiveAmountDoNotBreakTheReceiptPage(): void
+    {
+        $this->bookEntry('2031-09-10', '0.00', debit: '4980', credit: '1000', remark: 'Lidl');
+        $this->bookEntry('2031-09-11', '-5.00', debit: '4980', credit: '1000', remark: 'Lidl');
+        $proposal = $this->propose('Lidl', '2031-09-10', '15.50', 'cash', [['4980', '15.50', '7']]);
+        $this->client->loginUser($this->createUserWithToken(['ROLE_CASHJOURNAL'], [])[0]);
+
+        $crawler = $this->client->request('GET', '/journal/receipts/'.$proposal);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('.alert-warning tbody tr'));
+    }
+
     public function testACashReceiptWithoutPaymentIsBookedAnewAgainstTheCash(): void
     {
         $proposal = $this->propose('OBI', '2031-05-02', '15.70', 'cash', [['4200', '12.50', '19'], ['4980', '3.20', '0']]);

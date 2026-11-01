@@ -115,6 +115,24 @@ class GuestCheckInFormDataFactory
         return mb_strlen($number) >= 6 ? '•••'.mb_substr($number, -3) : '•••';
     }
 
+    /**
+     * Whether the number storedIdNumberHint() found on file belongs to $guest, so that leaving the
+     * ID field empty keeps it. It belongs to the person it was submitted or recorded for; anyone
+     * else needs one of their own.
+     */
+    public function keepsStoredIdNumber(GuestCheckIn $checkIn, GuestCheckInGuest $guest): bool
+    {
+        $submitted = ['firstname' => $guest->firstname, 'lastname' => $guest->lastname];
+        $previous = $checkIn->getPayload()['mainGuest'] ?? null;
+        if (\is_array($previous) && \is_string($previous['idNumber'] ?? null)) {
+            return GuestCheckInPersonMatch::sameSubmittedName($submitted, $previous);
+        }
+
+        $record = $this->mainGuestRecord($checkIn->getReservation());
+
+        return null !== $record && GuestCheckInPersonMatch::sameName($submitted, $record);
+    }
+
     /** @param array<string, mixed> $payload */
     private function fromPayload(array $payload): GuestCheckInSubmission
     {

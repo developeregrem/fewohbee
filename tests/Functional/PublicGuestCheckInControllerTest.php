@@ -10,6 +10,7 @@ use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\Enum\GuestCheckInFieldMode;
 use App\Entity\Enum\GuestCheckInStatus;
+use App\Entity\Enum\IDCardType;
 use App\Entity\GuestCheckIn;
 use App\Entity\GuestCheckInConfig;
 use App\Entity\Price;
@@ -420,6 +421,73 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertStringNotContainsString('•••766', $crawler->html());
     }
 
+    public function testAnotherArrivingGuestNeedsARequiredIdNumberOfTheirOwn(): void
+    {
+        [, $form] = $this->openFormWithRequiredIdNumberOnFile('?edit=1&main=other');
+        $form['guest_check_in[mainGuest][firstname]'] = 'Bernd';
+        $form['guest_check_in[mainGuest][lastname]'] = 'Neumann';
+
+        $crawler = $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertNull($this->checkIn()->getPayload());
+        self::assertStringNotContainsString('•••766', $crawler->html());
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $form['guest_check_in[mainGuest][idNumber]'] = 'X1234567';
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(303);
+        $this->em()->clear();
+        $mainGuest = $this->checkIn()->getPayload()['mainGuest'] ?? [];
+        self::assertSame('Bernd', $mainGuest['firstname'] ?? null);
+        self::assertSame('X1234567', $mainGuest['idNumber'] ?? null);
+    }
+
+    public function testOverwritingThePrefilledNameNeedsARequiredIdNumber(): void
+    {
+        [, $form] = $this->openFormWithRequiredIdNumberOnFile();
+        $form['guest_check_in[mainGuest][firstname]'] = 'Bernd';
+        $form['guest_check_in[mainGuest][lastname]'] = 'Neumann';
+
+        $crawler = $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertNull($this->checkIn()->getPayload());
+        self::assertStringContainsString('Please enter the ID number of this person.', $crawler->html());
+    }
+
+    public function testTheGuestOnRecordKeepsTheRequiredIdNumberByLeavingItEmpty(): void
+    {
+        [, $form] = $this->openFormWithRequiredIdNumberOnFile();
+
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(303);
+        $this->em()->clear();
+        self::assertSame('Anna', $this->checkIn()->getPayload()['mainGuest']['firstname'] ?? null);
+    }
+
+    public function testASubmittedIdNumberOnlyStaysWithTheSameName(): void
+    {
+        [$path, $form] = $this->openFormWithRequiredIdNumberOnFile();
+        $form['guest_check_in[mainGuest][idNumber]'] = 'P11223344';
+        $this->client->submit($form);
+        self::assertResponseStatusCodeSame(303);
+
+        $form = $this->client->request('GET', $path.'?edit=1')->filter('form[name="guest_check_in"]')->form();
+        $form['guest_check_in[mainGuest][firstname]'] = 'Bernd';
+        $form['guest_check_in[mainGuest][lastname]'] = 'Neumann';
+        $this->client->submit($form);
+        self::assertResponseStatusCodeSame(422);
+
+        $form = $this->client->request('GET', $path.'?edit=1')->filter('form[name="guest_check_in"]')->form();
+        $this->client->submit($form);
+        self::assertResponseStatusCodeSame(303);
+        $this->em()->clear();
+        self::assertSame('P11223344', $this->checkIn()->getPayload()['mainGuest']['idNumber'] ?? null);
+    }
+
     public function testOptionalServiceUsesTheExistingPriceAndWaitsForHotelierReview(): void
     {
         $reservation = $this->createReservation();
@@ -698,6 +766,35 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
     }
 
     /** The fields the setup of this test makes required for the main guest. */
+    /**
+     * The check-in form for a booker whose ID number is on file, with the number required and
+     * everything but that number filled in.
+     *
+     * @return array{0: string, 1: Form} link path and form
+     */
+    private function openFormWithRequiredIdNumberOnFile(string $query = ''): array
+    {
+        $this->em()->getRepository(GuestCheckInConfig::class)->findOneBy([])?->setIdDocumentMode(GuestCheckInFieldMode::REQUIRED);
+        $reservation = $this->createReservation();
+        $booker = $reservation->getBooker();
+        self::assertInstanceOf(Customer::class, $booker);
+        $booker->setIDNumber('P99887766');
+        $this->em()->flush();
+
+        $path = $this->linkPath($reservation);
+        $this->verify($path, 'Müller');
+        $crawler = $this->client->followRedirect();
+        if ('' !== $query) {
+            $crawler = $this->client->request('GET', $path.$query);
+        }
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $this->fillMainGuest($form);
+        $form['guest_check_in[mainGuest][idType]'] = IDCardType::PASSPORT->value;
+
+        return [$path, $form];
+    }
+
     private function fillMainGuest(Form $form): void
     {
         $form['guest_check_in[mainGuest][firstname]'] = 'Anna';
