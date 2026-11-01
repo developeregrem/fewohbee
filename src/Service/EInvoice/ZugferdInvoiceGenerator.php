@@ -128,7 +128,7 @@ class ZugferdInvoiceGenerator
             $netPrice = round($apartmentPosition->getNetPrice(), 2);
             $sum = round($netPrice * $apartmentPosition->getAmount(), 2);
             $documentBuilder->addNewPosition((string) $pos);
-            $documentBuilder->setDocumentPositionProductDetails($apartmentPosition->getDescription(), $apartmentPosition->getStartDate()->format('d.m.Y').' - '.$apartmentPosition->getEndDate()->format('d.m.Y'));
+            $documentBuilder->setDocumentPositionProductDetails($apartmentPosition->getDescription(), $apartmentPosition->getStartDate()->format('d.m.Y').' - '.$apartmentPosition->getVisibleEndDate()->format('d.m.Y'));
             $documentBuilder->setDocumentPositionNetPrice($netPrice);
             $documentBuilder->setDocumentPositionQuantity($apartmentPosition->getAmount(), ZugferdUnitCodes::REC20_PIECE);
             $documentBuilder->addDocumentPositionTax($this->resolveVatCategory($apartmentPosition->getVat()), ZugferdVatTypeCodes::VALUE_ADDED_TAX, $apartmentPosition->getVat());

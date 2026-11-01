@@ -6,7 +6,9 @@ namespace App\Tests\Unit;
 
 use App\Entity\Appartment;
 use App\Entity\Customer;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\Reservation;
+use App\Entity\RoomCategory;
 use App\Repository\AppartmentRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\RoomBlockRepository;
@@ -91,6 +93,27 @@ final class OperationsReportServiceTest extends TestCase
         self::assertSame([], $data['simple']['views']['mealsChecklist']['rows']);
         self::assertSame([], $data['reservations']);
         self::assertCount(2, $data['simple']['days']);
+    }
+
+    public function testEventEndsOnItsLastDay(): void
+    {
+        $hall = $this->makeRoom(1, 'Saal');
+        $hall->setRoomCategory((new RoomCategory())->setKind(RoomCategoryKind::EVENT_SPACE));
+        // Friday to Saturday, stored up to Sunday.
+        $service = $this->makeService([$hall], [$this->makeReservation($hall, '2026-05-01', '2026-05-03')]);
+        $types = ['FREE', 'STAYOVER', 'ARRIVAL', 'DEPARTURE', 'TURNOVER', 'BLOCKED'];
+
+        $lastDay = new \DateTimeImmutable('2026-05-02');
+        $data = $service->buildReportData($lastDay, $lastDay, null, $types);
+        self::assertSame('operations.frontdesk.departures', $data['simple']['reservations'][0]['frontdeskSectionKey']);
+        self::assertSame('01.05.2026 - 02.05.2026', $data['simple']['reservations'][0]['period']);
+        self::assertSame('DEPARTURE', $data['dayViews']['2026-05-02']['rows'][0]['occupancyType']);
+
+        $dayAfter = new \DateTimeImmutable('2026-05-03');
+        $data = $service->buildReportData($dayAfter, $dayAfter, null, $types);
+        self::assertNull($data['simple']['reservations'][0]['frontdeskSectionKey']);
+        self::assertSame('FREE', $data['dayViews']['2026-05-03']['rows'][0]['occupancyType']);
+        self::assertSame([], $data['dayViews']['2026-05-03']['rows'][0]['apartmentReservations']);
     }
 
     /**

@@ -56,21 +56,7 @@ final class ZugferdInvoiceTaxGroupingTest extends TestCase
             $invoice->addPosition($position);
         }
 
-        $settings = new InvoiceSettingsData();
-        $settings->setCompanyName('Example Hotel');
-        $settings->setCompanyAddress('Example Street 2');
-        $settings->setCompanyPostCode('01234');
-        $settings->setCompanyCity('Example City');
-        $settings->setCompanyCountry('DE');
-        $settings->setVatID('DE123456789');
-        $settings->setPaymentDueDays(14);
-        $appSettings = $this->createStub(AppSettingsService::class);
-        $appSettings->method('getSettings')->willReturn(new AppSettings());
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnArgument(0);
-        $generator = new ZugferdInvoiceGenerator($translator, $appSettings);
-
-        $xml = $generator->generateInvoiceData($invoice, $settings, ZugferdProfiles::PROFILE_EN16931, new En16931InvoiceValidator());
+        $xml = $this->generateXml($invoice);
 
         $document = new \DOMDocument();
         self::assertTrue($document->loadXML($xml));
@@ -105,6 +91,51 @@ final class ZugferdInvoiceTaxGroupingTest extends TestCase
         self::assertSame($taxTotal, (float) $xpath->evaluate('string(//ram:TaxTotalAmount)'));
         self::assertSame(300.0 + $taxTotal, (float) $xpath->evaluate('string(//ram:GrandTotalAmount)'));
         self::assertSame(300.0 + $taxTotal, (float) $xpath->evaluate('string(//ram:DuePayableAmount)'));
+    }
+
+    public function testEventPositionStatesItsLastDay(): void
+    {
+        $invoice = new Invoice();
+        $invoice->setNumber('EVENT-001');
+        $invoice->setCountry('DE');
+        $invoice->setDate(new \DateTime('2031-06-02'));
+        $invoice->setLastname('Example');
+        $invoice->setAddress('Example Street 1');
+        $invoice->setZip('01234');
+        $invoice->setCity('Example City');
+        $invoice->setPaymentMeans(PaymentMeansCode::CASH);
+        $event = new InvoiceAppartment();
+        $event->setDescription('Hall');
+        $event->setEventSpace(true);
+        $event->setStartDate(new \DateTime('2031-06-01'));
+        $event->setLastDay(new \DateTime('2031-06-01'));
+        $event->setPrice('100.00');
+        $event->setVat(19.0);
+        $event->setIncludesVat(false);
+        $event->setIsFlatPrice(false);
+        $event->setIsPerRoom(true);
+        $invoice->addAppartment($event);
+
+        self::assertStringContainsString('01.06.2031 - 01.06.2031', $this->generateXml($invoice));
+    }
+
+    private function generateXml(Invoice $invoice): string
+    {
+        $settings = new InvoiceSettingsData();
+        $settings->setCompanyName('Example Hotel');
+        $settings->setCompanyAddress('Example Street 2');
+        $settings->setCompanyPostCode('01234');
+        $settings->setCompanyCity('Example City');
+        $settings->setCompanyCountry('DE');
+        $settings->setVatID('DE123456789');
+        $settings->setPaymentDueDays(14);
+        $appSettings = $this->createStub(AppSettingsService::class);
+        $appSettings->method('getSettings')->willReturn(new AppSettings());
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnArgument(0);
+        $generator = new ZugferdInvoiceGenerator($translator, $appSettings);
+
+        return $generator->generateInvoiceData($invoice, $settings, ZugferdProfiles::PROFILE_EN16931, new En16931InvoiceValidator());
     }
 
     /** @return iterable<string, array{float, float}> */

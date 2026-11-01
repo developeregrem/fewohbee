@@ -57,7 +57,7 @@ final class ApartmentCalendarExportService
             if ($reservation->isConflict() || $reservation->isConflictIgnored()) {
                 continue;
             }
-            if (!$sync->getExportPastEntries() && $reservation->getEndDate()->format('Y-m-d') < $today) {
+            if (!$sync->getExportPastEntries() && $reservation->getVisibleEndDate()->format('Y-m-d') < $today) {
                 continue;
             }
             if ($sync->getReservationStatus()->contains($reservation->getReservationStatus())) {
@@ -85,7 +85,8 @@ final class ApartmentCalendarExportService
      * When enabled, at least one recorded time makes this a timed interval, with missing times
      * defaulting to local midnight for the export only. Otherwise the interval is all-day.
      * RFC 5545 wants DTEND later than DTSTART, so a same-day stay without a later end covers the
-     * rest of its day, the day as a whole when all-day.
+     * rest of its day, the day as a whole when all-day. A recorded departure falls on the last
+     * day shown; on a one-day event a time before the arrival lies past midnight.
      *
      * @param VCalendar<Node> $calendar
      */
@@ -121,12 +122,15 @@ final class ApartmentCalendarExportService
                 $reservation->getStartDate()->format('Y-m-d').' '.($arrivalTime?->format('H:i:s') ?? '00:00:00'),
                 $timezone,
             );
+            $endDay = null !== $departureTime ? $reservation->getVisibleEndDate() : $reservation->getEndDate();
             $end = new \DateTimeImmutable(
-                $reservation->getEndDate()->format('Y-m-d').' '.($departureTime?->format('H:i:s') ?? '00:00:00'),
+                $endDay->format('Y-m-d').' '.($departureTime?->format('H:i:s') ?? '00:00:00'),
                 $timezone,
             );
             if ($end <= $start) {
-                $end = $start->modify('+1 day')->setTime(0, 0);
+                $end = $reservation->isEventSpace() && null !== $departureTime
+                    ? $end->modify('+1 day')
+                    : $start->modify('+1 day')->setTime(0, 0);
             }
             $event->add('DTSTART', $start->setTimezone($utc));
             $event->add('DTEND', $end->setTimezone($utc));

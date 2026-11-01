@@ -44,7 +44,7 @@
                 </td>
                 <td>{{ item.apartment.number }} {{ item.apartment.description }}</td>
                 <td>{{ guestNames|join(', ') ?: '-' }}</td>
-                <td>{{ reservation.startDate|date('d.m.Y') }} - {{ reservation.endDate|date('d.m.Y') }}</td>
+                <td>{{ reservation.startDate|date('d.m.Y') }} - {{ reservation.visibleEndDate|date('d.m.Y') }}</td>
                 <td class="text-center">
                     {% if 'arrival' in item.categories %}
                         <span class="badge text-bg-success">{{ 'operations.frontdesk.arrivals'|trans }}</span>
@@ -193,7 +193,7 @@
                     {{ 'operations.frontdesk.guest'|trans }}: {{ guestNames|join(', ') ?: '-' }}
                 </div>
                 <div class="small text-muted mb-3">
-                    {{ 'operations.frontdesk.period'|trans }}: {{ reservation.startDate|date('d.m.Y') }} - {{ reservation.endDate|date('d.m.Y') }}
+                    {{ 'operations.frontdesk.period'|trans }}: {{ reservation.startDate|date('d.m.Y') }} - {{ reservation.visibleEndDate|date('d.m.Y') }}
                 </div>
                 <div class="mb-3">
                     <label class="form-label small">{{ 'reservation.status'|trans }}</label>

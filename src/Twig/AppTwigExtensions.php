@@ -406,7 +406,7 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         foreach ($reservations as $reservation) {
             $start = new \DateTimeImmutable($reservation->getStartDate()->format('Y-m-d').' UTC');
             // An event ends on its last day, the stored end day after it is free again.
-            $end = new \DateTimeImmutable(($reservation->isEventSpace() ? $reservation->getLastDay() : $reservation->getEndDate())->format('Y-m-d').' UTC');
+            $end = new \DateTimeImmutable($reservation->getVisibleEndDate()->format('Y-m-d').' UTC');
             // todo store all reservation dates as UTC time
             if ($day >= $start && $day <= $end) {
                 $result[] = $reservation;

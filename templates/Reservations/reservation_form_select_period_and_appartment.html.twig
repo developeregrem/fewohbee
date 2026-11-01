@@ -51,7 +51,7 @@
                 </div>
                 {% set lastStartDate = reservation.startdate|date('Y-m-d') %}
                 {# "To" of an event space is its last day #}
-                {% set lastEndDate = (reservation.eventSpace ? reservation.lastDay : reservation.enddate)|date('Y-m-d') %}
+                {% set lastEndDate = reservation.visibleEndDate|date('Y-m-d') %}
             {% endfor %}
         </div>
     {% endif %}

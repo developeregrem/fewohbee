@@ -182,9 +182,19 @@ class Reservation
         return $this->startDate;
     }
 
+    /** The stored, exclusive end, for calculating. What people read or type is getVisibleEndDate(). */
     public function getEndDate(): \DateTime
     {
         return $this->endDate;
+    }
+
+    /**
+     * The end as people read and type it: the departure day, for an event its last day. Anything
+     * calculating with nights or availability keeps to the stored getEndDate().
+     */
+    public function getVisibleEndDate(): \DateTime
+    {
+        return $this->isEventSpace() ? $this->getLastDay() : $this->endDate;
     }
 
     public function getPersons(): int

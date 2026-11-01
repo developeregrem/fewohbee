@@ -157,7 +157,7 @@ class SendNotificationEmailAction implements WorkflowActionInterface
 
         $room = $reservation->getAppartment() ? $this->esc((string) $reservation->getAppartment()->getNumber()) : '–';
         $from = $reservation->getStartDate()->format('d.m.Y');
-        $to = $reservation->getEndDate()->format('d.m.Y');
+        $to = $reservation->getVisibleEndDate()->format('d.m.Y');
         $persons = $reservation->getPersons();
 
         return <<<HTML

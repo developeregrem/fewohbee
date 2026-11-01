@@ -1,6 +1,6 @@
 {# When a reservation runs: arrival to departure day, for an event space its first to its last day. #}
 {% macro dates(reservation) -%}
-    {{ reservation.startdate|date('d.m.Y') }} – {{ (reservation.eventSpace ? reservation.lastDay : reservation.enddate)|date('d.m.Y') }}
+    {{ reservation.startdate|date('d.m.Y') }} – {{ reservation.visibleEndDate|date('d.m.Y') }}
 {%- endmacro %}
 
 {# How long it runs: nights, for an event space days. #}

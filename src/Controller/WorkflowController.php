@@ -577,8 +577,8 @@ class WorkflowController extends AbstractController
         if (method_exists($entity, 'getStartDate') && $entity->getStartDate()) {
             $data['startDate'] = $entity->getStartDate()->format('d.m.Y');
         }
-        if (method_exists($entity, 'getEndDate') && $entity->getEndDate()) {
-            $data['endDate'] = $entity->getEndDate()->format('d.m.Y');
+        if (method_exists($entity, 'getVisibleEndDate')) {
+            $data['endDate'] = $entity->getVisibleEndDate()->format('d.m.Y');
         }
         if (method_exists($entity, 'getAppartment') && $entity->getAppartment()) {
             $data['room'] = (string) $entity->getAppartment()->getNumber();

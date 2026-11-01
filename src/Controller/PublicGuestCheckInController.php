@@ -203,6 +203,7 @@ final class PublicGuestCheckInController extends AbstractController
         $reservation = $checkIn->getReservation();
         $form = $this->createForm(GuestCheckInVerificationType::class, new GuestCheckInVerification(), [
             'ask_last_name' => $this->verifier->asksLastName($reservation),
+            'event_space' => $reservation->isEventSpace(),
             'action' => $this->pageUrl($request, $token),
         ]);
         $form->handleRequest($request);
