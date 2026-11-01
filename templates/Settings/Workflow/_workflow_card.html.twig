@@ -18,15 +18,15 @@
                     <br><span class="text-body-secondary small">{{ workflow.system ? workflow.description|trans : workflow.description }}</span>
                 {% endif %}
                 <br>
-                <span class="badge bg-secondary bg-opacity-25 text-body-secondary small">
+                <span class="badge text-wrap bg-secondary bg-opacity-25 text-body-secondary small">
                     {{ ('workflow.trigger.' ~ workflow.triggerType|replace({'.': '_'}))|trans }}
                 </span>
                 {% for cond in workflow.conditions %}
-                    <span class="badge bg-info bg-opacity-25 text-body-secondary small">
+                    <span class="badge text-wrap bg-info bg-opacity-25 text-body-secondary small">
                         {{ ('workflow.condition.' ~ cond.type|replace({'.': '_'}))|trans }}
                     </span>
                 {% endfor %}
-                <span class="badge bg-success bg-opacity-25 text-body-secondary small">
+                <span class="badge text-wrap bg-success bg-opacity-25 text-body-secondary small">
                     {{ ('workflow.action.' ~ workflow.actionType|replace({'.': '_'}))|trans }}
                 </span>
             </div>
