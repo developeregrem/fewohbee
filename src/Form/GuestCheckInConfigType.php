@@ -6,7 +6,11 @@ namespace App\Form;
 
 use App\Entity\Enum\GuestCheckInFieldMode;
 use App\Entity\GuestCheckInConfig;
+use App\Entity\Template;
 use App\Service\PublicUrlService;
+use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
@@ -41,6 +45,23 @@ class GuestCheckInConfigType extends AbstractType
                     }
                 }),
             ],
+        ]);
+
+        $builder->add('invitationTemplate', EntityType::class, [
+            'class' => Template::class,
+            'required' => false,
+            'placeholder' => 'guest_checkin.settings.invitation_template_none',
+            'label' => 'guest_checkin.settings.invitation_template',
+            'help' => 'guest_checkin.settings.invitation_template_help',
+            'choice_label' => 'name',
+            // Reservation mails only; language variants follow their base template when sending.
+            'query_builder' => static fn (EntityRepository $repository): QueryBuilder => $repository->createQueryBuilder('t')
+                ->join('t.templateType', 'tt')
+                ->where('tt.name = :type')
+                ->andWhere('t.hidden = false')
+                ->andWhere('t.baseTemplate IS NULL')
+                ->setParameter('type', 'TEMPLATE_RESERVATION_EMAIL')
+                ->orderBy('t.name', 'ASC'),
         ]);
 
         $builder->add('extrasEnabled', CheckboxType::class, [

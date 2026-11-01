@@ -21,6 +21,33 @@ use PHPUnit\Framework\TestCase;
 
 final class TouristTaxServiceTest extends TestCase
 {
+    #[DataProvider('incompleteStayDates')]
+    public function testIncompleteDatesCannotSilentlyProduceAnEmptyTaxCalculation(bool $withStart, bool $withEnd): void
+    {
+        $reservation = new Reservation();
+        if ($withStart) {
+            $reservation->setStartDate(new \DateTime('2026-06-01'));
+        }
+        if ($withEnd) {
+            $reservation->setEndDate(new \DateTime('2026-06-03'));
+        }
+        $taxes = $this->createMock(TouristTaxRepository::class);
+        $taxes->expects(self::never())->method('findActiveForSubsidiaryInRange');
+        $service = new TouristTaxService($taxes, $this->createStub(GuestCategoryRepository::class));
+
+        $this->expectException(\TypeError::class);
+
+        $service->calculateForReservation($reservation);
+    }
+
+    /** @return iterable<string, array{bool, bool}> */
+    public static function incompleteStayDates(): iterable
+    {
+        yield 'both dates missing' => [false, false];
+        yield 'start missing' => [false, true];
+        yield 'end missing' => [true, false];
+    }
+
     public function testWaivedReturnsEmpty(): void
     {
         $r = $this->makeReservation([1 => 2]);

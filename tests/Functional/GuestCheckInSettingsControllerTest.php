@@ -112,6 +112,25 @@ final class GuestCheckInSettingsControllerTest extends WebTestCase
         self::assertSame('optional', $this->config()->getCompanyMode()->value);
     }
 
+    public function testTheInvitationTemplateIsChosenFromReservationMailsOnly(): void
+    {
+        $client = $this->authenticatedClient();
+        $crawler = $client->request('GET', '/settings/guest-checkin');
+        $options = $crawler->filter('select[name="guest_check_in_config[invitationTemplate]"] option')
+            ->each(static fn ($option): string => (string) $option->attr('value'));
+        $reservationMails = $this->em()->getConnection()->fetchFirstColumn(
+            "SELECT t.id FROM templates t JOIN template_types tt ON tt.id = t.template_type_id
+             WHERE tt.name = 'TEMPLATE_RESERVATION_EMAIL' AND t.hidden = 0 AND t.base_template_id IS NULL ORDER BY t.name"
+        );
+        self::assertNotEmpty($reservationMails);
+        self::assertEqualsCanonicalizing(['', ...array_map('strval', $reservationMails)], $options);
+
+        $this->submitSettings($client, ['guest_check_in_config[invitationTemplate]' => (string) $reservationMails[0]]);
+
+        self::assertResponseRedirects('/settings/guest-checkin');
+        self::assertSame((int) $reservationMails[0], $this->config()->getInvitationTemplate()?->getId());
+    }
+
     public function testAdminCanTurnOptionalServicesOnAndOff(): void
     {
         $client = $this->authenticatedClient();
@@ -167,7 +186,8 @@ final class GuestCheckInSettingsControllerTest extends WebTestCase
                     ->setExtrasEnabled(true)
                     ->setIdDocumentMode(GuestCheckInFieldMode::OPTIONAL)
                     ->setCompanionsMode(GuestCheckInFieldMode::OPTIONAL)
-                    ->setCompanyMode(GuestCheckInFieldMode::HIDDEN);
+                    ->setCompanyMode(GuestCheckInFieldMode::HIDDEN)
+                    ->setInvitationTemplate(null);
                 $em->getConnection()->executeStatement("DELETE FROM workflows WHERE system_code IN ('notify_guest_checkin', 'example_guest_checkin_invitation')");
                 $this->appSettings()->setPublicBaseUrl(null);
                 $em->flush();

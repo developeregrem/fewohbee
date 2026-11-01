@@ -79,6 +79,9 @@ guest_checkin:
     invitation_active: "Automatische Einladung aktiv:"
     invitation_none: "Noch keine automatische Einladung aktiv. Schalte z. B. die Automatisierung „Beispiel: Einladung zum Online-Check-in (7 Tage vorher)“ ein und wähle dort die E-Mail-Vorlage „Einladung zum Online-Check-in“."
     invitation_manage: "Automatisierungen verwalten"
+    invitation_template: "Vorlage für die Einladung"
+    invitation_template_none: "Keine"
+    invitation_template_help: "Diese E-Mail-Vorlage kannst du im Reiter „Online-Check-in“ einer Reservierung von Hand an den Bucher schicken. Ohne Auswahl gibt es dort keinen Button zum Senden."
   public:
     page_title: "Online-Check-in"
     language: "Sprache"
@@ -174,10 +177,17 @@ guest_checkin:
     invitation_planned: "Die Einladung verschickt die Automatisierung %names%."
     invitation_none: "Es ist keine automatische Einladung eingerichtet. Schick den Link selbst oder richte eine Automatisierung ein."
     invitation_setup: "Zu den Automatisierungen"
+    invitation_not_sent: "Die Einladung wurde noch nicht verschickt."
+    invitation_no_workflow: "Keine Automatisierung verschickt die Einladung. Schick sie von Hand oder richte eine Automatisierung ein."
+    invite_to: "Geht an %email%"
+    invite_send: "Einladung senden"
+    invite_again: "Erneut senden"
+    invite_no_recipient: "Für den Bucher ist keine E-Mail-Adresse hinterlegt. Schick den Link selbst."
     unavailable_disabled: "Der Online-Check-in ist ausgeschaltet. Du kannst ihn in den Einstellungen unter „Online-Check-in“ einschalten."
     unavailable_address: "Es ist keine öffentliche Adresse hinterlegt, daher lässt sich kein Link erzeugen. Du findest sie in den allgemeinen Einstellungen."
     unavailable_reservation: "Für diese Reservierung ist kein Online-Check-in möglich (storniert, ohne Zimmer oder bereits abgereist)."
     link_heading: "Link für den Gast"
+    link_menu: "Link / QR-Code"
     show_link: "Link anzeigen"
     show_qr: "QR-Code"
     download_qr: "QR-Code herunterladen"
@@ -255,6 +265,10 @@ guest_checkin:
   desk:
     success: "Der Gast ist als eingecheckt markiert."
     undone: "Die Markierung wurde zurückgenommen."
+  invite:
+    sent: "Die Einladung zum Online-Check-in wurde verschickt."
+    not_sent: "Die Einladung wurde nicht verschickt: %reason%"
+    failed: "Die Einladung konnte nicht verschickt werden. Prüfe die E-Mail-Einstellungen."
   frontdesk:
     header: "Check-in"
     state:

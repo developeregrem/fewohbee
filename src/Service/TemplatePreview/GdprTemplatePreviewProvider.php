@@ -151,7 +151,7 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
                 'description' => 'templates.preview.snippet.gdpr.addresses.desc',
                 'group' => 'GDPR',
                 'complexity' => 'easy',
-                'content' => "<div data-repeat=\"customer.customerAddresses\" data-repeat-as=\"address\"><h6 class=\"panel-title\">[[ 'customer.contact'|trans ]] ([[ address.type|trans ]])</h6><table class=\"general\"><tbody><tr data-if=\"address.company\"><td class=\"first\">[[ 'customer.company'|trans ]]:</td><td>[[ address.company ]]</td></tr><tr><td class=\"first\">[[ 'reservation.preview.customer.address'|trans ]]:</td><td>[[ address.address ]]<br />[[ address.zip ]] [[ address.city ]]<br />[[ address.country ]]</td></tr><tr><td class=\"first\">[[ 'customer.email'|trans ]]:</td><td>[[ address.email ? address.email : '-' ]]</td></tr><tr><td class=\"first\">[[ 'customer.phone'|trans ]]:</td><td>[[ address.phone ? address.phone : '-' ]]</td></tr><tr><td class=\"first\">[[ 'customer.fax'|trans ]]:</td><td>[[ address.fax ? address.fax : '-' ]]</td></tr><tr><td class=\"first\">[[ 'customer.mobilephone'|trans ]]:</td><td>[[ address.mobilephone ? address.mobilephone : '-' ]]</td></tr></tbody></table></div>",
+                'content' => "<div data-repeat=\"customer.customerAddresses\" data-repeat-as=\"address\"><h6 class=\"panel-title\">[[ 'customer.contact'|trans ]] ([[ address.type|trans ]])</h6><table class=\"general\"><tbody><tr data-if=\"address.company\"><td class=\"first\">[[ 'customer.company'|trans ]]:</td><td>[[ address.company ]]</td></tr><tr><td class=\"first\">[[ 'reservation.preview.customer.address'|trans ]]:</td><td>[[ address.address ]]<br />[[ address.zip ]] [[ address.city ]]<br />[[ address.country ]]</td></tr><tr><td class=\"first\">[[ 'customer.email'|trans ]]:</td><td>[[ address.email ? address.email : '-' ]]</td></tr><tr data-if=\"address.invoiceEmail\"><td class=\"first\">[[ 'customer.invoiceEmail.label'|trans ]]:</td><td>[[ address.invoiceEmail ]]</td></tr><tr><td class=\"first\">[[ 'customer.phone'|trans ]]:</td><td>[[ address.phone ? address.phone : '-' ]]</td></tr><tr><td class=\"first\">[[ 'customer.fax'|trans ]]:</td><td>[[ address.fax ? address.fax : '-' ]]</td></tr><tr><td class=\"first\">[[ 'customer.mobilephone'|trans ]]:</td><td>[[ address.mobilephone ? address.mobilephone : '-' ]]</td></tr></tbody></table></div>",
             ],
             [
                 'id' => 'gdpr.reservations.block',
@@ -204,6 +204,7 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
                     'city' => 'Musterstadt',
                     'country' => 'DE',
                     'email' => 'max.mustermann@example.com',
+                    'invoiceEmail' => 'buchhaltung@example.com',
                     'phone' => '+49 123 4567',
                     'fax' => '',
                     'mobilephone' => '+49 171 1234567',

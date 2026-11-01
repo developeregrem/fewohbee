@@ -12,7 +12,11 @@ interface WorkflowTriggerInterface
 
     public function getLabelKey(): string;
 
-    /** The entity class this trigger relates to, or null for non-entity triggers. */
+    /**
+     * The entity class this trigger relates to, or null for non-entity triggers.
+     *
+     * @return class-string|null
+     */
     public function getEntityClass(): ?string;
 
     /**
@@ -41,6 +45,7 @@ interface WorkflowTriggerInterface
     /**
      * Find only the IDs of matching entities (used by the scheduler for efficient dedup filtering).
      * Returns an empty array for event-driven triggers.
+     * A non-empty result requires a non-null entity class.
      *
      * @param array<string, mixed> $config Implementation-specific configuration values
      *

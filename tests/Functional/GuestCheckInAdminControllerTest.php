@@ -11,10 +11,12 @@ use App\Entity\CustomerAddresses;
 use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\GuestCheckIn;
 use App\Entity\GuestCheckInConfig;
+use App\Entity\MailCorrespondence;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\Role;
+use App\Entity\Template;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -51,6 +53,7 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
             $ids = [...$ids, ...$connection->fetchFirstColumn('SELECT booker_id FROM reservations WHERE id = ? AND booker_id IS NOT NULL', [$this->reservationId])];
             $this->customerIds = array_values(array_unique([...$this->customerIds, ...array_map('intval', $ids)]));
             $connection->executeStatement('DELETE FROM guest_check_in WHERE reservation_id = ?', [$this->reservationId]);
+            $connection->executeStatement('DELETE FROM correspondence WHERE reservation_id = ?', [$this->reservationId]);
             $connection->executeStatement('DELETE FROM reservations_has_customers WHERE reservation_id = ?', [$this->reservationId]);
             $connection->executeStatement('DELETE FROM reservations WHERE id = ?', [$this->reservationId]);
         }
@@ -62,7 +65,7 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
             }
             $connection->executeStatement('DELETE FROM customers WHERE id = ?', [$id]);
         }
-        $connection->executeStatement('UPDATE guest_check_in_config SET enabled = 0');
+        $connection->executeStatement('UPDATE guest_check_in_config SET enabled = 0, invitation_template_id = NULL');
         $connection->executeStatement('UPDATE app_settings SET public_base_url = NULL');
         parent::tearDown();
     }
@@ -545,7 +548,7 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         self::assertSame(GuestCheckInStatus::OPEN, $checkIn->getStatus());
         self::assertFalse($checkIn->hasPayload());
         self::assertNull($checkIn->getLastSubmittedAt(), 'Nothing left that looks sent.');
-        self::assertSelectorTextContains('#guest-checkin', 'Der Gast hat noch nicht online eingecheckt.');
+        self::assertSelectorTextContains('#guest-checkin .badge', 'Noch nicht eingecheckt');
     }
 
     public function testConfirmedCheckInCannotBeDiscardedFromAStaleDialog(): void
@@ -679,6 +682,85 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         self::assertSelectorExists('#guest-checkin form[action$="/checkin/desk"]');
     }
 
+    public function testTheInvitationIsSentByHandWithTheTemplateFromTheSettings(): void
+    {
+        $template = $this->useInvitationTemplate();
+        $reservation = $this->createReservation('anna-'.bin2hex(random_bytes(4)).'@example.com');
+        $this->loginAdmin();
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        $form = $crawler->filter('#guest-checkin form[action$="/checkin/invite"]');
+        self::assertCount(1, $form);
+        self::assertStringContainsString((string) ($reservation->getBooker()?->getEmails()[0] ?? ''), (string) $form->filter('button')->attr('title'));
+        self::assertSelectorTextContains('#guest-checkin', 'noch nicht verschickt');
+        self::assertStringContainsString('Keine Automatisierung', (string) $crawler->filter('#guest-checkin a[href$="/settings/workflows"]')->attr('title'), 'Without an automation an icon says so.');
+        self::assertCount(0, $form->filter('button[name="email"]'), 'With one address there is nothing to choose.');
+        $token = (string) $form->filter('input[name="_token"]')->attr('value');
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/invite', ['_token' => 'forged']);
+        self::assertSame([], $this->mailsFor($reservation));
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/invite', ['_token' => $token]);
+        self::assertResponseIsSuccessful();
+        $mails = $this->mailsFor($reservation);
+        self::assertCount(1, $mails);
+        self::assertSame($template->getId(), $mails[0]->getTemplate()?->getId());
+        self::assertSelectorTextContains('#guest-checkin', 'wurde am '.date('d.m.Y').' verschickt');
+        self::assertSelectorTextContains('#guest-checkin form[action$="/checkin/invite"] button', 'Erneut senden');
+    }
+
+    public function testWithSeveralAddressesTheChosenOneGetsTheInvitation(): void
+    {
+        $this->useInvitationTemplate();
+        $private = 'anna-'.bin2hex(random_bytes(4)).'@example.com';
+        $work = 'anna-work-'.bin2hex(random_bytes(4)).'@example.com';
+        $reservation = $this->createReservation($private);
+        $address = (new CustomerAddresses())->setType('CUSTOMER_ADDRESS_TYPE_BUSINESS')->setEmail($work);
+        $this->em()->persist($address);
+        $reservation->getBooker()?->addCustomerAddress($address);
+        $this->em()->flush();
+        $this->loginAdmin();
+
+        $crawler = $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        $form = $crawler->filter('#guest-checkin form[action$="/checkin/invite"]');
+        self::assertSame([$private, $work], $form->filter('button[name="email"]')->each(static fn ($button) => $button->attr('value')));
+        $token = (string) $form->filter('input[name="_token"]')->attr('value');
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/invite', ['_token' => $token, 'email' => 'someone-else@example.com']);
+        self::assertCount(0, $this->mailsFor($reservation), 'Only an address of the booker is used.');
+
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/invite', ['_token' => $token, 'email' => $work]);
+        $mails = $this->mailsFor($reservation);
+        self::assertCount(1, $mails);
+        self::assertSame($work, $mails[0]->getRecipient());
+    }
+
+    public function testWithoutAnInvitationTemplateOrAddressThereIsNothingToSend(): void
+    {
+        $reservation = $this->createReservation();
+        $this->loginAdmin();
+        $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertSelectorNotExists('#guest-checkin form[action$="/checkin/invite"]');
+        self::assertSelectorTextNotContains('#guest-checkin', 'keine E-Mail-Adresse');
+
+        $this->useInvitationTemplate();
+        $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertSelectorNotExists('#guest-checkin form[action$="/checkin/invite"]');
+        self::assertSelectorTextContains('#guest-checkin', 'keine E-Mail-Adresse');
+    }
+
+    public function testReadOnlyUsersCannotSendTheInvitation(): void
+    {
+        $this->useInvitationTemplate();
+        $reservation = $this->createReservation('anna-'.bin2hex(random_bytes(4)).'@example.com');
+        $this->client->loginUser($this->userWithRole('ROLE_RESERVATIONS_RO'), 'main');
+
+        $this->client->request('GET', '/reservation/get/'.$reservation->getId(), ['tab' => 'checkin']);
+        self::assertSelectorNotExists('#guest-checkin form[action$="/checkin/invite"]');
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/invite', ['_token' => 'any']);
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame([], $this->mailsFor($reservation));
+    }
+
     public function testWaitingSubmissionIsNotOverriddenByADeskCheckIn(): void
     {
         $reservation = $this->createReservation();
@@ -754,13 +836,18 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         return $user;
     }
 
-    private function createReservation(): Reservation
+    private function createReservation(?string $bookerEmail = null): Reservation
     {
         $em = $this->em();
         $booker = new Customer();
         $booker->setSalutation('Frau');
         $booker->setFirstname('Anna');
         $booker->setLastname('Müller');
+        if (null !== $bookerEmail) {
+            $address = (new CustomerAddresses())->setType('CUSTOMER_ADDRESS_TYPE_PRIVATE')->setEmail($bookerEmail);
+            $em->persist($address);
+            $booker->addCustomerAddress($address);
+        }
         $em->persist($booker);
 
         $reservation = new Reservation();
@@ -782,6 +869,27 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         $this->customerIds[] = (int) $booker->getId();
 
         return $reservation;
+    }
+
+    /** Picks a reservation mail from the sample data as invitation template. */
+    private function useInvitationTemplate(): Template
+    {
+        $template = $this->em()->createQueryBuilder()
+            ->select('t')->from(Template::class, 't')->join('t.templateType', 'tt')
+            ->where('tt.name = :type')->setParameter('type', 'TEMPLATE_RESERVATION_EMAIL')
+            ->setMaxResults(1)->getQuery()->getSingleResult();
+        $this->em()->getRepository(GuestCheckInConfig::class)->findOneBy([])?->setInvitationTemplate($template);
+        $this->em()->flush();
+
+        return $template;
+    }
+
+    /** @return MailCorrespondence[] */
+    private function mailsFor(Reservation $reservation): array
+    {
+        $this->em()->clear();
+
+        return $this->em()->getRepository(MailCorrespondence::class)->findBy(['reservation' => $reservation->getId()]);
     }
 
     private function em(): EntityManagerInterface

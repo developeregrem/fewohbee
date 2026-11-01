@@ -156,8 +156,8 @@ class SendNotificationEmailAction implements WorkflowActionInterface
         $guestsLabel = $this->translator->trans('app_settings.notification_mail.guests');
 
         $room = $reservation->getAppartment() ? $this->esc((string) $reservation->getAppartment()->getNumber()) : '–';
-        $from = $reservation->getStartDate()?->format('d.m.Y') ?? '–';
-        $to = $reservation->getEndDate()?->format('d.m.Y') ?? '–';
+        $from = $reservation->getStartDate()->format('d.m.Y');
+        $to = $reservation->getEndDate()->format('d.m.Y');
         $persons = $reservation->getPersons();
 
         return <<<HTML

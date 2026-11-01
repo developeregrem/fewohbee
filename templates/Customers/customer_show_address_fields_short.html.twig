@@ -20,6 +20,10 @@
                             <dd>{{ address.address }}<br>{{ address.zip }} {{ address.city }}<br />{{ address.country }}</dd>
                             <dt>{{ 'customer.email'|trans }}</dt>
                             <dd>{% if address.email %}{{ address.email }}{% else %} -{% endif %}</dd>                                                
+                            {% if address.invoiceEmail %}
+                            <dt>{{ 'customer.invoiceEmail.label'|trans }}</dt>
+                            <dd>{{ address.invoiceEmail }}</dd>
+                            {% endif %}
                         </dl>
                     </div>
                     <div class="col-sm-6">

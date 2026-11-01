@@ -24,6 +24,7 @@ use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\EInvoice\EInvoiceReadinessService;
 use App\Service\InvoiceService;
 use App\Service\MailService;
+use App\Service\Reservation\ReservationMailRecipientResolver;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -326,7 +327,7 @@ class CorrespondenceController extends AbstractController
      */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/attachment/add', name: 'correspondence.attachment.add', methods: ['POST'])]
-    public function addAttachmentAction(ManagerRegistry $doctrine, TemplatesService $ts, Request $request, InvoiceService $is, EInvoiceExportService $einvoice, EInvoiceReadinessService $readinessService): Response
+    public function addAttachmentAction(ManagerRegistry $doctrine, TemplatesService $ts, Request $request, InvoiceService $is, EInvoiceExportService $einvoice, EInvoiceReadinessService $readinessService, RequestStack $requestStack, ReservationService $rs, ReservationMailRecipientResolver $recipients): Response
     {
         $em = $doctrine->getManager();
         $error = false;
@@ -355,6 +356,7 @@ class CorrespondenceController extends AbstractController
                     }
                 }
                 $cId = $ts->makeCorespondenceOfInvoice($cId, $is, $binaryPayload, $asEInvoice);
+                $this->useInvoiceRecipient($requestStack, $recipients, $invoice, $rs->getSelectedReservations());
             }
         }
 
@@ -366,6 +368,25 @@ class CorrespondenceController extends AbstractController
         return $this->render('feedback.html.twig', [
             'error' => $error,
         ]);
+    }
+
+    /**
+     * Points the mail being written at the invoice's email, unless the user already typed in
+     * a recipient of their own. The note tells them in the dialog that the recipient changed.
+     *
+     * @param list<Reservation> $reservations
+     */
+    private function useInvoiceRecipient(RequestStack $requestStack, ReservationMailRecipientResolver $recipients, Invoice $invoice, array $reservations): void
+    {
+        $session = $requestStack->getSession();
+        $draft = $session->get(self::EMAIL_DRAFT_SESSION_KEY, []);
+        $recipient = $recipients->recipientForAttachedInvoice((string) ($draft['to'] ?? ''), $invoice, $reservations);
+        if (null === $recipient) {
+            return;
+        }
+        $draft['to'] = $recipient;
+        $draft['recipientFromInvoice'] = (string) $invoice->getNumber();
+        $session->set(self::EMAIL_DRAFT_SESSION_KEY, $draft);
     }
 
     /**

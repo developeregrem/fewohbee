@@ -242,6 +242,25 @@ class Customer
         return $this->customerAddresses;
     }
 
+    /**
+     * The e-mails of all addresses in address order, each once (compared without case). The
+     * first one is where mails to the customer as booker go unless another one is chosen.
+     *
+     * @return list<string>
+     */
+    public function getEmails(): array
+    {
+        $emails = [];
+        foreach ($this->customerAddresses as $address) {
+            $email = trim((string) $address->getEmail());
+            if ('' !== $email) {
+                $emails[mb_strtolower($email)] ??= $email;
+            }
+        }
+
+        return array_values($emails);
+    }
+
     public function getIDNumber(): ?string
     {
         return $this->IDNumber;

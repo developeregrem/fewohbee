@@ -45,6 +45,8 @@ customer.search.addresses: 'Anschriften suchen…'
 customer.template: Vorlage
 customer.zip: PLZ
 customer.buyerVatId: 'USt-IdNr. (Käufer)'
+customer.invoiceEmail.label: 'E-Mail für Rechnungen'
+customer.invoiceEmail.placeholder: 'nur, wenn abweichend'
 customer.buyerReference.label: Kundenreferenz
 customer.buyerReference.placeholder: 'z.B. Leitweg-ID'
 customer.buyerReference.hint: 'Ein vom Gast zugewiesener und für interne Lenkungszwecke benutzter Bezeichner, auch als Leitweg-ID bekannt.'

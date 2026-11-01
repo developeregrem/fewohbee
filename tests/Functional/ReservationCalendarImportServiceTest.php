@@ -341,6 +341,67 @@ ICS,
         self::assertFalse($reservation->isConflict());
     }
 
+    /** @return iterable<string, array{bool}> */
+    public static function dstSwitches(): iterable
+    {
+        yield 'autumn' => [false];
+        yield 'spring' => [true];
+    }
+
+    /**
+     * Ensure a stay spanning a daylight saving switch keeps its departure day
+     * and does not collide with a reservation arriving on that day.
+     */
+    #[DataProvider('dstSwitches')]
+    public function testStayAcrossDstSwitchKeepsDepartureAndTouchesFollowingStay(bool $intoDst): void
+    {
+        $switchDay = $this->nextDstSwitchDay($intoDst);
+        $start = $switchDay->modify('-10 days');
+        $end = $switchDay->modify('+5 days');
+        $import = $this->createImport('https://example.test/ical/dst-'.($intoDst ? 'spring' : 'autumn'), CalendarSyncImport::CONFLICT_MARK);
+        $this->createReservation($import, 'uid-dst-following', \DateTime::createFromImmutable($end), \DateTime::createFromImmutable($end->modify('+3 days')));
+        $uid = 'uid-dst-stay';
+        $service = $this->createServiceWithResponses([
+            $import->getUrl() => implode("\r\n", [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'BEGIN:VEVENT',
+                'UID:'.$uid,
+                'DTSTAMP:20260101T000000Z',
+                'DTSTART;VALUE=DATE:'.$start->format('Ymd'),
+                'DTEND;VALUE=DATE:'.$end->format('Ymd'),
+                'SUMMARY:CLOSED - Not available',
+                'END:VEVENT',
+                'END:VCALENDAR',
+            ]),
+        ]);
+
+        $service->syncImport($import);
+
+        $reservation = $this->getReservationRepository()->findOneByRefUidAndImport($uid, $import);
+        self::assertNotNull($reservation);
+        self::assertSame($start->format('Y-m-d'), $reservation->getStartDate()->format('Y-m-d'));
+        self::assertSame($end->format('Y-m-d'), $reservation->getEndDate()->format('Y-m-d'));
+        self::assertFalse($reservation->isConflict());
+    }
+
+    /**
+     * Midnight of the next day on which the default zone enters ($intoDst) or
+     * leaves daylight saving time.
+     */
+    private function nextDstSwitchDay(bool $intoDst): \DateTimeImmutable
+    {
+        $zone = new \DateTimeZone(date_default_timezone_get());
+        $now = time();
+        foreach ($zone->getTransitions($now, $now + 2 * 366 * 86400) as $index => $transition) {
+            if (0 < $index && $transition['isdst'] === $intoDst) {
+                return (new \DateTimeImmutable('@'.$transition['ts']))->setTimezone($zone)->setTime(0, 0);
+            }
+        }
+
+        self::markTestSkipped('The default time zone has no daylight saving switch.');
+    }
+
     /**
      * Build a ReservationCalendarImportService with mocked HTTP responses keyed by URL.
      *

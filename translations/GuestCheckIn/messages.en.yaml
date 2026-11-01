@@ -79,6 +79,9 @@ guest_checkin:
     invitation_active: "Automatic invitation active:"
     invitation_none: "No automatic invitation is active yet. For example, switch on the automation \"Example: Online check-in invitation (7 days before)\" and choose the email template \"Online check-in invitation\" there."
     invitation_manage: "Manage automations"
+    invitation_template: "Template for the invitation"
+    invitation_template_none: "None"
+    invitation_template_help: "You can send this email template to the booker by hand from the \"Online check-in\" tab of a reservation. Without a choice there is no send button."
   public:
     page_title: "Online check-in"
     language: "Language"
@@ -174,10 +177,17 @@ guest_checkin:
     invitation_planned: "The invitation is sent by the automation %names%."
     invitation_none: "No automatic invitation is set up. Send the link yourself or set up an automation."
     invitation_setup: "Go to automations"
+    invitation_not_sent: "The invitation has not been sent yet."
+    invitation_no_workflow: "No automation sends the invitation. Send it by hand or set up an automation."
+    invite_to: "Goes to %email%"
+    invite_send: "Send invitation"
+    invite_again: "Send again"
+    invite_no_recipient: "The booker has no email address. Send the link yourself."
     unavailable_disabled: "The online check-in is switched off. You can switch it on in the settings under \"Online check-in\"."
     unavailable_address: "No public address is set, so no link can be created. You find it in the general settings."
     unavailable_reservation: "Online check-in is not possible for this reservation (cancelled, without room or already departed)."
     link_heading: "Link for the guest"
+    link_menu: "Link / QR code"
     show_link: "Show link"
     show_qr: "QR code"
     download_qr: "Download QR code"
@@ -255,6 +265,10 @@ guest_checkin:
   desk:
     success: "The guest is marked as checked in."
     undone: "The mark was taken back."
+  invite:
+    sent: "The online check-in invitation was sent."
+    not_sent: "The invitation was not sent: %reason%"
+    failed: "The invitation could not be sent. Check the email settings."
   frontdesk:
     header: "Check-in"
     state:
