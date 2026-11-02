@@ -45,7 +45,7 @@ final class OperationsTools
     #[McpTool(
         name: 'get_operations_report',
         title: 'Operations report',
-        description: 'Room plan per day for housekeeping and front desk (at most 14 days): for every room its occupancy (ARRIVAL, DEPARTURE, TURNOVER = departure and arrival on the same day, STAYOVER, BLOCKED, FREE), guest count and housekeeping status, plus the reservations involved with their booked extras such as breakfast. Guest and staff names, housekeeping notes and block reasons are only included when the access token may share guest data.',
+        description: 'Room plan per day for housekeeping and front desk (at most 14 days): for every room its occupancy (ARRIVAL, DEPARTURE, TURNOVER = departure and arrival on the same day, STAYOVER, BLOCKED, FREE), guest count and housekeeping status, plus the reservations involved with their booked extras such as breakfast. In a room of kind "event_space" the last day counts as DEPARTURE, while the departure of its reservations stays the day after it. Guest and staff names, housekeeping notes and block reasons are only included when the access token may share guest data.',
         annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
     )]
     #[McpRequiresScope(ApiScope::OPERATIONS_READ)]

@@ -40,12 +40,13 @@ class GuestCheckInVerifier
     /**
      * Dates must match exactly; the name may be the booker's or any linked guest's, since a fellow
      * traveller may open a forwarded link. Differences in case, accents, hyphens and German
-     * umlaut spelling (Müller/Mueller) are ignored.
+     * umlaut spelling (Müller/Mueller) are ignored. An event ends on its last day; the stored day
+     * after it passes too, because a mail from an own template may still show that one.
      */
     public function matches(Reservation $reservation, GuestCheckInVerification $input): bool
     {
         $datesMatch = $input->arrival?->format('Y-m-d') === $reservation->getStartDate()->format('Y-m-d')
-            && $input->departure?->format('Y-m-d') === $reservation->getEndDate()->format('Y-m-d');
+            && \in_array($input->departure?->format('Y-m-d'), [$reservation->getVisibleEndDate()->format('Y-m-d'), $reservation->getEndDate()->format('Y-m-d')], true);
 
         $known = $this->knownLastNames($reservation);
         if ([] === $known) {

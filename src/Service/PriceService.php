@@ -860,7 +860,9 @@ class PriceService implements ResetInterface
                     $breakdown->addLine(new PriceBreakdownLine($category, $fullFare, $basePerHead, null));
                 }
                 if ($discounted > 0) {
-                    $unit = $this->applyModifier($basePerHead, $modifier, $category);
+                    // Whole cents, as a promise keeps them: a discount landing on half a cent
+                    // would otherwise cost something else once the booking has its promise.
+                    $unit = round($this->applyModifier($basePerHead, $modifier, $category), 2);
                     $breakdown->addLine(new PriceBreakdownLine($category, $discounted, $unit, $modifier));
                 }
             }

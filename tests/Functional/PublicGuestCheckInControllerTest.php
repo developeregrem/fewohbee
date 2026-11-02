@@ -4,22 +4,26 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
-use App\Entity\AppSettings;
+use App\Dto\GuestCheckIn\GuestCheckInApplyRequest;
 use App\Entity\Appartment;
+use App\Entity\AppSettings;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\Enum\GuestCheckInFieldMode;
 use App\Entity\Enum\GuestCheckInStatus;
+use App\Entity\Enum\IDCardType;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\GuestCheckIn;
 use App\Entity\GuestCheckInConfig;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
+use App\Entity\RoomCategory;
+use App\Entity\Subsidiary;
 use App\Entity\User;
-use App\Service\GuestCheckIn\GuestCheckInLinkService;
 use App\Service\GuestCheckIn\GuestCheckInApplyService;
-use App\Dto\GuestCheckIn\GuestCheckInApplyRequest;
+use App\Service\GuestCheckIn\GuestCheckInLinkService;
 use App\Service\GuestCheckIn\GuestCheckInRateLimiter;
 use App\Service\GuestCheckIn\GuestCheckInTokenSigner;
 use Doctrine\ORM\EntityManagerInterface;
@@ -41,6 +45,8 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
     private ?int $reservationId = null;
     private ?int $bookerId = null;
     private ?int $extraPriceId = null;
+    private ?int $hallId = null;
+    private ?int $hallCategoryId = null;
     /** @var list<int> further customers created by a test */
     private array $extraCustomerIds = [];
     private string $start;
@@ -77,6 +83,13 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
             $connection->executeStatement('DELETE FROM reservations_has_customers WHERE reservation_id = ?', [$this->reservationId]);
             $connection->executeStatement('DELETE FROM reservation_price WHERE reservation_id = ?', [$this->reservationId]);
             $connection->executeStatement('DELETE FROM reservations WHERE id = ?', [$this->reservationId]);
+        }
+        if (null !== $this->hallId) {
+            $em->clear();
+            $em->remove($em->find(Appartment::class, $this->hallId));
+            $em->flush();
+            $em->remove($em->find(RoomCategory::class, $this->hallCategoryId));
+            $em->flush();
         }
         if (null !== $this->extraPriceId) {
             $connection->executeStatement('DELETE FROM prices_has_reservation_origins WHERE price_id = ?', [$this->extraPriceId]);
@@ -420,6 +433,114 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertStringNotContainsString('•••766', $crawler->html());
     }
 
+    public function testAnotherArrivingGuestNeedsARequiredIdNumberOfTheirOwn(): void
+    {
+        [, $form] = $this->openFormWithRequiredIdNumberOnFile('?edit=1&main=other');
+        $form['guest_check_in[mainGuest][firstname]'] = 'Bernd';
+        $form['guest_check_in[mainGuest][lastname]'] = 'Neumann';
+
+        $crawler = $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertNull($this->checkIn()->getPayload());
+        self::assertStringNotContainsString('•••766', $crawler->html());
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $form['guest_check_in[mainGuest][idNumber]'] = 'X1234567';
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(303);
+        $this->em()->clear();
+        $mainGuest = $this->checkIn()->getPayload()['mainGuest'] ?? [];
+        self::assertSame('Bernd', $mainGuest['firstname'] ?? null);
+        self::assertSame('X1234567', $mainGuest['idNumber'] ?? null);
+    }
+
+    public function testOverwritingThePrefilledNameNeedsARequiredIdNumber(): void
+    {
+        [, $form] = $this->openFormWithRequiredIdNumberOnFile();
+        $form['guest_check_in[mainGuest][firstname]'] = 'Bernd';
+        $form['guest_check_in[mainGuest][lastname]'] = 'Neumann';
+
+        $crawler = $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertNull($this->checkIn()->getPayload());
+        self::assertStringContainsString('Please enter the ID number of this person.', $crawler->html());
+    }
+
+    public function testTheGuestOnRecordKeepsTheRequiredIdNumberByLeavingItEmpty(): void
+    {
+        [, $form] = $this->openFormWithRequiredIdNumberOnFile();
+
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(303);
+        $this->em()->clear();
+        self::assertSame('Anna', $this->checkIn()->getPayload()['mainGuest']['firstname'] ?? null);
+    }
+
+    public function testASubmittedIdNumberOnlyStaysWithTheSameName(): void
+    {
+        [$path, $form] = $this->openFormWithRequiredIdNumberOnFile();
+        $form['guest_check_in[mainGuest][idNumber]'] = 'P11223344';
+        $this->client->submit($form);
+        self::assertResponseStatusCodeSame(303);
+
+        $form = $this->client->request('GET', $path.'?edit=1')->filter('form[name="guest_check_in"]')->form();
+        $form['guest_check_in[mainGuest][firstname]'] = 'Bernd';
+        $form['guest_check_in[mainGuest][lastname]'] = 'Neumann';
+        $this->client->submit($form);
+        self::assertResponseStatusCodeSame(422);
+
+        $form = $this->client->request('GET', $path.'?edit=1')->filter('form[name="guest_check_in"]')->form();
+        $this->client->submit($form);
+        self::assertResponseStatusCodeSame(303);
+        $this->em()->clear();
+        self::assertSame('P11223344', $this->checkIn()->getPayload()['mainGuest']['idNumber'] ?? null);
+    }
+
+    public function testEventGuestGetsInWithTheLastDayAndSeesDaysInsteadOfNights(): void
+    {
+        $path = $this->eventLinkPath();
+        $lastDay = $this->start;
+
+        $this->client->request('GET', $path.'?lang=de');
+        self::assertSelectorTextContains('html', 'Erster Tag');
+        self::assertSelectorTextContains('html', 'Letzter Tag');
+
+        $this->end = $lastDay;
+        $this->verify($path, 'Müller');
+        self::assertResponseStatusCodeSame(303);
+
+        $crawler = $this->client->request('GET', $path.'?lang=de');
+        self::assertResponseIsSuccessful();
+        $facts = $crawler->filter('.fhb-gci-facts')->text();
+        $shown = (new \DateTimeImmutable($lastDay))->format('d.m.Y');
+        self::assertStringContainsString($shown.' – '.$shown, $facts);
+        self::assertStringContainsString('1 Tag', $facts);
+        self::assertStringNotContainsString('Nacht', $facts);
+    }
+
+    public function testEventGuestAlsoGetsInWithTheDayAfterAnOwnMailMayShow(): void
+    {
+        $path = $this->eventLinkPath();
+
+        $this->verify($path, 'Müller');
+
+        self::assertResponseStatusCodeSame(303);
+    }
+
+    public function testEventGuestIsRefusedWithAnyOtherLastDay(): void
+    {
+        $path = $this->eventLinkPath();
+        $this->end = (new \DateTimeImmutable($this->end))->modify('+1 day')->format('Y-m-d');
+
+        $this->verify($path, 'Müller');
+
+        self::assertResponseStatusCodeSame(422);
+    }
+
     public function testOptionalServiceUsesTheExistingPriceAndWaitsForHotelierReview(): void
     {
         $reservation = $this->createReservation();
@@ -698,6 +819,35 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
     }
 
     /** The fields the setup of this test makes required for the main guest. */
+    /**
+     * The check-in form for a booker whose ID number is on file, with the number required and
+     * everything but that number filled in.
+     *
+     * @return array{0: string, 1: Form} link path and form
+     */
+    private function openFormWithRequiredIdNumberOnFile(string $query = ''): array
+    {
+        $this->em()->getRepository(GuestCheckInConfig::class)->findOneBy([])?->setIdDocumentMode(GuestCheckInFieldMode::REQUIRED);
+        $reservation = $this->createReservation();
+        $booker = $reservation->getBooker();
+        self::assertInstanceOf(Customer::class, $booker);
+        $booker->setIDNumber('P99887766');
+        $this->em()->flush();
+
+        $path = $this->linkPath($reservation);
+        $this->verify($path, 'Müller');
+        $crawler = $this->client->followRedirect();
+        if ('' !== $query) {
+            $crawler = $this->client->request('GET', $path.$query);
+        }
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $this->fillMainGuest($form);
+        $form['guest_check_in[mainGuest][idType]'] = IDCardType::PASSPORT->value;
+
+        return [$path, $form];
+    }
+
     private function fillMainGuest(Form $form): void
     {
         $form['guest_check_in[mainGuest][firstname]'] = 'Anna';
@@ -743,10 +893,32 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
             ?? throw new \RuntimeException('Check-in row missing.');
     }
 
-    private function createReservation(bool $withBooker = true): Reservation
+    /** One day at $this->start; $this->end is then the day after it, as stored. */
+    private function eventLinkPath(): string
     {
         $em = $this->em();
-        $apartment = $em->getRepository(Appartment::class)->findOneBy([]) ?? throw new \RuntimeException('No apartment in the test data.');
+        $category = (new RoomCategory())->setName('Check-in hall')->setKind(RoomCategoryKind::EVENT_SPACE);
+        $em->persist($category);
+        $hall = new Appartment();
+        $hall->setNumber('CHK-HALL');
+        $hall->setDescription('Festsaal');
+        $hall->setBedsMax(60);
+        $hall->setObject($em->getRepository(Subsidiary::class)->findOneBy([], ['id' => 'ASC']) ?? throw new \RuntimeException('No subsidiary in the test database.'));
+        $hall->setRoomCategory($category);
+        $em->persist($hall);
+        $em->flush();
+        $this->hallId = $hall->getId();
+        $this->hallCategoryId = $category->getId();
+
+        $this->end = (new \DateTimeImmutable($this->start))->modify('+1 day')->format('Y-m-d');
+
+        return $this->linkPath($this->createReservation(room: $hall));
+    }
+
+    private function createReservation(bool $withBooker = true, ?Appartment $room = null): Reservation
+    {
+        $em = $this->em();
+        $apartment = $room ?? $em->getRepository(Appartment::class)->findOneBy([]) ?? throw new \RuntimeException('No apartment in the test data.');
         $status = $em->getRepository(ReservationStatus::class)->findOneBy(['isBlocking' => true]) ?? throw new \RuntimeException('No blocking status.');
 
         $reservation = new Reservation();

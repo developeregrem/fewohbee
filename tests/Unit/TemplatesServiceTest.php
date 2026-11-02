@@ -857,6 +857,67 @@ final class TemplatesServiceTest extends TestCase
         return [$default, $cash, $other];
     }
 
+    public function testLanguageVariantIsNotPickedByItself(): void
+    {
+        [$default, $cash] = $this->invoiceTemplates();
+        $default->setIsDefault(false);
+        $variant = $this->makeVariant($default, 90, 'en', '');
+        $service = $this->createServiceWithInvoiceTemplates([$variant, $default, $cash]);
+
+        self::assertSame($default, $service->getDefaultTemplate([$variant, $default]));
+        self::assertSame($default, $service->resolveInvoiceTemplate(new Invoice()));
+        self::assertSame($default, $service->resolveInvoiceTemplate((new Invoice())->setPaymentMeans(PaymentMeansCode::SEPA_CREDIT_TRANSFER)));
+        // Only choosing it by hand gets it.
+        self::assertSame($variant, $service->resolveInvoiceTemplate(new Invoice(), $variant));
+    }
+
+    public function testLanguageVariantOfABoundTemplateIsNoFallback(): void
+    {
+        [, $cash] = $this->invoiceTemplates();
+        $variant = $this->makeVariant($cash, 90, 'en', '');
+        $service = $this->createServiceWithInvoiceTemplates([$variant, $cash]);
+
+        self::assertNull($service->resolveInvoiceTemplate(new Invoice()));
+        self::assertSame($cash, $service->resolveInvoiceTemplate((new Invoice())->setPaymentMeans(PaymentMeansCode::CASH)));
+    }
+
+    public function testLanguageVariantDoesNotCountAsUnboundInvoiceTemplate(): void
+    {
+        [$default, $cash] = $this->invoiceTemplates();
+        $variant = $this->makeVariant($default, 90, 'en', '');
+        $service = $this->createServiceWithInvoiceTemplates([$variant, $cash, $default]);
+
+        self::assertTrue($service->leavesNoUnboundInvoiceTemplate($default, true));
+
+        $default->setPaymentMeans(PaymentMeansCode::CARD_PAYMENT);
+        self::assertTrue($service->leavesNoUnboundInvoiceTemplate($default));
+    }
+
+    public function testSavingOrDeletingALanguageVariantIsNeverRefused(): void
+    {
+        [$default, $cash] = $this->invoiceTemplates();
+        $default->setPaymentMeans(PaymentMeansCode::CARD_PAYMENT);
+        $variant = $this->makeVariant($default, 90, 'en', '');
+        $service = $this->createServiceWithInvoiceTemplates([$variant, $cash, $default]);
+
+        self::assertFalse($service->leavesNoUnboundInvoiceTemplate($variant));
+        self::assertFalse($service->leavesNoUnboundInvoiceTemplate($variant, true));
+    }
+
+    public function testVariantForAnswersTheSameFromTheTemplateAndFromItsVariants(): void
+    {
+        $base = $this->makeTemplate(80, 'Bestätigung', '', 'TEMPLATE_RESERVATION_EMAIL');
+        $english = $this->makeVariant($base, 81, 'en', '');
+        $french = $this->makeVariant($base, 82, 'fr', '');
+
+        foreach ([$base, $english, $french] as $template) {
+            self::assertSame($base, $template->variantFor(null));
+            self::assertSame($base, $template->variantFor('nl'));
+            self::assertSame($english, $template->variantFor('en'));
+            self::assertSame($french, $template->variantFor('fr'));
+        }
+    }
+
     public function testVariantCopiesTheTemplateButNeverTakesOverDefaultOrPaymentMeans(): void
     {
         $type = new TemplateType();

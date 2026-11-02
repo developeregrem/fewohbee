@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\Entity\Role;
+use App\Entity\Template;
+use App\Entity\TemplateType;
 use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -91,6 +93,49 @@ final class WorkflowFormEndpointsTest extends WebTestCase
 
         // The email template field keeps its own, unrelated list.
         self::assertArrayHasKey('templateId', $fields);
+    }
+
+    public function testTemplatePickersLeaveOutLanguageVariants(): void
+    {
+        $em = static::getContainer()->get(ManagerRegistry::class)->getManager();
+        $bases = [];
+        $variants = [];
+        foreach (['TEMPLATE_INVOICE_EMAIL', 'TEMPLATE_INVOICE_PDF', 'TEMPLATE_FILE_PDF'] as $typeName) {
+            $type = $em->getRepository(TemplateType::class)->findOneBy(['name' => $typeName]);
+            self::assertNotNull($type);
+            $base = (new Template())->setName('Base '.$typeName)->setTemplateType($type)->setText('<p>x</p>')->setIsDefault(false);
+            $variant = (new Template())->setName('Variant '.$typeName)->setTemplateType($type)->setText('<p>x</p>')->setIsDefault(false)->setLocale('en')->setBaseTemplate($base);
+            $em->persist($base);
+            $em->persist($variant);
+            $bases[] = $base;
+            $variants[] = $variant;
+        }
+        $em->flush();
+        $baseIds = array_map(static fn (Template $template): ?int => $template->getId(), $bases);
+        $variantIds = array_map(static fn (Template $template): ?int => $template->getId(), $variants);
+
+        try {
+            $action = $this->findAction($this->fetchOptions('invoice.days_after_date')['actions'] ?? [], 'send_template_email');
+            $fields = array_column($action['configSchema'], null, 'key');
+            $offered = [
+                ...array_column($fields['templateId']['options'], 'value'),
+                ...array_column($fields['invoicePdfTemplateId']['options'], 'value'),
+                ...array_column(array_column(array_merge(...array_column($fields['attachments']['groups'], 'items')), 'item'), 'templateId'),
+            ];
+
+            foreach ($baseIds as $id) {
+                self::assertContains($id, $offered);
+            }
+            foreach ($variantIds as $id) {
+                self::assertNotContains($id, $offered);
+            }
+        } finally {
+            $connection = static::getContainer()->get(ManagerRegistry::class)->getManager()->getConnection();
+            // Variants first: they point at the template they translate.
+            foreach ([...$variantIds, ...$baseIds] as $id) {
+                $connection->executeStatement('DELETE FROM templates WHERE id = ?', [$id]);
+            }
+        }
     }
 
     public function testTemplateEmailActionOffersATemplateForAttachedInvoices(): void

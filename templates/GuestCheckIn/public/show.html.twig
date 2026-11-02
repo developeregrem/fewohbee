@@ -27,8 +27,8 @@
     <div class="fhb-section">
         <dl class="fhb-gci-facts">
             <div><dt>{{ 'guest_checkin.public.room'|trans }}</dt><dd>{{ apartment.number }} · {{ apartment.roomCategory ? apartment.roomCategory|localized('name') : apartment|localized('description') }}</dd></div>
-            <div><dt>{{ 'guest_checkin.public.period'|trans }}</dt><dd>{{ reservation.startDate|date(dateFormat) }} – {{ reservation.endDate|date(dateFormat) }}</dd></div>
-            <div><dt>{{ 'guest_checkin.public.nights_label'|trans }}</dt><dd>{{ 'guest_checkin.public.nights'|trans({'%count%': reservation.startDate.diff(reservation.endDate).days}) }}</dd></div>
+            <div><dt>{{ 'guest_checkin.public.period'|trans }}</dt><dd>{{ reservation.startDate|date(dateFormat) }} – {{ reservation.visibleEndDate|date(dateFormat) }}</dd></div>
+            <div><dt>{{ 'guest_checkin.public.nights_label'|trans }}</dt><dd>{% set length = reservation.startDate.diff(reservation.endDate).days %}{{ reservation.eventSpace ? 'guest_checkin.public.days'|trans({'%count%': max(1, length)}) : 'guest_checkin.public.nights'|trans({'%count%': length}) }}</dd></div>
             <div><dt>{{ 'guest_checkin.public.persons_label'|trans }}</dt><dd>{{ reservation.totalGuests }}</dd></div>
         </dl>
     </div>

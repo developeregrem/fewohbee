@@ -745,6 +745,9 @@ class TemplatesService
      */
     public function getDefaultTemplate(array $templates): ?Template
     {
+        // A language variant is never the default; the template it translates stays in charge.
+        $templates = array_values(array_filter($templates, static fn (Template $template): bool => !$template->isVariant()));
+
         // find default template
         foreach ($templates as $template) {
             if ($template->getIsDefault()) {
@@ -765,9 +768,9 @@ class TemplatesService
      * A template bound to the invoice's payment means wins, so e.g. cash invoices get their own
      * layout without switching the selection by hand. Otherwise $preferred is used (the selection
      * made in the invoice settings), unless it is bound to another payment means itself - then
-     * the default among the unbound templates takes over. Embedded (hidden) templates are never
-     * picked. Null when no template fits: a template bound to another payment means is never used
-     * as a fallback.
+     * the default among the unbound templates takes over. Embedded (hidden) templates and language
+     * variants are never picked by themselves. Null when no template fits: a template bound to
+     * another payment means is never used as a fallback.
      */
     public function resolveInvoiceTemplate(Invoice $invoice, ?Template $preferred = null): ?Template
     {
@@ -797,11 +800,15 @@ class TemplatesService
     /**
      * Whether saving (or deleting) $template would leave only invoice templates bound to a payment
      * means. Invoices without a payment means, or with one no template is bound to, would then
-     * have no template at all. Embedded (hidden) templates count on neither side, since they are
-     * never picked.
+     * have no template at all. Embedded (hidden) templates and language variants count on neither
+     * side, since they are never picked by themselves.
      */
     public function leavesNoUnboundInvoiceTemplate(Template $template, bool $deleting = false): bool
     {
+        if ($template->isVariant()) {
+            return false;
+        }
+
         $templates = $this->loadInvoiceTemplates();
         if (!in_array($template, $templates, true)) {
             $templates[] = $template;
@@ -810,7 +817,7 @@ class TemplatesService
         $hasBound = false;
         $hasUnbound = false;
         foreach ($templates as $t) {
-            if (($deleting && $t === $template) || $t->isHidden() || 'TEMPLATE_INVOICE_PDF' !== $t->getTemplateType()?->getName()) {
+            if (($deleting && $t === $template) || $t->isHidden() || $t->isVariant() || 'TEMPLATE_INVOICE_PDF' !== $t->getTemplateType()?->getName()) {
                 continue;
             }
             if (null === $t->getPaymentMeans()) {

@@ -24,6 +24,7 @@ invoice_number_pattern:
   empty: 'Bitte ein Muster angeben.'
 guest_checkin:
   id_number_invalid: 'Bitte geben Sie die Ausweisnummer ohne Sonderzeichen an (4 bis 30 Zeichen).'
+  id_number_other_person: 'Bitte geben Sie die Ausweisnummer dieser Person an. Die hinterlegte Nummer gehört zu einem anderen Namen.'
   zip_invalid: 'Bitte geben Sie eine gültige Postleitzahl an.'
   phone_invalid: 'Bitte geben Sie eine gültige Telefonnummer an.'
   companion_address_incomplete: 'Bitte vervollständigen Sie die Anschrift oder leeren Sie alle Anschriftsfelder, wenn diese Person beim Hauptgast wohnt.'

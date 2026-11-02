@@ -435,7 +435,8 @@ class WorkflowController extends AbstractController
             return [['value' => 0, 'label' => '–']];
         }
 
-        $templates = $this->em->getRepository(Template::class)->loadByTypeName(array_values($typesToLoad));
+        // Workflows name the template; the language variant follows the guest when they run.
+        $templates = $this->em->getRepository(Template::class)->loadByTypeName(array_values($typesToLoad), includeVariants: false);
         $options = [['value' => 0, 'label' => '–']];
         foreach ($templates as $template) {
             $options[] = ['value' => $template->getId(), 'label' => $template->getName()];
@@ -462,7 +463,7 @@ class WorkflowController extends AbstractController
 
         $groups = [];
 
-        $templates = $this->em->getRepository(Template::class)->loadByTypeName($templateTypes);
+        $templates = $this->em->getRepository(Template::class)->loadByTypeName($templateTypes, includeVariants: false);
         if (count($templates) > 0) {
             $items = [];
             foreach ($templates as $template) {
@@ -576,8 +577,8 @@ class WorkflowController extends AbstractController
         if (method_exists($entity, 'getStartDate') && $entity->getStartDate()) {
             $data['startDate'] = $entity->getStartDate()->format('d.m.Y');
         }
-        if (method_exists($entity, 'getEndDate') && $entity->getEndDate()) {
-            $data['endDate'] = $entity->getEndDate()->format('d.m.Y');
+        if (method_exists($entity, 'getVisibleEndDate')) {
+            $data['endDate'] = $entity->getVisibleEndDate()->format('d.m.Y');
         }
         if (method_exists($entity, 'getAppartment') && $entity->getAppartment()) {
             $data['room'] = (string) $entity->getAppartment()->getNumber();

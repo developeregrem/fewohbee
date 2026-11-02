@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use App\Entity\Appartment;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\RoomBlock;
+use App\Entity\RoomCategory;
 use App\Repository\RoomBlockRepository;
+use App\Service\Calendar\Entry\CalendarEntryTimeRules;
 use App\Service\Calendar\Sync\ApartmentCalendarExportService;
+use App\Service\Calendar\Sync\Ics\IcsEventSpanResolver;
+use App\Service\Calendar\Sync\Ics\IcsOccurrenceReader;
 use App\Service\DisplayNameResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -158,6 +163,95 @@ final class ApartmentCalendarExportServiceTest extends TestCase
         yield 'midnight is a recorded time' => [true, '00:00', '00:00', '2030-01-10', '2030-01-15', '20300109T230000Z', '20300114T230000Z'];
         yield 'only midnight arrival is recorded' => [true, '00:00', null, '2030-01-10', '2030-01-15', '20300109T230000Z', '20300114T230000Z'];
         yield 'only midnight departure is recorded' => [true, null, '00:00', '2030-01-10', '2030-01-15', '20300109T230000Z', '20300114T230000Z'];
+        yield 'same day with only arrival time runs to the end of the day' => [true, '14:00', null, '2030-01-10', '2030-01-10', '20300110T130000Z', '20300110T230000Z'];
+        yield 'same day with departure before arrival runs to the end of the day' => [true, '14:00', '10:00', '2030-01-10', '2030-01-10', '20300110T130000Z', '20300110T230000Z'];
+        yield 'same day with equal times runs to the end of the day' => [true, '14:00', '14:00', '2030-01-10', '2030-01-10', '20300110T130000Z', '20300110T230000Z'];
+        yield 'same day with only midnight departure covers the day' => [true, null, '00:00', '2030-01-10', '2030-01-10', '20300109T230000Z', '20300110T230000Z'];
+        yield 'same day across spring daylight-saving change' => [true, '14:00', null, '2030-03-31', '2030-03-31', '20300331T120000Z', '20300331T220000Z'];
+        yield 'same day keeps a later departure time' => [true, '10:00', '16:00', '2030-01-10', '2030-01-10', '20300110T090000Z', '20300110T150000Z'];
+        yield 'same day with only departure time starts at midnight' => [true, null, '16:00', '2030-01-10', '2030-01-10', '20300109T230000Z', '20300110T150000Z'];
+        yield 'same day without times covers the day' => [true, null, null, '2030-01-10', '2030-01-10', '20300110', '20300111'];
+        yield 'same day with times disabled covers the day' => [null, '14:00', null, '2030-01-31', '2030-01-31', '20300131', '20300201'];
+    }
+
+    #[DataProvider('sameDayExportCases')]
+    public function testSameDayStaySurvivesOurOwnCalendarImport(bool $exportTimes, ?string $arrivalTime): void
+    {
+        $apartment = new Appartment();
+        $apartment->setNumber('A1');
+        $sync = $apartment->getCalendarSync();
+        $sync->setExportReservationTimes($exportTimes);
+        $status = (new ReservationStatus())->setName('Booked');
+        $sync->addReservationStatus($status);
+        $reservation = new Reservation();
+        $reservation->setStartDate(new \DateTime('2030-01-10'));
+        $reservation->setEndDate(new \DateTime('2030-01-10'));
+        $reservation->setArrivalTime(null !== $arrivalTime ? new \DateTime('2000-01-01 '.$arrivalTime) : null)
+            ->setReservationStatus($status)
+            ->setUuid(Uuid::v4());
+        $apartment->addReservation($reservation);
+
+        $read = (new IcsOccurrenceReader())->readEvents($this->export($apartment), new \DateTimeZone('Europe/Berlin'));
+        self::assertCount(1, $read->occurrences);
+        $span = (new IcsEventSpanResolver(new CalendarEntryTimeRules()))->resolve($read->occurrences[0]);
+
+        self::assertNotNull($span);
+        self::assertCount(1, $span->dates);
+        self::assertSame('2030-01-10', $span->lastDate()->format('Y-m-d'));
+    }
+
+    /** @return iterable<string, array{bool, ?string}> */
+    public static function sameDayExportCases(): iterable
+    {
+        yield 'all-day' => [false, null];
+        yield 'with arrival time' => [true, '14:00'];
+    }
+
+    #[DataProvider('eventCases')]
+    public function testEventEndsOnItsLastDay(
+        ?string $arrivalTime,
+        ?string $departureTime,
+        string $startDate,
+        string $storedEnd,
+        string $expectedStart,
+        string $expectedEnd,
+        int $importedDays,
+    ): void {
+        $content = $this->export($this->eventRoom($startDate, $storedEnd, $arrivalTime, $departureTime));
+
+        $event = Reader::read($content)->select('VEVENT')[0];
+        self::assertInstanceOf(VEvent::class, $event);
+        self::assertSame($expectedStart, (string) $event->select('DTSTART')[0]);
+        self::assertSame($expectedEnd, (string) $event->select('DTEND')[0]);
+
+        $read = (new IcsOccurrenceReader())->readEvents($content, new \DateTimeZone('Europe/Berlin'));
+        $span = (new IcsEventSpanResolver(new CalendarEntryTimeRules()))->resolve($read->occurrences[0]);
+        self::assertNotNull($span);
+        self::assertCount($importedDays, $span->dates);
+    }
+
+    /** @return iterable<string, array{?string, ?string, string, string, string, string, int}> */
+    public static function eventCases(): iterable
+    {
+        yield 'one day with both times' => ['18:00', '23:00', '2030-01-12', '2030-01-13', '20300112T170000Z', '20300112T220000Z', 1];
+        yield 'one day with only arrival time runs to the end of the day' => ['18:00', null, '2030-01-12', '2030-01-13', '20300112T170000Z', '20300112T230000Z', 1];
+        yield 'one day with only departure time starts at midnight' => [null, '23:00', '2030-01-12', '2030-01-13', '20300111T230000Z', '20300112T220000Z', 1];
+        yield 'one day running past midnight' => ['20:00', '01:00', '2030-01-12', '2030-01-13', '20300112T190000Z', '20300113T000000Z', 2];
+        yield 'several days with both times' => ['18:00', '12:00', '2030-01-11', '2030-01-14', '20300111T170000Z', '20300113T110000Z', 3];
+        yield 'several days with only arrival time' => ['18:00', null, '2030-01-11', '2030-01-14', '20300111T170000Z', '20300113T230000Z', 3];
+        yield 'stored on one day with both times' => ['18:00', '23:00', '2030-01-12', '2030-01-12', '20300112T170000Z', '20300112T220000Z', 1];
+        yield 'without times stays all-day' => [null, null, '2030-01-12', '2030-01-13', '20300112', '20300113', 1];
+    }
+
+    public function testEventLeavesTheFeedAfterItsLastDay(): void
+    {
+        $now = '2030-01-12T12:00:00+01:00';
+
+        $lastDayToday = $this->export($this->eventRoom('2030-01-12', '2030-01-13'), [], $now);
+        self::assertCount(1, Reader::read($lastDayToday)->select('VEVENT'));
+
+        $lastDayYesterday = $this->export($this->eventRoom('2030-01-11', '2030-01-12'), [], $now);
+        self::assertCount(0, Reader::read($lastDayYesterday)->select('VEVENT'));
     }
 
     public function testRoomBlocksRemainAllDayWhenReservationTimesAreEnabled(): void
@@ -245,6 +339,28 @@ final class ApartmentCalendarExportServiceTest extends TestCase
         yield 'entire calendar includes past all-day entries' => [true, false, '2030-01-01', '2030-01-09', '2030-01-10T15:00:00+01:00', true];
         yield 'entire calendar includes past timed entries' => [true, true, '2030-01-01', '2030-01-09', '2030-01-10T15:00:00+01:00', true];
         yield 'cutoff uses application date when UTC is still yesterday' => [null, false, '2030-01-01', '2030-01-09', '2030-01-09T23:30:00+00:00', false];
+    }
+
+    private function eventRoom(string $start, string $storedEnd, ?string $arrivalTime = null, ?string $departureTime = null): Appartment
+    {
+        $apartment = new Appartment();
+        $apartment->setNumber('Saal');
+        $apartment->setRoomCategory((new RoomCategory())->setKind(RoomCategoryKind::EVENT_SPACE));
+        $sync = $apartment->getCalendarSync();
+        $sync->setExportReservationTimes(true);
+        $status = (new ReservationStatus())->setName('Booked');
+        $sync->addReservationStatus($status);
+        $reservation = new Reservation();
+        $reservation->setAppartment($apartment);
+        $reservation->setStartDate(new \DateTime($start));
+        $reservation->setEndDate(new \DateTime($storedEnd));
+        $reservation->setArrivalTime(null !== $arrivalTime ? new \DateTime('2000-01-01 '.$arrivalTime) : null)
+            ->setDepartureTime(null !== $departureTime ? new \DateTime('2000-01-01 '.$departureTime) : null)
+            ->setReservationStatus($status)
+            ->setUuid(Uuid::v4());
+        $apartment->addReservation($reservation);
+
+        return $apartment;
     }
 
     /** @param list<RoomBlock> $blocks */

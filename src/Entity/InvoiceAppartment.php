@@ -197,6 +197,12 @@ class InvoiceAppartment
         return $lastDay < $this->startDate ? clone $this->startDate : $lastDay;
     }
 
+    /** The end as people read it, like at the reservation: the departure day, for an event its last day. */
+    public function getVisibleEndDate(): ?\DateTime
+    {
+        return $this->eventSpace ? $this->getLastDay() : $this->endDate;
+    }
+
     /** Takes the last day of an event as typed into the position form and stores the day after it. */
     public function setLastDay(?\DateTime $lastDay): void
     {

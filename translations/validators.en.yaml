@@ -24,6 +24,7 @@ invoice_number_pattern:
   empty: Please enter a pattern.
 guest_checkin:
   id_number_invalid: Please enter the ID number without special characters (4 to 30 characters).
+  id_number_other_person: Please enter the ID number of this person. The number on file belongs to a different name.
   zip_invalid: Please enter a valid zip code.
   phone_invalid: Please enter a valid phone number.
   companion_address_incomplete: Please complete the address, or clear all address fields if this person lives with the main guest.

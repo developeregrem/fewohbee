@@ -233,7 +233,7 @@ class HousekeepingViewService
         $dateKey = $date->format('Y-m-d');
         foreach ($reservations as $reservation) {
             $startKey = $reservation->getStartDate()->format('Y-m-d');
-            $endKey = $reservation->getEndDate()->format('Y-m-d');
+            $endKey = $reservation->getVisibleEndDate()->format('Y-m-d');
 
             if ($startKey === $dateKey) {
                 $arrivals[] = $reservation;
@@ -530,7 +530,7 @@ class HousekeepingViewService
 
         return array_values(array_filter($reservations, static function (Reservation $reservation) use ($dateKey): bool {
             $startKey = $reservation->getStartDate()->format('Y-m-d');
-            $endKey = $reservation->getEndDate()->format('Y-m-d');
+            $endKey = $reservation->getVisibleEndDate()->format('Y-m-d');
 
             return $startKey <= $dateKey && $endKey >= $dateKey;
         }));

@@ -19,12 +19,12 @@ class GuestCheckInVerificationType extends AbstractType
     {
         $builder
             ->add('arrival', DateType::class, [
-                'label' => 'guest_checkin.public.verify.arrival',
+                'label' => $options['event_space'] ? 'guest_checkin.public.verify.first_day' : 'guest_checkin.public.verify.arrival',
                 'widget' => 'single_text',
                 'input' => 'datetime_immutable',
             ])
             ->add('departure', DateType::class, [
-                'label' => 'guest_checkin.public.verify.departure',
+                'label' => $options['event_space'] ? 'guest_checkin.public.verify.last_day' : 'guest_checkin.public.verify.departure',
                 'widget' => 'single_text',
                 'input' => 'datetime_immutable',
             ]);
@@ -45,11 +45,13 @@ class GuestCheckInVerificationType extends AbstractType
         $resolver->setDefaults([
             'data_class' => GuestCheckInVerification::class,
             'ask_last_name' => true,
+            'event_space' => false,
             // The link token in the URL is the credential and no cookie authenticates this
             // request, so a forged cross-site post could not do anything the attacker could
             // not already do with the link itself.
             'csrf_protection' => false,
         ]);
         $resolver->setAllowedTypes('ask_last_name', 'bool');
+        $resolver->setAllowedTypes('event_space', 'bool');
     }
 }
