@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { onSwipe, horizontalSwipeDirection } from '../js/swipe.js';
 import {
     request as httpRequest,
     serializeForm as httpSerializeForm,
@@ -1379,9 +1380,9 @@ export default class extends Controller {
         // view by its day count, in the week view by a week - and swiping up
         // ends the week view. Listening on the persistent container keeps the
         // gestures working across table reloads, which replace its content.
-        this.onSwipe(this.tableContainer, signal, (dx, dy, target, edges) => {
-            if (Math.abs(dx) >= 60 && Math.abs(dx) >= 1.5 * Math.abs(dy)) {
-                const direction = dx < 0 ? 'forward' : 'backward';
+        onSwipe(this.tableContainer, signal, (dx, dy, target, edges) => {
+            const direction = horizontalSwipeDirection(dx, dy);
+            if (direction) {
                 // A table wider than the screen scrolls sideways first; only a
                 // swipe on past its edge pages
                 if (direction === 'forward' ? edges.right : edges.left) {
@@ -1474,36 +1475,6 @@ export default class extends Controller {
                 hideTimer = setTimeout(() => document.body.classList.remove('reservations-week-pointer'), 2000);
             }
         }, { signal });
-    }
-
-    /**
-     * Calls handler(dx, dy, target, startState) for each one-finger swipe on the
-     * element that is reasonably quick, so slow drags are not taken for a
-     * gesture. startState is what onStart returned when the finger went down.
-     */
-    onSwipe(element, signal, handler, onStart = null) {
-        if (!element) {
-            return;
-        }
-        let touchStart = null;
-        element.addEventListener('touchstart', (event) => {
-            touchStart = event.touches.length === 1
-                ? { x: event.touches[0].clientX, y: event.touches[0].clientY, time: Date.now(), target: event.target, state: onStart?.() }
-                : null;
-        }, { passive: true, signal });
-        element.addEventListener('touchend', (event) => {
-            if (!touchStart || event.changedTouches.length !== 1) {
-                return;
-            }
-            const dx = event.changedTouches[0].clientX - touchStart.x;
-            const dy = event.changedTouches[0].clientY - touchStart.y;
-            const quick = Date.now() - touchStart.time <= 800;
-            const { target, state } = touchStart;
-            touchStart = null;
-            if (quick) {
-                handler(dx, dy, target, state);
-            }
-        }, { passive: true, signal });
     }
 
     /** A mouse: the week view fits several weeks and is remembered. */
