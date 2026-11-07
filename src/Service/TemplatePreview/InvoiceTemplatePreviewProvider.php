@@ -189,7 +189,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
                 'label' => 'templates.editor.remarks',
                 'group' => 'Invoice',
                 'complexity' => 'simple',
-                'content' => '[[ invoice.remarkF ]]',
+                'content' => '[[ invoice.remark|nl2br ]]',
             ],
             [
                 'id' => 'invoice.total.appartment',
