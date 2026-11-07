@@ -143,7 +143,7 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
                 'label' => 'templates.preview.snippet.gdpr.general_remark',
                 'group' => 'GDPR',
                 'complexity' => 'simple',
-                'content' => '[[ customer.remarkF ]]',
+                'content' => '[[ customer.remark|nl2br ]]',
             ],
             [
                 'id' => 'gdpr.addresses.block',
@@ -194,6 +194,8 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
             'firstname' => 'Max',
             'lastname' => 'Mustermann',
             'birthday' => new \DateTime('1985-03-19'),
+            'remark' => 'Beispielkunde fuer die DSGVO-Vorschau',
+            // Keep the legacy formatted placeholder available for existing templates.
             'remarkF' => 'Beispielkunde fuer die DSGVO-Vorschau',
             'customerAddresses' => [
                 [

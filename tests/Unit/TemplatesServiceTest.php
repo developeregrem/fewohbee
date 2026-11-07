@@ -4,14 +4,20 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Entity\Customer;
 use App\Entity\Enum\PaymentMeansCode;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
+use App\Repository\CustomerRepository;
 use App\Repository\TemplateRepository;
 use App\Service\CustomFontManager;
+use App\Service\InvoiceService;
 use App\Service\MpdfService;
+use App\Service\TemplatePreview\GdprTemplatePreviewProvider;
+use App\Service\TemplatePreview\InvoiceEmailTemplatePreviewProvider;
+use App\Service\TemplatePreview\InvoiceTemplatePreviewProvider;
 use App\Service\TemplatePreview\TemplateRenderParamsResolver;
 use App\Service\TemplatesService;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -124,6 +130,65 @@ final class TemplatesServiceTest extends TestCase
         );
 
         self::assertSame('<p>&lt;img src=x onerror=alert(1)&gt;</p>', $output);
+    }
+
+    /** @param 'invoice_pdf'|'invoice_email'|'gdpr_pdf' $type */
+    #[DataProvider('remarkSnippets')]
+    public function testRemarkSnippetsPreserveLineBreaksAndEscapeHtml(string $type, ?string $remark, string $expected): void
+    {
+        $em = $this->createStub(EntityManagerInterface::class);
+        $provider = match ($type) {
+            'invoice_pdf' => new InvoiceTemplatePreviewProvider($em, $this->createStub(InvoiceService::class)),
+            'invoice_email' => new InvoiceEmailTemplatePreviewProvider($em, $this->createStub(InvoiceService::class)),
+            'gdpr_pdf' => new GdprTemplatePreviewProvider($em),
+        };
+        $entity = 'gdpr_pdf' === $type ? new Customer() : new Invoice();
+        $entity->setRemark($remark);
+        $variable = $entity instanceof Customer ? 'customer' : 'invoice';
+        $snippetId = $entity instanceof Customer ? 'gdpr.general.remark' : 'invoice.remarks';
+        $snippets = array_column($provider->getAvailableSnippets(), 'content', 'id');
+
+        $output = $this->createService()->renderTemplateString($snippets[$snippetId], [$variable => $entity]);
+
+        self::assertSame($expected, $output);
+    }
+
+    /** @return iterable<string, array{'invoice_pdf'|'invoice_email'|'gdpr_pdf', ?string, string}> */
+    public static function remarkSnippets(): iterable
+    {
+        foreach (['invoice_pdf', 'invoice_email', 'gdpr_pdf'] as $type) {
+            foreach ([
+                'line breaks' => ["Line 1\nLine 2", "Line 1<br />\nLine 2"],
+                'Windows line breaks' => ["Line 1\r\nLine 2", "Line 1<br />\r\nLine 2"],
+                'HTML content' => [
+                    "<img src=x onerror=alert(1)>\n<b>Text</b> & more",
+                    "&lt;img src=x onerror=alert(1)&gt;<br />\n&lt;b&gt;Text&lt;/b&gt; &amp; more",
+                ],
+                'empty remark' => ['', ''],
+                'unset remark' => [null, ''],
+            ] as $case => [$remark, $expected]) {
+                yield $type.' '.$case => [$type, $remark, $expected];
+            }
+        }
+    }
+
+    public function testGdprSampleRemarksRenderWithTheSnippetAndLegacyPlaceholder(): void
+    {
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturn($this->createStub(CustomerRepository::class));
+        $provider = new GdprTemplatePreviewProvider($em);
+        $params = $provider->buildPreviewRenderParams(new Template(), []);
+        $snippets = array_column($provider->getAvailableSnippets(), 'content', 'id');
+
+        $output = $this->createService()->renderTemplateString(
+            $snippets['gdpr.general.remark'].'|[[ customer.remarkF ]]',
+            $params,
+        );
+
+        self::assertSame(
+            'Beispielkunde fuer die DSGVO-Vorschau|Beispielkunde fuer die DSGVO-Vorschau',
+            $output,
+        );
     }
 
     public function testRenderTemplateStringConvertsDataRepeatOnTableRows(): void
