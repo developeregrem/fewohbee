@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container" data-controller="booking-journal">
+<div class="container fab-add-clearance" data-controller="booking-journal swipe-nav">
     <div class="row mb-2">
         <div class="col text-end">
             <div class="dropdown">
@@ -39,40 +39,7 @@
     </div>
     <div class="row justify-content-between mb-3">
         <div class="col d-flex align-items-center gap-3 flex-wrap">
-            {# fixed-width slots keep the prev/next arrows in a stable position regardless of the month name length, so rapid clicking never lands on empty space #}
-            <div class="d-flex align-items-center gap-2">
-                <div style="width: 2rem" class="text-end">
-                    {% if previousBatch %}
-                        {% set previousBatchLabel = getLocalizedMonth(previousBatch.month, 'MMMM', app.request.locale) ~ ' ' ~ previousBatch.year %}
-                        <ul class="pagination pagination-sm mb-0">
-                            <li class="page-item">
-                                <a href="{{ path('journal.batch.entries', {'id': previousBatch.id, 'filter': filter}) }}"
-                                   class="page-link"
-                                   title="{{ 'accounting.journal.batch.previous_month'|trans({'%month%': previousBatchLabel}) }}"
-                                   aria-label="{{ 'accounting.journal.batch.previous_month'|trans({'%month%': previousBatchLabel}) }}">
-                                    &larr;
-                                </a>
-                            </li>
-                        </ul>
-                    {% endif %}
-                </div>
-                <h4 class="mb-0 text-center" style="width: 13rem; white-space: nowrap;">{{ getLocalizedMonth(batch.month, 'MMMM', app.request.locale) }} {{ batch.year }}</h4>
-                <div style="width: 2rem">
-                    {% if nextBatch %}
-                        {% set nextBatchLabel = getLocalizedMonth(nextBatch.month, 'MMMM', app.request.locale) ~ ' ' ~ nextBatch.year %}
-                        <ul class="pagination pagination-sm mb-0">
-                            <li class="page-item">
-                                <a href="{{ path('journal.batch.entries', {'id': nextBatch.id, 'filter': filter}) }}"
-                                   class="page-link"
-                                   title="{{ 'accounting.journal.batch.next_month'|trans({'%month%': nextBatchLabel}) }}"
-                                   aria-label="{{ 'accounting.journal.batch.next_month'|trans({'%month%': nextBatchLabel}) }}">
-                                    &rarr;
-                                </a>
-                            </li>
-                        </ul>
-                    {% endif %}
-                </div>
-            </div>
+            <h4 class="mb-0 text-nowrap">{{ getLocalizedMonth(batch.month, 'MMMM', app.request.locale) }} {{ batch.year }}</h4>
             <select class="form-select form-select-sm" style="width: 12rem"
                     onchange="window.location.href='{{ path('journal.batch.entries', {'id': batch.id}) }}?filter=' + this.value">
                 <option value="all"{% if filter == 'all' %} selected{% endif %}>{{ 'accounting.journal.filter.all'|trans }}</option>
@@ -85,11 +52,19 @@
                 <span class="badge bg-secondary"><i class="fas fa-lock"></i> {{ 'accounting.journal.batch.closed'|trans }}</span>
             {% endif %}
             {% if not batch.closed %}
-                <button type="button" class="btn btn-secondary btn-sm"
+                <button type="button" class="btn btn-secondary btn-sm fab-add-inline"
                         data-action="click->booking-journal#openOffcanvas"
                         data-url="{{ path('journal.entry.new', {'id': batch.id, 'filter': filter, 'page': page}) }}"
                         data-offcanvas-title="{{ 'accounting.journal.entry.add'|trans }}">
                     <i class="fas fa-plus"></i> {{ 'accounting.journal.entry.add'|trans }}
+                </button>
+                {# Touch screens: the same as a floating button, see "Add button on touch screens" in app.css #}
+                <button type="button" class="btn fab-add"
+                        data-action="click->booking-journal#openOffcanvas"
+                        data-url="{{ path('journal.entry.new', {'id': batch.id, 'filter': filter, 'page': page}) }}"
+                        data-offcanvas-title="{{ 'accounting.journal.entry.add'|trans }}"
+                        title="{{ 'accounting.journal.entry.add'|trans }}" aria-label="{{ 'accounting.journal.entry.add'|trans }}">
+                    <i class="fas fa-plus"></i>
                 </button>
             {% endif %}
             {% if batch.closed and is_granted('ROLE_ADMIN') %}
@@ -333,6 +308,28 @@
         </ul>
         {% include 'paginator.html.twig' with { 'url': path('journal.batch.entries', {'id': batch.id, 'filter': filter}), 'search': search } %}
     </div>
+
+    {# Edge arrows and swipes page through the entries first and only then
+       change the month; back from the first page lands on the last page of
+       the previous month, so the entries read on without a gap #}
+    {% if page < pages %}
+        {% set edgeNextUrl = path('journal.batch.entries', {'id': batch.id, 'filter': filter, 'page': page + 1, 'search': search}) %}
+        {% set edgeNextLabel = 'accounting.journal.batch.next_page'|trans({'%page%': page + 1, '%pages%': pages}) %}
+    {% elseif nextBatch %}
+        {% set edgeNextUrl = path('journal.batch.entries', {'id': nextBatch.id, 'filter': filter}) %}
+        {% set edgeNextLabel = 'accounting.journal.batch.next_month'|trans({'%month%': getLocalizedMonth(nextBatch.month, 'MMMM', app.request.locale) ~ ' ' ~ nextBatch.year}) %}
+    {% endif %}
+    {% if page > 1 %}
+        {% set edgePreviousUrl = path('journal.batch.entries', {'id': batch.id, 'filter': filter, 'page': page - 1, 'search': search}) %}
+        {% set edgePreviousLabel = 'accounting.journal.batch.previous_page'|trans({'%page%': page - 1, '%pages%': pages}) %}
+    {% elseif previousBatch %}
+        {% set edgePreviousUrl = path('journal.batch.entries', {'id': previousBatch.id, 'filter': filter, 'page': previousBatchLastPage}) %}
+        {% set edgePreviousLabel = 'accounting.journal.batch.previous_month'|trans({'%month%': getLocalizedMonth(previousBatch.month, 'MMMM', app.request.locale) ~ ' ' ~ previousBatch.year}) %}
+    {% endif %}
+    {% include 'BookingJournal/_edge_navigation.html.twig' with {
+        'previousUrl': edgePreviousUrl|default(''), 'previousLabel': edgePreviousLabel|default(''),
+        'nextUrl': edgeNextUrl|default(''), 'nextLabel': edgeNextLabel|default('')
+    } %}
 
     {# ── Offcanvas ─────────────────────────────────────── #}
     <div class="offcanvas offcanvas-end" tabindex="-1" id="journalOffcanvas"

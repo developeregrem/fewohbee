@@ -168,10 +168,18 @@ class BookingJournalController extends AbstractController
         $batchDate = new \DateTimeImmutable(sprintf('%04d-%02d-01', $batch->getYear(), $batch->getMonth()));
         $previousBatchDate = $batchDate->modify('-1 month');
         $nextBatchDate = $batchDate->modify('+1 month');
+        $previousBatch = $batchRepo->findByYearAndMonth((int) $previousBatchDate->format('Y'), (int) $previousBatchDate->format('n'));
+
+        // Swiping back from the first page continues on the last page of the
+        // previous month, so the entries read on without a gap
+        $previousBatchLastPage = null === $previousBatch
+            ? 1
+            : max(1, (int) ceil($entryRepo->findByBatch($previousBatch, '', 1, self::PER_PAGE, $filter)->count() / self::PER_PAGE));
 
         return $this->render('BookingJournal/entries.html.twig', [
             'batch' => $batch,
-            'previousBatch' => $batchRepo->findByYearAndMonth((int) $previousBatchDate->format('Y'), (int) $previousBatchDate->format('n')),
+            'previousBatch' => $previousBatch,
+            'previousBatchLastPage' => $previousBatchLastPage,
             'nextBatch' => $batchRepo->findByYearAndMonth((int) $nextBatchDate->format('Y'), (int) $nextBatchDate->format('n')),
             'entries' => $entries,
             'bankOpeningBalance' => $bankOpeningBalance,

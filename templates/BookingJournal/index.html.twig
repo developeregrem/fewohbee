@@ -9,7 +9,26 @@
 {% endblock %}
 
 {% block content %}
-<div class="container" data-controller="booking-journal"
+{# Shared by the regular add menu and the floating one on touch screens #}
+{% set addItems %}
+    <li>
+        <button type="button" class="dropdown-item"
+                data-action="click->booking-journal#openOffcanvas"
+                data-url="{{ path('journal.batch.new') }}"
+                data-offcanvas-title="{{ 'accounting.journal.batch.add'|trans }}">
+            <i class="fas fa-calendar-plus"></i> {{ 'accounting.journal.batch.add'|trans }}
+        </button>
+    </li>
+    <li>
+        <button type="button" class="dropdown-item"
+                data-action="click->booking-journal#openOpeningBalance"
+                data-url-template="{{ path('journal.opening_balance.new', {'year': '__YEAR__'}) }}"
+                data-offcanvas-title="{{ 'accounting.opening_balance.title'|trans }}">
+            <i class="fas fa-flag-checkered"></i> {{ 'accounting.opening_balance.title'|trans }}
+        </button>
+    </li>
+{% endset %}
+<div class="container fab-add-clearance" data-controller="booking-journal swipe-nav"
      data-booking-journal-batches-url-value="{{ path('journal.batches') }}">
     <div class="row justify-content-between mb-3">
         <div class="col">
@@ -18,32 +37,18 @@
         <div class="col-auto d-flex flex-wrap gap-2 align-items-center">
             <select class="form-select form-select-sm" style="width:6rem"
                     data-booking-journal-target="yearSelect"
-                    data-action="change->booking-journal#yearChange">
+                    data-swipe-nav-target="select"
+                    data-action="change->booking-journal#yearChange change->swipe-nav#updateButtons">
                 {% for y in years %}
                     <option value="{{ y.year }}" {% if y.year == currentYear %}selected{% endif %}>{{ y.year }}</option>
                 {% endfor %}
             </select>
-            <div class="dropdown">
+            <div class="dropdown fab-add-inline">
                 <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                     <i class="fas fa-plus"></i> {{ 'button.add'|trans }}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li>
-                        <button type="button" class="dropdown-item"
-                                data-action="click->booking-journal#openOffcanvas"
-                                data-url="{{ path('journal.batch.new') }}"
-                                data-offcanvas-title="{{ 'accounting.journal.batch.add'|trans }}">
-                            <i class="fas fa-calendar-plus"></i> {{ 'accounting.journal.batch.add'|trans }}
-                        </button>
-                    </li>
-                    <li>
-                        <button type="button" class="dropdown-item"
-                                data-action="click->booking-journal#openOpeningBalance"
-                                data-url-template="{{ path('journal.opening_balance.new', {'year': '__YEAR__'}) }}"
-                                data-offcanvas-title="{{ 'accounting.opening_balance.title'|trans }}">
-                            <i class="fas fa-flag-checkered"></i> {{ 'accounting.opening_balance.title'|trans }}
-                        </button>
-                    </li>
+                    {{ addItems }}
                 </ul>
             </div>
             <button type="button" class="btn btn-outline-secondary btn-sm"
@@ -78,6 +83,23 @@
 
     <div data-booking-journal-target="batchTable">
         {% include 'BookingJournal/batch_table.html.twig' with {'batches': [], 'year': currentYear, 'page': 1, 'pages': 0} %}
+    </div>
+
+    {% include 'BookingJournal/_edge_navigation.html.twig' with {
+        'selectMode': true,
+        'previousLabel': 'accounting.journal.batch.previous_year'|trans,
+        'nextLabel': 'accounting.journal.batch.next_year'|trans
+    } %}
+
+    {# Touch screens: the add menu behind a floating button, see "Add button on touch screens" in app.css #}
+    <div class="dropup fab-add-dropdown">
+        <button type="button" class="btn fab-add" data-bs-toggle="dropdown" aria-expanded="false"
+                title="{{ 'button.add'|trans }}" aria-label="{{ 'button.add'|trans }}">
+            <i class="fas fa-plus"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" data-bs-display="static">
+            {{ addItems }}
+        </ul>
     </div>
 
     {# ── Offcanvas for forms ─────────────────────────────── #}

@@ -1,0 +1,30 @@
+{# Paging arrows at the left and right screen edge, used by the swipe-nav
+   controller for swipes as well.
+   - With previousUrl / nextUrl they are links (a missing url hides the arrow).
+   - With selectMode they are buttons that step the year select of the page;
+     the controller hides the one without a neighbouring year. #}
+<div class="journal-edge-nav">
+    {% if selectMode|default(false) %}
+        <button type="button" class="btn btn-light shadow-sm journal-edge-prev" hidden
+                data-swipe-nav-target="previous" data-action="swipe-nav#previous"
+                title="{{ previousLabel }}" aria-label="{{ previousLabel }}">
+            <i class="fas fa-chevron-left"></i></button>
+        <button type="button" class="btn btn-light shadow-sm journal-edge-next" hidden
+                data-swipe-nav-target="next" data-action="swipe-nav#next"
+                title="{{ nextLabel }}" aria-label="{{ nextLabel }}">
+            <i class="fas fa-chevron-right"></i></button>
+    {% else %}
+        {% if previousUrl|default('') %}
+            <a href="{{ previousUrl }}" class="btn btn-light shadow-sm journal-edge-prev"
+               data-swipe-nav-target="previous"
+               title="{{ previousLabel }}" aria-label="{{ previousLabel }}">
+                <i class="fas fa-chevron-left"></i></a>
+        {% endif %}
+        {% if nextUrl|default('') %}
+            <a href="{{ nextUrl }}" class="btn btn-light shadow-sm journal-edge-next"
+               data-swipe-nav-target="next"
+               title="{{ nextLabel }}" aria-label="{{ nextLabel }}">
+                <i class="fas fa-chevron-right"></i></a>
+        {% endif %}
+    {% endif %}
+</div>
