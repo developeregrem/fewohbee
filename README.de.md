@@ -220,11 +220,11 @@ Selbst hosten bleibt kostenlos und vollwertig unterstützt. Beide Wege nutzen di
 ## Mehrsprachigkeit
 
 FewohBee ist von Grund auf mehrsprachig angelegt und wird **vollständig auf Deutsch und Englisch**
-ausgeliefert. Beide Sprachen werden gemeinsam gepflegt — kein Feature erscheint nur in einer
-Sprache.
+ausgeliefert.
 
-Eine weitere Sprache gewünscht? Gerne ein
-[Issue anlegen](https://github.com/developeregrem/fewohbee/issues) — Beiträge sind sehr willkommen.
+**Hilf bei der Übersetzung von FewohBee** in deine Sprache auf **[Hosted Weblate](https://hosted.weblate.org/projects/fewohbee/)**. Details stehen im [Wiki](https://github.com/developeregrem/fewohbee/wiki/Translations).
+
+[![Übersetzungsstand](https://hosted.weblate.org/widget/fewohbee/multi-auto.svg)](https://hosted.weblate.org/engage/fewohbee/)
 
 ---
 
@@ -236,6 +236,8 @@ Beiträge sind willkommen — ob Fehlermeldung, Übersetzung, Dokumentation oder
   Regeln zur Mehrsprachigkeit, Test-Erwartungen und Coding-Standards des Projekts. Die Datei ist
   für KI-Coding-Agents geschrieben, gilt aber genauso als verbindlicher Leitfaden für Menschen.
 - 🐛 **Fehler und Ideen:** [Issue anlegen](https://github.com/developeregrem/fewohbee/issues)
+- 🌍 **Übersetzungen:** auf [Hosted Weblate](https://hosted.weblate.org/projects/fewohbee/), siehe
+  [Translations](https://github.com/developeregrem/fewohbee/wiki/Translations) im Wiki
 - 🔀 **Pull Requests:** möglichst fokussiert halten, Tests beilegen und darauf achten, dass die
   deutschen *und* englischen Übersetzungen vollständig sind
 
