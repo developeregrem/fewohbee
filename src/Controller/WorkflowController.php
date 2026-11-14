@@ -156,7 +156,7 @@ class WorkflowController extends AbstractController
         }
 
         return new JsonResponse([
-            'entities' => array_values($results),
+            'entities' => $results,
             'total' => count($results),
         ]);
     }
@@ -381,7 +381,11 @@ class WorkflowController extends AbstractController
         return $options;
     }
 
-    /** @param array<string, mixed> $field */
+    /**
+     * @param array<string, mixed> $field
+     *
+     * @return array<string, mixed> Schema field with translated labels and otherwise preserved metadata
+     */
     private function translateField(array $field): array
     {
         if (isset($field['label'])) {
@@ -431,7 +435,8 @@ class WorkflowController extends AbstractController
             return [['value' => 0, 'label' => '–']];
         }
 
-        $templates = $this->em->getRepository(Template::class)->loadByTypeName(array_values($typesToLoad));
+        // Workflows name the template; the language variant follows the guest when they run.
+        $templates = $this->em->getRepository(Template::class)->loadByTypeName(array_values($typesToLoad), includeVariants: false);
         $options = [['value' => 0, 'label' => '–']];
         foreach ($templates as $template) {
             $options[] = ['value' => $template->getId(), 'label' => $template->getName()];
@@ -458,7 +463,7 @@ class WorkflowController extends AbstractController
 
         $groups = [];
 
-        $templates = $this->em->getRepository(Template::class)->loadByTypeName($templateTypes);
+        $templates = $this->em->getRepository(Template::class)->loadByTypeName($templateTypes, includeVariants: false);
         if (count($templates) > 0) {
             $items = [];
             foreach ($templates as $template) {
@@ -551,6 +556,20 @@ class WorkflowController extends AbstractController
         ]);
     }
 
+    /**
+     * Identifier, number and status values follow the entity's dynamic getter contracts.
+     *
+     * @return array{
+     *     id: mixed,
+     *     startDate?: string,
+     *     endDate?: string,
+     *     room?: string,
+     *     booker?: string,
+     *     number?: mixed,
+     *     date?: string,
+     *     status?: mixed
+     * }
+     */
     private function serializePreviewEntity(object $entity): array
     {
         $data = ['id' => method_exists($entity, 'getId') ? $entity->getId() : null];
@@ -558,8 +577,8 @@ class WorkflowController extends AbstractController
         if (method_exists($entity, 'getStartDate') && $entity->getStartDate()) {
             $data['startDate'] = $entity->getStartDate()->format('d.m.Y');
         }
-        if (method_exists($entity, 'getEndDate') && $entity->getEndDate()) {
-            $data['endDate'] = $entity->getEndDate()->format('d.m.Y');
+        if (method_exists($entity, 'getVisibleEndDate')) {
+            $data['endDate'] = $entity->getVisibleEndDate()->format('d.m.Y');
         }
         if (method_exists($entity, 'getAppartment') && $entity->getAppartment()) {
             $data['room'] = (string) $entity->getAppartment()->getNumber();

@@ -10,7 +10,6 @@ use App\Entity\Invoice;
 use App\Entity\InvoicePosition;
 use App\Entity\Reservation;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 
 /**
  * What a portal charges the house for a booking: its commission and its payment
@@ -96,11 +95,10 @@ class OriginFeeCalculator
      */
     private function baseOf(Invoice $invoice, callable $keep, bool $includeStay): float
     {
-        /** @var Collection<int, InvoicePosition> $positions */
-        $positions = ($invoice->getPositions() ?? new ArrayCollection())->filter($keep);
+        $positions = $invoice->getPositions()->filter($keep);
 
         $stay = $includeStay
-            ? $invoice->getAppartments() ?? new ArrayCollection()
+            ? $invoice->getAppartments()
             : new ArrayCollection();
 
         return $this->sums->grossTotal($stay, $positions);
@@ -154,7 +152,7 @@ class OriginFeeCalculator
      */
     private function portalCollectedThePayment(Invoice $invoice): ?bool
     {
-        $reservations = $invoice->getReservations() ?? new ArrayCollection();
+        $reservations = $invoice->getReservations();
         if (0 === count($reservations)) {
             return false;
         }
@@ -188,7 +186,7 @@ class OriginFeeCalculator
     private function fee(Invoice $invoice, ?Reservation $shown, float $base, callable $rateOf, bool $baseIsOne = true): OriginFee
     {
         $rates = [];
-        foreach ($invoice->getReservations() ?? [] as $reservation) {
+        foreach ($invoice->getReservations() as $reservation) {
             $rate = $this->toPercent($rateOf($reservation));
             // Keyed by the formatted figure: it doubles as the label in a log
             // line and keeps "12", "12.00" and 12.0 from counting as three
@@ -217,7 +215,7 @@ class OriginFeeCalculator
      */
     private function reservationTheFiguresBelongTo(Invoice $invoice): ?Reservation
     {
-        foreach ($invoice->getReservations() ?? [] as $reservation) {
+        foreach ($invoice->getReservations() as $reservation) {
             $origin = $reservation->getReservationOrigin();
             if (null === $origin) {
                 continue;

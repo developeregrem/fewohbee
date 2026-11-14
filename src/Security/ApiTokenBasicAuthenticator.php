@@ -25,6 +25,9 @@ use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface
  */
 class ApiTokenBasicAuthenticator extends AbstractAuthenticator implements AuthenticationEntryPointInterface
 {
+    // RFC 9110 section 11.3: list Basic first for clients that cannot parse unknown schemes.
+    private const string AUTHENTICATION_CHALLENGES = 'Basic realm="fewohbee-api", Bearer realm="fewohbee-api"';
+
     public function __construct(
         private readonly ApiTokenService $apiTokenService,
         private readonly ApiTokenContext $apiTokenContext,
@@ -64,19 +67,17 @@ class ApiTokenBasicAuthenticator extends AbstractAuthenticator implements Authen
     {
         return new JsonResponse(
             ['error' => ['code' => Response::HTTP_UNAUTHORIZED, 'message' => 'Invalid credentials.']],
-            Response::HTTP_UNAUTHORIZED
+            Response::HTTP_UNAUTHORIZED,
+            ['WWW-Authenticate' => self::AUTHENTICATION_CHALLENGES],
         );
     }
 
     public function start(Request $request, ?AuthenticationException $authException = null): Response
     {
-        $response = new JsonResponse(
+        return new JsonResponse(
             ['error' => ['code' => Response::HTTP_UNAUTHORIZED, 'message' => 'Authentication required.']],
-            Response::HTTP_UNAUTHORIZED
+            Response::HTTP_UNAUTHORIZED,
+            ['WWW-Authenticate' => self::AUTHENTICATION_CHALLENGES],
         );
-        // Bearer for API clients, Basic so that calendar clients (Thunderbird & co.) prompt for credentials.
-        $response->headers->set('WWW-Authenticate', 'Bearer realm="fewohbee-api", Basic realm="fewohbee-api"');
-
-        return $response;
     }
 }

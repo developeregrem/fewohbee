@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Tests\Unit\GuestCheckIn;
 
 use App\Dto\GuestCheckIn\GuestCheckInVerification;
+use App\Entity\Appartment;
 use App\Entity\Customer;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\GuestCheckIn;
 use App\Entity\Reservation;
+use App\Entity\RoomCategory;
 use App\Service\GuestCheckIn\GuestCheckInTokenSigner;
 use App\Service\GuestCheckIn\GuestCheckInVerifier;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -75,6 +78,36 @@ final class GuestCheckInVerifierTest extends TestCase
         self::assertTrue($verifier->isVerified(new Request(cookies: ['fhb_gci' => $cookie->getValue()]), $checkIn));
         self::assertFalse($verifier->isVerified(new Request(cookies: ['fhb_gci' => $cookie->getValue()]), new GuestCheckIn(new Reservation(), 'selectorB')));
         self::assertFalse($verifier->isVerified(new Request(), $checkIn));
+    }
+
+    #[DataProvider('eventDepartures')]
+    public function testEventIsConfirmedWithItsLastDay(string $departure, bool $expected): void
+    {
+        // One day, stored up to the day after.
+        $reservation = $this->reservation('Müller');
+        $reservation->setEndDate(new \DateTime('2026-10-11'));
+        $reservation->setAppartment((new Appartment())->setRoomCategory((new RoomCategory())->setKind(RoomCategoryKind::EVENT_SPACE)));
+        $input = $this->input('Müller');
+        $input->departure = new \DateTimeImmutable($departure);
+
+        self::assertSame($expected, $this->verifier()->matches($reservation, $input));
+    }
+
+    /** @return iterable<string, array{string, bool}> */
+    public static function eventDepartures(): iterable
+    {
+        yield 'last day' => ['2026-10-10', true];
+        yield 'stored day after, as a mail from an own template may show it' => ['2026-10-11', true];
+        yield 'two days after' => ['2026-10-12', false];
+        yield 'day before' => ['2026-10-09', false];
+    }
+
+    public function testAccommodationOnlyPassesWithTheDepartureDay(): void
+    {
+        $input = $this->input('Müller');
+        $input->departure = new \DateTimeImmutable('2026-10-11');
+
+        self::assertFalse($this->verifier()->matches($this->reservation('Müller'), $input));
     }
 
     private function verifier(): GuestCheckInVerifier

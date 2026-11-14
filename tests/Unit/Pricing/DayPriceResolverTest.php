@@ -42,6 +42,19 @@ final class DayPriceResolverTest extends TestCase
         self::assertEqualsWithDelta(50.0, $adjustments['2026-12-31']->percent, 0.0001);
     }
 
+    public function testARoomPriceWithSurchargeIsComparedIncludingTheFurtherPersons(): void
+    {
+        // 80 € for two plus 15 € for each further guest: 110 € for four, so 132 € is 20 % more.
+        $perRoom = $this->row(80.0);
+        $perRoom->setIsPerRoom(true);
+        $perRoom->setNumberOfPersons(2);
+        $perRoom->setExtraPersonSurcharge('15.00');
+
+        $adjustments = $this->resolver([$this->dayPrice('2026-12-31', 132.0, 4)], [[$perRoom]])->adjustments($this->room(), $this->day('2026-12-31'), $this->day('2027-01-01'));
+
+        self::assertEqualsWithDelta(20.0, $adjustments['2026-12-31']->percent, 0.0001);
+    }
+
     public function testOnlyDayPricesFromAssistantsAndProgramsAreHeldWithinTheLimits(): void
     {
         $manual = $this->dayPrice('2026-12-30', 240.0, 2);

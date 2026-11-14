@@ -57,6 +57,7 @@ final class InvoiceServiceNextNumberTest extends TestCase
         self::assertEmpty($invoice->getNumber());
     }
 
+    /** @return array<string, array{string|null, string|null}> */
     public static function numberProvider(): array
     {
         return [

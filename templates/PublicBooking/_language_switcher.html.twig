@@ -1,0 +1,26 @@
+{#
+    Language choice of the stand-alone booking page. Never shown when embedded: there the
+    embedding website passes ?lang= and owns the language of the page.
+
+    From step 2 on a language button re-posts the wizard (`formId`) with the request that
+    produced the current step, so the dates and details entered so far are kept.
+#}
+{% set offeredLocales = guest_locales() %}
+{% if not embed and offeredLocales|length > 1 %}
+    {% set currentStep = step|default(1) %}
+    {% set repostIntent = currentStep >= 3 ? 'preview' : (currentStep >= 2 ? 'availability' : null) %}
+    <nav class="d-flex justify-content-end flex-wrap gap-1 mb-2 small fhb-lang" aria-label="{{ 'online_booking.public.language'|trans }}">
+        {% for locale in offeredLocales %}
+            {% set active = app.request.locale == locale %}
+            {% set target = path('public.booking', {'embed': 0, 'lang': locale}) %}
+            {% if repostIntent and not successMessage|default(false) %}
+                <button type="submit" form="{{ formId }}" formaction="{{ target }}" formnovalidate name="intent" value="{{ repostIntent }}"
+                        class="btn btn-link btn-sm p-0 px-1{{ active ? ' fw-bold text-decoration-none' : '' }}"
+                        lang="{{ locale }}" title="{{ language_name(locale) }}"{% if active %} aria-current="true"{% endif %}>{{ locale|upper }}</button>
+            {% else %}
+                <a href="{{ target }}" class="px-1{{ active ? ' fw-bold text-decoration-none' : '' }}"
+                   hreflang="{{ locale }}" lang="{{ locale }}" title="{{ language_name(locale) }}"{% if active %} aria-current="true"{% endif %}>{{ locale|upper }}</a>
+            {% endif %}
+        {% endfor %}
+    </nav>
+{% endif %}

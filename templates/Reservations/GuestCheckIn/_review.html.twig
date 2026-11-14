@@ -138,8 +138,11 @@
                 {% endfor %}
 
                 {% if person.main and reservation.booker %}
-                    <details class="small mt-2" data-guest-checkin-target="moreOptions">
+                    <details class="small mt-2" data-guest-checkin-target="moreOptions"{% if person.hasCompany %} open{% endif %}>
                         <summary class="text-body-secondary">{{ 'guest_checkin.tab.more_options'|trans }}</summary>
+                        {% if person.hasCompany %}
+                            <p class="text-body-secondary mt-1 mb-1">{{ 'guest_checkin.tab.company_booker_hint'|trans }}</p>
+                        {% endif %}
                         <div class="form-check mt-1">
                             <input class="form-check-input" type="checkbox" name="setAsBooker" value="1" id="{{ personId }}-booker">
                             <label class="form-check-label" for="{{ personId }}-booker">{{ 'guest_checkin.tab.set_as_booker'|trans }}</label>

@@ -12,17 +12,17 @@ class PricePeriod
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     #[ORM\Column(type: 'date')]
-    private $start;
+    private ?\DateTimeInterface $start = null;
     #[ORM\Column(type: 'date')]
-    private $end;
+    private ?\DateTimeInterface $end = null;
     /** Optional label, e.g. the event the period was created for. */
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
     private ?string $description = null;
     #[ORM\ManyToOne(targetEntity: 'App\Entity\Price', inversedBy: 'pricePeriods')]
     #[ORM\JoinColumn(nullable: false)]
-    private $price;
+    private ?Price $price = null;
 
     public function getId(): ?int
     {

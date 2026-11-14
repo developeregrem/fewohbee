@@ -140,6 +140,18 @@ class RoomCategoryImageController extends AbstractController
      * Serializes a RoomCategoryImage entity to a JSON-friendly array.
      * Includes action URLs (delete, primary) built via the router so the
      * JS controller does not need to assemble paths manually.
+     *
+     * @return array{
+     *     id: int|null,
+     *     filename: string,
+     *     thumbnailUrl: string,
+     *     mediumUrl: string,
+     *     sortOrder: int,
+     *     isPrimary: bool,
+     *     deleteUrl: string,
+     *     primaryUrl: string,
+     *     csrfToken: string
+     * }
      */
     private function serializeImage(RoomCategoryImage $image, RoomCategoryImageService $imageService): array
     {

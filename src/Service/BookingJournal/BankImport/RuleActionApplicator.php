@@ -75,8 +75,9 @@ final class RuleActionApplicator
         if (isset($action['creditAccountId'])) {
             $line['userCreditAccountId'] = (int) $action['creditAccountId'];
         }
+        // Missing or null rule values preserve a previously assigned tax rate.
         if (isset($action['taxRateId'])) {
-            $line['userTaxRateId'] = null !== $action['taxRateId'] ? (int) $action['taxRateId'] : null;
+            $line['userTaxRateId'] = (int) $action['taxRateId'];
         }
 
         $remark = $this->renderTemplate($action['remarkTemplate'] ?? null, $line);
@@ -202,7 +203,7 @@ final class RuleActionApplicator
         }
 
         $tail = substr($purpose, $offset + strlen($marker));
-        if (false === $tail || '' === $tail) {
+        if ('' === $tail) {
             return null;
         }
 
@@ -323,7 +324,7 @@ final class RuleActionApplicator
         }
 
         $tail = substr($purpose, $offset + strlen($marker));
-        if (false === $tail || '' === $tail) {
+        if ('' === $tail) {
             return null;
         }
 
@@ -332,7 +333,7 @@ final class RuleActionApplicator
             return null;
         }
 
-        return $this->cleanInvoiceNumber($matches[1] ?? null);
+        return $this->cleanInvoiceNumber($matches[1]);
     }
 
     /**
@@ -409,6 +410,7 @@ final class RuleActionApplicator
 
     /**
      * @param array<string, mixed> $line
+     * @param array<string, string> $params
      */
     private function markSplitRulePending(array &$line, string $key, array $params): void
     {

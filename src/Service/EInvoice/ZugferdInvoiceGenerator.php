@@ -121,18 +121,20 @@ class ZugferdInvoiceGenerator
 
         // invoice positions
         $pos = 1;
+        // Match InvoiceSumCalculator: float array keys would truncate fractional VAT rates.
         $netSums = [];
         /* @var $apartmentPosition \App\Entity\InvoiceAppartment */
         foreach ($invoice->getAppartments() as $apartmentPosition) {
             $netPrice = round($apartmentPosition->getNetPrice(), 2);
             $sum = round($netPrice * $apartmentPosition->getAmount(), 2);
             $documentBuilder->addNewPosition((string) $pos);
-            $documentBuilder->setDocumentPositionProductDetails($apartmentPosition->getDescription(), $apartmentPosition->getStartDate()->format('d.m.Y').' - '.$apartmentPosition->getEndDate()->format('d.m.Y'));
+            $documentBuilder->setDocumentPositionProductDetails($apartmentPosition->getDescription(), $apartmentPosition->getStartDate()->format('d.m.Y').' - '.$apartmentPosition->getVisibleEndDate()->format('d.m.Y'));
             $documentBuilder->setDocumentPositionNetPrice($netPrice);
             $documentBuilder->setDocumentPositionQuantity($apartmentPosition->getAmount(), ZugferdUnitCodes::REC20_PIECE);
             $documentBuilder->addDocumentPositionTax($this->resolveVatCategory($apartmentPosition->getVat()), ZugferdVatTypeCodes::VALUE_ADDED_TAX, $apartmentPosition->getVat());
             $documentBuilder->setDocumentPositionLineSummation($sum);
-            $netSums[$apartmentPosition->getVat()] = ($netSums[$apartmentPosition->getVat()] ?? 0) + $sum;
+            $rate = (string) $apartmentPosition->getVat();
+            $netSums[$rate] = ($netSums[$rate] ?? 0) + $sum;
             ++$pos;
         }
 
@@ -147,15 +149,17 @@ class ZugferdInvoiceGenerator
             $documentBuilder->setDocumentPositionQuantity($miscPosition->getAmount(), ZugferdUnitCodes::REC20_PIECE);
             $documentBuilder->addDocumentPositionTax($this->resolveVatCategory($miscPosition->getVat()), ZugferdVatTypeCodes::VALUE_ADDED_TAX, $miscPosition->getVat());
             $documentBuilder->setDocumentPositionLineSummation($sum);
-            $netSums[$miscPosition->getVat()] = ($netSums[$miscPosition->getVat()] ?? 0) + $sum;
+            $rate = (string) $miscPosition->getVat();
+            $netSums[$rate] = ($netSums[$rate] ?? 0) + $sum;
             ++$pos;
         }
 
         $vatSum = 0;
         $netSum = 0;
         foreach ($netSums as $vat => $sum) {
-            $documentBuilder->addDocumentTax($this->resolveVatCategory((float) $vat), ZugferdVatTypeCodes::VALUE_ADDED_TAX, $sum, $sum * ($vat / 100), $vat);
-            $vatSum += round($sum * ($vat / 100), 2);
+            $rate = (float) $vat;
+            $documentBuilder->addDocumentTax($this->resolveVatCategory($rate), ZugferdVatTypeCodes::VALUE_ADDED_TAX, $sum, $sum * ($rate / 100), $rate);
+            $vatSum += round($sum * ($rate / 100), 2);
             $netSum += $sum;
         }
 
@@ -219,8 +223,8 @@ class ZugferdInvoiceGenerator
     }
 
     /**
-     * @param array<string, string> $codesByConstantName
-     * @param array<string, int>    $supportedCodes
+     * @param array<string, string> $codesByConstantName constant name => ISO code
+     * @param array<string, string> $supportedCodes      ISO code => constant name
      */
     private function resolveCandidateToIsoCode(mixed $candidate, array $codesByConstantName, array $supportedCodes): ?string
     {

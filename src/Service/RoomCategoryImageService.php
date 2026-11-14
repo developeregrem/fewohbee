@@ -274,6 +274,7 @@ class RoomCategoryImageService
             'image/jpeg' => imagejpeg($resized, $targetPath, 85),
             'image/png' => imagepng($resized, $targetPath, 6),
             'image/webp' => imagewebp($resized, $targetPath, 85),
+            default => throw new \RuntimeException('Unsupported image type: '.$mime),
         };
 
         // Free the resized copy (but not the source — it's reused for other variants)

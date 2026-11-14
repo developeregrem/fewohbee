@@ -10,6 +10,9 @@ use App\Entity\Workflow;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<Workflow>
+ */
 class WorkflowRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -127,7 +130,11 @@ class WorkflowRepository extends ServiceEntityRepository
         return $this->findBy(['isSystem' => false], ['name' => 'ASC']);
     }
 
-    /** @return Workflow[] */
+    /**
+     * @param array<string> $triggerTypes Trigger type keys; an empty selection matches none
+     *
+     * @return Workflow[]
+     */
     public function findActiveByTriggerTypes(array $triggerTypes): array
     {
         return $this->createQueryBuilder('w')

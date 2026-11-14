@@ -1,0 +1,26 @@
+reservationorigin.add: 'Herkunft hinzufügen'
+reservationorigin.business: geschäftlich
+reservationorigin.color: Farbe
+reservationorigin.color.enable: 'Farbindikator anzeigen'
+reservationorigin.color.help: 'Die Farbe wird in der Reservierungsübersicht als Indikator an der Reservierung angezeigt.'
+reservationorigin.delete.ask: 'Reservierungsherkunft wirklich löschen?'
+reservationorigin.description: Reservierungsherkunft
+reservationorigin.flash.create.check_prices: 'Bitte prüfen Sie anschließend die Preiskategorien, damit diese auch für die neue Herkunft gelten.'
+reservationorigin.flash.create.success: 'Reservierungsherkunft erfolgreich angelegt.'
+reservationorigin.flash.delete.inuse.reservations: 'Reservierungsherkunft kann nicht gelöscht werden, da sie in vorhandenen Reservierungen genutzt wird.'
+reservationorigin.flash.delete.success: 'Reservierungsherkunft erfolgreich gelöscht.'
+reservationorigin.flash.edit.success: 'Reservierungsherkunft erfolgreich bearbeitet.'
+reservationorigin.flash.edit.ota_fees_enabled: 'Ob einzelne Leistungen bei den Portalgebühren berücksichtigt werden, wird am jeweiligen Preis über „Bei Portalgebühren berücksichtigen“ festgelegt. Prüfe daher die vorhandenen Preise.'
+reservationorigin.flash.surcharge_invalid: 'Kommission und Zahlungsgebühr müssen Prozentwerte zwischen 0 und 100 mit höchstens zwei Nachkommastellen sein.'
+reservationorigin.flash.surcharge_required: 'Bei aktivierten OTA-Gebühren muss mindestens Kommission oder Zahlungsgebühr angegeben werden.'
+reservationorigin.name: Bezeichnung
+reservationorigin.guest_surcharge_enabled: OTA-Gebühren
+reservationorigin.commission_percent: Kommission
+reservationorigin.payment_fee_percent: Zahlungsgebühr
+reservationorigin.payment_collection: 'Zahlung wird eingezogen von'
+reservationorigin.tourist_tax_collection: 'Wer kassiert die Kurtaxe?'
+reservationorigin.tourist_tax_collection.hint: 'Zahlt der Gast die Kurtaxe vor Ort, wähle „Unterkunft“. Zieht das Portal sie zusammen mit dem Buchungspreis ein, wähle „Portal“. Damit wird festgelegt, ob die Zahlungsgebühr des Portals auch auf die Kurtaxe berechnet wird.'
+reservationorigin.collection.property: Unterkunft
+reservationorigin.collection.portal: Portal
+reservationorigin.private: privat
+reservationorigin.title: Reservierungsherkunft

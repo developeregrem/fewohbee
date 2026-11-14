@@ -22,7 +22,7 @@ final readonly class PriceQuoteDto
     /**
      * @param array{id: int|null, number: string|null, description: string|null} $apartment
      * @param array{id: int|null, name: string|null}                    $object
-     * @param array{id: int|null, name: string|null}|null               $roomCategory
+     * @param array{id: int|null, name: string|null, kind: string}|null $roomCategory
      * @param array{id: int, name: string|null}                         $origin
      * @param array<int, int>                                           $guestCounts
      * @param array{gross: float, net: float, vat: float, base: float, modifiers: float} $room

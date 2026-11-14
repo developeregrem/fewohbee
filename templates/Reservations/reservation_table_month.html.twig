@@ -82,7 +82,8 @@
         {# currently max two events are allowed for one day (end of one reservation and start of another reservation) #}
         {% for reservation in reservationsForDay %}
             {% set style = 'background-color: ' ~ reservation.reservationStatus.color ~ ';' %}
-            {% set isBoundaryDay = tmpDateFormatted == reservation.startDate|date('Y-m-d') or tmpDateFormatted == reservation.endDate|date('Y-m-d') %}
+            {# An event fills whole days, there is no arrival or departure half #}
+            {% set isBoundaryDay = not reservation.eventSpace and (tmpDateFormatted == reservation.startDate|date('Y-m-d') or tmpDateFormatted == reservation.endDate|date('Y-m-d')) %}
             {% if not isBoundaryDay and reservation.reservationOrigin and reservation.reservationOrigin.color %}
                 {% set style = style ~ ' --feb-reservation-origin-color: ' ~ reservation.reservationOrigin.color ~ ';' %}
             {% endif %}
@@ -90,7 +91,9 @@
             {% set noEvents = ' no-pointer-events' %}
             {% if loop.length == 1 %}
                 {% set resCol = 2 %} 
-                {% if tmpDateFormatted == reservation.startDate|date('Y-m-d') %}
+                {% if reservation.eventSpace %}
+                    {# whole day #}
+                {% elseif tmpDateFormatted == reservation.startDate|date('Y-m-d') %}
                     {% set resCss = resCss ~ ' month-reservationstartend month-reservation-start month-reservation-onlystart' %}
                     {# relevant to get the pointer event for selecable if reservation starts or ends at this day, therefore an empty dummy layer is placed to collect the event #}
                     {% set dummyContent = '<div class="month-reservation-end dummy-day">&nbsp;</div>' %}
@@ -115,7 +118,9 @@
             {% set noEvents = ' no-pointer-events' %}
             {% set blockCss = 'reservation-popover reservation-yearly month-reservation-blocked' %}
             {% set blockDummy = '' %}
-            {% if tmpDateFormatted == roomBlock.startDate|date('Y-m-d') %}
+            {% if roomBlock.appartment.eventSpace %}
+                {# whole day, like the events of the room #}
+            {% elseif tmpDateFormatted == roomBlock.startDate|date('Y-m-d') %}
                 {% set blockCss = blockCss ~ ' month-reservationstartend month-reservation-start month-reservation-onlystart' %}
                 {% set blockDummy = '<div class="month-reservation-end dummy-day">&nbsp;</div>' %}
             {% elseif tmpDateFormatted == roomBlock.endDate|date('Y-m-d') %}

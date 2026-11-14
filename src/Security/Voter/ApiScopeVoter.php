@@ -15,6 +15,8 @@ use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
  * Grants API scope attributes (e.g. API_SCOPE_RESERVATIONS_READ) only when the request
  * was authenticated with an ApiToken that carries the scope AND the token owner holds
  * the underlying application role. A token can never exceed its owner's permissions.
+ *
+ * @extends Voter<string, mixed>
  */
 class ApiScopeVoter extends Voter
 {

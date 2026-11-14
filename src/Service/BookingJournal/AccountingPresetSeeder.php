@@ -19,6 +19,22 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Seeds accounting accounts and tax rates from predefined chart-of-accounts presets.
  *
  * Idempotent: only inserts accounts/rates that don't already exist (by accountNumber/rate).
+ *
+ * @phpstan-type AccountDefinition array{
+ *     number: string, nameKey: string, type: string,
+ *     isCash?: bool, isBank?: bool, isOpening?: bool, isAuto?: bool,
+ *     datevSachverhaltLuL?: int, datevFunktionsergaenzungLuL?: int
+ * }
+ * @phpstan-type TaxRateDefinition array{
+ *     nameKey: string, rate: float,
+ *     datevOutputBuKey: string|null, datevInputBuKey: string|null,
+ *     isDefault: bool, revenueAccountNumber: string
+ * }
+ * @phpstan-type WorkflowDefinition array{
+ *     systemCode: string, nameKey: string, descriptionKey: string,
+ *     actionType: string, debitAccountNumber: string,
+ *     conditions: list<array{type: string, config: array<string, int|string>}>, priority: int
+ * }
  */
 class AccountingPresetSeeder
 {
@@ -119,7 +135,7 @@ class AccountingPresetSeeder
     }
 
     /**
-     * @return array<int, array{number: string, nameKey: string, type: string, isCash?: bool, isBank?: bool, isOpening?: bool, isAuto?: bool, sachverhaltLuL?: int, funktionsergaenzungLuL?: int}>
+     * @return list<AccountDefinition>
      */
     private function getAccountDefinitions(string $preset): array
     {
@@ -133,7 +149,7 @@ class AccountingPresetSeeder
     }
 
     /**
-     * @return array<int, array{nameKey: string, rate: float, outputBuKey?: string, inputBuKey?: string, isDefault?: bool, revenueAccountNumber?: string}>
+     * @return list<TaxRateDefinition>
      */
     private function getTaxRateDefinitions(string $preset): array
     {
@@ -148,6 +164,7 @@ class AccountingPresetSeeder
 
     // ── SKR03 (Germany) ──────────────────────────────────────────────
 
+    /** @return list<AccountDefinition> */
     private function getSkr03Accounts(): array
     {
         return [
@@ -178,6 +195,7 @@ class AccountingPresetSeeder
 
     // ── SKR04 (Germany) ──────────────────────────────────────────────
 
+    /** @return list<AccountDefinition> */
     private function getSkr04Accounts(): array
     {
         return [
@@ -207,6 +225,7 @@ class AccountingPresetSeeder
 
     // ── EKR (Austria) ────────────────────────────────────────────────
 
+    /** @return list<AccountDefinition> */
     private function getEkrAtAccounts(): array
     {
         return [
@@ -231,6 +250,7 @@ class AccountingPresetSeeder
 
     // ── KMU-Kontenrahmen (Switzerland) ───────────────────────────────
 
+    /** @return list<AccountDefinition> */
     private function getKmuChAccounts(): array
     {
         return [
@@ -292,6 +312,10 @@ class AccountingPresetSeeder
         return $created;
     }
 
+    /**
+     * @param WorkflowDefinition $def
+     * @return array{debitAccountId: int|null, fallbackCreditAccountId: '', remark: ''}
+     */
     private function buildActionConfig(array $def, AccountingAccount $debitAccount): array
     {
         return [
@@ -302,7 +326,7 @@ class AccountingPresetSeeder
     }
 
     /**
-     * @return list<array{systemCode: string, nameKey: string, descriptionKey: string, actionType: string, debitAccountNumber: string, conditions: array, priority?: int}>
+     * @return list<WorkflowDefinition>
      */
     private function getWorkflowDefinitions(string $preset): array
     {
@@ -316,7 +340,7 @@ class AccountingPresetSeeder
     }
 
     /**
-     * @return list<array>
+     * @return list<WorkflowDefinition>
      */
     private function getWorkflows(string $presetKey, string $cashNumber, string $bankNumber, string $cardNumber): array
     {
@@ -367,6 +391,7 @@ class AccountingPresetSeeder
 
     // ── Tax rates ────────────────────────────────────────────────────
 
+    /** @return list<TaxRateDefinition> */
     private function getSkr03TaxRates(): array
     {
         return [
@@ -376,6 +401,7 @@ class AccountingPresetSeeder
         ];
     }
 
+    /** @return list<TaxRateDefinition> */
     private function getSkr04TaxRates(): array
     {
         return [
@@ -385,6 +411,7 @@ class AccountingPresetSeeder
         ];
     }
 
+    /** @return list<TaxRateDefinition> */
     private function getAtTaxRates(): array
     {
         return [
@@ -395,6 +422,7 @@ class AccountingPresetSeeder
         ];
     }
 
+    /** @return list<TaxRateDefinition> */
     private function getChTaxRates(): array
     {
         return [

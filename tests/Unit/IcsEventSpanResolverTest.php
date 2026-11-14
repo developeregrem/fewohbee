@@ -81,6 +81,24 @@ final class IcsEventSpanResolverTest extends TestCase
         self::assertSame(['2026-08-01', '2026-08-02', '2026-08-03'], $this->dateKeys($span->dates));
     }
 
+    public function testAllDaySpanAcrossTheSpringSwitchKeepsItsLastDay(): void
+    {
+        // The night of 28 March 2027 is one hour short in Berlin.
+        $span = $this->resolve(['DTSTART' => '20270327', 'DTEND' => '20270330']);
+
+        self::assertNotNull($span);
+        self::assertSame(['2027-03-27', '2027-03-28', '2027-03-29'], $this->dateKeys($span->dates));
+    }
+
+    public function testAllDaySpanAcrossTheAutumnSwitchGainsNoDay(): void
+    {
+        // The night of 31 October 2027 is one hour long in Berlin.
+        $span = $this->resolve(['DTSTART' => '20271030', 'DTEND' => '20271102']);
+
+        self::assertNotNull($span);
+        self::assertSame(['2027-10-30', '2027-10-31', '2027-11-01'], $this->dateKeys($span->dates));
+    }
+
     public function testTimedMultiDayEventKeepsItsClosingDay(): void
     {
         $span = $this->resolve(['DTSTART' => '20260814T130000', 'DTEND' => '20260816T140000']);

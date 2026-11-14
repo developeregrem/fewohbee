@@ -28,6 +28,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_ADMIN')]
 class SubsidiaryServiceController extends AbstractController
 {
+    /**
+     * @return Response
+     */
     #[Route('/', name: 'objects.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine)
     {
@@ -42,6 +45,11 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/{id}/get', name: 'objects.get.object', methods: ['GET'], defaults: ['id' => '0'])]
     public function getObjectAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
@@ -57,6 +65,9 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/new', name: 'objects.new.object', methods: ['GET'])]
     public function newObjectAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
@@ -73,6 +84,9 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/create', name: 'objects.create.object', methods: ['POST'])]
     public function createObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, InvoiceNumberPatternService $patternService, Request $request)
     {
@@ -112,6 +126,11 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/{id}/edit', name: 'objects.edit.object', methods: ['POST'], defaults: ['id' => '0'])]
     public function editObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, InvoiceNumberPatternService $patternService, Request $request, $id)
     {
@@ -156,6 +175,9 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/{id}/delete', name: 'objects.delete.object', methods: ['DELETE'])]
     public function deleteObjectAction(SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, Subsidiary $entry)
     {

@@ -66,7 +66,7 @@ final class OpeningHoursExtension extends AbstractExtension
             }
 
             $times = implode(', ', array_map(
-                static fn (array $range): string => $range[0].'–'.$range[1],
+                static fn (array $range): string => $range[0].' - '.$range[1],
                 $ranges
             ));
 

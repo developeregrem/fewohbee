@@ -31,7 +31,7 @@ class CashJournalEntry
     private $date;
     #[ORM\Column(type: 'text', length: 255, nullable: true)]
     private $remark;
-    #[ORM\ManyToOne(targetEntity: 'CashJournal', inversedBy: 'cashJournalEntries')]
+    #[ORM\ManyToOne(targetEntity: CashJournal::class, inversedBy: 'cashJournalEntries')]
     private $cashJournal;
 
     /**
@@ -49,7 +49,7 @@ class CashJournalEntry
      *
      * @param string $incomes
      *
-     * @return CashJournalEntry
+     * @return $this
      */
     public function setIncomes($incomes): static
     {
@@ -73,7 +73,7 @@ class CashJournalEntry
      *
      * @param string $expenses
      *
-     * @return CashJournalEntry
+     * @return $this
      */
     public function setExpenses($expenses): static
     {
@@ -95,7 +95,7 @@ class CashJournalEntry
     /**
      * Set counterAccount.
      *
-     * @return CashJournalEntry
+     * @return $this
      */
     public function setCounterAccount(string $counterAccount): static
     {
@@ -115,7 +115,7 @@ class CashJournalEntry
     /**
      * Set invoiceNumber.
      *
-     * @return CashJournalEntry
+     * @return $this
      */
     public function setInvoiceNumber(string $invoiceNumber): static
     {
@@ -135,7 +135,7 @@ class CashJournalEntry
     /**
      * Set documentNumber.
      *
-     * @return CashJournalEntry
+     * @return $this
      */
     public function setDocumentNumber(int $documentNumber): static
     {
@@ -155,7 +155,7 @@ class CashJournalEntry
     /**
      * Set date.
      *
-     * @return CashJournalEntry
+     * @return $this
      */
     public function setDate(\DateTime $date): static
     {
@@ -175,7 +175,7 @@ class CashJournalEntry
     /**
      * Set remark.
      *
-     * @return CashJournalEntry
+     * @return $this
      */
     public function setRemark(string $remark): static
     {
@@ -195,7 +195,7 @@ class CashJournalEntry
     /**
      * Set cashJournal.
      *
-     * @return CashJournalEntry
+     * @return $this
      */
     public function setCashJournal(?CashJournal $cashJournal = null): static
     {
@@ -217,7 +217,7 @@ class CashJournalEntry
      *
      * @param string $inventory
      *
-     * @return CashJournalEntry
+     * @return $this
      */
     public function setInventory($inventory): static
     {

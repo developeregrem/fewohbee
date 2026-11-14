@@ -26,9 +26,33 @@
         {# === Tab 1: General fields (name, acronym, description) === #}
         <div class="tab-pane fade show active" id="rc-pane-general" role="tabpanel"
              aria-labelledby="rc-tab-general" tabindex="0">
+            {% import 'common/content_translations.html.twig' as contentTranslations %}
             {{ form_row(form.name) }}
+            {{ contentTranslations.inputs(form.translations, 'name') }}
+            {# Each kind says in one sentence what changes, so the choice needs no documentation. #}
+            {# Same grid as form_row: label column left, the choices right. #}
+            <fieldset class="mb-3 row">
+                <legend class="col-form-label col-sm-4 text-sm-end pt-0">{{ form.kind.vars.label|trans }}</legend>
+                <div class="col-sm">
+                    {% for child in form.kind %}
+                        <div class="form-check">
+                            <input type="radio" id="{{ child.vars.id }}" name="{{ child.vars.full_name }}"
+                                   class="form-check-input" value="{{ child.vars.value }}"{% if child.vars.checked %} checked{% endif %}
+                                   aria-describedby="{{ child.vars.id }}_help" required>
+                            <label class="form-check-label" for="{{ child.vars.id }}">{{ child.vars.label|trans }}</label>
+                            <div class="form-text mt-0" id="{{ child.vars.id }}_help">{{ (child.vars.label ~ '.help')|trans }}</div>
+                        </div>
+                    {% endfor %}
+                    {% do form.kind.setRendered %}
+                    {% if hasReservations|default(false) %}
+                        <div class="form-text"><i class="fas fa-info-circle"></i> {{ 'category.kind.has_reservations'|trans }}</div>
+                    {% endif %}
+                    {{ form_errors(form.kind) }}
+                </div>
+            </fieldset>
             {{ form_row(form.acronym) }}
             {{ form_row(form.details) }}
+            {{ contentTranslations.inputs(form.translations, 'details') }}
             {{ form_row(form.minFullPayers) }}
         </div>
 

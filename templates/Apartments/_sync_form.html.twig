@@ -1,75 +1,101 @@
+{% form_theme exportForm 'bootstrap_5_layout.html.twig' %}
+{% import 'Apartments/_sync_macros.html.twig' as calendarUi %}
+
 {{ form_start(exportForm, {'attr': {
     'id': 'entry-form-export-'~sync.id,
     'data-controller': 'settings',
     'data-action': 'submit->settings#submitFormAction',
     'data-url': path('apartments.sync.edit', {'id': sync.id})
 } }) }}
-    <div class="row mb-4">
-        <div class="col">{{ 'calendar.sync.export.hint'|trans }}</div>
-    </div>
-    <h6>{{ 'calendar.sync.export.option.title'|trans }}</h6>
-    <div class="row mb-3">
-        <div class="col">        
-            {{ form_widget(exportForm.reservationStatus) }}
-            {{ form_help(exportForm.reservationStatus) }}
+    {{ form_errors(exportForm) }}
+    <p class="text-body-secondary mb-4">{{ 'calendar.sync.export.hint'|trans }}</p>
+
+    <section class="card shadow-sm mb-4" aria-labelledby="calendar-export-options-{{ sync.id }}">
+        <div class="card-body p-3 p-sm-4">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <span class="d-inline-flex bg-primary-subtle text-primary-emphasis rounded-3 p-2">
+                    <i class="fas fa-sliders fa-fw" aria-hidden="true"></i>
+                </span>
+                <h6 class="mb-0" id="calendar-export-options-{{ sync.id }}">{{ 'calendar.sync.export.option.title'|trans }}</h6>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-12 col-md-6">
+                    {{ form_row(exportForm.exportPastEntries, {
+                        'row_attr': {'class': 'mb-0'},
+                        'label_attr': {'class': 'fw-semibold fs-6'},
+                        'attr': {'class': 'text-body'},
+                        'help_attr': {'class': 'text-body-secondary'}
+                    }) }}
+                </div>
+                <div class="col-12 col-md-6">
+                    <fieldset class="mb-0" aria-describedby="{{ exportForm.reservationStatus.vars.id }}_help">
+                        <legend class="fs-6 fw-semibold mb-2">{{ 'calendar.sync.export.option.status.label'|trans }}</legend>
+                        <div class="d-flex flex-wrap gap-2 column-gap-4" id="{{ exportForm.reservationStatus.vars.id }}">
+                            {% for status in exportForm.reservationStatus %}
+                                {{ form_widget(status) }}
+                            {% endfor %}
+                        </div>
+                        {% do exportForm.reservationStatus.setRendered %}
+                        {{ form_help(exportForm.reservationStatus, {'help_attr': {'class': 'text-body-secondary'}}) }}
+                        {{ form_errors(exportForm.reservationStatus) }}
+                    </fieldset>
+                </div>
+            </div>
+
+            <div class="border-top mt-4 pt-3">
+                {{ calendarUi.toggle(exportForm.exportGuestName) }}
+            </div>
+            <div class="border-top mt-3 pt-3">
+                {{ calendarUi.toggle(exportForm.exportReservationTimes) }}
+            </div>
         </div>
-    </div>
-    <div class="row mb-4">
-        <div class="col">        
-            {{ form_widget(exportForm.exportGuestName) }}
-            {{ form_help(exportForm.exportGuestName) }}
+    </section>
+
+    <section class="card shadow-sm mb-4" aria-labelledby="calendar-export-access-{{ sync.id }}">
+        <div class="card-body p-3 p-sm-4">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <span class="d-inline-flex bg-primary-subtle text-primary-emphasis rounded-3 p-2">
+                    <i class="fas fa-link fa-fw" aria-hidden="true"></i>
+                </span>
+                <h6 class="mb-0" id="calendar-export-access-{{ sync.id }}">{{ 'calendar.sync.export.access.title'|trans }}</h6>
+            </div>
+
+            {{ calendarUi.toggle(exportForm.isPublic) }}
+
+            <div class="mt-3">
+                {{ calendarUi.calendar_address(
+                    'calendar-export-public-url-' ~ sync.id,
+                    url('apartments.get.calendar', {'uuid': sync.uuid}),
+                    'calendar.sync.export.access.url.title',
+                    'calendar.sync.export.access.url.hint',
+                    'fa-globe'
+                ) }}
+            </div>
+            <div class="border-top mt-4 pt-4">
+                {{ calendarUi.calendar_address(
+                    'calendar-export-private-url-' ~ sync.id,
+                    url('api.apartments.calendar', {'id': sync.apartment.id}),
+                    'calendar.sync.export.access.private_url.title',
+                    'calendar.sync.export.access.private_url.hint',
+                    'fa-lock'
+                ) }}
+            </div>
         </div>
-    </div>
-    <h6>{{ 'calendar.sync.export.access.title'|trans }}</h6>
-    <div class="row mb-3">
-        <div class="col">
-            {{ form_widget(exportForm.isPublic) }}
-            {{ form_help(exportForm.isPublic) }}
-        </div>
-    </div>
+    </section>
 
     {{ form_rest(exportForm) }}
 
-    <div class="mb-3 mt-3 mx-auto">    
-        <div>{{ 'calendar.sync.export.access.url.title'|trans }}</div>
-        <div class="input-group" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
-            <input type="text" class="form-control border-end-0 pt-0 pb-1" id="floatingInput" placeholder="{{ 'calendar.sync.export.access.url.title'|trans }}" autocomplete="off"
-                value="{{ url('apartments.get.calendar', { 'uuid': sync.uuid }) }}" data-copy-target="input">
-            <span class="input-group-append">
-                <button class="btn btn-outline-secondary border-start-0 border-0 shadow-none" type="button" title="{{ 'copy.text'|trans }}" data-action="click->copy#copy">
-                    <i class="fa-solid fa-copy prefix"></i>
-                </button>
-            </span>
+    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+        <div class="small text-body-secondary">
+            <i class="fas fa-clock-rotate-left me-1" aria-hidden="true"></i>
+            {{ 'calendar.sync.export.access.last'|trans }}:
+            {% if sync.lastExport is not null %}
+                <time datetime="{{ sync.lastExport|date('c') }}">{{ sync.lastExport|date('d.m.Y H:i') }}</time>
+            {% else %}
+                {{ 'calendar.sync.export.access.never'|trans }}
+            {% endif %}
         </div>
-        <p class="form-text mb-0">{{ 'calendar.sync.export.access.url.hint'|trans }}</p>
-    </div>
-    <div class="mb-3 mx-auto">
-        <div>{{ 'calendar.sync.export.access.private_url.title'|trans }}</div>
-        <div class="input-group" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
-            <input type="text" class="form-control border-end-0 pt-0 pb-1" placeholder="{{ 'calendar.sync.export.access.private_url.title'|trans }}" autocomplete="off"
-                value="{{ url('api.apartments.calendar', { 'id': sync.apartment.id }) }}" data-copy-target="input">
-            <span class="input-group-append">
-                <button class="btn btn-outline-secondary border-start-0 border-0 shadow-none" type="button" title="{{ 'copy.text'|trans }}" data-action="click->copy#copy">
-                    <i class="fa-solid fa-copy prefix"></i>
-                </button>
-            </span>
-        </div>
-        <p class="form-text mb-0">{{ 'calendar.sync.export.access.private_url.hint'|trans }}</p>
-    </div>
-    <div class="row mb-4">
-        <div class="col">
-            <div>{{ 'calendar.sync.export.access.last'|trans }}</div>
-            <span class="text-muted">
-                {% if sync.lastExport is not null%}
-                    {{ sync.lastExport|date('d.m.Y H:i') }}
-                {% else %}
-                    -
-                {% endif %}
-            </span>
-        </div>
-    </div>
-
-    <div class="d-flex justify-content-end">
         <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-export-{{ sync.id }}"
                class="btn btn-primary"/>
     </div>

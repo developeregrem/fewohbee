@@ -9,10 +9,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method Amenity|null find($id, $lockMode = null, $lockVersion = null)
- * @method Amenity|null findOneBy(array $criteria, array $orderBy = null)
- * @method Amenity[]    findAll()
- * @method Amenity[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<Amenity>
  */
 class AmenityRepository extends ServiceEntityRepository
 {

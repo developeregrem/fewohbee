@@ -216,6 +216,19 @@ body {
     font-size: 0.9rem;
 }
 
+/* Reservation popover: grow with the content within the viewport;
+   long contact values and remarks wrap instead of overflowing. */
+.reservation-bar-popover {
+    --bs-popover-max-width: min(32rem, calc(100vw - 1rem));
+    width: max-content;
+    overflow-wrap: anywhere;
+}
+
+.reservation-bar-popover a {
+    color: inherit;
+    text-decoration: none;
+}
+
 .form-switch > .form-check-input {
     margin-top: .25em;
     margin-right: .75em;
@@ -399,8 +412,8 @@ body.reservations-week-layout #reservation-table {
     width: 100%;
 }
 
-/* Rooms are stretched to fill the screen in the normal and the week view
-   (stretchRoomRows), keep the bars level with the room names */
+/* A few rooms grow moderately in normal view; five or more rooms and week
+   view fill the available height. Keep the bars level with the room names. */
 #reservation-table tbody td {
     vertical-align: middle;
 }
@@ -574,7 +587,7 @@ body.reservations-week-fit #flash-message-container {
     }
 
     /* The column of the inline add button is empty here unless there are conflicts */
-    #table-filter > .row > .col-auto:not(:has(> a)) {
+    .reservations-add-column:not(:has(> a)) {
         display: none;
     }
 
@@ -598,24 +611,31 @@ body.reservations-week-fit #flash-message-container {
     }
 }
 
-/* New reservation button on touch screens, phones and tablets alike (Reservations/index.html.twig):
-   round, at the bottom right above the table, in place of the button in the filter row, and
-   also in the full-screen week view. Same touch test as isDesktopWeekMode(). */
-.reservations-fab {
+/* Add button on touch screens, phones and tablets alike: round, at the bottom right above the
+   content, in place of the regular button (fab-add-inline). On the reservation overview it also
+   stays in the full-screen week view. Same touch test as isDesktopWeekMode(). */
+.fab-add {
     display: none;
 }
 
 @media not all and (hover: hover) and (pointer: fine) {
-    .reservations-fab {
-        display: inline-block;
+    .fab-add {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .reservations-add-inline {
+    .fab-add-inline {
         display: none;
+    }
+
+    /* Room to scroll the last buttons of a page out from under the round button */
+    .fab-add-clearance {
+        padding-bottom: 5rem;
     }
 }
 
-.reservations-fab {
+.fab-add {
     position: fixed;
     right: 1rem;
     bottom: calc(1rem + env(safe-area-inset-bottom));
@@ -637,8 +657,21 @@ body.reservations-week-fit #flash-message-container {
     line-height: 1;
 }
 
-.reservations-fab:hover,
-.reservations-fab:active {
+/* A round add button that opens a menu: the wrapper takes the fixed place so
+   the menu opens upwards right above the button */
+.fab-add-dropdown {
+    position: fixed;
+    right: 1rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    z-index: 1030;
+}
+
+.fab-add-dropdown > .fab-add {
+    position: static;
+}
+
+.fab-add:hover,
+.fab-add:active {
     border-color: rgba(var(--bs-body-bg-rgb), .6);
     background-color: rgba(var(--bs-body-bg-rgb), .45);
     color: var(--bs-body-color);
@@ -687,6 +720,28 @@ body.reservations-week-pointer .reservations-week-controls > .btn {
 
 .reservations-week-close {
     top: .5rem;
+    right: .5rem;
+}
+
+/* Booking journal: paging arrows at the screen edges, like the desktop
+   week view of the reservations (swipe_nav_controller) */
+.journal-edge-nav > .btn {
+    position: fixed;
+    top: 50%;
+    z-index: 1030;
+    transform: translateY(-50%);
+    opacity: .85;
+}
+
+.journal-edge-nav > .btn:hover {
+    opacity: 1;
+}
+
+.journal-edge-prev {
+    left: .5rem;
+}
+
+.journal-edge-next {
     right: .5rem;
 }
 

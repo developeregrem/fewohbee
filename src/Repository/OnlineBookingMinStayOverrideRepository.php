@@ -8,6 +8,9 @@ use App\Entity\OnlineBookingMinStayOverride;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<OnlineBookingMinStayOverride>
+ */
 class OnlineBookingMinStayOverrideRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)

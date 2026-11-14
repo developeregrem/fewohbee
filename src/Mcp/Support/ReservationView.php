@@ -51,7 +51,7 @@ final class ReservationView
             'persons' => $reservation->getPersons(),
             'guestCounts' => $reservation->getGuestCounts(),
             'status' => ['id' => $status?->getId(), 'name' => $status?->getName()],
-            'apartment' => ['id' => $apartment?->getId(), 'number' => $apartment?->getNumber(), 'description' => $apartment?->getDescription()],
+            'apartment' => ['id' => $apartment?->getId(), 'number' => $apartment?->getNumber(), 'description' => $apartment?->getDescription(), 'kind' => $apartment?->getKind()->value],
             'object' => ['id' => $object?->getId(), 'name' => $object?->getName()],
             'origin' => ['id' => $origin?->getId(), 'name' => $origin?->getName()],
             'booker' => [

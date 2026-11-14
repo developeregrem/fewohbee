@@ -1,8 +1,12 @@
 <fieldset id="tt-form-fieldset-{{ tax.id }}" {% if tax.id != null %} disabled {% endif %}
           data-controller="tourist-tax-mode"
           data-tourist-tax-mode-flat-value="per_night_flat">
+    {% import 'common/content_translations.html.twig' as contentTranslations %}
     <div class="row">
-        <div class="col-md-6">{{ form_row(form.name) }}</div>
+        <div class="col-md-6">
+            {{ form_row(form.name) }}
+            {{ contentTranslations.inputs(form.translations, 'name') }}
+        </div>
         <div class="col-md-6">{{ form_row(form.sortOrder) }}</div>
     </div>
     <div class="row">

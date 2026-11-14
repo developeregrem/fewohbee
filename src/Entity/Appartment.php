@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Attribute\TemplateIgnore;
+use App\Entity\Enum\RoomCategoryKind;
+use App\Entity\Translation\ContentTranslatable;
+use App\Entity\Translation\ContentTranslationsTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -12,12 +16,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\AppartmentRepository')]
 #[ORM\Table(name: 'appartments')]
-class Appartment
+class Appartment implements ContentTranslatable
 {
+    use ContentTranslationsTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     /** Stable public identifier, used where a room is addressed from an unauthenticated surface. */
     #[ORM\Column(type: 'uuid', unique: true)]
     private Uuid $uuid;
@@ -28,16 +34,19 @@ class Appartment
     private int $beds_max;
     #[ORM\Column(type: 'string', length: 255)]
     private string $description;
-    #[ORM\ManyToOne(targetEntity: 'Subsidiary', inversedBy: 'appartments')]
+    #[ORM\ManyToOne(targetEntity: Subsidiary::class, inversedBy: 'appartments')]
     private Subsidiary $object;
-    #[ORM\OneToMany(mappedBy: 'appartment', targetEntity: 'Reservation')]
+    /** @var Collection<int, Reservation> */
+    #[ORM\OneToMany(mappedBy: 'appartment', targetEntity: Reservation::class)]
     private Collection $reservations;
     #[ORM\ManyToOne(targetEntity: 'App\Entity\RoomCategory', inversedBy: 'apartments')]
     #[ORM\JoinColumn(nullable: true)]
+    #[Assert\NotNull(message: 'appartment.category.required')]
     private ?RoomCategory $roomCategory = null;
     #[ORM\OneToOne(mappedBy: 'apartment', targetEntity: CalendarSync::class, cascade: ['persist', 'remove'])]
     private CalendarSync $calendarSync;
 
+    /** @var Collection<int, CalendarSyncImport> */
     #[ORM\OneToMany(mappedBy: 'apartment', targetEntity: CalendarSyncImport::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $calendarSyncImports;
 
@@ -55,7 +64,12 @@ class Appartment
         $this->calendarSyncImports = new ArrayCollection();
     }
 
-    public function getId()
+    public static function translatableFields(): array
+    {
+        return ['description'];
+    }
+
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -65,71 +79,67 @@ class Appartment
         return $this->uuid;
     }
 
-    public function getNumber()
+    public function getNumber(): string
     {
         return $this->number;
     }
 
-    public function getBedsMax()
+    public function getBedsMax(): int
     {
         return $this->beds_max;
     }
 
-    public function getDescription()
+    public function getDescription(): string
     {
         return $this->description;
     }
 
-    public function getReservations()
+    /** @return Collection<int, Reservation> */
+    public function getReservations(): Collection
     {
         return $this->reservations;
     }
 
-    /**
-     * Set id.
-     *
-     * @param int $id
-     *
-     * @return Appartment
-     */
-    public function setId($id)
+    public function setId(int $id): static
     {
         $this->id = $id;
 
         return $this;
     }
 
-    public function setNumber($number): void
+    public function setNumber(string $number): void
     {
         $this->number = $number;
     }
 
-    public function setBedsMax($beds_max): void
+    public function setBedsMax(int $beds_max): void
     {
         $this->beds_max = $beds_max;
     }
 
-    public function setDescription($description): void
+    public function setDescription(string $description): void
     {
         $this->description = $description;
     }
 
-    public function getObject()
+    public function getObject(): Subsidiary
     {
         return $this->object;
     }
 
-    public function setObject($object): void
+    public function setObject(Subsidiary $object): void
     {
         $this->object = $object;
     }
 
-    public function setReservations($reservations): void
+    /** @param Collection<int, Reservation> $reservations */
+    public function setReservations(Collection $reservations): void
     {
         $this->reservations = $reservations;
     }
 
-    public function addReservation(Reservation $reservation)
+    /** @return $this */
+    public function addReservation(Reservation $reservation): static
     {
         $this->reservations[] = $reservation;
 
@@ -153,6 +163,19 @@ class Appartment
         return $this;
     }
 
+    /** An event space is booked per day; a room without category is accommodation. */
+    public function isEventSpace(): bool
+    {
+        return true === $this->roomCategory?->isEventSpace();
+    }
+
+    /** Templates use isEventSpace(): an enum cannot be printed. */
+    #[TemplateIgnore]
+    public function getKind(): RoomCategoryKind
+    {
+        return $this->roomCategory?->getKind() ?? RoomCategoryKind::ACCOMMODATION;
+    }
+
     public function getCalendarSync(): ?CalendarSync
     {
         return $this->calendarSync;
@@ -170,7 +193,11 @@ class Appartment
         return $this;
     }
 
-    /** Return all iCal import configurations for this apartment. */
+    /**
+     * Return all iCal import configurations for this apartment.
+     *
+     * @return Collection<int, CalendarSyncImport>
+     */
     public function getCalendarSyncImports(): Collection
     {
         return $this->calendarSyncImports;

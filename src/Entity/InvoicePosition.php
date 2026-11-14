@@ -17,25 +17,28 @@ class InvoicePosition
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'bigint')]
-    private $id;
+    private int|string|null $id = null;
     #[ORM\Column(type: 'integer')]
+    #[Assert\NotNull]
     #[Assert\Positive]
-    private $amount;
+    private ?int $amount = null;
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
-    private $description;
-    // Negative unit prices represent deductions, just like miscellaneous prices.
+    private ?string $description = null;
+    /** @var int|float|numeric-string|null Negative unit prices represent deductions. */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private $price;
+    #[Assert\NotNull]
+    private int|float|string|null $price = null;
+    /** @var float|numeric-string Keep DBAL strings intact to avoid false updates after hydration. */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\PositiveOrZero]
-    private float $vat;
-    #[ORM\ManyToOne(targetEntity: 'Invoice', inversedBy: 'positions')]
-    private $invoice;
+    private float|string $vat;
+    #[ORM\ManyToOne(targetEntity: Invoice::class, inversedBy: 'positions')]
+    private ?Invoice $invoice = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $includesVat;
+    private ?bool $includesVat = null;
     #[ORM\Column(type: 'boolean', nullable: true)]
-    private $isFlatPrice;
+    private ?bool $isFlatPrice = null;
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $isPerRoom;
     #[ORM\ManyToOne(targetEntity: AccountingAccount::class)]
@@ -93,27 +96,28 @@ class InvoicePosition
         $this->isPerRoom = false;
     }
 
-    public function getId()
+    public function getId(): int|string|null
     {
         return $this->id;
     }
 
-    public function getDescription()
+    public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    public function getPrice()
+    /** @return int|float|numeric-string|null */
+    public function getPrice(): int|float|string|null
     {
         return $this->price;
     }
 
     public function getVat(): float
     {
-        return $this->vat;
+        return (float) $this->vat;
     }
 
-    public function getInvoice()
+    public function getInvoice(): ?Invoice
     {
         return $this->invoice;
     }
@@ -123,7 +127,7 @@ class InvoicePosition
      * Line total, invoice sum, booking journal and e-invoice all read the quantity through here,
      * which keeps them consistent even for positions saved with a larger quantity by mistake.
      */
-    public function getAmount()
+    public function getAmount(): ?int
     {
         return $this->isFlatPrice ? 1 : $this->amount;
     }
@@ -145,32 +149,33 @@ class InvoicePosition
         return number_format((float) $this->price, 2, ',', '.');
     }
 
-    public function setId($id): void
+    public function setId(int|string $id): void
     {
         $this->id = $id;
     }
 
-    public function setDescription($description): void
+    public function setDescription(?string $description): void
     {
         $this->description = $description;
     }
 
-    public function setPrice($price): void
+    /** @param int|float|numeric-string|null $price */
+    public function setPrice(int|float|string|null $price): void
     {
         $this->price = $price;
     }
 
-    public function setVat($vat): void
+    public function setVat(int|float|string|null $vat): void
     {
         $this->vat = (float) $vat;
     }
 
-    public function setInvoice($invoice): void
+    public function setInvoice(?Invoice $invoice): void
     {
         $this->invoice = $invoice;
     }
 
-    public function setAmount($amount): void
+    public function setAmount(?int $amount): void
     {
         $this->amount = $amount;
     }

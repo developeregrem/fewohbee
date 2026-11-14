@@ -35,6 +35,7 @@ final class PriceServicePackageTest extends TestCase
         return $c;
     }
 
+    /** @param list<PriceComponent> $components */
     private function makePackagePrice(float $total, array $components): Price
     {
         $p = new Price();

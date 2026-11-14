@@ -8,8 +8,11 @@ use App\Entity\Appartment;
 use App\Entity\DayPrice;
 use App\Entity\Enum\DayPriceSource;
 use App\Entity\Enum\InvoiceStatus;
+use App\Entity\Enum\ModifierType;
 use App\Entity\Enum\PercentageBase;
 use App\Entity\Enum\TaxCalculationMode;
+use App\Entity\GuestCategory;
+use App\Entity\GuestCategoryModifier;
 use App\Entity\Invoice;
 use App\Entity\Price;
 use App\Entity\PriceRule;
@@ -20,6 +23,7 @@ use App\Entity\TouristTax;
 use App\Entity\User;
 use App\Repository\ReservationRepository;
 use App\Service\InvoiceService;
+use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\Pricing\PricePromiseService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -183,6 +187,47 @@ final class ReservationPricePromiseTest extends WebTestCase
             self::assertSame([['Messe', '10.00']], $night['d']['r'] ?? null);
         } finally {
             $this->em()->remove($this->em()->find(PriceRule::class, $rule->getId()));
+            $this->em()->flush();
+        }
+    }
+
+    /**
+     * The online booking refuses a total that differs from the one shown, so a discount landing on
+     * half a cent must not make the price before the promise differ from the promised one.
+     */
+    public function testADiscountFallingOnHalfACentCostsTheSameBeforeAndAfterThePromise(): void
+    {
+        $this->createRoomPrice('44.50')->setIsPerRoom(false);
+        $reservation = $this->createReservation('+880 days', withPromise: false);
+        $categories = $this->em()->getRepository(GuestCategory::class)->findAll();
+        $adult = array_find($categories, static fn (GuestCategory $category): bool => $category->isAdult());
+        $child = array_find($categories, static fn (GuestCategory $category): bool => !$category->isAdult() && $category->isCountedInOccupancy());
+        self::assertInstanceOf(GuestCategory::class, $adult);
+        self::assertInstanceOf(GuestCategory::class, $child);
+        $reservation->setGuestCounts([$adult->getId() => self::PERSONS - 1, $child->getId() => 1]);
+        // Limited to this stay, so other tests are not affected.
+        $modifier = (new GuestCategoryModifier())
+            ->setCategory($child)
+            ->setType(ModifierType::DISCOUNT_PERCENT)
+            ->setValue('25')
+            ->setValidFrom($reservation->getStartDate())
+            ->setValidTo($reservation->getEndDate())
+            ->setActive(true)
+            ->setSortOrder(-1);
+        $this->em()->persist($modifier);
+        $this->em()->flush();
+
+        try {
+            $pricing = self::getContainer()->get(PublicPricingService::class);
+            $shown = $pricing->calculateReservationRoomTotal($reservation);
+            self::getContainer()->get(PricePromiseService::class)->reconcile($reservation);
+            $promised = $pricing->calculateReservationRoomTotal($reservation);
+
+            // 44.50 less 25 % is 33.375, billed as 33.38: 11.12 off on each of the two nights.
+            self::assertEqualsWithDelta(-22.24, $shown->modifiers, 0.001);
+            self::assertEqualsWithDelta($shown->room + $shown->modifiers, $promised->room + $promised->modifiers, 0.001);
+        } finally {
+            $this->em()->remove($this->em()->find(GuestCategoryModifier::class, $modifier->getId()));
             $this->em()->flush();
         }
     }

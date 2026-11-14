@@ -18,23 +18,25 @@ class ReservationStatus
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     #[ORM\Column(type: 'string', length: 100)]
     #[Assert\NotBlank]
-    private $name;
+    private ?string $name = null;
     #[ORM\Column(type: 'string', length: 7)]
     #[Assert\Regex('/^#[0-9a-f]{6}$/i')]
-    private $color;
+    private ?string $color = null;
+    /** @var Collection<int, Reservation> */
     #[ORM\OneToMany(targetEntity: Reservation::class, mappedBy: 'reservationStatus')]
-    private $reservations;
+    private Collection $reservations;
     #[ORM\Column(type: 'string', length: 7)]
-    private $contrastColor;
+    private ?string $contrastColor = null;
     #[ORM\Column(type: 'string', length: 50, unique: true, nullable: true)]
-    private $code;
+    private ?string $code = null;
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
-    private $isBlocking = true;
+    private bool $isBlocking = true;
+    /** @var Collection<int, CalendarSync> */
     #[ORM\ManyToMany(targetEntity: CalendarSync::class, mappedBy: 'reservationStatus')]
-    private $calendarSyncs;
+    private Collection $calendarSyncs;
 
     public function __construct()
     {
@@ -72,7 +74,7 @@ class ReservationStatus
     }
 
     /**
-     * @return Collection|Reservation[]
+     * @return Collection<int, Reservation>
      */
     public function getReservations(): Collection
     {
@@ -143,7 +145,7 @@ class ReservationStatus
     }
 
     /**
-     * @return Collection|CalendarSync[]
+     * @return Collection<int, CalendarSync>
      */
     public function getCalendarSyncs(): Collection
     {

@@ -12,6 +12,7 @@ use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\NotNull;
 
 class InvoiceMiscPositionType extends AbstractType
 {
@@ -31,6 +32,8 @@ class InvoiceMiscPositionType extends AbstractType
             ->add('vat', NumberType::class, [
                 'label' => 'invoice.vat',
                 'scale' => 2,
+                // The entity setter normalizes null to zero; validate the submitted value here.
+                'constraints' => [new NotNull()],
             ])
             ->add('includesVat', CheckboxType::class, [
                 'label' => 'price.includesvat',

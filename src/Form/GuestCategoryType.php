@@ -25,6 +25,9 @@ class GuestCategoryType extends AbstractType
                 'label' => 'guest_category.field.name',
                 'empty_data' => '',
             ])
+            ->add('translations', ContentTranslationsType::class, [
+                'fields' => ['name' => ['max_length' => 100]],
+            ])
             ->add('acronym', TextType::class, [
                 'label' => 'guest_category.field.acronym',
                 'empty_data' => '',

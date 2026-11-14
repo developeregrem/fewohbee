@@ -35,9 +35,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route(path: '/customers')]
 class CustomerServiceController extends AbstractController
 {
+    /** @var int */
     private $perPage = 20;
+    /** @var list<string> */
     public static $addessTypes = ['CUSTOMER_ADDRESS_TYPE_PRIVATE', 'CUSTOMER_ADDRESS_TYPE_BUSINESS', 'CUSTOMER_ADDRESS_TYPE_ADDITIONAL'];
 
+    /**
+     * @return Response
+     */
     #[Route('/', name: 'customers.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine, Request $request)
     {
@@ -82,6 +87,9 @@ class CustomerServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/search', name: 'customers.search', methods: ['POST'])]
     public function searchCustomersAction(ManagerRegistry $doctrine, Request $request)
     {
@@ -101,6 +109,11 @@ class CustomerServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/{id}/get', name: 'customers.get.customer', methods: ['GET'], defaults: ['id' => '0'])]
     public function getCustomerAction(
         ManagerRegistry $doctrine,
@@ -122,6 +135,9 @@ class CustomerServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/new', name: 'customers.new.customer', methods: ['GET'])]
     public function newCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
@@ -145,6 +161,9 @@ class CustomerServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @return Response
+     */
     #[Route('/create', name: 'customers.create.customer', methods: ['POST'])]
     public function createCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
@@ -172,6 +191,11 @@ class CustomerServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/{id}/edit/show', name: 'customers.edit.customer.show', methods: ['GET'], defaults: ['id' => '0'])]
     public function showEditCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request, $id)
     {
@@ -190,6 +214,11 @@ class CustomerServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/{id}/edit', name: 'customers.edit.customer', methods: ['POST'], defaults: ['id' => '0'])]
     public function editCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CustomerService $cs, Request $request, $id)
     {
@@ -217,6 +246,11 @@ class CustomerServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/{id}/delete', name: 'customers.delete.customer', methods: ['GET', 'POST'])]
     public function deleteCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CustomerService $cs, Request $request, $id)
     {
@@ -272,6 +306,11 @@ class CustomerServiceController extends AbstractController
         return $this->json($addresses);
     }
 
+    /**
+     * @param int|string $id Route ID, including numeric strings
+     *
+     * @return Response
+     */
     #[Route('/{id}/gdpr', name: 'customers.gdpr.customer', methods: ['GET'])]
     public function exportGDPRToPdfAction(ManagerRegistry $doctrine, TemplatesService $ts, $id)
     {

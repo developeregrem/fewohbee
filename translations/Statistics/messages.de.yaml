@@ -1,0 +1,62 @@
+statistics:
+  origin:
+    description: Herkunft
+    monthly: 'monatliche Herkunftsübersicht'
+    title: Herkunft
+    yearly: 'jährliche Herkunftsübersicht'
+  turnover:
+    description: Umsätze
+    help: 'Umsätze: Rechnungen (brutto) nach Rechnungsdatum, mit dem unten gewählten Status. Prognose: erwarteter Umsatz der Reservierungen, die dabei noch nicht mitzählen, nach Abreisemonat. Stornierte Reservierungen und Konflikte zählen nicht.'
+    monthly: 'monatliche Umsätze'
+    title: Umsätze
+    yearly: 'jährliche Umsätze'
+    series:
+      invoiced: 'Rechnungen (nach Rechnungsdatum)'
+      invoiced_year: 'Rechnungen %year% (nach Rechnungsdatum)'
+      forecast: 'Prognose (nach Abreisemonat)'
+      forecast_year: 'Prognose %year% (nach Abreisemonat)'
+    forecast:
+      show: 'Prognose aus Reservierungen anzeigen'
+      include_invoiced: 'Reservierungen mit Rechnung einbeziehen'
+      tooltip:
+        reservations: '{0}keine Reservierung|{1}eine Reservierung|]1,Inf[%count% Reservierungen'
+        invoiced: '{1}davon %amount% aus einer Reservierung mit Rechnung|]1,Inf[davon %amount% aus %count% Reservierungen mit Rechnung'
+  utilization:
+    description: Auslastung
+    monthly: 'monatliche Auslastung'
+    title: Auslastung
+    yearly: 'jährliche Auslastung'
+  tourism:
+    title: Tourismus
+    description: Tourismus
+    arrivals: Ankünfte
+    arrivals_by_country: 'Ankünfte nach Land'
+    beds_total: Betten
+    by_country_table: 'Ankünfte und Übernachtungen nach Land'
+    country: Land
+    no_warnings: 'Keine Warnungen'
+    overnights: Übernachtungen
+    overnights_by_country: 'Übernachtungen nach Land'
+    regenerate: 'Statistik neu berechnen'
+    rooms_total: Zimmer
+    summary: Zusammenfassung
+    turnover: Umsatz
+    utilization: Auslastung
+    warnings: Hinweise/Warnungen
+    room_label: Zimmer
+    show_by_state: 'Anzeige nach Bundesländern'
+    state: Bundesland
+    by_state_table: 'Ankünfte und Übernachtungen nach Bundesland'
+    arrivals_by_state: 'Ankünfte nach Bundesland'
+    overnights_by_state: 'Übernachtungen nach Bundesland'
+    no_state_data: 'Keine Bundesland-Daten verfügbar. Bitte die PostalCodeData-Tabelle befüllen, um Statistiken auf Bundeslandebene zu ermöglichen. Siehe <a href="https://github.com/developeregrem/fewohbee/wiki/City-Lookup" target="_blank">Anleitung</a>.'
+    guest_category: Gastkategorie
+    overnights_by_guest_category: 'Übernachtungen nach Gastkategorie'
+    by_country_and_category_table: 'Übernachtungen: Land × Gastkategorie'
+    no_category_data: 'Keine Daten zu Gastkategorien verfügbar.'
+    total: Gesamt
+    last_calculated: 'Letzte Berechnung:'
+  snapshot:
+    warning:
+      persons_mismatch: 'Anzahl Personen ungleich Anzahl Gäste; bitte die Reservierung auf Vollständigkeit prüfen.'
+statistics.blocked.room_days: 'Gesperrte Zimmertage'

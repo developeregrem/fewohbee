@@ -93,6 +93,7 @@ class RoomBlockService
      * Updates period/reason/note; the room cannot be changed (delete and recreate instead).
      *
      * @throws RoomBlockConflictException
+     * @throws \InvalidArgumentException for an empty period or missing reason
      */
     public function updateBlock(RoomBlock $block, \DateTimeImmutable $start, \DateTimeImmutable $end, string $reason, ?string $note = null): void
     {

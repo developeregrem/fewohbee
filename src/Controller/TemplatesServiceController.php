@@ -20,6 +20,7 @@ use App\Exception\CustomFontException;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomFontManager;
 use App\Service\FileUploader;
+use App\Service\Localization\GuestLocaleService;
 use App\Service\TemplatePreview\TemplatePreviewProviderRegistry;
 use App\Service\TemplateSchemaService;
 use App\Service\TemplatesService;
@@ -35,6 +36,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 
@@ -172,6 +174,8 @@ class TemplatesServiceController extends AbstractController
 
     /**
      * update entity end show update result.
+     *
+     * @param int|string $id Route ID, including numeric strings
      */
     #[Route('/{id}/edit', name: 'settings.templates.edit', methods: ['POST'], defaults: ['id' => '0'])]
     public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, TranslatorInterface $translator, Request $request, $id): Response
@@ -187,7 +191,7 @@ class TemplatesServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->clear(Template::class);
+                $em->clear();
             } elseif (null !== $conflict) {
                 $error = true;
                 $this->addFlash('warning', $this->paymentMeansConflictMessage($translator, $template, $conflict));
@@ -211,6 +215,29 @@ class TemplatesServiceController extends AbstractController
     }
 
     /**
+     * Language variant of a template in a further guest language, opened in the editor for
+     * translation.
+     */
+    #[Route('/{id}/variant', name: 'settings.templates.variant.create', methods: ['POST'])]
+    public function createVariantAction(TemplatesService $ts, GuestLocaleService $guestLocales, Request $request, Template $template): Response
+    {
+        $locale = $request->request->getString('locale');
+        if (!$this->isCsrfTokenValid('template-variant'.$template->getId(), $request->request->getString('_token'))) {
+            $this->addFlash('warning', 'flash.invalidtoken');
+        } elseif ($template->isVariant() || !\in_array($locale, $guestLocales->extraLocales(), true) || null !== $template->getVariant($locale)) {
+            $this->addFlash('warning', 'templates.flash.variant.invalid');
+        } else {
+            $name = \sprintf('%s (%s)', $template->getName(), $guestLocales->languageName($locale, false));
+            $variant = $ts->createVariant($template, $locale, $name);
+            $this->addFlash('success', 'templates.flash.variant.created');
+
+            return $this->redirectToRoute('settings.templates.edit.page', ['id' => $variant->getId()]);
+        }
+
+        return $this->redirectToRoute('settings.templates.overview');
+    }
+
+    /**
      * delete entity.
      */
     #[Route('/{id}/delete', name: 'settings.templates.delete', methods: ['DELETE'])]
@@ -221,6 +248,9 @@ class TemplatesServiceController extends AbstractController
 
             if ($countCor > 0) {
                 $this->addFlash('warning', 'templates.flash.delete.inuse.reservations');
+            } elseif (!$template->getVariants()->isEmpty()) {
+                // Variants may have been sent already; each one goes on its own first.
+                $this->addFlash('warning', 'templates.flash.delete.has_variants');
             } elseif ($ts->leavesNoUnboundInvoiceTemplate($template, true)) {
                 $this->addFlash('warning', 'templates.flash.payment_means.no_unbound');
             } else {
@@ -270,7 +300,7 @@ class TemplatesServiceController extends AbstractController
         }
 
         try {
-            $params = $provider->buildPreviewRenderParams($template, $context);
+            $params = $templatesService->inTemplateLanguage($template, static fn (): array => $provider->buildPreviewRenderParams($template, $context));
         } catch (\Throwable) {
             return $this->json([
                 'html' => '',
@@ -286,7 +316,7 @@ class TemplatesServiceController extends AbstractController
         }
         $hostTypeName = $template->getTemplateType()?->getName();
         try {
-            $html = $templatesService->renderTemplateString($templateText, $params, $hostTypeName);
+            $html = $templatesService->inTemplateLanguage($template, static fn (): string => $templatesService->renderTemplateString($templateText, $params, $hostTypeName, $template->getLocale()));
         } catch (\Throwable $e) {
             return $this->json([
                 'html' => '',
@@ -303,7 +333,7 @@ class TemplatesServiceController extends AbstractController
         $previewSubject = trim((string) $request->request->get('previewSubject', ''));
         if ('' !== $previewSubject) {
             try {
-                $subject = $templatesService->renderSubjectString($previewSubject, $params);
+                $subject = $templatesService->inTemplateLanguage($template, static fn (): string => $templatesService->renderSubjectString($previewSubject, $params));
             } catch (\Throwable $e) {
                 $subjectError = $e->getMessage();
             }
@@ -360,7 +390,7 @@ class TemplatesServiceController extends AbstractController
         }
 
         try {
-            $params = $provider->buildPreviewRenderParams($template, $context);
+            $params = $templatesService->inTemplateLanguage($template, static fn (): array => $provider->buildPreviewRenderParams($template, $context));
         } catch (\Throwable) {
             $message = $translator->trans('templates.preview.render.error.generic');
             if ($request->isXmlHttpRequest()) {
@@ -378,7 +408,7 @@ class TemplatesServiceController extends AbstractController
         }
         $hostTypeName = $template->getTemplateType()?->getName();
         try {
-            $html = $templatesService->renderTemplateString($templateText, $params, $hostTypeName);
+            $html = $templatesService->inTemplateLanguage($template, static fn (): string => $templatesService->renderTemplateString($templateText, $params, $hostTypeName, $template->getLocale()));
         } catch (\Throwable $e) {
             if ($request->isXmlHttpRequest()) {
                 return $this->json([
@@ -466,6 +496,9 @@ class TemplatesServiceController extends AbstractController
         TemplatePreviewProviderRegistry $previewRegistry,
         TranslatorInterface $translator,
         Environment $twig,
+        LocaleSwitcher $localeSwitcher,
+        GuestLocaleService $guestLocales,
+        Request $request,
         TemplateType $id
     ): Response {
         $template = new Template();
@@ -475,6 +508,10 @@ class TemplatesServiceController extends AbstractController
         if (!$provider) {
             return $this->json([]);
         }
+
+        // A language variant inserts the snippets' fixed texts in its own language.
+        $locale = $request->query->getString('locale');
+        $contentLocale = $guestLocales->isGuestLocale($locale) ? $locale : $localeSwitcher->getLocale();
 
         $snippets = $provider->getAvailableSnippets();
         foreach ($snippets as &$snippet) {
@@ -488,7 +525,8 @@ class TemplatesServiceController extends AbstractController
                 try {
                     // Render snippet labels/text (e.g. {{ '...'|trans }}) while
                     // keeping pseudo-twig placeholders ([[ ... ]]) untouched.
-                    $snippet['content'] = $twig->createTemplate($snippet['content'])->render();
+                    $content = $snippet['content'];
+                    $snippet['content'] = $localeSwitcher->runWithLocale($contentLocale, static fn (): string => $twig->createTemplate($content)->render());
                 } catch (\Throwable) {
                     // Keep original content if rendering fails for any snippet.
                 }

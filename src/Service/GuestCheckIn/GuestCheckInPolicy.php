@@ -45,7 +45,7 @@ class GuestCheckInPolicy
         }
 
         $today = $this->today();
-        if ($today > $reservation->getEndDate()->format('Y-m-d')) {
+        if ($today > $reservation->getVisibleEndDate()->format('Y-m-d')) {
             return GuestCheckInLinkState::UNAVAILABLE;
         }
 
@@ -75,7 +75,7 @@ class GuestCheckInPolicy
             $reservation = $checkIn->getReservation();
             $today = $this->today();
 
-            return $today >= $reservation->getStartDate()->format('Y-m-d') && $today <= $reservation->getEndDate()->format('Y-m-d');
+            return $today >= $reservation->getStartDate()->format('Y-m-d') && $today <= $reservation->getVisibleEndDate()->format('Y-m-d');
         }
 
         return true;

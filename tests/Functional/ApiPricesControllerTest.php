@@ -66,7 +66,7 @@ final class ApiPricesControllerTest extends WebTestCase
         $row = $payload['data'][0];
         foreach ([
             'id', 'type', 'description', 'price', 'vat', 'includesVat', 'isFlatPrice', 'isPerRoom',
-            'numberOfPersons', 'minStay', 'active', 'roomCategory', 'roomCategories', 'origins', 'allDays', 'weekdays',
+            'numberOfPersons', 'extraPersonSurcharge', 'minStay', 'active', 'roomCategory', 'roomCategories', 'origins', 'allDays', 'weekdays',
             'allPeriods', 'periods', 'isBookableOnline', 'isMandatoryOnline', 'isPackage', 'components',
         ] as $key) {
             self::assertArrayHasKey($key, $row);
@@ -75,6 +75,8 @@ final class ApiPricesControllerTest extends WebTestCase
         self::assertArrayHasKey('monday', $row['weekdays']);
         self::assertNotEmpty($row['origins'], 'A price without an origin can never be selected.');
         self::assertNotEmpty($row['roomCategories'], 'An apartment price is always bound to a room category.');
+        self::assertSame(['id', 'name', 'kind'], array_keys($row['roomCategories'][0]));
+        self::assertContains($row['roomCategories'][0]['kind'], ['accommodation', 'event_space']);
         // Deprecated single-category field stays filled while a price has exactly one category.
         if (1 === count($row['roomCategories'])) {
             self::assertSame($row['roomCategories'][0], $row['roomCategory']);
@@ -177,7 +179,8 @@ final class ApiPricesControllerTest extends WebTestCase
         [, $token] = $this->createUserWithToken(['ROLE_RESERVATIONS_RO'], [ApiScope::PRICES_READ->value]);
         $fixture = $this->findPricedApartment();
 
-        // numberOfPersons is matched exactly, so a wildly oversized party has no price row.
+        // numberOfPersons is matched exactly (the sample prices charge no surcharge for further
+        // persons), so a wildly oversized party has no price row.
         $uri = sprintf(
             '/api/v1/prices/quote?apartmentId=%d&start=%s&end=%s&persons=99&originId=%d',
             $fixture['apartmentId'],

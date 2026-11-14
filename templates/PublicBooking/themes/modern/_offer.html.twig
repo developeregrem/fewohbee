@@ -4,6 +4,17 @@
                 ? 'online_booking.public.calendar.your_offer'|trans
                 : 'online_booking.public.available_room_types'|trans -}}
         </h2>
+        {% if not calendarActive|default(false) %}
+            {# Guests tended to overlook that the quantities start at zero and must be
+               raised before they can continue, so say it before the first card. #}
+            <p class="fhb-hint fhb-offer-hint">
+                {%- if preselected|default(false) -%}
+                    {{ 'online_booking.public.selection.preselected'|trans }}
+                {%- else -%}
+                    {{ 'online_booking.public.selection.hint'|trans({'%count%': max(1, search.roomsCount)}) }}
+                {%- endif -%}
+            </p>
+        {% endif %}
         {% for row in availability %}
             {% set galleryId = 'gallery-' ~ row.typeKey|replace({':': '-'}) %}
             <div class="fhb-room-card">
@@ -90,17 +101,26 @@
                                 {% for option in row.occupancyOptions %}
                                     {% set fieldName = 'occ_' ~ row.typeKey ~ '_p' ~ option.persons %}
                                     {% set selectedVal = selectedQty[row.typeKey][option.persons]|default(0) %}
+                                    {% set inputId = 'fhb-occ-' ~ row.typeKey|replace({':': '-'}) ~ '-p' ~ option.persons %}
                                     <div class="fhb-occupancy-row">
                                         <span class="fhb-occupancy-icons"
                                               title="{{ option.persons }} {{ option.persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }}">
                                             {% for i in 1..option.persons %}<i class="fa-solid fa-user fhb-occupancy-icon"></i>{% endfor %}
                                         </span>
                                         <span class="fhb-occupancy-price">{{ option.totalPriceFormatted }}&nbsp;{{ currency_symbol }}</span>
-                                        <div class="fhb-qty">
-                                            <input class="form-control" type="number" min="0" max="{{ row.availableCount }}"
-                                                   name="{{ fieldName }}" value="{{ selectedVal }}"
+                                        {# Mobile browsers show no spin buttons on number inputs, so without
+                                           the stepper a 0 reads like a fixed value rather than a choice. #}
+                                        <div class="fhb-stepper fhb-qty-stepper">
+                                            <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="{{ inputId }}" data-fhb-step-delta="-1"
+                                                    aria-label="{{ 'online_booking.public.decrease'|trans }}">&minus;</button>
+                                            <input class="form-control" type="number" inputmode="numeric" min="0"
+                                                   max="{{ row.occupancyAvailableCounts[option.persons]|default(row.availableCount) }}"
+                                                   id="{{ inputId }}" name="{{ fieldName }}" value="{{ selectedVal }}"
+                                                   data-fhb-room-qty data-fhb-persons="{{ option.persons }}"
                                                    aria-label="{{ row.typeLabel }} — {{ option.persons }} {{ option.persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }}"
                                                    onwheel="this.blur()">
+                                            <button class="fhb-stepper-btn fhb-stepper-btn-add" type="button" data-fhb-step-btn="{{ inputId }}" data-fhb-step-delta="1"
+                                                    aria-label="{{ 'online_booking.public.increase'|trans }}">+</button>
                                         </div>
                                     </div>
                                 {% endfor %}

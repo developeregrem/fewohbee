@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 
 final class WorkflowRegistryTest extends TestCase
 {
+    /** @param list<class-string> $entityClasses */
     private function makeAction(string $type, array $entityClasses): WorkflowActionInterface
     {
         $action = $this->createStub(WorkflowActionInterface::class);

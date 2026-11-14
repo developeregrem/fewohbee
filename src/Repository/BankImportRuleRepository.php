@@ -9,6 +9,9 @@ use App\Entity\BankImportRule;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<BankImportRule>
+ */
 class BankImportRuleRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)

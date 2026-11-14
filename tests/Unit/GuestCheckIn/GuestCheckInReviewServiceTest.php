@@ -48,6 +48,23 @@ final class GuestCheckInReviewServiceTest extends TestCase
         self::assertCount(5, $toNew['changes']['new']);
     }
 
+    public function testCompanyDetailsShowUpAsChangesOfTheMainGuest(): void
+    {
+        $booker = $this->customer(1, 'Anna', 'Müller');
+        $review = $this->review($this->reservation($booker, 2), [
+            'firstname' => 'Anna', 'lastname' => 'Müller',
+            'address' => ['street' => 'Ring 1', 'zip' => '1010', 'city' => 'Wien'],
+            'company' => ['name' => 'Muster GmbH', 'vatId' => null, 'address' => null],
+        ]);
+
+        $main = $review['persons'][0];
+        self::assertTrue($main['hasCompany']);
+        $new = $this->option($main, 'booker')['changes']['new'];
+        self::assertContains('customer.company', array_column($new, 'label'));
+        $invoiceAddress = array_values(array_filter($new, static fn (array $row): bool => 'guest_checkin.tab.invoice_address' === $row['label']));
+        self::assertSame('Ring 1, 1010 Wien', $invoiceAddress[0]['value'] ?? null, 'The guest\'s address serves as invoice address.');
+    }
+
     public function testDifferentPersonIsNeitherPreselectedNorSimple(): void
     {
         $booker = $this->customer(1, 'Anna', 'Müller');

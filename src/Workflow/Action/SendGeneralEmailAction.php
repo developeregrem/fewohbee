@@ -169,6 +169,7 @@ class SendGeneralEmailAction implements WorkflowActionInterface
         return $summary;
     }
 
+    /** @param array<string, mixed> $config */
     private function resolveRecipient(array $config): ?string
     {
         $recipientType = $config['recipientType'] ?? 'notification_email';

@@ -13,6 +13,7 @@ use App\Entity\CustomerAddresses;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\RoomCategory;
 use App\Service\ReservationTableService;
 use PHPUnit\Framework\TestCase;
@@ -724,6 +725,64 @@ final class ReservationTableServiceTest extends TestCase
     }
 
     // ── Helpers ───────────────────────────────────────────────────────
+
+    // ── Event spaces (whole days) ─────────────────────────────────────
+
+    public function testEventFillsWholeDaysUpToItsLastDay(): void
+    {
+        $start = new \DateTimeImmutable('2024-03-01');
+        // Event on Mar 2 and Mar 3, stored with the exclusive end Mar 4
+        $res = self::makeReservation(1, '2024-03-02', '2024-03-04');
+
+        $days = $this->service->buildDays($start, 4);
+        $cells = $this->service->buildCellsForRow($days, [$res], $start, 4, [], true);
+
+        // Mar 1: two empty halves
+        self::assertSame(TableCell::TYPE_EMPTY, $cells[0]->type);
+        self::assertSame(TableCell::TYPE_EMPTY, $cells[1]->type);
+        // Event: both halves of Mar 2 and Mar 3, starting at the day boundary
+        self::assertSame(TableCell::TYPE_RESERVATION, $cells[2]->type);
+        self::assertSame(4, $cells[2]->span);
+        self::assertTrue($cells[2]->startsAtDayBoundary);
+        self::assertSame(TableCell::POS_FULL, $cells[2]->position);
+        // Mar 4 is free again, both halves
+        self::assertSame(TableCell::TYPE_EMPTY, $cells[3]->type);
+        self::assertSame('2024-03-04', $cells[3]->date);
+        self::assertSame('left', $cells[3]->side);
+    }
+
+    public function testOneDayEventFillsItsDayAndTheNextEventTheNextDay(): void
+    {
+        $start = new \DateTimeImmutable('2024-03-01');
+        $saturday = self::makeReservation(1, '2024-03-02', '2024-03-03');
+        $sunday = self::makeReservation(2, '2024-03-03', '2024-03-04');
+
+        $days = $this->service->buildDays($start, 3);
+        $cells = $this->service->buildCellsForRow($days, [$saturday, $sunday], $start, 3, [], true);
+
+        self::assertSame(1, $cells[2]->reservationId);
+        self::assertSame(2, $cells[2]->span);
+        self::assertSame(TableCell::POS_SINGLE, $cells[2]->position);
+        self::assertSame(2, $cells[3]->reservationId);
+        self::assertSame(2, $cells[3]->span);
+        self::assertSame('2024-03-03', $cells[3]->date);
+    }
+
+    public function testBuildGridShowsEventSpaceRowsByTheDay(): void
+    {
+        $start = new \DateTimeImmutable('2024-03-01');
+        $hall = self::makeApartment(1, 'Saal');
+        $hall->setRoomCategory((new RoomCategory())->setName('Saal')->setKind(RoomCategoryKind::EVENT_SPACE));
+        $res = self::makeReservation(1, '2024-03-02', '2024-03-03');
+        $res->setAppartment($hall);
+
+        $grid = $this->service->buildGrid([$hall], $start, 3, [$res]);
+        $cells = $grid->rows[0]->cells;
+
+        self::assertSame(TableCell::TYPE_RESERVATION, $cells[2]->type);
+        self::assertSame('2024-03-02', $cells[2]->date);
+        self::assertSame(2, $cells[2]->span);
+    }
 
     private static function makeBlock(int $id, Appartment $apt, string $startDate, string $endDate): \App\Entity\RoomBlock
     {

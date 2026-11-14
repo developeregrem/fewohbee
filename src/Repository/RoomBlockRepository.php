@@ -14,6 +14,8 @@ use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * Repository for room blocks (out-of-order periods); endDate is exclusive.
+ *
+ * @extends ServiceEntityRepository<RoomBlock>
  */
 class RoomBlockRepository extends ServiceEntityRepository
 {

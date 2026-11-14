@@ -1,0 +1,11 @@
+<div class="modal-body">
+    <div class="alert alert-warning mb-0" role="alert">
+        {{ 'reservation.origin.missing'|trans }}
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('reservationorigin.overview') }}" class="alert-link">{{ 'nav.reservationorigin'|trans }}</a>
+        {% endif %}
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.close'|trans }}</button>
+</div>

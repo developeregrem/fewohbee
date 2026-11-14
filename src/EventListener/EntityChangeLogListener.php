@@ -337,7 +337,7 @@ final class EntityChangeLogListener
 
             return $cls;
         }
-        if (is_array($value) || $value instanceof \Countable) {
+        if (is_array($value)) {
             return sprintf('array(%d)', count($value));
         }
         if (is_string($value)) {

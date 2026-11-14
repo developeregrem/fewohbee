@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace App\EventSubscriber;
 
 use App\Entity\User;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
@@ -55,8 +56,11 @@ class LastActionSubscriber implements EventSubscriberInterface
                 }
                 try {
                     $em = $this->doctrine->getManager('background');
-                    if (!$em->isOpen()) {
+                    if (!$em instanceof EntityManagerInterface || !$em->isOpen()) {
                         $em = $this->doctrine->resetManager('background');
+                    }
+                    if (!$em instanceof EntityManagerInterface) {
+                        return;
                     }
 
                     $em->createQuery('UPDATE App\Entity\User u SET u.lastAction = :ts WHERE u.id = :id')

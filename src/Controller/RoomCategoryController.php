@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Price;
 use App\Entity\RoomCategory;
 use App\Form\RoomCategoryType;
+use App\Repository\ReservationRepository;
 use App\Repository\RoomCategoryRepository;
 use App\Service\Pricing\PricePromiseService;
 use App\Service\RoomCategoryImageService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Route('/settings/category')]
 class RoomCategoryController extends AbstractController
@@ -56,7 +60,7 @@ class RoomCategoryController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'room_category_edit', methods: ['GET', 'POST'])]
-    public function edit(ManagerRegistry $doctrine, PricePromiseService $pricePromises, Request $request, RoomCategory $roomCategory): Response
+    public function edit(ManagerRegistry $doctrine, PricePromiseService $pricePromises, ReservationRepository $reservations, TranslatorInterface $translator, Request $request, RoomCategory $roomCategory): Response
     {
         // The minimum of full-fare guests shapes room prices: open bookings without a promise are
         // promised today's price first, before the form changes the category in memory.
@@ -67,16 +71,25 @@ class RoomCategoryController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $doctrine->getManager()->flush();
+            // A price serves either accommodation or event spaces: a new kind must not turn a
+            // price this category shares with other categories into a mixed one.
+            $mixedPrices = $roomCategory->getPrices()->filter(static fn (Price $price): bool => $price->mixesRoomKinds());
+            if ($mixedPrices->isEmpty()) {
+                $doctrine->getManager()->flush();
 
-            // add success message
-            $this->addFlash('success', 'category.flash.edit.success');
+                // add success message
+                $this->addFlash('success', 'category.flash.edit.success');
 
-            return new Response('', Response::HTTP_NO_CONTENT);
+                return new Response('', Response::HTTP_NO_CONTENT);
+            }
+            $form->get('kind')->addError(new FormError($translator->trans('category.kind.error.mixed_prices', [
+                '%prices%' => implode(', ', $mixedPrices->map(static fn (Price $price): string => (string) $price->getDescription())->toArray()),
+            ])));
         }
 
         return $this->render('RoomCategory/edit.html.twig', [
             'category' => $roomCategory,
+            'hasReservations' => $reservations->existsForRoomCategory($roomCategory),
             'form' => $form->createView(),
         ]);
     }

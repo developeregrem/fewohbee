@@ -141,6 +141,19 @@ final class PriceServiceNightRatesTest extends TestCase
         self::assertSame('105.00', $service->getNightRates($reservation, ignorePromise: true)[0]?->unit);
     }
 
+    public function testPriceRulesMoveTheSurchargeLikeTheRoomPrice(): void
+    {
+        $perRoom = $this->price(17, '80.00');
+        $perRoom->setIsPerRoom(true);
+        $perRoom->setExtraPersonSurcharge('20.00');
+
+        $rates = $this->service($perRoom, dynamicRates: $this->resolver(10.0))->getNightRates($this->reservation());
+
+        // 80 € and 20 € + 10 %, each rounded to whole euros.
+        self::assertSame('88.00', $rates[0]?->unit);
+        self::assertSame('22.00', $rates[0]->extraPersonSurcharge);
+    }
+
     public function testFlatPricesAreNeverChangedByRules(): void
     {
         $flat = $this->price(17, '300.00');

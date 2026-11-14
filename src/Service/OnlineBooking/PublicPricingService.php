@@ -16,8 +16,10 @@ use App\Repository\GuestCategoryModifierRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Repository\PriceRepository;
 use App\Service\InvoiceService;
+use App\Service\Localization\ContentTranslator;
 use App\Service\PriceService;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Translation\LocaleSwitcher;
 
 /**
  * Calculate room prices for specific occupancy levels in the public booking flow.
@@ -40,6 +42,8 @@ class PublicPricingService
         private readonly PriceRepository $priceRepository,
         private readonly GuestCategoryRepository $guestCategoryRepository,
         private readonly GuestCategoryModifierRepository $modifierRepository,
+        private readonly ?ContentTranslator $contentTranslator = null,
+        private readonly ?LocaleSwitcher $localeSwitcher = null,
     ) {
     }
 
@@ -83,7 +87,7 @@ class PublicPricingService
             $options[$persons] = [
                 'persons' => $persons,
                 'totalPrice' => $singleTotal,
-                'totalPriceFormatted' => self::formatAmount($singleTotal),
+                'totalPriceFormatted' => $this->money($singleTotal),
             ];
         }
 
@@ -154,14 +158,14 @@ class PublicPricingService
 
                 $entry = [
                     'id' => $id,
-                    'description' => (string) $price->getDescription(),
+                    'description' => (string) ($this->contentTranslator?->text($price, 'description') ?? $price->getDescription()),
                     'categoryIds' => $isGlobal || null === $sample['categoryId'] ? [] : [$sample['categoryId']],
                     'categoryName' => $isGlobal ? null : $sample['categoryName'],
                     'calculationType' => $calculationType,
                     'unitPrice' => $unitPrice,
-                    'unitPriceFormatted' => self::formatAmount($unitPrice),
+                    'unitPriceFormatted' => $this->money($unitPrice),
                     'pricePerUnit' => $perUnit,
-                    'pricePerUnitFormatted' => self::formatAmount($perUnit),
+                    'pricePerUnitFormatted' => $this->money($perUnit),
                     'maxQuantity' => $isGlobal ? max(1, $totalRooms) : 1,
                     'isMandatory' => $price->getIsMandatoryOnline(),
                     'autoQuantity' => !$isGlobal,
@@ -175,10 +179,7 @@ class PublicPricingService
             }
         }
 
-        // Global extras first, then category-bound grouped by category name.
-        usort($byCategory, static fn ($a, $b) => [$a['categoryName'], $a['description']] <=> [$b['categoryName'], $b['description']]);
-
-        return array_merge(array_values($global), array_values($byCategory));
+        return $this->sortExtras([...array_values($global), ...array_values($byCategory)]);
     }
 
     /**
@@ -274,7 +275,7 @@ class PublicPricingService
             $lineTotal = $perUnit * $quantity;
             $result[] = [
                 'id' => $id,
-                'description' => (string) $price->getDescription(),
+                'description' => (string) ($this->contentTranslator?->text($price, 'description') ?? $price->getDescription()),
                 'categoryIds' => array_values(array_filter(array_column($candidate['buckets'], 'categoryId'), static fn (?int $categoryId): bool => null !== $categoryId)),
                 'categoryName' => $isGlobal ? null : implode(', ', array_filter(array_column($candidate['buckets'], 'categoryName'))),
                 'calculationType' => $calculationType,
@@ -283,12 +284,32 @@ class PublicPricingService
                 'quantity' => $quantity,
                 'pricePerUnit' => $perUnit,
                 'lineTotal' => $lineTotal,
-                'lineTotalFormatted' => self::formatAmount($lineTotal),
+                'lineTotalFormatted' => $this->money($lineTotal),
                 'price' => $price,
             ];
         }
 
-        return $result;
+        return $this->sortExtras($result);
+    }
+
+    /**
+     * Orders extras the same way in every booking step: global extras first, then the
+     * category-bound ones grouped by category, each by the name the guest reads.
+     *
+     * @template T of array{categoryIds: list<int>, categoryName: ?string, description: string}
+     *
+     * @param list<T> $extras
+     *
+     * @return list<T>
+     */
+    private function sortExtras(array $extras): array
+    {
+        $collator = new \Collator(\Locale::getDefault());
+        usort($extras, static fn (array $a, array $b): int => ([] !== $a['categoryIds']) <=> ([] !== $b['categoryIds'])
+            ?: (int) $collator->compare((string) $a['categoryName'], (string) $b['categoryName'])
+            ?: (int) $collator->compare($a['description'], $b['description']));
+
+        return $extras;
     }
 
     /**
@@ -322,7 +343,7 @@ class PublicPricingService
 
         $validDays = 0;
         for ($i = 1; $i <= $nights; ++$i) {
-            if (isset($pricesPerDay[$i]) && null !== $pricesPerDay[$i]) {
+            if (isset($pricesPerDay[$i])) {
                 ++$validDays;
             }
         }
@@ -383,7 +404,7 @@ class PublicPricingService
             }
 
             $directions[$direction] = true;
-            $labels[] = $category->getName();
+            $labels[] = (string) ($this->contentTranslator?->text($category, 'name') ?? $category->getName());
         }
 
         if ([] === $labels) {
@@ -509,13 +530,27 @@ class PublicPricingService
     }
 
     /**
-     * Money as the public booking pages print it (German grouping).
+     * Money as the public booking pages print it, grouped like $locale (1.234,50 in German,
+     * 1,234.50 in English). Without a locale it keeps the German grouping the pages always used.
      *
-     * One definition so every total on the page reads the same; a locale-aware
-     * format would replace this single call site.
+     * One definition so every total on the page reads the same.
      */
-    public static function formatAmount(float $amount): string
+    public static function formatAmount(float $amount, ?string $locale = null): string
     {
-        return number_format($amount, 2, ',', '.');
+        if (null === $locale) {
+            return number_format($amount, 2, ',', '.');
+        }
+
+        $formatter = new \NumberFormatter($locale, \NumberFormatter::DECIMAL);
+        $formatter->setAttribute(\NumberFormatter::MIN_FRACTION_DIGITS, 2);
+        $formatter->setAttribute(\NumberFormatter::MAX_FRACTION_DIGITS, 2);
+
+        return (string) $formatter->format($amount);
+    }
+
+    /** {@see formatAmount()} in the language of the page. */
+    private function money(float $amount): string
+    {
+        return self::formatAmount($amount, $this->localeSwitcher?->getLocale());
     }
 }

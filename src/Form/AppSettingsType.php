@@ -5,11 +5,17 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\AppSettings;
+use App\Entity\Template;
 use App\Service\InvoiceNumberPatternService;
+use App\Service\Localization\GuestLocaleService;
 use App\Service\PublicUrlService;
+use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
@@ -23,6 +29,7 @@ class AppSettingsType extends AbstractType
 {
     public function __construct(
         private readonly InvoiceNumberPatternService $patternService,
+        private readonly GuestLocaleService $guestLocales,
     ) {
     }
 
@@ -61,10 +68,57 @@ class AppSettingsType extends AbstractType
                     }),
                 ],
             ])
-            ->add('customerSalutations', TextType::class, [
+            ->add('customerSalutations', CollectionType::class, [
                 'label' => 'app_settings.form.customer_salutations',
                 'help' => 'app_settings.form.customer_salutations_help',
                 'mapped' => false,
+                'entry_type' => CustomerSalutationType::class,
+                'entry_options' => ['label' => false],
+                'allow_add' => true,
+                'allow_delete' => true,
+                'prototype' => true,
+            ])
+            ->add('guestLocales', ChoiceType::class, [
+                'label' => 'guest_locales.label',
+                'help' => 'guest_locales.help',
+                'mapped' => false,
+                'multiple' => true,
+                'expanded' => true,
+                'required' => false,
+                'choices' => array_combine(
+                    array_map(fn (string $locale): string => $this->guestLocales->languageName($locale, false), $this->guestLocales->enabledLocales()),
+                    $this->guestLocales->enabledLocales(),
+                ),
+                'choice_translation_domain' => false,
+                // The installation language is always offered; the controller adds it back.
+                'choice_attr' => fn (string $locale): array => $locale === $this->guestLocales->baseLocale()
+                    ? ['disabled' => 'disabled']
+                    : [],
+            ])
+            ->add('confirmationTemplate', EntityType::class, [
+                'class' => Template::class,
+                'required' => false,
+                'placeholder' => 'app_settings.form.confirmation_template_none',
+                'label' => 'app_settings.form.confirmation_template',
+                'help' => 'app_settings.form.confirmation_template_help',
+                'choice_label' => 'name',
+                'query_builder' => static fn (EntityRepository $repository): QueryBuilder => self::baseTemplates($repository, ['TEMPLATE_RESERVATION_EMAIL']),
+            ])
+            ->add('confirmationAttachments', EntityType::class, [
+                'class' => Template::class,
+                'required' => false,
+                'multiple' => true,
+                'expanded' => true,
+                'by_reference' => false,
+                'label' => 'app_settings.form.confirmation_attachments',
+                'help' => 'app_settings.form.confirmation_attachments_help',
+                'choice_label' => 'name',
+                'query_builder' => static fn (EntityRepository $repository): QueryBuilder => self::baseTemplates($repository, ['TEMPLATE_RESERVATION_PDF', 'TEMPLATE_FILE_PDF']),
+            ])
+            ->add('confirmationSendImmediately', CheckboxType::class, [
+                'required' => false,
+                'label' => 'app_settings.form.confirmation_send_immediately',
+                'help' => 'app_settings.form.confirmation_send_immediately_help',
             ])
             ->add('notificationEmail', EmailType::class, [
                 'label' => 'app_settings.form.notification_email',
@@ -143,6 +197,24 @@ class AppSettingsType extends AbstractType
                 ],
             ]);
         }
+    }
+
+    /**
+     * Visible templates of the given types, without language variants: those follow their base
+     * template in the booker's language.
+     *
+     * @param EntityRepository<Template> $repository
+     * @param list<string>               $typeNames
+     */
+    private static function baseTemplates(EntityRepository $repository, array $typeNames): QueryBuilder
+    {
+        return $repository->createQueryBuilder('t')
+            ->join('t.templateType', 'tt')
+            ->where('tt.name IN (:types)')
+            ->andWhere('t.hidden = false')
+            ->andWhere('t.baseTemplate IS NULL')
+            ->setParameter('types', $typeNames)
+            ->orderBy('t.name', 'ASC');
     }
 
     public function configureOptions(OptionsResolver $resolver): void

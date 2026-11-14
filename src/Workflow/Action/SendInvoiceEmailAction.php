@@ -245,6 +245,7 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
         ]);
     }
 
+    /** @param array<string, mixed> $config */
     private function resolveEmailTemplate(array $config): Template
     {
         $templateId = (int) ($config['templateId'] ?? 0);
@@ -259,6 +260,8 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
      * The invoice layout to render. Picking one is optional — without an explicit
      * choice the invoice gets the template bound to its payment means, or else the
      * default invoice template, just like an invoice created by hand.
+     *
+     * @param array<string, mixed> $config
      */
     private function resolvePdfTemplate(array $config, Invoice $invoice): Template
     {
@@ -296,6 +299,7 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
         return $template;
     }
 
+    /** @param array<string, mixed> $config */
     private function resolveRecipient(array $config, Invoice $invoice): ?string
     {
         $recipientType = $config['recipientType'] ?? 'invoice_email';

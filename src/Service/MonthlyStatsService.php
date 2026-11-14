@@ -13,13 +13,57 @@ use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
 use App\Repository\PostalCodeDataRepository;
+use App\Repository\ReservationRepository;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+/**
+ * @phpstan-type SnapshotWarning array{
+ *     reservation_id: int,
+ *     status_id: int,
+ *     start_date: string,
+ *     end_date: string,
+ *     appartment_number: string|null,
+ *     message: string,
+ *     ignored: bool
+ * }
+ * @phpstan-type TourismMetrics array{
+ *     arrivals_total: int,
+ *     overnights_total: int,
+ *     arrivals_by_country: array<array-key, int>,
+ *     overnights_by_country: array<array-key, int>,
+ *     arrivals_by_state: array<string, int>,
+ *     overnights_by_state: array<string, int>,
+ *     overnights_by_guest_category: array<int, int>,
+ *     overnights_by_country_and_category: array<array-key, array<int, int|float>>
+ * }
+ * @phpstan-type BuiltMetrics array{
+ *     period: array{year: int, month: int},
+ *     subsidiary: int|string|null,
+ *     summary: array{
+ *         reservations_total: int,
+ *         guests_total: int,
+ *         nights_total: int,
+ *         arrivals_total: int,
+ *         departures_total: int,
+ *         turnovers_count: int
+ *     },
+ *     inventory: array{rooms_total: int, beds_total: int},
+ *     utilization: array{month_percent: float, daily_percent: list<int|float>},
+ *     tourism: TourismMetrics,
+ *     reservation_origin: array<array-key, int>,
+ *     warnings: list<SnapshotWarning>,
+ *     by_status: array<int, array{tourism: TourismMetrics, utilization: array{stays: int}}>,
+ *     blocked: array{room_days: int, bed_days: int},
+ *     turnover?: array{total: float, by_status: array<int, float>}
+ * }
+ * @phpstan-type SnapshotPayload array{snapshot: MonthlyStatsSnapshot, warnings: array<array-key, array<string, mixed>>}
+ */
 class MonthlyStatsService
 {
+    /** @var array<string, string|null> */
     private array $stateCache = [];
 
     public function __construct(
@@ -45,6 +89,12 @@ class MonthlyStatsService
 
     /**
      * Build the metrics payload and warnings for a snapshot without persisting it.
+     * Empty status selection uses the configured defaults; ignored warnings are keyed by reservation ID.
+     *
+     * @param array<int, bool> $ignoredWarnings
+     * @param array<int|string> $reservationStatus
+     *
+     * @return array{metrics: BuiltMetrics, warnings: list<SnapshotWarning>}
      */
     public function buildMetrics(
         int $month,
@@ -558,6 +608,10 @@ class MonthlyStatsService
 
     /**
      * Build daily utilization percentages for a month without persisting them.
+     *
+     * @param array<int|string> $reservationStatus Empty selects the configured defaults
+     *
+     * @return list<int|float>
      */
     public function getDailyUtilizationForMonth(
         int $month,
@@ -588,6 +642,12 @@ class MonthlyStatsService
 
     /**
      * Filter existing metrics to only include data for the given reservation status IDs.
+     * Persisted snapshots can contain older or additional fields, which are preserved.
+     *
+     * @param array<string, mixed> $metrics
+     * @param array<int|string> $statusIds
+     *
+     * @return array<string, mixed>
      */
     public function filterMetricsByStatus(array $metrics, array $statusIds): array
     {
@@ -619,6 +679,8 @@ class MonthlyStatsService
 
     /**
      * Create or update a single snapshot for a specific subsidiary scope.
+     *
+     * @return SnapshotPayload
      */
     private function upsertSnapshot(int $month, int $year, ?Subsidiary $subsidiary, bool $force): array
     {
@@ -631,7 +693,10 @@ class MonthlyStatsService
             $snapshot->setMonth($month);
             $snapshot->setYear($year);
             $snapshot->setIsAll(null === $subsidiary);
-            $snapshot->setSubsidiary($subsidiary);
+            // Resetting or clearing the manager detaches the caller's subsidiary.
+            $snapshot->setSubsidiary(
+                null === $subsidiary ? null : $this->em->getReference(Subsidiary::class, $subsidiary->getId())
+            );
             $this->em->persist($snapshot);
         } elseif (!$force) {
             $metrics = $snapshot->getMetrics();
@@ -658,8 +723,7 @@ class MonthlyStatsService
         try {
             $this->em->flush();
         } catch (UniqueConstraintViolationException $exception) {
-            $this->registry->resetManager();
-            $this->em = $this->registry->getManager();
+            $this->resetEntityManager();
             $repo = $this->em->getRepository(MonthlyStatsSnapshot::class);
             $existing = $repo->findOneByMonthYearSubsidiary($month, $year, $subsidiary);
             if (null === $existing) {
@@ -686,13 +750,17 @@ class MonthlyStatsService
 
     /**
      * Build daily utilization data using the reservation repository.
+     *
+     * @param array<int|string> $reservationStatus
+     *
+     * @return list<int|float>
      */
     private function buildDailyUtilization(
         \DateTimeImmutable $monthStart,
         int $daysInMonth,
-        $objectId,
+        int|string $objectId,
         int $bedsTotal,
-        $reservationRepo,
+        ReservationRepository $reservationRepo,
         array $reservationStatus = []
     ): array {
         $beds = 0 === $bedsTotal ? 1 : $bedsTotal;
@@ -706,6 +774,7 @@ class MonthlyStatsService
         return $data;
     }
 
+    /** @return array<int> */
     private function getDefaultReservationStatusIds(): array
     {
         return $this->em->getRepository(ReservationStatus::class)->findDefaultIds();
@@ -713,6 +782,12 @@ class MonthlyStatsService
 
     /**
      * Loop over reservation status IDs in the 'by_status' field and calculate the summed metrics.
+     * Legacy buckets may be incomplete or non-arrays; existing fallback and skip rules apply.
+     *
+     * @param array<array-key, mixed> $byStatus
+     * @param array<int|string> $statusIds
+     *
+     * @return array{tourism: TourismMetrics, utilization: array{stays: int, month_percent: float}}
      */
     private function aggregateByStatus(array $byStatus, array $statusIds, int $bedsTotal, int $daysInMonth): array
     {
@@ -787,6 +862,8 @@ class MonthlyStatsService
 
     /**
      * Build or update a snapshot and return it with runtime warnings.
+     *
+     * @return SnapshotPayload
      */
     public function getOrCreateSnapshotWithWarnings(int $month, int $year, ?Subsidiary $subsidiary, bool $force = false): array
     {
@@ -838,7 +915,17 @@ class MonthlyStatsService
             return;
         }
 
+        $this->resetEntityManager();
+    }
+
+    private function resetEntityManager(): void
+    {
         $this->registry->resetManager();
-        $this->em = $this->registry->getManager();
+        $manager = $this->registry->getManager();
+        if (!$manager instanceof EntityManagerInterface) {
+            throw new \LogicException('Monthly statistics require an ORM entity manager.');
+        }
+
+        $this->em = $manager;
     }
 }

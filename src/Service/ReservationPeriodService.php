@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Dto\ReservationPeriod;
+use App\Entity\Appartment;
 use App\Exception\InvalidReservationPeriodException;
 
 /**
@@ -29,6 +30,22 @@ final class ReservationPeriodService
         }
 
         return $this->validate($startDate, $endDate);
+    }
+
+    /**
+     * Reads the dates of an admin form for the given room. For an event space "to" is the last
+     * day of the event and is stored as the day after, so "Saturday to Saturday" books one day.
+     * For accommodation "to" stays the departure day.
+     *
+     * @throws InvalidReservationPeriodException when the stored period exceeds the safety ceiling
+     */
+    public function forRoom(ReservationPeriod $input, ?Appartment $room): ReservationPeriod
+    {
+        if (true !== $room?->isEventSpace()) {
+            return $input;
+        }
+
+        return $this->validate($input->start, $input->end->modify('+1 day'));
     }
 
     /**

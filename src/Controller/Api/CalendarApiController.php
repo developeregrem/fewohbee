@@ -176,6 +176,10 @@ class CalendarApiController extends AbstractController
         return $parsed->setTime(0, 0);
     }
 
+    /**
+     * @param list<array<string, bool|int|string|null>> $data Calendar, entry or holiday rows
+     * @param array<string, string|array{id: int|null, name: string|null}|null> $meta
+     */
     private function envelope(array $data, array $meta): JsonResponse
     {
         return new JsonResponse([

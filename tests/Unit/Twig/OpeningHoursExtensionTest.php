@@ -41,7 +41,7 @@ final class OpeningHoursExtensionTest extends TestCase
         ]);
 
         self::assertSame(
-            'Mo.–Fr. 08:00–12:00, 16:00–19:00 · Sa. 09:00–12:00',
+            'Mo.–Fr. 08:00 - 12:00, 16:00 - 19:00 · Sa. 09:00 - 12:00',
             $this->extension('de')->openingHours($subsidiary)
         );
     }
@@ -58,7 +58,7 @@ final class OpeningHoursExtensionTest extends TestCase
         ]);
 
         self::assertSame(
-            'Mo.–Di. 08:00–12:00 · Do.–Fr. 08:00–12:00',
+            'Mo.–Di. 08:00 - 12:00 · Do.–Fr. 08:00 - 12:00',
             $this->extension('de')->openingHours($subsidiary)
         );
     }
@@ -73,8 +73,8 @@ final class OpeningHoursExtensionTest extends TestCase
         $subsidiary = new Subsidiary();
         $subsidiary->setOpeningHours([1 => [['08:00', '12:00']]]);
 
-        self::assertSame('Mo. 08:00–12:00', $this->extension('de')->openingHours($subsidiary));
-        self::assertSame('Mon 08:00–12:00', $this->extension('en')->openingHours($subsidiary));
+        self::assertSame('Mo. 08:00 - 12:00', $this->extension('de')->openingHours($subsidiary));
+        self::assertSame('Mon 08:00 - 12:00', $this->extension('en')->openingHours($subsidiary));
     }
 
     public function testUnconfiguredHoursRenderAsAnEmptyString(): void

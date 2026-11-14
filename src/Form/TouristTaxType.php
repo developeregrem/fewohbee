@@ -36,6 +36,9 @@ class TouristTaxType extends AbstractType
                 'label' => 'tourist_tax.field.name',
                 'empty_data' => '',
             ])
+            ->add('translations', ContentTranslationsType::class, [
+                'fields' => ['name' => ['max_length' => 100]],
+            ])
             ->add('calculationMode', EnumType::class, [
                 'class' => TaxCalculationMode::class,
                 'choice_label' => fn (TaxCalculationMode $m) => 'tourist_tax.calculation_mode.'.$m->value,

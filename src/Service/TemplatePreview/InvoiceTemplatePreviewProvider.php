@@ -189,7 +189,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
                 'label' => 'templates.editor.remarks',
                 'group' => 'Invoice',
                 'complexity' => 'simple',
-                'content' => '[[ invoice.remarkF ]]',
+                'content' => '[[ invoice.remark|nl2br ]]',
             ],
             [
                 'id' => 'invoice.total.appartment',
@@ -237,7 +237,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
                 'description' => 'templates.editor.appartment.positions.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
-                'content' => "<table style=\"width: 100%;\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.position.appartment'|trans }}</th>\n      <th>{{ 'invoice.position.stays'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.appartments\" data-repeat-as=\"appartment\">\n      <td>[[ appartment.description ]] (Personen: [[ appartment.persons ]])<br />[[ appartment.startDate|date('d.m.Y') ]] - [[ appartment.endDate|date('d.m.Y') ]]</td>\n      <td>[[ appartment.amount ]]</td>\n      <td>[[ appartment.priceFormated ]] €</td>\n      <td>[[ appartment.vat ]]</td>\n      <td style=\"text-align: right;\">[[ appartment.totalPrice ]] €</td>\n    </tr>\n    <tr>\n      <td colspan=\"5\" style=\"text-align: right;\">[[ appartmentTotal ]] €</td>\n    </tr>\n  </tbody>\n</table>",
+                'content' => "<table style=\"width: 100%;\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.position.appartment'|trans }}</th>\n      <th>{{ 'invoice.position.stays'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.appartments\" data-repeat-as=\"appartment\">\n      <td>[[ appartment.description ]] (Personen: [[ appartment.persons ]])<br />[[ appartment.startDate|date('d.m.Y') ]] - [[ appartment.visibleEndDate|date('d.m.Y') ]]</td>\n      <td>[[ appartment.amount ]]</td>\n      <td>[[ appartment.priceFormated ]] €</td>\n      <td>[[ appartment.vat ]]</td>\n      <td style=\"text-align: right;\">[[ appartment.totalPrice ]] €</td>\n    </tr>\n    <tr>\n      <td colspan=\"5\" style=\"text-align: right;\">[[ appartmentTotal ]] €</td>\n    </tr>\n  </tbody>\n</table>",
             ],
             [
                 'id' => 'invoice.misc.positions',
@@ -340,6 +340,9 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
 
     /**
      * Build a minimal sample payload for invoice previews.
+     *
+     * @param array<string, mixed> $ctx
+     * @return array<string, mixed>
      */
     private function buildSampleParams(array $ctx = []): array
     {

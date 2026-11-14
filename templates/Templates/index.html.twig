@@ -55,7 +55,8 @@
     <div class="row mt-3">
         <div class="col">
             {% set lastTypeId = null %}
-            {% for template in templates %}
+            {# Language variants are listed under the template they translate. #}
+            {% for template in templates|filter(t => not t.isVariant()) %}
                 {% if lastTypeId != template.templateType.id %}
                     {% if lastTypeId is not null %}
                                 </tbody>
@@ -85,18 +86,41 @@
                                 <tbody>
                     {% set lastTypeId = template.templateType.id %}
                 {% endif %}
+                {% for row in [template]|merge(template.variants.toArray) %}
                 <tr>
-                    <td>{{ template.name }}</td>
+                    <td>
+                        {% if row.isVariant() %}
+                            <span class="ms-3 text-body-secondary"><i class="fas fa-level-up-alt fa-rotate-90 me-2" aria-hidden="true"></i></span>{{ row.name }}
+                            <span class="badge text-bg-light border ms-1" title="{{ 'templates.variant.badge'|trans }}">{{ row.locale|upper }}</span>
+                        {% else %}
+                            {{ row.name }}
+                        {% endif %}
+                    </td>
                     <td class="text-center">
-                        {% if template.isDefault %}
+                        {% if row.isDefault %}
                             <i class="fas fa-check text-success" aria-hidden="true"></i>
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{{ path('settings.templates.edit.page', {'id': template.id}) }}" title="{{ 'button.edit'|trans }}">
+                        <a href="{{ path('settings.templates.edit.page', {'id': row.id}) }}" title="{{ 'button.edit'|trans }}">
                             <i class="fas fa-edit" aria-hidden="true"></i></a>
-                        {% set id = template.id %}
-                        {% set targetUrl = path('settings.templates.delete', {'id': template.id}) %}
+                        {% set missingLocales = row.isVariant() ? [] : guest_extra_locales()|filter(locale => row.variant(locale) is null) %}
+                        {% if missingLocales is not empty %}
+                            <span class="dropdown">
+                                <a href="#" data-bs-toggle="dropdown" aria-expanded="false" title="{{ 'templates.variant.add'|trans }}">
+                                    <i class="fas fa-language" aria-hidden="true"></i></a>
+                                <form method="post" action="{{ path('settings.templates.variant.create', {'id': row.id}) }}" class="dropdown-menu">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('template-variant' ~ row.id) }}">
+                                    <h6 class="dropdown-header">{{ 'templates.variant.add'|trans }}</h6>
+                                    {% for locale in missingLocales %}
+                                        <button type="submit" class="dropdown-item" name="locale" value="{{ locale }}">{{ language_name(locale, false) }}</button>
+                                    {% endfor %}
+                                </form>
+                            </span>
+                        {% endif %}
+                        {% set id = row.id %}
+                        {% set targetUrl = path('settings.templates.delete', {'id': row.id}) %}
+                        {% set deletePopoverHint = row.variants is not empty ? 'templates.variant.delete_hint'|trans : '' %}
                         <a href="#" title="{{ 'button.delete'|trans }}">
                             <i class="fas fa-trash-alt"
                                 data-popover="delete"
@@ -104,6 +128,7 @@
                                 data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
                     </td>
                 </tr>
+                {% endfor %}
             {% endfor %}
             {% if lastTypeId is not null %}
                                 </tbody>

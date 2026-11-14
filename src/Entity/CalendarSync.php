@@ -18,20 +18,25 @@ class CalendarSync
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     #[ORM\Column(type: 'uuid', unique: true)]
-    private $uuid;
+    private Uuid $uuid;
     #[ORM\Column(type: 'boolean')]
-    private $isPublic;
+    private bool $isPublic;
+    /** @var Collection<int, ReservationStatus> */
     #[ORM\ManyToMany(targetEntity: ReservationStatus::class, inversedBy: 'calendarSyncs', cascade: ['persist'])]
-    private $reservationStatus;
+    private Collection $reservationStatus;
     #[ORM\Column(type: 'datetime', nullable: true)]
-    private $lastExport;
+    private ?\DateTimeInterface $lastExport = null;
     #[ORM\OneToOne(targetEntity: Appartment::class, inversedBy: 'calendarSync', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
-    private $apartment;
+    private ?Appartment $apartment = null;
     #[ORM\Column(type: 'boolean')]
-    private $exportGuestName;
+    private bool $exportGuestName;
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $exportReservationTimes = false;
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $exportPastEntries = false;
 
     public function __construct()
     {
@@ -46,12 +51,12 @@ class CalendarSync
         return $this->id;
     }
 
-    public function getUuid()
+    public function getUuid(): Uuid
     {
         return $this->uuid;
     }
 
-    public function setUuid($uuid): self
+    public function setUuid(Uuid $uuid): self
     {
         $this->uuid = $uuid;
 
@@ -71,7 +76,7 @@ class CalendarSync
     }
 
     /**
-     * @return Collection|ReservationStatus[]
+     * @return Collection<int, ReservationStatus>
      */
     public function getReservationStatus(): Collection
     {
@@ -127,6 +132,30 @@ class CalendarSync
     public function setExportGuestName(bool $exportGuestName): self
     {
         $this->exportGuestName = $exportGuestName;
+
+        return $this;
+    }
+
+    public function getExportReservationTimes(): bool
+    {
+        return $this->exportReservationTimes;
+    }
+
+    public function setExportReservationTimes(bool $exportReservationTimes): self
+    {
+        $this->exportReservationTimes = $exportReservationTimes;
+
+        return $this;
+    }
+
+    public function getExportPastEntries(): bool
+    {
+        return $this->exportPastEntries;
+    }
+
+    public function setExportPastEntries(bool $exportPastEntries): self
+    {
+        $this->exportPastEntries = $exportPastEntries;
 
         return $this;
     }

@@ -4,7 +4,7 @@ object.check_in.from: check-in from
 object.check_in.help: 'House rules for arrival and departure. They can be inserted into letter and email templates with the "Check-in times of the branch" snippet, and retrieved through the REST API. Leave empty to publish nothing.'
 object.check_in.until: check-in until
 object.check_in.value.from: 'Check-in from %from%'
-object.check_in.value.window: 'Check-in %from%-%until%'
+object.check_in.value.window: 'Check-in %from% - %until%'
 object.check_in.window: Check-in
 object.check_in.window.help: 'The second field is the upper bound. Leave it empty when a later arrival is possible too. An end time before the start time means the window runs past midnight, e.g. 17:00-02:00.'
 object.check_in_note: Note on the check-in times

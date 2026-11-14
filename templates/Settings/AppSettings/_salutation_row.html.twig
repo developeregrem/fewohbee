@@ -1,0 +1,17 @@
+<tr class="collection-row">
+    <td>
+        {{ form_widget(row.salutation, {attr: {class: 'form-control form-control-sm', 'aria-label': language_name(base_locale(), false)}}) }}
+        {{ form_errors(row.salutation) }}
+    </td>
+    {% for locale in guest_extra_locales() %}
+        <td>
+            {{ form_widget(row[locale], {attr: {class: 'form-control form-control-sm', placeholder: row.salutation.vars.value, 'aria-label': language_name(locale, false)}}) }}
+            {{ form_errors(row[locale]) }}
+        </td>
+    {% endfor %}
+    <td class="text-end" style="width: 1%;">
+        <button type="button" class="btn btn-sm btn-outline-danger" data-action="collection#remove" title="{{ 'button.delete'|trans }}">
+            <i class="fas fa-trash-alt"></i>
+        </button>
+    </td>
+</tr>

@@ -212,13 +212,13 @@ Self-hosting stays free and fully supported. Both paths use the same codebase.
 
 ---
 
-## Internationalization
+## Language Support
 
-FewohBee is multilingual by design and ships **complete German and English** translations. Both
-languages are maintained together — no feature ships in one language only.
+FewohBee is multilingual by design and ships **complete German and English** translations.
 
-Want another language? [Open an issue](https://github.com/developeregrem/fewohbee/issues) — 
-contributions are very welcome.
+**Help translate FewohBee** into your language on **[Hosted Weblate](https://hosted.weblate.org/projects/fewohbee/)**.  Details are in the [Wiki](https://github.com/developeregrem/fewohbee/wiki/Translations).
+
+[![Translation status](https://hosted.weblate.org/widget/fewohbee/multi-auto.svg)](https://hosted.weblate.org/engage/fewohbee/)
 
 ---
 
@@ -230,6 +230,8 @@ Contributions are welcome, whether it's a bug report, a translation, documentati
   internationalization rules, testing expectations and coding standards for this project. It is
   written for AI coding agents, but it is the definitive contributor guide for humans too.
 - 🐛 **Bugs and ideas:** [open an issue](https://github.com/developeregrem/fewohbee/issues)
+- 🌍 **Translations:** on [Hosted Weblate](https://hosted.weblate.org/projects/fewohbee/), see
+  [Translations](https://github.com/developeregrem/fewohbee/wiki/Translations) in the Wiki
 - 🔀 **Pull requests:** keep them focused, include tests, and make sure German *and* English
   translations are complete
 

@@ -5,9 +5,9 @@
         <label class="fhb-label" for="salutation">{{ 'customer.salutation'|trans }}</label>
         <select class="form-select" id="salutation" name="salutation" required>
             <option value="">--</option>
-            {% for salutation in customer_salutations %}
-                {% set translatedSalutation = salutation|trans %}
-                <option value="{{ translatedSalutation }}" {% if booker.salutation == translatedSalutation %}selected{% endif %}>{{ translatedSalutation }}</option>
+            {# Guests read the salutation in their language; the stored wording is what is sent. #}
+            {% for label, salutation in salutation_choices() %}
+                <option value="{{ salutation }}" {% if booker.salutation == salutation %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
     </div>
@@ -29,7 +29,7 @@
         <input class="form-control" type="tel" id="phone" name="phone" value="{{ booker.phone }}">
     </div>
     <div class="col-6 col-md-4">
-        <label class="fhb-label" for="company">{{ 'customer.company'|trans }}</label>
+        <label class="fhb-label" for="company">{{ 'online_booking.public.company'|trans }}</label>
         <input class="form-control" type="text" id="company" name="company" value="{{ booker.company }}">
     </div>
 
@@ -56,6 +56,6 @@
 
     <div class="col-12">
         <label class="fhb-label" for="comment">{{ 'online_booking.public.comment'|trans }}</label>
-        <textarea class="form-control" id="comment" name="comment" rows="3"{% if config.commentPlaceholder %} placeholder="{{ config.commentPlaceholder }}"{% endif %}>{{ booker.comment }}</textarea>
+        <textarea class="form-control" id="comment" name="comment" rows="3"{% set commentPlaceholder = config|localized('commentPlaceholder') %}{% if commentPlaceholder %} placeholder="{{ commentPlaceholder }}"{% endif %}>{{ booker.comment }}</textarea>
     </div>
 </div>

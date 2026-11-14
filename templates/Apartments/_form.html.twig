@@ -1,3 +1,14 @@
 <fieldset id="entry-form-fieldset-{{ apartment.id }}" {% if apartment.id != null %} disabled {% endif %}>
-    {{ form_widget(form) }}
+    {% import 'common/content_translations.html.twig' as contentTranslations %}
+    {{ form_errors(form) }}
+    {% if form.roomCategory.vars.choices is empty %}
+        <div class="alert alert-warning" role="alert">
+            {{ 'appartment.category.missing'|trans }}
+            <a href="{{ path('room_category_index') }}" class="alert-link">{{ 'nav.category'|trans }}</a>
+        </div>
+    {% endif %}
+    {{ form_row(form.number) }}
+    {{ form_row(form.description) }}
+    {{ contentTranslations.inputs(form.translations, 'description') }}
+    {{ form_rest(form) }}
 </fieldset>

@@ -67,7 +67,7 @@ final class WorkflowActionTest extends TestCase
         $result = $action->execute(['status' => 2], $invoice, []);
 
         self::assertSame(2, $invoice->getStatus());
-        self::assertIsString($result);
+        self::assertSame('workflow.log.invoice_status_changed', $result);
     }
 
     public function testChangeInvoiceStatusSkipsForInvalidStatus(): void
@@ -119,7 +119,7 @@ final class WorkflowActionTest extends TestCase
         $result = $action->execute(['paymentMeansCode' => 10], $invoice, []);
 
         self::assertSame(PaymentMeansCode::CASH, $invoice->getPaymentMeans());
-        self::assertIsString($result);
+        self::assertSame('workflow.log.payment_means_changed', $result);
     }
 
     public function testChangePaymentMeansSkipsForInvalidCode(): void
@@ -176,7 +176,7 @@ final class WorkflowActionTest extends TestCase
         $result = $action->execute(['statusId' => 5], $reservation, []);
 
         self::assertSame($status, $reservation->getReservationStatus());
-        self::assertIsString($result);
+        self::assertSame('workflow.log.reservation_status_changed', $result);
     }
 
     // -------------------------------------------------------------------------
@@ -204,7 +204,7 @@ final class WorkflowActionTest extends TestCase
 
         self::assertSame($status, $res1->getReservationStatus());
         self::assertSame($status, $res2->getReservationStatus());
-        self::assertIsString($result);
+        self::assertSame('workflow.log.reservation_status_changed', $result);
     }
 
     public function testChangeReservationStatusOnInvoiceSkipsWhenNoReservations(): void

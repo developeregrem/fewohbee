@@ -1,0 +1,50 @@
+name: Translations
+
+# Community translations arrive as pull requests from the translation platform, German and
+# English with the feature that needs them. Either way the files must parse, keep the key sets
+# and keep every placeholder (tests/Unit/Localization).
+on:
+  pull_request:
+    paths:
+      - 'translations/**'
+      - 'config/packages/translation.yaml'
+      - 'tests/Unit/Localization/**'
+      - '.github/workflows/translations.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'translations/**'
+      - 'config/packages/translation.yaml'
+      - 'tests/Unit/Localization/**'
+      - '.github/workflows/translations.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint translations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: intl, gd, mbstring, zip
+          coverage: none
+
+      # Only the console is needed: no database, no assets, so skip the Composer scripts.
+      - name: Install dependencies
+        run: |
+          cp .env.dist .env
+          composer install --no-interaction --no-progress --no-scripts
+
+      - name: YAML syntax
+        run: php bin/console lint:yaml translations
+
+      - name: Message syntax
+        run: php bin/console lint:translations
+
+      - name: Keys and placeholders
+        run: php bin/phpunit tests/Unit/Localization

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Entity\Enum\GuestCheckInFieldMode;
+use App\Entity\Translation\ContentTranslatable;
+use App\Entity\Translation\ContentTranslationsTrait;
 use App\Repository\GuestCheckInConfigRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -19,8 +21,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: GuestCheckInConfigRepository::class)]
 #[ORM\Table(name: 'guest_check_in_config')]
 #[ORM\HasLifecycleCallbacks]
-class GuestCheckInConfig
+class GuestCheckInConfig implements ContentTranslatable
 {
+    use ContentTranslationsTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
@@ -57,6 +61,13 @@ class GuestCheckInConfig
     #[ORM\Column(type: Types::STRING, length: 10, enumType: GuestCheckInFieldMode::class, options: ['default' => 'optional'])]
     private GuestCheckInFieldMode $companionsMode = GuestCheckInFieldMode::OPTIONAL;
 
+    /**
+     * Company, VAT ID and invoice address of the main guest, for invoices to a company. Never
+     * required: most guests travel privately. Off until the hotelier offers it.
+     */
+    #[ORM\Column(type: Types::STRING, length: 10, enumType: GuestCheckInFieldMode::class, options: ['default' => 'hidden'])]
+    private GuestCheckInFieldMode $companyMode = GuestCheckInFieldMode::HIDDEN;
+
     /** Shown above the form, e.g. a greeting or what the data is needed for. Plain text. */
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\Length(max: 2000)]
@@ -73,12 +84,22 @@ class GuestCheckInConfig
     #[Assert\Length(max: 2000)]
     private ?string $privacyText = null;
 
+    /** Mail the reservation dialog sends as invitation by hand; without one there is no such button. */
+    #[ORM\ManyToOne(targetEntity: Template::class)]
+    #[ORM\JoinColumn(name: 'invitation_template_id', nullable: true, onDelete: 'SET NULL')]
+    private ?Template $invitationTemplate = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
 
     public function __construct()
     {
         $this->updatedAt = new \DateTime('now');
+    }
+
+    public static function translatableFields(): array
+    {
+        return ['introText', 'privacyText', 'privacyUrl'];
     }
 
     #[ORM\PrePersist]
@@ -177,6 +198,19 @@ class GuestCheckInConfig
         return $this;
     }
 
+    public function getCompanyMode(): GuestCheckInFieldMode
+    {
+        return $this->companyMode;
+    }
+
+    /** A required company would turn away every private guest, so it is offered at most. */
+    public function setCompanyMode(GuestCheckInFieldMode $companyMode): self
+    {
+        $this->companyMode = GuestCheckInFieldMode::REQUIRED === $companyMode ? GuestCheckInFieldMode::OPTIONAL : $companyMode;
+
+        return $this;
+    }
+
     public function getCompanionsMode(): GuestCheckInFieldMode
     {
         return $this->companionsMode;
@@ -221,6 +255,18 @@ class GuestCheckInConfig
     public function setPrivacyText(?string $privacyText): self
     {
         $this->privacyText = self::normalizeNullableString($privacyText);
+
+        return $this;
+    }
+
+    public function getInvitationTemplate(): ?Template
+    {
+        return $this->invitationTemplate;
+    }
+
+    public function setInvitationTemplate(?Template $invitationTemplate): self
+    {
+        $this->invitationTemplate = $invitationTemplate;
 
         return $this;
     }

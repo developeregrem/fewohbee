@@ -15,7 +15,8 @@ namespace App\Dto\Pricing;
 
 /**
  * The room price promised for one night: the price row it came from, its unit price and the
- * meaning of that amount (per person, per room or flat; gross or net), plus the guest lines.
+ * meaning of that amount (per person, per room or flat; gross or net), plus the guest lines and,
+ * for a per-room price, the surcharge for every person beyond the included ones.
  *
  * VAT rate, description and revenue account are not promised; they are read from the price row
  * when the invoice is created.
@@ -23,8 +24,9 @@ namespace App\Dto\Pricing;
 final readonly class PromisedNight
 {
     /**
-     * @param list<PromisedLine> $lines      empty when the reservation has no guest counts
-     * @param RateAdjustment|null $adjustment how price rules changed the unit price, for display
+     * @param list<PromisedLine> $lines                empty when the reservation has no guest counts
+     * @param RateAdjustment|null $adjustment           how price rules changed the unit price, for display
+     * @param string|null         $extraPersonSurcharge charge per night for every person beyond $includedPersons
      */
     public function __construct(
         public int $priceId,
@@ -34,6 +36,8 @@ final readonly class PromisedNight
         public bool $includesVat,
         public array $lines = [],
         public ?RateAdjustment $adjustment = null,
+        public ?string $extraPersonSurcharge = null,
+        public int $includedPersons = 0,
     ) {
     }
 
@@ -48,6 +52,8 @@ final readonly class PromisedNight
             $rate->includesVat,
             $lines,
             $rate->adjustment,
+            $rate->extraPersonSurcharge,
+            $rate->includedPersons,
         );
     }
 
@@ -55,7 +61,7 @@ final readonly class PromisedNight
      * The night without its date, as stored in a segment. Consecutive nights with equal
      * payloads are merged into one segment.
      *
-     * @return array{p: int, u: string, t: string, g: bool, l?: list<array<int, int|string>>, d?: array<string, mixed>}
+     * @return array{p: int, u: string, t: string, g: bool, l?: list<array<int, int|string>>, d?: array<string, mixed>, s?: string, x?: int}
      */
     public function payload(): array
     {
@@ -70,6 +76,10 @@ final readonly class PromisedNight
         }
         if (null !== $this->adjustment) {
             $payload['d'] = $this->adjustment->toArray();
+        }
+        if (null !== $this->extraPersonSurcharge) {
+            $payload['s'] = $this->extraPersonSurcharge;
+            $payload['x'] = $this->includedPersons;
         }
 
         return $payload;
@@ -99,6 +109,13 @@ final readonly class PromisedNight
             }
         }
 
-        return new self($segment['p'], $segment['u'], 'f' === $type, 'r' === $type, $segment['g'], $lines, $adjustment);
+        // Promises made before the surcharge existed carry neither key.
+        $surcharge = $segment['s'] ?? null;
+        $included = $segment['x'] ?? 0;
+        if ((null !== $surcharge && !is_string($surcharge)) || !is_int($included)) {
+            return null;
+        }
+
+        return new self($segment['p'], $segment['u'], 'f' === $type, 'r' === $type, $segment['g'], $lines, $adjustment, $surcharge, $included);
     }
 }

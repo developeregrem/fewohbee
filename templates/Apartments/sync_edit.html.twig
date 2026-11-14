@@ -5,19 +5,19 @@
             </div>
         </div>
     {% set isImportTab = activeTab is defined and activeTab == 'import' %}
-    <ul class="nav nav-tabs" id="calendar-sync-tabs" role="tablist">
+    <ul class="nav nav-tabs modal-tabs" id="calendar-sync-tabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link{% if not isImportTab %} active{% endif %}" id="calendar-sync-export-tab" data-bs-toggle="tab"
+            <button class="nav-link text-body{% if not isImportTab %} active{% endif %}" id="calendar-sync-export-tab" data-bs-toggle="tab"
                     data-bs-target="#calendar-sync-export" type="button" role="tab"
                     aria-controls="calendar-sync-export" aria-selected="{% if not isImportTab %}true{% else %}false{% endif %}">
-                {{ 'calendar.sync.export.tab'|trans }}
+                <i class="fas fa-file-export me-2" aria-hidden="true"></i>{{ 'calendar.sync.export.tab'|trans }}
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link{% if isImportTab %} active{% endif %}" id="calendar-sync-import-tab" data-bs-toggle="tab"
+            <button class="nav-link text-body{% if isImportTab %} active{% endif %}" id="calendar-sync-import-tab" data-bs-toggle="tab"
                     data-bs-target="#calendar-sync-import" type="button" role="tab"
                     aria-controls="calendar-sync-import" aria-selected="{% if isImportTab %}true{% else %}false{% endif %}">
-                {{ 'calendar.sync.import.tab'|trans }}
+                <i class="fas fa-file-import me-2" aria-hidden="true"></i>{{ 'calendar.sync.import.tab'|trans }}
             </button>
         </li>
     </ul>

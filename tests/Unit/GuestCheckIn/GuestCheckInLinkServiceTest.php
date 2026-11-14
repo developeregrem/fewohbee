@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\GuestCheckIn;
 
 use App\Entity\Appartment;
+use App\Entity\Customer;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Repository\GuestCheckInRepository;
@@ -31,6 +32,20 @@ final class GuestCheckInLinkServiceTest extends TestCase
 
         self::assertSame('https://example.com/checkin/'.$signer->linkToken('AAAAAAAAAAAAAAAAAAAAAA'), $url);
         self::assertSame($url, $service->url($this->reservation()));
+    }
+
+    public function testLinkOpensInTheBookersLanguage(): void
+    {
+        $repository = $this->createStub(GuestCheckInRepository::class);
+        $repository->method('ensureSelector')->willReturn('AAAAAAAAAAAAAAAAAAAAAA');
+        $reservation = $this->reservation();
+        $booker = new Customer();
+        $booker->setLocale('en');
+        $reservation->setBooker($booker);
+
+        $url = $this->service($repository, true, 'https://example.com')->url($reservation);
+
+        self::assertStringEndsWith('?lang=en', (string) $url);
     }
 
     public function testNoLinkIsCreatedWhileTheFeatureIsOff(): void
@@ -88,7 +103,8 @@ final class GuestCheckInLinkServiceTest extends TestCase
         $publicUrl = $this->createStub(PublicUrlService::class);
         $publicUrl->method('getBaseUrl')->willReturn($baseUrl);
         $publicUrl->method('generate')->willReturnCallback(
-            static fn (string $route, array $parameters): ?string => null === $baseUrl ? null : $baseUrl.'/checkin/'.$parameters['token'],
+            static fn (string $route, array $parameters): ?string => null === $baseUrl ? null : $baseUrl.'/checkin/'.$parameters['token']
+                .(isset($parameters['lang']) ? '?lang='.$parameters['lang'] : ''),
         );
 
         $clock = new MockClock('2026-09-20 12:00', date_default_timezone_get());

@@ -377,6 +377,50 @@ final class BookingJournalControllerTest extends WebTestCase
         );
     }
 
+    public function testEdgeArrowsPageThroughEntriesBeforeChangingTheMonth(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $em = $this->getEntityManager();
+        $em->createQuery('DELETE FROM App\Entity\BookingEntry e WHERE e.bookingBatch IN (SELECT b.id FROM App\Entity\BookingBatch b WHERE b.year = 2096)')->execute();
+        $em->createQuery('DELETE FROM App\Entity\BookingBatch b WHERE b.year = 2096')->execute();
+
+        // 41 entries make two pages of 40
+        $may = $this->createEntryIn(2096, 5)->getBookingBatch();
+        for ($i = 2; $i <= 41; ++$i) {
+            $entry = new BookingEntry();
+            $entry->setBookingBatch($may);
+            $entry->setDate(new \DateTime('2096-05-20'));
+            $entry->setDocumentNumber($i);
+            $entry->setAmount('1.00');
+            $em->persist($entry);
+        }
+        $em->flush();
+        $june = $this->createEntryIn(2096, 6)->getBookingBatch();
+        $mayId = $may->getId();
+        $juneId = $june->getId();
+
+        // First page of May: forward stays in May
+        $crawler = $client->request('GET', '/journal/batch/'.$mayId);
+        self::assertResponseIsSuccessful();
+        $next = (string) $crawler->filter('.journal-edge-next')->attr('href');
+        self::assertStringContainsString('/journal/batch/'.$mayId, $next);
+        self::assertStringContainsString('page=2', $next);
+
+        // Last page of May: forward goes to June
+        $crawler = $client->request('GET', '/journal/batch/'.$mayId.'?page=2');
+        $next = (string) $crawler->filter('.journal-edge-next')->attr('href');
+        self::assertStringContainsString('/journal/batch/'.$juneId, $next);
+        self::assertStringNotContainsString('page=', $next);
+
+        // June: back lands on the last page of May
+        $crawler = $client->request('GET', '/journal/batch/'.$juneId);
+        $previous = (string) $crawler->filter('.journal-edge-prev')->attr('href');
+        self::assertStringContainsString('/journal/batch/'.$mayId, $previous);
+        self::assertStringContainsString('page=2', $previous);
+    }
+
     public function testYearViewIsForbiddenWithoutRole(): void
     {
         $client = static::createClient();
@@ -462,6 +506,7 @@ final class BookingJournalControllerTest extends WebTestCase
         return $this->createUserWithRoles(['ROLE_CASHJOURNAL']);
     }
 
+    /** @param list<string> $roleCodes */
     private function createUserWithRoles(array $roleCodes): User
     {
         $container = static::getContainer();

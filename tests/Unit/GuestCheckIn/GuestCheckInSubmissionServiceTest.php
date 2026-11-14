@@ -36,6 +36,30 @@ final class GuestCheckInSubmissionServiceTest extends TestCase
         self::assertNull($payload['companions'][0]['address'], 'No own address: lives with the main guest.');
     }
 
+    public function testCompanyDetailsAreStoredWithTheMainGuest(): void
+    {
+        $checkIn = new GuestCheckIn(new Reservation(), 'selector');
+        $submission = $this->submission();
+        $submission->mainGuest->company = ' Muster GmbH ';
+        $submission->mainGuest->vatId = 'DE123456789';
+
+        $this->service()->submit($checkIn, $submission, 'de');
+
+        $company = $checkIn->getPayload()['mainGuest']['company'] ?? null;
+        self::assertSame(['name' => 'Muster GmbH', 'vatId' => 'DE123456789', 'address' => null], $company, 'No own invoice address: the address above.');
+    }
+
+    public function testWithoutACompanyNameNothingIsStoredForTheInvoice(): void
+    {
+        $checkIn = new GuestCheckIn(new Reservation(), 'selector');
+
+        $this->service()->submit($checkIn, $this->submission(), 'de');
+
+        $mainGuest = $checkIn->getPayload()['mainGuest'] ?? [];
+        self::assertArrayHasKey('company', $mainGuest);
+        self::assertNull($mainGuest['company']);
+    }
+
     public function testEmptyIdNumberKeepsThePreviousOne(): void
     {
         $checkIn = new GuestCheckIn(new Reservation(), 'selector');

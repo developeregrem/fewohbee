@@ -50,6 +50,20 @@ final class OnlineBookingSettingsControllerTest extends WebTestCase
         parent::tearDown();
     }
 
+    public function testEmbedCodeIsOneSnippetAndExplainsTheLanguageParameter(): void
+    {
+        $client = $this->authenticatedClient();
+
+        $crawler = $client->request('GET', '/settings/online-booking');
+
+        self::assertResponseIsSuccessful();
+        // The website sets ?lang= itself; the code does not change per language.
+        self::assertCount(1, $crawler->filter('textarea[data-copy-target="input"]'));
+        self::assertStringNotContainsString('lang=', (string) $crawler->filter('textarea[data-copy-target="input"]')->text());
+        self::assertSelectorTextContains('ul.small', 'lang=de');
+        self::assertSelectorTextContains('ul.small', 'lang=en');
+    }
+
     private function submitSettings(KernelBrowser $client, string $placeholder): void
     {
         $crawler = $client->request('GET', '/settings/online-booking');

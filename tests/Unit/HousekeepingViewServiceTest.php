@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Entity\Appartment;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\Reservation;
+use App\Entity\RoomCategory;
 use App\Repository\AppartmentRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\RoomBlockRepository;
@@ -60,6 +63,7 @@ final class HousekeepingViewServiceTest extends TestCase
         ];
     }
 
+    /** @param list<Reservation> $reservations */
     #[DataProvider('occupancyCases')]
     public function testResolveOccupancyForDay(\DateTimeImmutable $date, array $reservations, string $expected): void
     {
@@ -110,6 +114,32 @@ final class HousekeepingViewServiceTest extends TestCase
         self::assertSame('FREE', $result['type']);
     }
 
+    /** @param list<Reservation> $reservations */
+    #[DataProvider('eventSpaceCases')]
+    public function testEventEndsOnItsLastDay(string $date, array $reservations, string $expected): void
+    {
+        $occupancy = $this->makeService()->resolveOccupancyForDay(new \DateTimeImmutable($date), $reservations);
+
+        self::assertSame($expected, $occupancy['type']);
+    }
+
+    /** @return iterable<string, array{string, list<Reservation>, string}> */
+    public static function eventSpaceCases(): iterable
+    {
+        // Friday to Sunday, stored up to Monday.
+        $weekend = self::makeEvent('2024-01-05', '2024-01-08');
+        yield 'first day' => ['2024-01-05', [$weekend], 'ARRIVAL'];
+        yield 'day in between' => ['2024-01-06', [$weekend], 'STAYOVER'];
+        yield 'last day' => ['2024-01-07', [$weekend], 'DEPARTURE'];
+        yield 'day after' => ['2024-01-08', [$weekend], 'FREE'];
+
+        // One Saturday, stored up to Sunday.
+        $saturday = self::makeEvent('2024-01-06', '2024-01-07');
+        yield 'one-day event comes and goes on its day' => ['2024-01-06', [$saturday], 'TURNOVER'];
+        yield 'day after a one-day event' => ['2024-01-07', [$saturday], 'FREE'];
+        yield 'another event starting the day after' => ['2024-01-07', [$saturday, self::makeEvent('2024-01-07', '2024-01-09')], 'ARRIVAL'];
+    }
+
     private function makeService(): HousekeepingViewService
     {
         return new HousekeepingViewService(
@@ -131,6 +161,14 @@ final class HousekeepingViewServiceTest extends TestCase
             ->setReason('Renovierung');
 
         return $block;
+    }
+
+    private static function makeEvent(string $start, string $end): Reservation
+    {
+        $event = self::makeReservation($start, $end);
+        $event->setAppartment((new Appartment())->setRoomCategory((new RoomCategory())->setKind(RoomCategoryKind::EVENT_SPACE)));
+
+        return $event;
     }
 
     private static function makeReservation(string $start, string $end): Reservation

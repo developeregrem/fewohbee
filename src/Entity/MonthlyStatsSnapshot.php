@@ -31,6 +31,7 @@ class MonthlyStatsSnapshot
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Subsidiary $subsidiary = null;
 
+    /** @var array<string, mixed> Versioned JSON payload; historical and additional metric fields are retained. */
     #[ORM\Column(type: Types::JSON)]
     private array $metrics = [];
 
@@ -124,6 +125,8 @@ class MonthlyStatsSnapshot
 
     /**
      * Get the metrics payload for this snapshot.
+     *
+     * @return array<string, mixed>
      */
     public function getMetrics(): array
     {
@@ -132,6 +135,8 @@ class MonthlyStatsSnapshot
 
     /**
      * Set the metrics payload for this snapshot.
+     *
+     * @param array<string, mixed> $metrics
      */
     public function setMetrics(array $metrics): void
     {

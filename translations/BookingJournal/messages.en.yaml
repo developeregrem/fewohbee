@@ -150,6 +150,10 @@ accounting.journal.batch.close: Close Month
 accounting.journal.batch.reopen: Reopen Month
 accounting.journal.batch.previous_month: 'Previous month: %month%'
 accounting.journal.batch.next_month: 'Next month: %month%'
+accounting.journal.batch.previous_page: 'Previous page: %page% of %pages%'
+accounting.journal.batch.next_page: 'Next page: %page% of %pages%'
+accounting.journal.batch.previous_year: 'Previous year'
+accounting.journal.batch.next_year: 'Next year'
 
 # Journal - Filter
 accounting.journal.filter.all: All entries

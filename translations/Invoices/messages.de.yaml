@@ -1,0 +1,200 @@
+invoice.action: Aktion
+invoice.add.another.reservation: 'Weitere Reservierung hinzufügen'
+invoice.appartment: Zimmerpositionen
+invoice.appartment.persons: '{1} %count% Person|]1,Inf] %count% Personen'
+invoice.appartment.position.beds: Betten
+invoice.appartment.position.category: Kategorie
+invoice.appartment.position.description: Beschreibung
+invoice.appartment.position.enddate: Bis
+invoice.appartment.position.number: Zimmer
+invoice.appartment.position.person: Person
+invoice.appartment.position.persons: Personen
+invoice.appartment.position.price: Preis
+invoice.appartment.position.pricecategory: Preiskategorie
+invoice.appartment.position.startdate: Von
+invoice.appartment.position.vat: Steuer
+invoice.brutto: Brutto
+invoice.company: Firma
+invoice.containing.vat: 'enthaltene Mehrwersteuer'
+invoice.customer.recommendation: Vorauswahl
+invoice.customer.section.contact: Kontakt
+invoice.customer.section.address: Adresse
+invoice.customer.section.communication: 'Telefon & E-Mail'
+invoice.customer.section.einvoice: 'Angaben zur E-Rechnung'
+invoice.customer.section.payment: Zahlungsangaben
+invoice.customer.einvoice.hint: 'Nur nötig, wenn E-Rechnungen an Behörden (XRechnung) gestellt werden. Für Privat- und Geschäftsgäste sind diese Felder in der Regel nicht erforderlich.'
+invoice.customer.payment.hint: 'Nur nötig bei Kartenzahlung oder SEPA-Lastschrift.'
+invoice.date: Rechnungsdatum
+invoice.date2: Datum
+invoice.delete.ask: 'Diese Rechnung unwiderruflich löschen?'
+invoice.description: Rechnungsverwaltung
+invoice.details: Rechnungsdetails
+invoice.enddate: Bis
+invoice.flash.create.success: 'Rechnung wurde erfolgreich erstellt.'
+invoice.flash.delete.not.possible: 'Die Rechnung konnte nicht gelöscht werden.'
+invoice.flash.delete.success: 'Die Rechnung wurde erfolgreich gelöscht.'
+invoice.flash.edit.success: 'Rechnung wurde erfolgreich bearbeitet.'
+invoice.guest: Gast
+invoice.id: Rechnungsnummer
+invoice.id.last: 'letzte:'
+invoice.number.missing.error: 'Bitte zuerst eine Rechnungsnummer eingeben.'
+invoice.number.duplicate.error: 'Diese Rechnungsnummer ist bereits vergeben. Bitte wähle eine andere.'
+invoice.number.range.hint: 'Nummernkreis: %range%'
+invoice.number.range.global: Standard
+invoice.lastname: Nachname
+invoice.miscellaneous: 'Sonstige Positionen'
+invoice.miscellaneous.position.amount: Anzahl
+invoice.miscellaneous.position.amount.flat_help: 'Pauschalpreis: 1x pro Buchung'
+invoice.netto: Netto
+invoice.number: Rechnungsnr.
+invoice.number.short: Rechnung
+invoice.einvoice: E-Rechnung
+invoice.open.reservations.filter.customer: 'Reservierungen nach Kunden durchsuchen'
+invoice.open.reservations.filter.time: 'Reservierungen in Zeitraum durchsuchen'
+invoice.position.add.appartment: 'Zimmer Position hinzufügen'
+invoice.position.add.miscellaneous: 'Sonstige Position hinzufügen'
+invoice.position.additional: 'weitere Leistungen'
+invoice.position.amount: Anzahl
+invoice.position.appartment: Zimmer
+invoice.position.service: Leistung
+invoice.position.stays: Übernachtungen
+invoice.price.single: Einzelpreis
+invoice.price.total: Gesamt
+invoice.remark: Bemerkungen
+invoice.reservation: Reservierung
+invoice.reservations.unavailable: 'Mindestens eine ausgewählte Reservierung ist nicht mehr vorhanden. Starte die Rechnungserstellung erneut und wähle die Reservierungen neu aus.'
+invoice.select.customer.search.input.placeholder: 'Nachname Kunde'
+invoice.select.open.reservation: 'Reservierung ohne Rechnung auswählen'
+invoice.startdate: Von
+invoice.status: Status
+invoice.status.canceled: storniert
+invoice.status.unpaid: offen
+invoice.status.paid: bezahlt
+invoice.status.prepaid: angezahlt
+invoice.template: 'Rechnungstemplate wählen'
+invoice.template.bound_count: '{1} 1 Vorlage wird automatisch nach Zahlungsmethode gewählt|]1,Inf[ %count% Vorlagen werden automatisch nach Zahlungsmethode gewählt'
+invoice.template.none_found: 'Für diese Rechnung gibt es keine passende Rechnungsvorlage. Lege eine nicht eingebettete Rechnungsvorlage ohne Zahlungsmethode an.'
+invoice.title: Rechnungsverwaltung
+invoice.vat: MwSt.
+invoice.vatwarning: 'Sie nutzen Preiskategorien sowohl mit inkludierter MwSt. als auch ohne. Dieser Mix kann zu unstimmigen Anzeigen führen. Es wird empfohlen einheitliche Preiskategorien zu verwenden.'
+invoice.settings.text: Einstellungen
+invoice.settings.no_settings: 'Keine weiteren Einstellungen vorhanden. Bitte hinzufügen.'
+invoice.settings.add: 'Neue Einstellungen hinzufügen'
+invoice.settings.companyName: Firmenname
+invoice.settings.taxNumber: Steuernummer
+invoice.settings.vatID: USt-IdNr.
+invoice.settings.vatID.hint: 'Für E-Rechnungen ist eine USt-IdNr. oder eine Registernummer erforderlich (die Steuernummer allein genügt nicht).'
+invoice.settings.registrationNumber: Registernummer
+invoice.settings.registrationNumber.hint: 'z. B. Handelsregisternummer (HRB/HRA). Alternative zur USt-IdNr. für E-Rechnungen.'
+invoice.settings.selleridentifier.required: 'Bitte eine USt-IdNr. oder eine Registernummer angeben – E-Rechnungen benötigen eine davon (die Steuernummer allein genügt nicht).'
+invoice.settings.contactName: Kontaktname
+invoice.settings.contactDepartment: Abteilung
+invoice.settings.contactPhone: Telefonnummer
+invoice.settings.contactMail: E-Mail
+invoice.settings.companyInvoiceMail: Rechnungs-E-Mail
+invoice.settings.companyAddress: Adresse
+invoice.settings.companyPostCode: Postleitzahl
+invoice.settings.companyCity: Stadt
+invoice.settings.companyCountry: Land
+invoice.settings.accountIBAN: IBAN
+invoice.settings.accountName: Kontoinhaber
+invoice.settings.accountBIC: BIC
+invoice.settings.paymentTerms: Zahlungsbedingungen
+invoice.settings.paymentDueDays: 'Zahlungsfrist (Tage)'
+invoice.settings.einvoiceProfile: 'E-Rechnung Profil'
+invoice.settings.einvoiceProfile.xrechnung: 'XRechnung (B2G)'
+invoice.settings.einvoiceProfile.en16931: 'ZUGFeRD (EN 16931) – empfohlen'
+invoice.settings.einvoiceProfile.help: 'ZUGFeRD reicht für die meisten Betriebe und Gäste aus. XRechnung nur wählen, wenn explizit gefordert (z. B. B2G).'
+invoice.settings.profile.hint.en16931: 'ZUGFeRD: Ihre Rechnungs-PDFs enthalten automatisch maschinenlesbare E-Rechnungsdaten. Über die Felder unten hinaus sind keine weiteren Angaben nötig.'
+invoice.settings.profile.hint.xrechnung: 'XRechnung: Kontaktname, Telefon und E-Mail sind Pflicht; jede Rechnung braucht zudem eine Käuferreferenz (Leitweg-ID) und eine Zahlungsart.'
+invoice.settings.section.profile: E-Rechnungs-Profil
+invoice.settings.section.company: Unternehmen
+invoice.settings.section.contact: Kontakt
+invoice.settings.section.tax: Steuer
+invoice.settings.section.payment: Zahlung
+invoice.settings.xrechnung.contact.error: 'Dieses Feld ist beim Profil XRechnung erforderlich.'
+invoice.settings.form.error: 'Es wurde nichts gespeichert. Bitte die markierten Felder unten korrigieren.'
+invoice.settings.xrechnung.required.hint: '* Diese Felder sind für das XRechnung-Profil (B2G) erforderlich.'
+invoice.settings.help.general: 'Die hier eingetragenen Informationen sind für den digitalen Rechnungsexport (E-Rechnung) erforderlich.'
+invoice.settings.help.invoiceMail: 'Gibt die E-Mail-Adresse an, an die die Antwort auf eine Rechnung gesendet werden kann.'
+invoice.settings.flash.create.success: 'Neue Einstellungen erfolgreich hinzugefügt.'
+invoice.settings.flash.edit.success: 'Einstellungen erfolgreich bearbeitet.'
+invoice.settings.flash.delete.success: 'Einstellungen erfolgreich gelöscht.'
+invoice.settings.title.einvoice: E-Rechnung
+invoice.settings.title.template: Rechnungsvorlage
+invoice.settings.active.error: 'Für diese Rechnung sind keine Rechnungsdaten hinterlegt. Lege unter den Rechnungseinstellungen einen Standard-Datensatz oder einen Datensatz für die Niederlassung an.'
+invoice.settings.section.scope: Gültigkeit
+invoice.settings.scope: 'Diese Rechnungsdaten gelten für'
+invoice.settings.scope.help: 'Hier werden ausschließlich die Absenderdaten für die elektronische Rechnung (XML) festgelegt. Was auf der PDF-Rechnung steht, kommt aus der Rechnungsvorlage und bleibt davon unberührt. Betreibst du mehrere Niederlassungen unter verschiedenen Firmen, lege je Niederlassung einen eigenen Datensatz an.'
+invoice.settings.scope.default: 'Standard – alle Niederlassungen ohne eigene Rechnungsdaten'
+invoice.settings.scope.unused: 'Wird nicht verwendet'
+invoice.settings.no_default.hint: 'Kein Datensatz ist als Standard gekennzeichnet. Niederlassungen ohne eigene Rechnungsdaten – und Rechnungen ohne Niederlassung – können damit keine elektronische Rechnung erzeugen.'
+invoice.settings.scope.new: 'Neue Rechnungsdaten'
+invoice.settings.subsidiary.taken: 'Für diese Niederlassung sind bereits Rechnungsdaten hinterlegt. Es kann je Niederlassung nur einen Datensatz geben.'
+invoice.settings.creditorReference.label: Gläubiger-ID
+invoice.settings.creditorReference.hint: 'Die eindeutige Kennung für SEPA-Lastschrift'
+invoice.settings.paymentterm.error: 'Mindestens eines der Felder "Zahlungsbedingungen" oder "Zahlungsfrist (Tage)" muss ausgefüllt sein.'
+invoice.einvoice.violation.invoiceNumber: 'Rechnungsnummer fehlt (Rechnung bearbeiten)'
+invoice.einvoice.violation.invoiceDate: 'Rechnungsdatum fehlt (Rechnung bearbeiten)'
+invoice.einvoice.violation.buyerName: 'Name oder Firma des Empfängers fehlt (Rechnung bearbeiten)'
+invoice.einvoice.violation.buyerStreet: 'Straße/Anschrift des Empfängers fehlt (Rechnung bearbeiten)'
+invoice.einvoice.violation.buyerCountry: 'Land des Empfängers fehlt (Rechnung bearbeiten)'
+invoice.einvoice.violation.buyerPostCodeCity: 'Postleitzahl oder Ort des Empfängers fehlt (Rechnung bearbeiten)'
+invoice.einvoice.violation.buyerEmail: 'E-Mail-Adresse des Empfängers fehlt (Rechnung bearbeiten)'
+invoice.einvoice.violation.buyerReference: 'Käuferreferenz (Leitweg-ID) fehlt (Rechnung bearbeiten)'
+invoice.einvoice.violation.paymentMeans: 'Keine Zahlungsart ausgewählt (Rechnung bearbeiten)'
+invoice.einvoice.violation.paymentTerms: 'Weder Zahlungsbedingungen noch Zahlungsfrist hinterlegt (Einstellungen bearbeiten)'
+invoice.einvoice.violation.sellerName: 'Firmenname fehlt (Einstellungen bearbeiten)'
+invoice.einvoice.violation.sellerAddress: 'Firmenanschrift (Straße, PLZ, Ort, Land) ist unvollständig (Einstellungen bearbeiten)'
+invoice.einvoice.violation.sellerIdentifier: 'USt-IdNr. oder Registernummer fehlt – die Steuernummer allein genügt für E-Rechnungen nicht (Einstellungen bearbeiten)'
+invoice.einvoice.violation.sellerElectronicAddress: 'Rechnungs-E-Mail (elektronische Adresse) fehlt (Einstellungen bearbeiten)'
+invoice.einvoice.violation.sellerContact: 'Kontaktname, Telefon oder E-Mail fehlt (Einstellungen bearbeiten)'
+invoice.einvoice.violation.accountIBAN: 'IBAN fehlt (Einstellungen bearbeiten)'
+invoice.einvoice.violation.accountIBANBIC: 'IBAN oder BIC fehlt (Einstellungen bearbeiten)'
+invoice.einvoice.violation.cardNumber: 'Kartennummer für Kartenzahlung fehlt (Rechnung bearbeiten)'
+invoice.einvoice.violation.customerIBAN: 'Kunden-IBAN für Lastschrift fehlt (Rechnung bearbeiten)'
+invoice.einvoice.violation.mandateReference: 'Mandatsreferenz für Lastschrift fehlt (für XRechnung erforderlich; Rechnung bearbeiten)'
+invoice.einvoice.violation.creditorReference: 'Gläubiger-ID für Lastschrift fehlt (Einstellungen bearbeiten)'
+invoice.einvoice.violation.positions: 'Die Rechnung enthält keine Positionen'
+invoice.einvoice.fixlocation.invoice: 'in der Rechnung zu beheben'
+invoice.einvoice.fixlocation.settings: 'in den Rechnungseinstellungen zu beheben'
+invoice.einvoice.status.ready: 'E-Rechnung bereit – der PDF-Download enthält maschinenlesbare E-Rechnungsdaten'
+invoice.einvoice.ready.short: 'E-Rechnung bereit'
+invoice.einvoice.notready.short: 'E-Rechnung: Angaben fehlen'
+invoice.einvoice.status.missing: 'E-Rechnung noch nicht möglich, fehlende Angaben'
+invoice.einvoice.status.notconfigured: 'E-Rechnung ist nicht eingerichtet'
+invoice.einvoice.export.fallback: 'Die E-Rechnung konnte nicht erstellt werden; stattdessen wurde ein normales PDF erzeugt.'
+invoice.einvoice.attach.auto: 'Wird als E-Rechnung angehängt (PDF mit eingebettetem XML)'
+invoice.paymentmeans.label: Zahlungsmethode
+CASH: Barzahlung
+CHEQUE: Scheck
+CREDIT_TRANSFER: 'Überweisung (Non-SEPA)'
+CARD_PAYMENT: Kartenzahlung
+CREDIT_CARD_PAYMENT: Kreditkartenzahlung
+SEPA_CREDIT_TRANSFER: SEPA-Überweisung
+SEPA_DIRECT_DEBIT: SEPA-Lastschrift
+invoice.misc.package.hint: 'Dieses Paket wird beim Speichern in mehrere Positionen aufgeteilt.'
+invoice.tourist_tax.heading: Beherbergungsabgaben
+invoice.apartment_modifier.heading: 'Aufschläge / Ermäßigungen'
+invoice.apartment_modifier.position: '%category% — %modifier% (%nights% × %count%)'
+invoice.apartment_extra_person.position: 'Aufschlag je weitere Person (%nights% × %count%)'
+invoice.apartment_modifier.label.surcharge_absolute: 'Aufschlag %value%'
+invoice.apartment_modifier.label.discount_percent: 'Rabatt %value%%'
+invoice.apartment_modifier.label.flat_rate: 'Pauschalpreis %value%'
+invoice.apartment_modifier.label.free: Kostenlos
+invoice.tourist_tax.position: '%tax% — %category% (%nights% × %count%)'
+invoice.tourist_tax.position.percent_per_room: '%tax% (%percent% % vom Übernachtungspreis, %nights%)'
+invoice.tourist_tax.position.nights: '{0} %count% Nächte|{1} %count% Nacht|]1,Inf] %count% Nächte'
+invoice.tourist_tax.position.persons: '{0} %count% Personen|{1} %count% Person|]1,Inf] %count% Personen'
+invoice.tourist_tax.no_positions: 'Für diese Buchung wurden keine Beherbergungsabgaben berechnet.'
+invoice.payment_qr.remittance: 'Rechnung %number%'
+invoice.payment_due_date: 'Zahlbar bis'
+invoice.payment_due.date: Fälligkeitsdatum
+invoice.payment_due.choose: 'Frist wählen'
+invoice.payment_due.period: '{0}Sofort fällig|{1}%count% Tag|]1,Inf]%count% Tage'
+invoice.payment_due.standard: Standard
+invoice.payment_due.custom: 'Eigene Frist'
+invoice.payment_due.days: Tage
+invoice.payment_due.first_arrival: 'Bis zur Anreise'
+invoice.payment_due.last_departure: 'Bis zur Abreise'
+invoice.payment_due.date.missing: 'Bitte gib ein gültiges Fälligkeitsdatum an.'

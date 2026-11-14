@@ -29,17 +29,12 @@ use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\Uid\Uuid;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ReservationFixtures extends Fixture implements FixtureGroupInterface, DependentFixtureInterface
 {
-    private $translator;
-
     public function __construct(
-        TranslatorInterface $translator,
         private readonly InvoiceNumberPatternService $patternService,
     ) {
-        $this->translator = $translator;
     }
 
     public static function getGroups(): array

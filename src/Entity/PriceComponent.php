@@ -23,14 +23,16 @@ class PriceComponent
     #[ORM\Column(type: 'string', length: 100)]
     private string $description = '';
 
+    /** @var float|numeric-string Keep DBAL strings intact to avoid false updates after hydration. */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private float $vat = 0.0;
+    private float|string $vat = 0.0;
 
     #[ORM\Column(type: 'string', length: 16, enumType: PriceComponentAllocationType::class)]
     private PriceComponentAllocationType $allocationType = PriceComponentAllocationType::PERCENT;
 
+    /** @var float|numeric-string Keep DBAL strings intact to avoid false updates after hydration. */
     #[ORM\Column(type: 'decimal', precision: 10, scale: 4)]
-    private float $allocationValue = 0.0;
+    private float|string $allocationValue = 0.0;
 
     #[ORM\Column(type: 'boolean')]
     private bool $isRemainder = false;
@@ -73,7 +75,7 @@ class PriceComponent
 
     public function getVat(): float
     {
-        return $this->vat;
+        return (float) $this->vat;
     }
 
     public function setVat(float $vat): self
@@ -97,7 +99,7 @@ class PriceComponent
 
     public function getAllocationValue(): float
     {
-        return $this->allocationValue;
+        return (float) $this->allocationValue;
     }
 
     public function setAllocationValue(float $allocationValue): self

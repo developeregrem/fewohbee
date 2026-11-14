@@ -64,8 +64,8 @@ accounting:
       format.placeholder: Please choose…
       format.camt: 'XML: camt.052/053 from v08'
       format.csv_profile: 'CSV: %profile%'
-      file: Bank statement file(s)
-      file.invalid_type: Please upload CSV or XML file(s).
+      file: Bank statement files
+      file.invalid_type: Please upload CSV or XML files.
       multiple_files_name: '%count% XML files'
       flash:
         invalid: Input incomplete — please check all fields.
@@ -139,7 +139,7 @@ accounting:
         label: from invoice
         help: The remark is taken from the generated invoice booking.
       overlap_warning:
-        message: 'Warning: This bank account already has %count% committed import(s) overlapping %from% to %to%: %imports%%more%'
+        message: '{1}Warning: This bank account already has %count% committed import overlapping %from% to %to%: %imports%%more%|]1,Inf[Warning: This bank account already has %count% committed imports overlapping %from% to %to%: %imports%%more%'
         import: '%from%-%to% (committed at %committedAt%, %committed% lines posted)'
         more: ' and %count% more'
       reapply_rules:

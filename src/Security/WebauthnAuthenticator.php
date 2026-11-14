@@ -42,7 +42,7 @@ final class WebauthnAuthenticator extends AbstractAuthenticator
     /**
      * Only handle POST to the passkey verification endpoint.
      */
-    public function supports(Request $request): ?bool
+    public function supports(Request $request): bool
     {
         return $request->isMethod('POST')
             && '/login/webauthn' === $request->getPathInfo();
@@ -110,12 +110,12 @@ final class WebauthnAuthenticator extends AbstractAuthenticator
      * Return a JSON success response — the frontend Stimulus controller
      * handles the actual redirect to the dashboard.
      */
-    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
+    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): JsonResponse
     {
         return new JsonResponse(['success' => true]);
     }
 
-    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
+    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): JsonResponse
     {
         return new JsonResponse(
             ['error' => $exception->getMessageKey()],

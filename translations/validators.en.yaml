@@ -24,9 +24,14 @@ invoice_number_pattern:
   empty: Please enter a pattern.
 guest_checkin:
   id_number_invalid: Please enter the ID number without special characters (4 to 30 characters).
+  id_number_other_person: Please enter the ID number of this person. The number on file belongs to a different name.
   zip_invalid: Please enter a valid zip code.
   phone_invalid: Please enter a valid phone number.
   companion_address_incomplete: Please complete the address, or clear all address fields if this person lives with the main guest.
+  company_name_missing: Please enter the company name.
+  company_address_incomplete: Please complete the invoice address, or clear all its fields if it matches your address above.
+  company_address_missing: Please enter the invoice address.
+  vat_id_invalid: Please enter the VAT ID with its country code, e.g. DE123456789.
   companion_field_missing: Please fill in.
   public_address_missing: Set the public address in the general settings first, links for guests are built from it.
 public_base_url:

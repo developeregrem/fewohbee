@@ -34,7 +34,9 @@ class GuestCheckInCompanionType extends AbstractType
         $builder
             ->add('salutation', ChoiceType::class, [
                 'label' => 'guest_checkin.public.field.salutation_optional',
-                'choices' => array_combine($options['salutations'], $options['salutations']),
+                // Wording in the guest's language => stored salutation (GuestSalutations).
+                'choices' => $options['salutations'],
+                'choice_translation_domain' => false,
                 'placeholder' => '',
                 'required' => false,
                 'attr' => ['autocomplete' => 'off'],

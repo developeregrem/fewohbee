@@ -10,6 +10,13 @@ category:
     Number of guests who always pay the full per-person rate before per-category
     price adjustments (e.g. child discounts) take effect. Example: 2 → discounts
     only apply from 3 guests onwards. 0 = no minimum.
+  kind: 'Kind of room'
+  kind.accommodation: Accommodation
+  kind.accommodation.help: 'For rooms and holiday apartments: booked per night, counts towards occupancy, overnight stays and tourist tax.'
+  kind.event_space: 'Event space'
+  kind.event_space.help: 'For a seminar room, hall or outdoor area: booked per day, does not count towards occupancy, overnight stays and tourist tax and cannot be booked online yet. Its turnover counts.'
+  kind.has_reservations: 'This category already has reservations. If you change the kind of room, statistics, tourist tax and new invoices follow it.'
+  kind.error.mixed_prices: 'The kind of room cannot be changed while the category shares prices with categories of the other kind: %prices%. Assign these prices separately first.'
   double: Double room
   flash:
     create:

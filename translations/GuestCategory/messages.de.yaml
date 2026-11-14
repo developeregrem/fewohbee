@@ -17,7 +17,7 @@ guest_category:
 
   warning:
     no_adult: "Diese Buchung enthält keinen Erwachsenen. Aktiviere die Freigabe weiter unten, um trotzdem zu speichern."
-    over_capacity: "Maximale Bettenbelegung des Zimmers erreicht."
+    over_capacity: "Maximale Personenzahl des Zimmers erreicht."
 
   field:
     name: "Bezeichnung"

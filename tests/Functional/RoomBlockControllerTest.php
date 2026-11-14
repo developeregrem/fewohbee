@@ -347,6 +347,7 @@ final class RoomBlockControllerTest extends WebTestCase
         return $block;
     }
 
+    /** @param list<string> $roleCodes */
     private function createUserWithRoles(array $roleCodes): User
     {
         $container = static::getContainer();

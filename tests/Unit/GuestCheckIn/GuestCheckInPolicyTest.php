@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Unit\GuestCheckIn;
 
 use App\Entity\Appartment;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\GuestCheckIn;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Entity\RoomCategory;
 use App\Service\GuestCheckIn\GuestCheckInLinkState;
 use App\Service\GuestCheckIn\GuestCheckInPolicy;
+use App\Service\GuestCheckIn\Section\GuestCheckInSection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Clock\MockClock;
@@ -91,9 +94,50 @@ final class GuestCheckInPolicyTest extends TestCase
         self::assertSame(2, $this->policy()->companionCount($reservation));
     }
 
+    #[DataProvider('eventTimelineCases')]
+    public function testEventLinkEndsWithItsLastDay(string $now, GuestCheckInLinkState $expected): void
+    {
+        $policy = new GuestCheckInPolicy(new MockClock($now, date_default_timezone_get()));
+
+        self::assertSame($expected, $policy->linkState($this->event(), null, true));
+    }
+
+    /** @return iterable<string, array{0: string, 1: GuestCheckInLinkState}> */
+    public static function eventTimelineCases(): iterable
+    {
+        yield 'last day' => ['2026-10-11 18:00', GuestCheckInLinkState::LOCKED];
+        yield 'stored day after' => ['2026-10-12 08:00', GuestCheckInLinkState::UNAVAILABLE];
+    }
+
+    #[DataProvider('eventSectionCases')]
+    public function testDuringStaySectionEndsWithTheLastDayOfAnEvent(string $now, bool $expected): void
+    {
+        $policy = new GuestCheckInPolicy(new MockClock($now, date_default_timezone_get()));
+        $section = new GuestCheckInSection('door_code', 'a.html.twig', duringStayOnly: true);
+
+        self::assertSame($expected, $policy->isSectionVisible($section, new GuestCheckIn($this->event(), 'selector')));
+    }
+
+    /** @return iterable<string, array{0: string, 1: bool}> */
+    public static function eventSectionCases(): iterable
+    {
+        yield 'first day' => ['2026-10-10 12:00', true];
+        yield 'last day' => ['2026-10-11 18:00', true];
+        yield 'stored day after' => ['2026-10-12 08:00', false];
+    }
+
     private function policy(): GuestCheckInPolicy
     {
         return new GuestCheckInPolicy(new MockClock('2026-09-20 12:00', date_default_timezone_get()));
+    }
+
+    /** Two days, stored up to the day after the second. */
+    private function event(): Reservation
+    {
+        $event = $this->reservation();
+        $event->setAppartment((new Appartment())->setRoomCategory((new RoomCategory())->setKind(RoomCategoryKind::EVENT_SPACE)));
+
+        return $event;
     }
 
     private function reservation(): Reservation

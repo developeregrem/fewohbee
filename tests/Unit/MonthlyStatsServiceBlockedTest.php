@@ -25,6 +25,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * Verifies the additive `blocked` bucket: it sums blocked room/bed days
  * without touching the utilization denominator.
+ *
+ * @phpstan-import-type BuiltMetrics from MonthlyStatsService
  */
 final class MonthlyStatsServiceBlockedTest extends TestCase
 {
@@ -57,6 +59,8 @@ final class MonthlyStatsServiceBlockedTest extends TestCase
 
     /**
      * @param array<string, array{rooms: int, beds: int}> $blockedPerDay
+     *
+     * @return BuiltMetrics
      */
     private function buildMetrics(array $blockedPerDay): array
     {

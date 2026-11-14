@@ -29,6 +29,7 @@ use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -131,6 +132,46 @@ final class PublicBookingGrandTotalTest extends TestCase
         );
     }
 
+    public function testGuestLanguageIsStoredWhileWorkflowsRunInTheInstallationLanguage(): void
+    {
+        $localeSwitcher = new LocaleSwitcher('de', []);
+        $localeSwitcher->setLocale('en');
+        $intlDefault = \Locale::getDefault();
+
+        $dispatchedIn = null;
+        $booker = null;
+        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher->method('dispatch')->willReturnCallback(
+            static function (object $event) use ($localeSwitcher, &$dispatchedIn, &$booker): object {
+                $dispatchedIn = $localeSwitcher->getLocale();
+                $booker = $event instanceof OnlineBookingCreatedEvent ? $event->booker : null;
+
+                return $event;
+            }
+        );
+
+        try {
+            $result = $this->makeService($eventDispatcher, null, $localeSwitcher)->createBooking(
+                new \DateTimeImmutable('2026-06-01'),
+                new \DateTimeImmutable('2026-06-03'),
+                2,
+                1,
+                ['category:1' => [2 => 1]],
+                $this->booker(),
+                [],
+                [1 => 2],
+            );
+
+            self::assertSame('de', $dispatchedIn);
+            self::assertSame('en', $localeSwitcher->getLocale());
+            self::assertInstanceOf(Customer::class, $booker);
+            self::assertSame('en', $booker->getLocale());
+            self::assertSame('12.00', $result['grandTotalFormatted']);
+        } finally {
+            \Locale::setDefault($intlDefault);
+        }
+    }
+
     /** @return array<string, string> */
     private function booker(): array
     {
@@ -146,7 +187,7 @@ final class PublicBookingGrandTotalTest extends TestCase
         ];
     }
 
-    private function makeService(?EventDispatcherInterface $eventDispatcher = null, ?RoomTotal $roomTotal = null): PublicBookingService
+    private function makeService(?EventDispatcherInterface $eventDispatcher = null, ?RoomTotal $roomTotal = null, ?LocaleSwitcher $localeSwitcher = null): PublicBookingService
     {
         $config = new OnlineBookingConfig();
         $config->setEnabled(true);
@@ -225,6 +266,8 @@ final class PublicBookingGrandTotalTest extends TestCase
             $this->zeroPricingService($roomTotal),
             $catRepo,
             $touristTaxService,
+            localeSwitcher: $localeSwitcher,
+            installationLocale: null !== $localeSwitcher ? 'de' : null,
         );
     }
 

@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Entity\Reservation;
 use App\Entity\Role;
 use App\Entity\User;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
@@ -69,21 +73,37 @@ final class NotificationBellTest extends WebTestCase
     {
         $client = static::createClient();
         $client->loginUser($this->createUser('ROLE_ADMIN'));
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $reservation = $em->getRepository(Reservation::class)->findOneBy([]);
+        self::assertInstanceOf(Reservation::class, $reservation);
+        $reservationId = $reservation->getId();
+        $originalConflict = $reservation->isConflict();
+        $originalIgnored = $reservation->isConflictIgnored();
+        $reservation->setIsConflict(true)->setIsConflictIgnored(false);
+        $em->flush();
 
-        $crawler = $client->request('GET', '/notifications/panel');
-        self::assertResponseIsSuccessful();
+        try {
+            $crawler = $client->request('GET', '/notifications/panel');
+            self::assertResponseIsSuccessful();
+            self::assertSelectorExists('a.dropdown-item[data-url*="/reservation/conflicts"]');
 
-        // Whatever is present must open through the shared modal, never navigate.
-        // Entries are links; the "mark all read" button below them carries a
-        // data-url of its own and is not one.
-        foreach ($crawler->filter('a.dropdown-item[data-url]') as $node) {
-            self::assertSame(
-                'click->notifications#openItemAction',
-                $node->getAttribute('data-action'),
-                'Panel entries reuse the shared #modalCenter'
-            );
+            // Entries are links; the "mark all read" button carries its own data-url.
+            $crawler->filter('a.dropdown-item[data-url]')->each(static function (Crawler $item): void {
+                self::assertSame(
+                    'click->notifications#openItemAction',
+                    $item->attr('data-action'),
+                    'Panel entries reuse the shared #modalCenter'
+                );
+            });
+        } finally {
+            $em->getConnection()->update('reservations', [
+                'is_conflict' => $originalConflict,
+                'is_conflict_ignored' => $originalIgnored,
+            ], ['id' => $reservationId], [
+                'is_conflict' => Types::BOOLEAN,
+                'is_conflict_ignored' => Types::BOOLEAN,
+            ]);
         }
-        self::assertTrue(true);
     }
 
     public function testTheReservationOverviewNoLongerCarriesTheReminderButton(): void

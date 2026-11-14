@@ -3,7 +3,7 @@ profile:
     title: Persönliche Daten
     subtitle: Passe deine persönlichen Daten an.
     submit: Speichern
-    saving: Speichern...
+    saving: Speichern…
     updated: Deine Daten wurden aktualisiert.
     password_help: Lasse das Feld leer, um dein aktuelles Passwort zu behalten.
   theme:

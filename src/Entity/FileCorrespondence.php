@@ -10,39 +10,27 @@ use Doctrine\ORM\Mapping as ORM;
 class FileCorrespondence extends Correspondence
 {
     #[ORM\Column(type: 'string', length: 100)]
-    protected $fileName;
+    protected ?string $fileName = null;
 
+    /** @var resource|string|null DBAL hydrates BLOBs as streams; PHP has no native resource property type. */
     #[ORM\Column(type: 'blob', nullable: true)]
-    protected $binaryPayload;
+    protected $binaryPayload = null;
 
-    /**
-     * Set fileName.
-     *
-     * @param string $fileName
-     *
-     * @return FileCorrespondence
-     */
-    public function setFileName($fileName)
+    /** @return $this */
+    public function setFileName(string $fileName): static
     {
         $this->fileName = $fileName;
 
         return $this;
     }
 
-    /**
-     * Get fileName.
-     *
-     * @return string
-     */
-    public function getFileName()
+    public function getFileName(): ?string
     {
         return $this->fileName;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getBinaryPayload()
+    /** Reads stored bytes; reading a hydrated BLOB consumes its stream from the current position. */
+    public function getBinaryPayload(): ?string
     {
         if (null === $this->binaryPayload) {
             return null;
@@ -54,12 +42,8 @@ class FileCorrespondence extends Correspondence
         return $this->binaryPayload;
     }
 
-    /**
-     * @param string|null $binaryPayload
-     *
-     * @return FileCorrespondence
-     */
-    public function setBinaryPayload($binaryPayload)
+    /** @return $this */
+    public function setBinaryPayload(?string $binaryPayload): static
     {
         $this->binaryPayload = $binaryPayload;
 

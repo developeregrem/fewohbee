@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\Service\HousekeepingExportService;
 use App\Service\HousekeepingViewService;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class HousekeepingExportServiceTest extends TestCase
@@ -62,7 +63,7 @@ final class HousekeepingExportServiceTest extends TestCase
         self::assertStringContainsString('Sam Bee', $output);
     }
 
-    private function captureStreamedResponse($response): string
+    private function captureStreamedResponse(StreamedResponse $response): string
     {
         ob_start();
         $response->sendContent();

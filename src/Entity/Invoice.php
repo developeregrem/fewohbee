@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Entity\Enum\PaymentMeansCode;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\InvoiceRepository')]
@@ -17,37 +18,40 @@ class Invoice
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
     #[ORM\Column(type: 'string', length: 45)]
-    private $number;
+    private ?string $number = null;
     #[ORM\Column(type: 'date')]
-    private $date;
+    private ?\DateTime $date = null;
     #[ORM\Column(type: 'string', length: 20, nullable: true)]
-    private $salutation;
+    private ?string $salutation = null;
     #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $firstname;
+    private ?string $firstname = null;
     #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $lastname;
+    private ?string $lastname = null;
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private $company;
+    private ?string $company = null;
     #[ORM\Column(type: 'string', length: 150, nullable: true)]
-    private $address;
+    private ?string $address = null;
     #[ORM\Column(type: 'string', length: 10, nullable: true)]
-    private $zip;
+    private ?string $zip = null;
     #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $city;
+    private ?string $city = null;
     #[ORM\Column(type: 'text', nullable: true)]
-    private $remark;
+    private ?string $remark = null;
     #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $payment;
+    private ?string $payment = null;
     #[ORM\Column(type: 'smallint')]
-    private $status;
-    #[ORM\OneToMany(targetEntity: 'InvoicePosition', mappedBy: 'invoice')]
-    private $positions;
-    #[ORM\OneToMany(targetEntity: 'InvoiceAppartment', mappedBy: 'invoice')]
-    private $appartments;
-    #[ORM\ManyToMany(targetEntity: 'Reservation', mappedBy: 'invoices')]
-    private $reservations;
+    private int $status;
+    /** @var Collection<int, InvoicePosition> */
+    #[ORM\OneToMany(targetEntity: InvoicePosition::class, mappedBy: 'invoice')]
+    private Collection $positions;
+    /** @var Collection<int, InvoiceAppartment> */
+    #[ORM\OneToMany(targetEntity: InvoiceAppartment::class, mappedBy: 'invoice')]
+    private Collection $appartments;
+    /** @var Collection<int, Reservation> */
+    #[ORM\ManyToMany(targetEntity: Reservation::class, mappedBy: 'invoices')]
+    private Collection $reservations;
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $phone = null;
@@ -110,97 +114,101 @@ class Invoice
         $this->status = 1; // not payed yet
     }
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getNumber()
+    public function getNumber(): ?string
     {
         return $this->number;
     }
 
+    /** @throws \TypeError Until the draft has an invoice date. */
     public function getDate(): \DateTime
     {
         return $this->date;
     }
 
-    public function getSalutation()
+    public function getSalutation(): ?string
     {
         return $this->salutation;
     }
 
-    public function getFirstname()
+    public function getFirstname(): ?string
     {
         return $this->firstname;
     }
 
-    public function getLastname()
+    public function getLastname(): ?string
     {
         return $this->lastname;
     }
 
-    public function getCompany()
+    public function getCompany(): ?string
     {
         return $this->company;
     }
 
-    public function getAddress()
+    public function getAddress(): ?string
     {
         return $this->address;
     }
 
-    public function getZip()
+    public function getZip(): ?string
     {
         return $this->zip;
     }
 
-    public function getRemark()
+    public function getRemark(): ?string
     {
         return $this->remark;
     }
 
-    public function getRemarkF()
+    public function getRemarkF(): string
     {
         return nl2br($this->remark ?? '');
     }
 
-    public function getPositions()
+    /** @return Collection<int, InvoicePosition> */
+    public function getPositions(): Collection
     {
         return $this->positions;
     }
 
-    public function getAppartments()
+    /** @return Collection<int, InvoiceAppartment> */
+    public function getAppartments(): Collection
     {
         return $this->appartments;
     }
 
-    public function getCity()
+    public function getCity(): ?string
     {
         return $this->city;
     }
 
-    public function getReservations()
+    /** @return Collection<int, Reservation> */
+    public function getReservations(): Collection
     {
         return $this->reservations;
     }
 
-    public function getPayment()
+    public function getPayment(): ?string
     {
         return $this->payment;
     }
 
-    public function getStatus()
+    public function getStatus(): int
     {
         return $this->status;
     }
 
-    public function setId($id): void
+    public function setId(int $id): void
     {
         $this->id = $id;
     }
 
-    public function setNumber($number): void
+    public function setNumber(string $number): void
     {
         $this->number = $number;
     }
@@ -215,91 +223,94 @@ class Invoice
         $this->subsidiary = $subsidiary;
     }
 
-    public function setDate($date): void
+    public function setDate(\DateTime $date): void
     {
         $this->date = $date;
     }
 
-    public function setSalutation($salutation): void
+    public function setSalutation(?string $salutation): void
     {
         $this->salutation = $salutation;
     }
 
-    public function setFirstname($firstname): void
+    public function setFirstname(?string $firstname): void
     {
         $this->firstname = $firstname;
     }
 
-    public function setLastname($lastname): void
+    public function setLastname(?string $lastname): void
     {
         $this->lastname = $lastname;
     }
 
-    public function setCompany($company): void
+    public function setCompany(?string $company): void
     {
         $this->company = $company;
     }
 
-    public function setAddress($address): void
+    public function setAddress(?string $address): void
     {
         $this->address = $address;
     }
 
-    public function setZip($zip): void
+    public function setZip(?string $zip): void
     {
         $this->zip = $zip;
     }
 
-    public function setCity($city): void
+    public function setCity(?string $city): void
     {
         $this->city = $city;
     }
 
-    public function setRemark($remark): void
+    public function setRemark(?string $remark): void
     {
         $this->remark = $remark;
     }
 
-    public function setPayment($payment): void
+    public function setPayment(?string $payment): void
     {
         $this->payment = $payment;
     }
 
-    public function setStatus($status): void
+    public function setStatus(int $status): void
     {
         $this->status = $status;
     }
 
-    public function setPositions($positions): void
+    /** @param Collection<int, InvoicePosition> $positions */
+    public function setPositions(Collection $positions): void
     {
         $this->positions = $positions;
     }
 
-    public function setAppartments($appartments): void
+    /** @param Collection<int, InvoiceAppartment> $appartments */
+    public function setAppartments(Collection $appartments): void
     {
         $this->appartments = $appartments;
     }
 
-    public function setReservations($reservations): void
+    /** @param Collection<int, Reservation> $reservations */
+    public function setReservations(Collection $reservations): void
     {
         $this->reservations = $reservations;
     }
 
-    public function addAppartment(InvoiceAppartment $appartment)
+    public function addAppartment(InvoiceAppartment $appartment): static
     {
         $this->appartments[] = $appartment;
 
         return $this;
     }
 
-    public function addPosition(InvoicePosition $position)
+    public function addPosition(InvoicePosition $position): static
     {
         $this->positions[] = $position;
 
         return $this;
     }
 
-    public function addReservation(Reservation $reservation)
+    public function addReservation(Reservation $reservation): static
     {
         $this->reservations[] = $reservation;
 
@@ -388,8 +399,8 @@ class Invoice
 
     public function getCardNumberShort(): ?string
     {
-        if (strlen($this->cardNumber) < 10) {
-            return $this->cardNumber; // Not enough characters to mask
+        if (null === $this->cardNumber || strlen($this->cardNumber) < 10) {
+            return $this->cardNumber;
         }
 
         return substr($this->cardNumber, -10);

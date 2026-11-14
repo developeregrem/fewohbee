@@ -147,9 +147,15 @@ class ProcessScheduledWorkflowsCommand extends Command
             }
 
             $entityClass = $trigger->getEntityClass();
+            if (null === $entityClass) {
+                throw new \LogicException(sprintf(
+                    'Scheduled trigger "%s" returned entity IDs without an entity class.',
+                    $triggerType,
+                ));
+            }
 
             // Phase 2: batch dedup — one query instead of N individual checks
-            $processedIds = ($workflowId !== null && $entityClass !== null)
+            $processedIds = $workflowId !== null
                 ? $this->workflowLogRepository->findProcessedEntityIds($workflowId, $entityClass)
                 : [];
 

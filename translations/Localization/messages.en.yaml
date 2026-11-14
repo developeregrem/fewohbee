@@ -1,0 +1,9 @@
+content_translations:
+    toggle: "Translations"
+    filled: "%language%: translated"
+    missing: "%language%: not translated yet"
+    fallback_hint: "If a field is left empty, guests see the text in %language%."
+guest_locales:
+    label: "Languages for guests"
+    help: "Online booking and online check-in offer their pages in these languages. For each additional language you can translate texts such as room descriptions or booking terms. The language of this installation is always included."
+    switcher_label: "Language"

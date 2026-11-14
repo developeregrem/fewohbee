@@ -35,12 +35,14 @@ class WebauthnCredential
     #[ORM\Column(type: 'string', length: 255)]
     private string $type;
 
+    /** @var array<string> */
     #[ORM\Column(type: 'json')]
     private array $transports;
 
     #[ORM\Column(name: 'attestation_type', type: 'string', length: 255)]
     private string $attestationType;
 
+    /** @var array<mixed> Stored attestation data is not interpreted during authentication. */
     #[ORM\Column(name: 'trust_path', type: 'json')]
     private array $trustPath;
 
@@ -56,6 +58,7 @@ class WebauthnCredential
     #[ORM\Column(type: 'integer')]
     private int $counter;
 
+    /** @var array<string, mixed>|null Extension data defined by the WebAuthn library. */
     #[ORM\Column(name: 'other_ui', type: 'json', nullable: true)]
     private ?array $otherUI = null;
 
@@ -157,6 +160,7 @@ class WebauthnCredential
         return $this->type;
     }
 
+    /** @return array<string> */
     public function getTransports(): array
     {
         return $this->transports;

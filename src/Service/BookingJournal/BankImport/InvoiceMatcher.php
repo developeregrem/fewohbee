@@ -9,7 +9,6 @@ use App\Entity\Invoice;
 use App\Repository\InvoiceRepository;
 use App\Service\InvoiceNumberGenerator;
 use App\Service\InvoiceService;
-use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * Maps a {@see ImportState} line to an existing {@see Invoice}, if any.
@@ -127,8 +126,8 @@ final class InvoiceMatcher
         $vats = [];
 
         $this->invoiceService->calculateSums(
-            $invoice->getAppartments() ?? new ArrayCollection(),
-            $invoice->getPositions() ?? new ArrayCollection(),
+            $invoice->getAppartments(),
+            $invoice->getPositions(),
             $vats,
             $brutto,
             $netto,

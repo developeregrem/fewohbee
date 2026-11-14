@@ -201,6 +201,21 @@ final class McpServerTest extends WebTestCase
         self::assertSame(McpToolCallOutcome::DENIED, $this->latestAudit('get_property_overview')?->getOutcome());
     }
 
+    public function testPropertyOverviewNamesTheKindOfEachRoomCategory(): void
+    {
+        $this->configureMcp(enabled: true);
+        [, $token] = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS, ApiScope::RESERVATIONS_READ]);
+
+        $result = $this->callTool($token, 'get_property_overview');
+
+        self::assertFalse($result['isError'] ?? false);
+        $categories = $result['structuredContent']['roomCategories'];
+        self::assertNotEmpty($categories);
+        foreach ($categories as $category) {
+            self::assertContains($category['kind'], ['accommodation', 'event_space']);
+        }
+    }
+
     public function testScopeDoesNotExceedTheOwnersRoles(): void
     {
         $this->configureMcp(enabled: true);
@@ -332,13 +347,13 @@ final class McpServerTest extends WebTestCase
 
         $result = $this->callTool($token, 'get_rate_calendar', [
             'apartmentId' => (int) $apartment->getId(),
-            'objectId' => (int) $apartment->getObject()?->getId(),
+            'objectId' => (int) $apartment->getObject()->getId(),
             'start' => $start->format('Y-m-d'),
             'end' => $end->format('Y-m-d'),
             'originId' => (int) $origin->getId(),
         ]);
         self::assertFalse($result['isError'] ?? false, (string) json_encode($result));
-        self::assertSame($apartment->getObject()?->getId(), $result['structuredContent']['branch']['id']);
+        self::assertSame($apartment->getObject()->getId(), $result['structuredContent']['branch']['id']);
         $periods = $result['structuredContent']['periods'];
         self::assertSame($start->format('Y-m-d'), $periods[0]['firstNight']);
         self::assertSame($end->format('Y-m-d'), $periods[array_key_last($periods)]['lastNight']);
@@ -378,7 +393,7 @@ final class McpServerTest extends WebTestCase
         [$set, $removed, $byHand] = array_column($args['nights'], 'night');
         $apartment = $this->em()->getRepository(Appartment::class)->findOneBy(['active' => true], ['id' => 'ASC']);
         self::assertInstanceOf(Appartment::class, $apartment);
-        $manual = new DayPrice($apartment->getObject() ?? self::fail('Room without subsidiary.'), $apartment->getRoomCategory() ?? self::fail('Room without category.'), new \DateTimeImmutable($byHand));
+        $manual = new DayPrice($apartment->getObject(), $apartment->getRoomCategory() ?? self::fail('Room without category.'), new \DateTimeImmutable($byHand));
         $manual->set(150.0, $args['persons'], DayPriceSource::MANUAL, null, new \DateTimeImmutable());
         $this->em()->persist($manual);
         $this->em()->flush();
@@ -432,7 +447,7 @@ final class McpServerTest extends WebTestCase
             'firstNight' => (new \DateTimeImmutable('+705 days'))->format('Y-m-d'),
             'lastNight' => (new \DateTimeImmutable('+707 days'))->format('Y-m-d'),
             'percent' => 20,
-            'objectIds' => [(int) $apartment->getObject()?->getId()],
+            'objectIds' => [(int) $apartment->getObject()->getId()],
         ];
         $ruleId = null;
 
@@ -737,6 +752,30 @@ final class McpServerTest extends WebTestCase
         self::assertFalse($result['isError'] ?? false);
     }
 
+    public function testATokenCanBeRevokedOnTheSettingsPage(): void
+    {
+        $this->configureMcp(enabled: true);
+        $admin = $this->createUserWithToken(['ROLE_ADMIN'], [ApiScope::MCP_ACCESS])[0];
+        $token = $this->em()->getRepository(\App\Entity\ApiToken::class)->findOneBy(['user' => $admin]);
+        self::assertNotNull($token);
+        $tokenId = $token->getId();
+        $this->client->loginUser($admin);
+
+        $crawler = $this->client->request('GET', '/settings/mcp');
+        self::assertResponseIsSuccessful();
+        // The confirmation popover only starts inside a controller that enables it.
+        $icon = $crawler->filter('[data-controller~="settings"] [data-popover="delete"]')
+            ->reduce(static fn (Crawler $node): bool => str_contains((string) $node->attr('data-bs-content'), '/settings/mcp/tokens/'.$tokenId.'/revoke'));
+        self::assertCount(1, $icon);
+
+        $popover = new Crawler((string) $icon->attr('data-bs-content'));
+        $this->client->request('DELETE', (string) $popover->filter('form')->attr('action'), ['_token' => $popover->filter('input[name="_token"]')->attr('value')]);
+
+        self::assertResponseStatusCodeSame(204);
+        $this->em()->clear();
+        self::assertNull($this->em()->find(\App\Entity\ApiToken::class, $tokenId));
+    }
+
     public function testInvalidHostsAreNotSaved(): void
     {
         $this->configureMcp(enabled: true);
@@ -956,6 +995,7 @@ final class McpServerTest extends WebTestCase
             (string) static::getContainer()->get('translator')->trans('profile.apitokens.mcp.usage_hint'),
             $crawler->filter('#api-tokens .alert-success')->text()
         );
+        $this->assertTokenIsShownOnce($crawler, $token);
     }
 
     public function testRestTokenIgnoresAiOptions(): void
@@ -974,6 +1014,7 @@ final class McpServerTest extends WebTestCase
         $token = $this->em()->getRepository(\App\Entity\ApiToken::class)->findOneBy(['user' => $admin, 'name' => 'Calendar']);
         self::assertNotNull($token);
         self::assertSame([ApiScope::CALENDAR_READ->value], $token->getScopes());
+        $this->assertTokenIsShownOnce($this->client->followRedirect(), $token);
     }
 
     public function testRestApiRejectsAiTokens(): void
@@ -1004,6 +1045,28 @@ final class McpServerTest extends WebTestCase
         ]);
 
         self::assertNull($this->em()->getRepository(\App\Entity\ApiToken::class)->findOneBy(['user' => $admin, 'name' => 'Claude']));
+    }
+
+    private function assertTokenIsShownOnce(Crawler $crawler, \App\Entity\ApiToken $token): void
+    {
+        self::assertResponseIsSuccessful();
+        $input = $crawler->filter('#api-tokens .alert-success input[data-copy-target="input"]');
+        self::assertCount(1, $input);
+        $plainToken = (string) $input->attr('value');
+        self::assertStringStartsWith('fwb_', $plainToken);
+        self::assertSame($token->getTokenHash(), ApiTokenService::hash($plainToken));
+        self::assertSame(1, substr_count((string) $this->client->getResponse()->getContent(), $plainToken));
+        self::assertSelectorNotExists('.alert-api_token_plain');
+        self::assertSelectorTextContains(
+            '#flash-message-container .alert-success',
+            (string) static::getContainer()->get('translator')->trans('profile.apitokens.created'),
+        );
+
+        $this->client->request('GET', '/profile/');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('#api-tokens .alert-success input[data-copy-target="input"]');
+        self::assertStringNotContainsString($plainToken, (string) $this->client->getResponse()->getContent());
     }
 
     /**
@@ -1191,7 +1254,7 @@ final class McpServerTest extends WebTestCase
 
         return [
             'roomCategoryId' => (int) $category->getId(),
-            'objectId' => (int) $apartment->getObject()?->getId(),
+            'objectId' => (int) $apartment->getObject()->getId(),
             'persons' => $occupancies[0],
             'nights' => $nights,
         ];

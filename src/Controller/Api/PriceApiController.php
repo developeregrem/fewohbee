@@ -141,7 +141,7 @@ class PriceApiController extends AbstractController
         }
 
         $subsidiary = $this->resolveSubsidiary($request);
-        if (null !== $apartment && null !== $subsidiary && $apartment->getObject()?->getId() !== $subsidiary->getId()) {
+        if (null !== $apartment && null !== $subsidiary && $apartment->getObject()->getId() !== $subsidiary->getId()) {
             throw new BadRequestHttpException("The apartment does not belong to 'objectId'.");
         }
         $sampleRoom = $apartment ?? (null !== $subsidiary
@@ -167,7 +167,7 @@ class PriceApiController extends AbstractController
             'end' => $lastNight->format('Y-m-d'),
             'nights' => $nights,
             'roomCategoryId' => $roomCategory->getId(),
-            'objectId' => $sampleRoom->getObject()?->getId(),
+            'objectId' => $sampleRoom->getObject()->getId(),
             'occupancies' => $occupancies,
             'origin' => ['id' => (int) $origin->getId(), 'name' => $origin->getName()],
         ]);
@@ -276,7 +276,7 @@ class PriceApiController extends AbstractController
         }
 
         // Without an explicit occupancy, report every one the category actually has a
-        // price for — numberOfPersons is matched exactly, so any other value is empty.
+        // price for — numberOfPersons is matched exactly, so without a surcharge price any other value is empty.
         $occupancies = $this->priceRepository->findOccupanciesForRoomCategory($roomCategory);
 
         return [] === $occupancies ? [] : $occupancies;

@@ -10,6 +10,7 @@ use App\Entity\RoomCategory;
 use App\Repository\AppartmentRepository;
 use App\Repository\ReservationRepository;
 use App\Service\AvailabilityService;
+use App\Service\Localization\ContentTranslator;
 use App\Service\RoomCategoryImageService;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -24,6 +25,7 @@ class PublicAvailabilityService
         private readonly RoomCategoryImageService $imageService,
         private readonly TranslatorInterface $translator,
         private readonly AvailabilityService $availabilityService,
+        private readonly ?ContentTranslator $contentTranslator = null,
     ) {
     }
 
@@ -92,9 +94,7 @@ class PublicAvailabilityService
 
             $category = $room->getRoomCategory();
             $typeKey = $category ? 'category:'.$category->getId() : 'apartment:'.$room->getId();
-            $typeLabel = $category
-                ? (string) ($category->getName() ?? $category->getAcronym() ?? 'Room')
-                : trim(sprintf('%s - %s', (string) $room->getNumber(), (string) $room->getDescription()));
+            $typeLabel = $this->typeLabel($room);
             $typeDescription = $category ? $this->buildCategoryDescription($category) : null;
             $roomId = (int) $room->getId();
             $bedsMax = (int) $room->getBedsMax();
@@ -272,9 +272,7 @@ class PublicAvailabilityService
 
         return [[
             'typeKey' => $category instanceof RoomCategory ? 'category:'.$category->getId() : 'apartment:'.$roomId,
-            'typeLabel' => $category instanceof RoomCategory
-                ? (string) ($category->getName() ?? $category->getAcronym() ?? 'Room')
-                : trim(sprintf('%s - %s', (string) $room->getNumber(), (string) $room->getDescription())),
+            'typeLabel' => $this->typeLabel($room),
             'typeDescription' => $category instanceof RoomCategory ? $this->buildCategoryDescription($category) : null,
             'maxGuests' => $capacity,
             'availableCount' => 1,
@@ -390,10 +388,24 @@ class PublicAvailabilityService
         return $counts;
     }
 
+    /** Room type name guests see: the category in their language, else number and description. */
+    private function typeLabel(Appartment $room): string
+    {
+        $category = $room->getRoomCategory();
+        if (null !== $category) {
+            return (string) ($this->contentTranslator?->text($category, 'name') ?? $category->getName()
+                ?? $category->getAcronym() ?? $this->translator->trans('online_booking.public.room_fallback'));
+        }
+
+        $description = $this->contentTranslator?->text($room, 'description') ?? $room->getDescription();
+
+        return trim(sprintf('%s - %s', (string) $room->getNumber(), (string) $description));
+    }
+
     /** Return the optional public-facing room category description. */
     private function buildCategoryDescription(RoomCategory $category): ?string
     {
-        $details = trim((string) $category->getDetails());
+        $details = trim((string) ($this->contentTranslator?->text($category, 'details') ?? $category->getDetails()));
 
         if ('' === $details) {
             return null;

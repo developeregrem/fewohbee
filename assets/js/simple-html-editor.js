@@ -139,7 +139,9 @@ export function createSimpleHtmlEditor(editorContainer, initialContent, options 
             PreserveStyleAndClass,
             FontFamily,
             FontSize,
-            Table.configure({ resizable: false }),
+            // No columns to drag here, so no TableView: it would replace a width set on the table
+            // with a min-width in the editor, while the sent HTML keeps the width.
+            Table.configure({ resizable: false, View: null }),
             TableRow,
             TableHeader,
             TableCell,

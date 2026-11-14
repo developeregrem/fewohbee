@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Dto\GuestCheckIn\GuestCheckInGuest;
 use App\Dto\GuestCheckIn\GuestCheckInSubmission;
 use App\Dto\GuestCheckIn\GuestCheckInVerification;
+use App\Entity\Enum\GuestCheckInFieldMode;
 use App\Entity\Enum\GuestCheckInStatus;
 use App\Entity\GuestCheckIn;
 use App\Form\GuestCheckInType;
@@ -22,14 +23,14 @@ use App\Service\GuestCheckIn\GuestCheckInSubmissionService;
 use App\Service\GuestCheckIn\GuestCheckInTokenSigner;
 use App\Service\GuestCheckIn\GuestCheckInVerifier;
 use App\Service\GuestCheckIn\Section\GuestCheckInSections;
+use App\Service\Localization\GuestLocaleService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Translation\LocaleSwitcher;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Public online check-in page, reached through the link a guest received.
@@ -42,8 +43,6 @@ use Symfony\Component\Translation\LocaleSwitcher;
  */
 final class PublicGuestCheckInController extends AbstractController
 {
-    private const SUPPORTED_LOCALES = ['de', 'en'];
-
     /** Sent by the language buttons on the form page (base template); see index(). */
     private const SWITCH_LANGUAGE_FIELD = 'switch_language';
 
@@ -60,9 +59,8 @@ final class PublicGuestCheckInController extends AbstractController
         private readonly GuestCheckInSubmissionService $submissionService,
         private readonly GuestCheckInFormDataFactory $formDataFactory,
         private readonly GuestCheckInExtrasService $extrasService,
-        private readonly LocaleSwitcher $localeSwitcher,
-        #[Autowire('%kernel.default_locale%')]
-        private readonly string $installationLocale,
+        private readonly GuestLocaleService $guestLocales,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -74,7 +72,8 @@ final class PublicGuestCheckInController extends AbstractController
     )]
     public function index(Request $request, string $token): Response
     {
-        $locale = $this->applyLocale($request);
+        // Explicit ?lang= wins, then the browser's languages, then the installation's language.
+        $locale = $this->guestLocales->applyToRequest($request);
 
         if ($this->rateLimiter->isLinkGuessingBlocked($request)) {
             return $this->unavailable(Response::HTTP_TOO_MANY_REQUESTS);
@@ -132,7 +131,8 @@ final class PublicGuestCheckInController extends AbstractController
                 'companion_count' => $companionCount,
                 'stored_id_hint' => $otherGuestForm ? null : $this->formDataFactory->storedIdNumberHint($checkIn),
                 'extras' => $selectableExtras,
-                'action' => $this->pageUrl($request, $token, ['edit' => 1]),
+                // The other guest's form has to come back as such, or the POST is taken for the first guest.
+                'action' => $this->pageUrl($request, $token, $otherGuestForm ? ['edit' => 1, 'main' => 'other'] : ['edit' => 1]),
             ];
             $form = $this->createForm(GuestCheckInType::class, $formData, $formOptions);
             $form->handleRequest($request);
@@ -146,9 +146,17 @@ final class PublicGuestCheckInController extends AbstractController
                     return $this->unavailable(Response::HTTP_TOO_MANY_REQUESTS);
                 }
 
+                /** @var GuestCheckInSubmission $submission */
+                $submission = $form->getData();
+                // The form lets the field stay empty while a number is on file, without knowing whose it is.
+                if (GuestCheckInFieldMode::REQUIRED === $config->getIdDocumentMode()
+                    && null !== $formOptions['stored_id_hint']
+                    && null === $submission->mainGuest->idNumber
+                    && !$this->formDataFactory->keepsStoredIdNumber($checkIn, $submission->mainGuest)) {
+                    $form->get('mainGuest')->get('idNumber')->addError(new FormError($this->translator->trans('guest_checkin.id_number_other_person', [], 'validators')));
+                }
+
                 if ($form->isValid()) {
-                    /** @var GuestCheckInSubmission $submission */
-                    $submission = $form->getData();
                     try {
                         $this->submissionService->submit($checkIn, $submission, $locale, $config);
                         $this->rateLimiter->registerSubmission($checkIn->getSelector());
@@ -158,7 +166,8 @@ final class PublicGuestCheckInController extends AbstractController
                         if ([] === $submission->extras) {
                             throw $exception;
                         }
-                        $form->addError(new FormError('guest_checkin.public.extras.changed'));
+                        // FormError carries finished text; the theme prints it as it is.
+                        $form->addError(new FormError($this->translator->trans('guest_checkin.public.extras.changed', [], 'validators')));
                     }
                 }
             }
@@ -173,6 +182,8 @@ final class PublicGuestCheckInController extends AbstractController
             'extras' => $selectableExtras,
             'bookedExtras' => $bookedExtras,
             'existingRequestedExtras' => $existingRequestedExtras,
+            // Requests stored with the check-in carry the stored names; guests read them in their language.
+            'extraLabels' => array_column($extras, 'label', 'id'),
             'extrasChanged' => $extrasChanged,
             'canStartOtherGuest' => $canStartOtherGuest,
             'otherGuestForm' => $otherGuestForm,
@@ -192,6 +203,7 @@ final class PublicGuestCheckInController extends AbstractController
         $reservation = $checkIn->getReservation();
         $form = $this->createForm(GuestCheckInVerificationType::class, new GuestCheckInVerification(), [
             'ask_last_name' => $this->verifier->asksLastName($reservation),
+            'event_space' => $reservation->isEventSpace(),
             'action' => $this->pageUrl($request, $token),
         ]);
         $form->handleRequest($request);
@@ -224,21 +236,6 @@ final class PublicGuestCheckInController extends AbstractController
         ], new Response(status: $failed ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK)));
     }
 
-    /** Explicit ?lang= wins, then the browser's languages, then the installation's language. */
-    private function applyLocale(Request $request): string
-    {
-        $requested = $request->query->getString('lang');
-        $locale = \in_array($requested, self::SUPPORTED_LOCALES, true)
-            ? $requested
-            : $request->getPreferredLanguage(array_values(array_unique([$this->installationLocale, ...self::SUPPORTED_LOCALES])));
-        $locale = \in_array($locale, self::SUPPORTED_LOCALES, true) ? $locale : $this->installationLocale;
-
-        $request->setLocale($locale);
-        $this->localeSwitcher->setLocale($locale);
-
-        return $locale;
-    }
-
     /**
      * Keeps an explicitly chosen language across redirects and form posts.
      *
@@ -246,9 +243,9 @@ final class PublicGuestCheckInController extends AbstractController
      */
     private function pageUrl(Request $request, string $token, array $parameters = []): string
     {
-        $lang = $request->query->getString('lang');
-        if (\in_array($lang, self::SUPPORTED_LOCALES, true)) {
-            $parameters['lang'] = $lang;
+        $lang = $this->guestLocales->requestedLocale($request);
+        if (null !== $lang) {
+            $parameters[GuestLocaleService::QUERY_PARAMETER] = $lang;
         }
 
         return $this->generateUrl(GuestCheckInLinkService::ROUTE, ['token' => $token, ...$parameters]);

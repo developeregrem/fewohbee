@@ -95,6 +95,24 @@ final class PricePromiseTest extends TestCase
         self::assertSame([['Weekend', 10.0], ['Fair', 2.5]], $night->adjustment->rules);
     }
 
+    public function testAPerRoomNightKeepsItsSurchargeForFurtherPersons(): void
+    {
+        $promise = new PricePromise('2026-10-02', 'ctx', ['2026-12-20' => new PromisedNight(17, '80.00', false, true, true, [], null, '15.00', 2)], []);
+
+        $night = PricePromise::fromArray($promise->toArray())?->night(new \DateTimeImmutable('2026-12-20'));
+
+        self::assertSame('15.00', $night?->extraPersonSurcharge);
+        self::assertSame(2, $night->includedPersons);
+    }
+
+    public function testAPromiseFromBeforeTheSurchargeReadsWithoutOne(): void
+    {
+        $stored = (new PricePromise('2026-10-02', 'ctx', ['2026-12-20' => new PromisedNight(17, '80.00', false, true, true)], []))->toArray();
+
+        self::assertArrayNotHasKey('s', $stored['n'][0]);
+        self::assertNull(PricePromise::fromArray($stored)?->night(new \DateTimeImmutable('2026-12-20'))?->extraPersonSurcharge);
+    }
+
     /** @return iterable<string, array{0: array<string, mixed>|null}> */
     public static function unreadablePromises(): iterable
     {

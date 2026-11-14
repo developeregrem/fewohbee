@@ -18,7 +18,6 @@ use App\Interfaces\ITemplatePreviewProvider;
 use App\Service\HousekeepingViewService;
 use App\Service\OperationsFilterService;
 use App\Service\OperationsReportService;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -27,7 +26,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
 {
     public function __construct(
-        private readonly EntityManagerInterface $em,
         private readonly OperationsReportService $operationsReportService,
         private readonly OperationsFilterService $filterService,
         private readonly HousekeepingViewService $housekeepingViewService,

@@ -36,7 +36,7 @@ class FrontdeskViewService
                 }
 
                 $startKey = $reservation->getStartDate()->format('Y-m-d');
-                $endKey = $reservation->getEndDate()->format('Y-m-d');
+                $endKey = $reservation->getVisibleEndDate()->format('Y-m-d');
                 $categories = [];
                 if ($startKey === $dateKey) {
                     $categories[] = 'arrival';

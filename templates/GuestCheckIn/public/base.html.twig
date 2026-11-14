@@ -81,7 +81,7 @@
                            posts what was typed so far (PublicGuestCheckInController), so nothing is lost. #}
                         {% set keep = (app.request.query.has('edit') ? {'edit': 1} : {}) + (app.request.query.get('main') == 'other' ? {'main': 'other'} : {}) %}
                         {% set checkInForm = form is defined and form and form.vars.name == 'guest_check_in' ? form : null %}
-                        {% for lang in ['de', 'en'] %}
+                        {% for lang in guest_locales() %}
                             {% if checkInForm %}
                                 <button type="submit" form="{{ checkInForm.vars.id }}" formaction="{{ path('public.guest_checkin', {'token': token, 'lang': lang, 'edit': 1} + keep) }}" formnovalidate
                                         name="switch_language" value="1" lang="{{ lang }}"{% if app.request.locale == lang %} aria-current="true"{% endif %}>{{ lang|upper }}</button>

@@ -67,6 +67,42 @@ final class TouristTaxServicePercentTest extends TestCase
         self::assertSame([], $service->calculateForReservation($r));
     }
 
+    public function testPercentTaxCombinesValidityAndReportRangeAcrossDaylightSavingTime(): void
+    {
+        $timezone = new \DateTimeZone('Europe/Berlin');
+        $start = new \DateTime('2026-03-28', $timezone);
+        $end = new \DateTime('2026-04-02', $timezone);
+        $originalStart = $start->format('Y-m-d H:i:s.u e P');
+        $originalEnd = $end->format('Y-m-d H:i:s.u e P');
+        $tax = $this->makeTax('City tax', TaxCalculationMode::PERCENT_PER_ROOM, '5.00', PercentageBase::NET);
+        $tax->setValidFrom(new \DateTime('2026-03-30', $timezone));
+        $tax->setValidTo(new \DateTime('2026-04-01', $timezone));
+        $service = $this->makeService([$tax], [
+            '2026-03-28' => 80.0,
+            '2026-03-29' => 100.0,
+            '2026-03-30' => 120.0,
+            '2026-03-31' => 160.0,
+            '2026-04-01' => 200.0,
+        ]);
+        $reservation = $this->makeReservation([1 => 2], '2026-03-28', '2026-04-02');
+        $reservation->setStartDate($start);
+        $reservation->setEndDate($end);
+        $rangeStart = new \DateTimeImmutable('2026-03-29 00:00:00', new \DateTimeZone('UTC'));
+        $rangeEnd = new \DateTimeImmutable('2026-03-31 23:59:59', new \DateTimeZone('UTC'));
+
+        $rows = $service->calculateForReservation($reservation, $rangeStart, $rangeEnd);
+
+        self::assertCount(1, $rows);
+        self::assertSame(2, $rows[0]->nights);
+        self::assertSame(280.0, $rows[0]->apartmentBase);
+        self::assertSame(14.0, $rows[0]->total());
+        self::assertEquals($rows, $service->calculateForReservation($reservation, $rangeStart, $rangeEnd));
+        self::assertSame($start, $reservation->getStartDate());
+        self::assertSame($end, $reservation->getEndDate());
+        self::assertSame($originalStart, $start->format('Y-m-d H:i:s.u e P'));
+        self::assertSame($originalEnd, $end->format('Y-m-d H:i:s.u e P'));
+    }
+
     public function testFlatModeStillProducesIdenticalLegacyResult(): void
     {
         // Regression: ein PER_NIGHT_FLAT-Tax verhält sich exakt wie früher.
@@ -133,6 +169,7 @@ final class TouristTaxServicePercentTest extends TestCase
         return $tax;
     }
 
+    /** @param array<int, int> $guestCounts */
     private function makeReservation(array $guestCounts, string $start, string $end): Reservation
     {
         $r = new Reservation();

@@ -1,3 +1,4 @@
+<div class="table-responsive">
 <table class="table table-bordered table-hover">
     <thead>
     <tr>
@@ -45,5 +46,6 @@
     {% endfor %}
     </tbody>
 </table>
+</div>
 <input id="page" type="hidden" name="page" value="{{ page }}" data-customers-target="page" />
 {% include 'paginator.html.twig' with { 'url' : path('customers.overview'), 'pagination_action': 'click->customers#paginateAction' } %}

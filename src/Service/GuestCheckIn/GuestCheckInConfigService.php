@@ -7,7 +7,7 @@ namespace App\Service\GuestCheckIn;
 use App\Entity\GuestCheckInConfig;
 use App\Repository\GuestCheckInConfigRepository;
 use App\Repository\OnlineBookingConfigRepository;
-use App\Service\AppSettingsService;
+use App\Service\Localization\GuestSalutations;
 use Doctrine\ORM\EntityManagerInterface;
 
 class GuestCheckInConfigService
@@ -17,8 +17,8 @@ class GuestCheckInConfigService
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly GuestCheckInConfigRepository $repository,
-        private readonly AppSettingsService $appSettingsService,
         private readonly OnlineBookingConfigRepository $onlineBookingConfigRepository,
+        private readonly GuestSalutations $salutations,
     ) {
     }
 
@@ -58,17 +58,14 @@ class GuestCheckInConfigService
     }
 
     /**
-     * Salutations the guest form offers: the configured ones as stored (untranslated), blanks
-     * dropped.
+     * Salutations the guest form offers: wording in the guest's language => the stored
+     * salutation, which the form submits.
      *
-     * @return list<string>
+     * @return array<string, string>
      */
     public function offeredSalutations(): array
     {
-        return array_values(array_filter(
-            $this->appSettingsService->getSettings()->getCustomerSalutations(),
-            static fn (string $salutation): bool => '' !== trim($salutation),
-        ));
+        return $this->salutations->choices();
     }
 
     /** Same accent colour as the online booking page, read without creating its settings row. */

@@ -17,7 +17,7 @@ guest_category:
 
   warning:
     no_adult: "This booking contains no adult guest. Enable the override below to save anyway."
-    over_capacity: "Room bed capacity reached."
+    over_capacity: "Maximum number of people for the room reached."
 
   field:
     name: "Name"

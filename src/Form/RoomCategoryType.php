@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\Amenity;
+use App\Entity\Enum\RoomCategoryKind;
 use App\Entity\RoomCategory;
 use App\Repository\AmenityRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -29,10 +31,22 @@ class RoomCategoryType extends AbstractType
 
         $builder
             ->add('name', TextType::class, ['empty_data' => ''])
+            ->add('kind', EnumType::class, [
+                'class' => RoomCategoryKind::class,
+                'label' => 'category.kind',
+                'expanded' => true,
+                'choice_label' => static fn (RoomCategoryKind $kind): string => $kind->labelKey(),
+            ])
             ->add('acronym', TextType::class, ['label' => 'category.acronym'])
             ->add('details', TextareaType::class, [
                 'label' => 'category.details',
                 'required' => false,
+            ])
+            ->add('translations', ContentTranslationsType::class, [
+                'fields' => [
+                    'name' => ['max_length' => 255],
+                    'details' => ['type' => TextareaType::class],
+                ],
             ])
             ->add('minFullPayers', IntegerType::class, [
                 'label' => 'category.min_full_payers',

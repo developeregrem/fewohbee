@@ -1,25 +1,143 @@
+price.abbreviation.alldays: Immer
+price.abbreviation.friday: Fr
+price.abbreviation.monday: Mo
+price.abbreviation.saturday: Sa
+price.abbreviation.sunday: So
+price.abbreviation.thursday: Do
+price.abbreviation.tuesday: Di
+price.abbreviation.wednesday: Mi
+price.active: Aktiv
+price.alldays: Immer
+price.appartment: Zimmerpreis
+price.appartment.hint: 'Nur auszufüllen, wenn Typ: Zimmerpreis gewählt.'
+price.breakfast: Frühstück
+price.category: Zimmerkategorie
+price.category.all: 'Alle Kategorien'
+price.category.misc.hint: 'Optional: Ohne Auswahl gilt der Preis für alle Zimmerkategorien.'
+price.overview.section.appartment: Zimmerpreise
+price.overview.section.miscellaneous: 'Sonstige Preise'
+price.category.appartment.hint: 'Der Preis gilt für jede ausgewählte Zimmerkategorie.'
+price.collapsable.group.1.description: Allgemein
+price.collapsable.group.2.description: 'Saisonale Informationen'
+price.collapsable.group.3.description: 'Appartment spezifisch'
+price.collapsable.group.4.description: 'Paket mit mehreren Steuersätzen (optional)'
+price.package.enable: 'Als Paket konfigurieren'
+price.package.hint: 'Teile diesen Preis in Komponenten mit unterschiedlichen Steuersätzen auf (z. B. Speisen 7 %, Getränke 19 %). Die Komponenten erscheinen als separate Rechnungspositionen.'
+price.package.col.description: Beschreibung
+price.package.col.vat: USt
+price.package.col.allocation_type: Art
+price.package.col.value: Wert
+price.package.col.remainder: Rest
+price.package.col.revenue_account: Erlöskonto
+price.revenue_account: Erlöskonto
+price.revenue_account.default: 'Standard (aus Steuersatz)'
+price.revenue_account.help: 'Optional und nur in Automatisierungen verwendet. Legt ein bestimmtes Erlöskonto fest, auf das Umsätze dieses Preises im Buchungsjournal gebucht werden.<br><br>Ist das Feld leer, wird das Standard-Erlöskonto des jeweiligen Steuersatzes verwendet (z. B. 8300 für 7 %, 8400 für 19 %).<br><br>Nützlich, wenn bestimmte Umsätze (z. B. Speisen, Getränke, Kurtaxe) getrennt auf eigene Konten laufen sollen.'
+price.package.remainder.help: 'Markiert diese Komponente als Rest. Ihr Wert wird automatisch berechnet — aus dem, was nach Abzug aller anderen Komponenten vom Gesamtpreis übrig bleibt.<br><br><b>Nützlich für:</b><br>• Mischung aus Prozent- und Betragskomponenten (z. B. Getränke fest 4,50 €, Speisen = Rest)<br>• Rundungs-Cents auffangen<br><br>Pro Paket darf nur <b>eine</b> Komponente als Rest markiert sein.'
+price.package.add_row: 'Komponente hinzufügen'
+price.package.taxrates.empty: 'Es sind keine Steuersätze konfiguriert. Konfigurieren Sie zuerst Steuersätze in den Buchungsjournal-Einstellungen, bevor Sie Paket-Komponenten anlegen.'
+price.package.overview.badge: 'Paket (%count%)'
+price.package.overview.tooltip: 'Enthält %count% Paket-Komponenten.'
+price.package.sum_preview: Summenvorschau
+price.package.allocation.percent: Prozent
+price.package.allocation.amount: Betrag
+price.package.error.description_required: 'Jede Paket-Komponente benötigt eine Beschreibung.'
+price.package.error.vat_negative: 'Der Steuersatz einer Paket-Komponente darf nicht negativ sein.'
+price.package.error.value_required: 'Jede Paket-Komponente benötigt einen Wert größer als Null (außer wenn als Rest markiert).'
+price.package.error.multiple_remainder: 'Es darf nur eine Komponente als Rest markiert sein.'
+price.package.error.sum_mismatch: 'Die Paket-Komponenten ergeben in Summe nicht den Gesamtpreis.'
+price.package.error.percent_over_100: 'Die Prozent-Komponenten überschreiten 100 %.'
+price.package.error.amount_over_total: 'Die Betrags-Komponenten überschreiten den Gesamtpreis.'
+price.daysinweek: 'Gültigkeit Wochentage'
+price.delete.ask: 'Wollen Sie diesen Preis wirklich löschen?'
+price.description: Beschreibung
+price.double: 'Doppelzimmer (1 Nacht)'
+price.end: Bis
+price.flash.create.conflict: 'Die Preiskategorie konnte nicht gespeichert werden, da es Konflikte mit den folgenden aktiven Kategorien gibt:'
+price.flash.create.success: 'Der Preis wurde erfolgreich angelegt.'
+price.flash.delete.success: 'Preisklasse erfolgreich gelöscht.'
+price.flash.edit.success: 'Der Preis wurde erfolgreich bearbeitet.'
+price.flash.mixed_room_kinds: 'Ein Preis gilt entweder für Unterkünfte oder für Veranstaltungsräume. Wähle nur Zimmerkategorien einer Raumart.'
+price.friday: Freitag
+price.from: Von
+price.inactive: 'Nicht Aktiv'
+price.includesvat: 'inkl. MwSt.'
+price.isflatprice: Pauschalpreis
+price.perroom: 'Pro Nacht (sonst pro Person)'
+price.defaultactiveinreservationcreation: 'Bei Reservierungs-Neuanlage standardmäßig aktiv'
+price.bookableonline: 'Für Online-Buchung und Check-in verfügbar'
+price.brokered: 'Bei Portalgebühren berücksichtigen'
+price.brokered.hint: 'Legt fest, ob das Portal für diese Leistung Kommission oder eine Zahlungsgebühr berechnet. Ausschalten für Leistungen, die erst vor Ort hinzugefügt werden, etwa ein an der Rezeption bestelltes Frühstück.'
+price.mandatoryonline: 'Pflicht bei Online-Buchung'
+price.mandatoryonline.hint: 'Der Gast kann diesen Posten nicht abwählen.'
+price.visibility.label: 'Sichtbarkeit & Verfügbarkeit'
+price.calculation_type.label: Berechnungsart
+price.calculation_type.flat: 'Pauschalpreis (pro Buchung)'
+price.calculation_type.per_person: 'Pro Nacht, pro Person'
+price.calculation_type.per_person.day: 'Pro Tag, pro Person'
+price.calculation_type.per_room: 'Pro Nacht, pro Zimmer'
+price.calculation_type.per_room.day: 'Pro Tag, pro Raum'
+price.calculation_type.per_person.help: 'Jede Person zahlt diesen Preis. Anpassungen je Gastkategorie (z. B. für Kinder) wirken hier.'
+price.calculation_type.per_room.help: 'Das Zimmer kostet diesen Preis, egal wie viele Personen darin übernachten. Optional mit Aufschlag je weitere Person.'
+price.calculation_type.per_room.help.day: 'Der Raum kostet diesen Preis pro Tag, egal wie viele Personen ihn nutzen. Optional mit Aufschlag je weitere Person.'
+price.calculation_type.flat.help: 'Ein fester Betrag pro Buchung, unabhängig von Nächten und Personen.'
+price.calculation_type.flat.help.day: 'Ein fester Betrag pro Buchung, unabhängig von Tagen und Personen.'
+price.minstay: 'Preis gültig ab … Nächten'
+price.minstay.day: 'Preis gültig ab … Tagen'
+price.miscellaneous: 'Sonstiger Preis'
+price.monday: Montag
+price.numberofbeds: 'Anzahl der Betten'
+price.numberofpersons: 'Anzahl der Personen'
+price.numberofpersons.scope.exact: genau
+price.numberofpersons.scope.up_to: 'bis zu'
+price.numberofpersons.help.exact: 'Der Preis gilt nur, wenn genau so viele Personen gebucht sind.'
+price.numberofpersons.help.up_to: 'Der Preis gilt auch für weniger Personen. Darüber kommt der Aufschlag je weitere Person hinzu.'
+price.numberofpersons.up_to_count: 'bis %count%'
+price.extra_person_surcharge: 'Aufschlag je weitere Person'
+price.extra_person_surcharge.disabled: 'Nur bei Berechnungsart „Pro Nacht, pro Zimmer“.'
+price.extra_person_surcharge.disabled.day: 'Nur bei Berechnungsart „Pro Tag, pro Raum“.'
+price.extra_person_surcharge.exact: 'Betrag, der für jede Person über der Personenzahl hinzukommt. Leer lassen, wenn der Preis nur für genau diese Personenzahl gilt.'
+price.extra_person_surcharge.example: 'Jede weitere Person bis zur Bettenzahl kostet den Aufschlag. Beispiel für %persons% Personen: %base% + 2 × %surcharge% = %total% pro Nacht.'
+price.extra_person_surcharge.example.day: 'Jede weitere Person bis zur maximalen Personenzahl des Raums kostet den Aufschlag. Beispiel für %persons% Personen: %base% + 2 × %surcharge% = %total% pro Tag.'
+price.extra_person_surcharge.short: '+%amount% je weitere Person'
+price.extra_person_surcharge.unit: '%currency% pro Nacht'
+price.extra_person_surcharge.unit.day: '%currency% pro Tag'
+price.origin: 'gültig für Herkunft'
+price.price: Preis
+price.saturday: Samstag
+price.season: Zeitraum
+price.season.hint: 'Kategorien mit einem Zeitraum haben eine höhere Wertigkeit als Kategorien ohne.'
+price.seasonend: 'Saison Ende'
+price.seasonstart: 'Saison Start'
+price.single: 'Einzelzimmer (1 Nacht)'
+price.sunday: Sonntag
+price.thursday: Donnerstag
+price.tuesday: Dienstag
+price.type: Typ
+price.vat: Steuer
+price.wednesday: Mittwoch
+price.weekdays: Wochentage
 price.period.description: 'Bezeichnung des Zeitraums (optional), z. B. Messe oder Stadtfest'
 price.persons: Pers.
 price.flash.delete.deactivated_in_use: '{1}Dieser Preis gehört noch zum zugesagten Preis einer Buchung. Er wurde deshalb deaktiviert statt gelöscht.|]1,Inf[Dieser Preis gehört noch zum zugesagten Preis von %count% Buchungen. Er wurde deshalb deaktiviert statt gelöscht.'
-price_rules.tab.prices: 'Grundpreise'
-price_rules.tab.rules: 'Preisregeln'
-price_rules.title: 'Preisregeln'
+price_rules.tab.prices: Grundpreise
+price_rules.tab.rules: Preisregeln
+price_rules.title: Preisregeln
 price_rules.intro: 'Preisregeln passen die Grundpreise prozentual an, z. B. am Wochenende, kurzfristig oder bei hoher Auslastung. Treffen mehrere Regeln zu, werden sie addiert. Bestehende Buchungen behalten ihren Preis.'
 price_rules.load_error: 'Das Formular konnte nicht geladen werden.'
-price_rules.list: 'Regeln'
+price_rules.list: Regeln
 price_rules.add: 'Regel hinzufügen'
 price_rules.edit: 'Regel bearbeiten'
 price_rules.empty: 'Noch keine Preisregeln. Ohne Regeln gelten die Grundpreise.'
-price_rules.disabled: 'aus'
-price_rules.enable: 'Einschalten'
-price_rules.disable: 'Ausschalten'
+price_rules.disabled: aus
+price_rules.enable: Einschalten
+price_rules.disable: Ausschalten
 price_rules.saved: 'Die Preisregel wurde gespeichert.'
-price_rules.save: 'Speichern'
-price_rules.name: 'Bezeichnung'
-price_rules.condition: 'Bedingung'
-price_rules.condition_always: 'Immer'
-price_rules.condition_last_minute: 'Kurzfristig'
-price_rules.condition_early_bird: 'Frühbucher'
+price_rules.save: Speichern
+price_rules.name: Bezeichnung
+price_rules.condition: Bedingung
+price_rules.condition_always: Immer
+price_rules.condition_last_minute: Kurzfristig
+price_rules.condition_early_bird: Frühbucher
 price_rules.condition_occupancy_high: 'Hohe Auslastung'
 price_rules.condition_occupancy_low: 'Niedrige Auslastung'
 price_rules.condition_help_always: 'Gilt für jede Nacht. Grenze sie unten auf Wochentage oder einen Zeitraum ein, z. B. für Wochenenden, die Saison oder eine Veranstaltung.'
@@ -27,16 +145,16 @@ price_rules.condition_help_last_minute: 'Gilt für Nächte, die höchstens so vi
 price_rules.condition_help_early_bird: 'Gilt für Nächte, die mindestens so viele Tage entfernt sind.'
 price_rules.condition_help_occupancy_high: 'Gilt, wenn in der Nacht mindestens so viel Prozent der Zimmer belegt sind. Gezählt werden alle Zimmer der Niederlassung, bei ausgewählten Zimmerkategorien nur diese.'
 price_rules.condition_help_occupancy_low: 'Gilt für Nächte, die höchstens so viele Tage entfernt sind und in denen höchstens so viel Prozent der Zimmer belegt sind.'
-price_rules.occupancy: 'Auslastung'
+price_rules.occupancy: Auslastung
 price_rules.days: 'Tage vor der Nacht'
-price_rules.raise: 'Erhöhen'
-price_rules.lower: 'Senken'
+price_rules.raise: Erhöhen
+price_rules.lower: Senken
 price_rules.section.when: 'Wann?'
 price_rules.section.amount: 'Um wie viel?'
 price_rules.section.subsidiaries: 'Für welche Niederlassungen?'
 price_rules.section.categories: 'Für welche Zimmer?'
 price_rules.section.nights: 'Nur an bestimmten Nächten'
-price_rules.weekdays: 'Nächte'
+price_rules.weekdays: Nächte
 price_rules.first_night: 'Erste Nacht'
 price_rules.last_night: 'Letzte Nacht'
 price_rules.period_help: 'Optional. Beide Nächte gehören dazu. Ohne Zeitraum gilt die Regel das ganze Jahr.'
@@ -49,13 +167,13 @@ price_rules.when.occupancy_high: 'Ab %occupancy% % Auslastung'
 price_rules.when.occupancy_low: '{0}Höchstens %occupancy% % Auslastung, nur heute Nacht|{1}Höchstens %occupancy% % Auslastung, bis 1 Tag vorher|]1,Inf[Höchstens %occupancy% % Auslastung, bis %count% Tage vorher'
 price_rules.when.weekdays: 'Nächte %days%'
 price_rules.template.intro: 'Wähle, worauf die Regel reagieren soll. Alle Werte kannst du danach anpassen.'
-price_rules.template.weekend: 'Wochenende'
+price_rules.template.weekend: Wochenende
 price_rules.template.weekend_help: 'Freitag- und Samstagnacht teurer'
 price_rules.template.season: 'Saison oder Veranstaltung'
 price_rules.template.season_help: 'Für einen Zeitraum, z. B. Hauptsaison, Messe oder Stadtfest'
-price_rules.template.last_minute: 'Kurzfristig'
+price_rules.template.last_minute: Kurzfristig
 price_rules.template.last_minute_help: 'Freie Nächte kurz vorher günstiger anbieten'
-price_rules.template.early_bird: 'Frühbucher'
+price_rules.template.early_bird: Frühbucher
 price_rules.template.early_bird_help: 'Rabatt für Buchungen weit im Voraus'
 price_rules.template.occupancy_high: 'Hohe Auslastung'
 price_rules.template.occupancy_high_help: 'Teurer, wenn nur noch wenige Zimmer frei sind'
@@ -67,14 +185,14 @@ price_rules.preview.matches: '{1}Trifft nach heutigem Stand in den nächsten %ni
 price_rules.preview.example: 'Beispiel %room%, %persons% Pers., %night%:'
 price_rules.preview.limited: 'Zusammen mit den anderen Regeln ist die Grenze erreicht.'
 price_rules.limits.title: 'Grenzen und Rundung'
-price_rules.limits.edit: 'Ändern'
+price_rules.limits.edit: Ändern
 price_rules.limits.summary: 'Regeln senken einen Preis um höchstens %decrease% % und erhöhen ihn um höchstens %increase% %.'
 price_rules.limits.summary_rounding_whole: 'Geänderte Preise werden auf ganze Beträge gerundet.'
 price_rules.limits.summary_rounding_none: 'Geänderte Preise werden nicht gerundet.'
 price_rules.limits.help: 'Treffen mehrere Regeln zu, werden sie addiert. Diese Grenzen gelten für die Summe.'
 price_rules.limits.max_decrease: 'Höchstens senken um'
 price_rules.limits.max_increase: 'Höchstens erhöhen um'
-price_rules.limits.rounding: 'Rundung'
+price_rules.limits.rounding: Rundung
 price_rules.limits.rounding_whole: 'Auf ganze Beträge'
 price_rules.limits.rounding_none: 'Nicht runden'
 price_rules.limits.saved: 'Die Grenzen wurden gespeichert.'
@@ -83,29 +201,29 @@ price.period.rules_link: 'Zu den Preisregeln'
 price_rules.occupancy_across: 'Auslastung der ausgewählten Niederlassungen gemeinsam zählen'
 price_rules.occupancy_across_help: 'Sinnvoll, wenn mehrere Niederlassungen zusammen ein Haus bilden, z. B. eine je Etage. Sonst zählt jede Niederlassung für sich.'
 price_rules.when.across: 'Niederlassungen zusammen gezählt'
-price_rules.tab.calendar: 'Preiskalender'
-price_calendar.title: 'Preiskalender'
+price_rules.tab.calendar: Preiskalender
+price_calendar.title: Preiskalender
 price_calendar.intro: 'Der Preiskalender zeigt, was eine Nacht heute kostet: Grundpreis, Preisregeln und Tagespreise zusammen. Jeder Tag steht für die Nacht, die an ihm beginnt. Tippe auf eine Nacht, um ihren Preis festzulegen.'
-price_calendar.subsidiary: 'Niederlassung'
-price_calendar.category: 'Zimmerkategorie'
-price_calendar.persons: 'Personen'
+price_calendar.subsidiary: Niederlassung
+price_calendar.category: Zimmerkategorie
+price_calendar.persons: Personen
 price_calendar.persons_count: '{1}1 Person|]1,Inf[%count% Personen'
 price_calendar.nothing: 'Für diese Auswahl gibt es keine Zimmer oder keine Preise.'
 price_calendar.previous: 'Vorheriger Monat'
 price_calendar.next: 'Nächster Monat'
-price_calendar.legend.rules: 'Preisregel'
-price_calendar.legend.day_price: 'Tagespreis'
+price_calendar.legend.rules: Preisregel
+price_calendar.legend.day_price: Tagespreis
 price_calendar.legend.tap: 'Zum Ändern eine Nacht antippen'
-price_calendar.occupancy: 'Auslastung'
+price_calendar.occupancy: Auslastung
 price_calendar.booked: '%booked% von %rooms% belegt'
-price_calendar.source.manual: 'Tagespreis'
+price_calendar.source.manual: Tagespreis
 price_calendar.source.assistant: 'Tagespreis vom KI-Assistenten'
 price_calendar.source.api: 'Tagespreis über API-Zugang „%label%“'
 price_calendar.day_price_for: '{1}für 1 Person|]1,Inf[für %count% Personen'
-price_calendar.base: 'Grundpreis'
+price_calendar.base: Grundpreis
 price_calendar.price: 'Preis für diese Nacht'
-price_calendar.column_price: 'Preis'
-price_calendar.column_new: 'Neu'
+price_calendar.column_price: Preis
+price_calendar.column_new: Neu
 price_calendar.limited: 'Auf die eingestellte Grenze begrenzt.'
 price_calendar.no_price: 'Für diese Nacht gibt es keinen Preis oder nur einen Pauschalpreis.'
 price_calendar.amount: '{1}Tagespreis für 1 Person|]1,Inf[Tagespreis für %count% Personen'
@@ -119,17 +237,17 @@ price_calendar.reset: 'Für diese Nächte gelten wieder Grundpreis und Preisrege
 price_calendar.error.amount: 'Gib einen Preis über 0 an.'
 price_calendar.error.range: 'Die letzte Nacht darf nicht vor der ersten liegen; höchstens 366 Nächte auf einmal.'
 price_calendar.error.weekdays: 'Wähle mindestens eine Nacht aus.'
-price_calendar.month_1: 'Januar'
-price_calendar.month_2: 'Februar'
-price_calendar.month_3: 'März'
-price_calendar.month_4: 'April'
-price_calendar.month_5: 'Mai'
-price_calendar.month_6: 'Juni'
-price_calendar.month_7: 'Juli'
-price_calendar.month_8: 'August'
-price_calendar.month_9: 'September'
-price_calendar.month_10: 'Oktober'
-price_calendar.month_11: 'November'
-price_calendar.month_12: 'Dezember'
+price_calendar.month_1: Januar
+price_calendar.month_2: Februar
+price_calendar.month_3: März
+price_calendar.month_4: April
+price_calendar.month_5: Mai
+price_calendar.month_6: Juni
+price_calendar.month_7: Juli
+price_calendar.month_8: August
+price_calendar.month_9: September
+price_calendar.month_10: Oktober
+price_calendar.month_11: November
+price_calendar.month_12: Dezember
 price_calendar.night_title: 'Nacht vom %from% auf %to%'
 price_calendar.last_night_help: 'Gemeint ist die Nacht, die an diesem Tag beginnt.'

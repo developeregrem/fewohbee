@@ -197,13 +197,14 @@ export default class extends Controller {
         const successUrl = event.currentTarget.dataset.successUrl;
         const form = event.target.closest('form');
         if (!url || !successUrl || !form) return;
-        // The request leaves for the overview whatever the server answers, so a field the
-        // server would reject has to be caught here, e.g. a payment period without days.
+        // Successful HTTP responses lead to the overview, including validation feedback.
+        // Catch invalid fields here, e.g. a payment period without days.
         if (!form.reportValidity()) return;
         httpRequest({ 
             url, 
             method: 'POST', 
             data: httpSerializeForm(form),
+            target: form.querySelector('#flash-message-overlay'),
             onSuccess: () => { 
                 location.href = successUrl;
             }

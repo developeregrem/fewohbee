@@ -22,6 +22,7 @@ class BookingEntryRepository extends ServiceEntityRepository
         parent::__construct($registry, BookingEntry::class);
     }
 
+    /** @return Paginator<BookingEntry> */
     public function findByBatch(BookingBatch $batch, string $search = '', int $page = 1, int $limit = 20, string $mode = 'all'): Paginator
     {
         $qb = $this->createQueryBuilder('e')

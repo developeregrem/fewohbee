@@ -39,7 +39,7 @@ class PriceCalendarService
     }
 
     /**
-     * @return list<array{night: \DateTimeImmutable, past: bool, price: float|null, base: float|null, percent: float, rules: list<array{name: string, percent: float}>, dayPrice: array{amount: float, persons: int, source: string, sourceLabel: string|null}|null, limited: bool, booked: int, sellable: int}>|null
+     * @return list<array{night: \DateTimeImmutable, past: bool, price: float|null, base: float|null, percent: float, rules: list<array{name: string, percent: float}>, dayPrice: array{amount: float, persons: int, source: string, sourceLabel: string|null}|null, limited: bool, extraPersonSurcharge: float|null, booked: int, sellable: int}>|null
      *                                                                                                                                                                                                                   null when the subsidiary has no room of the category
      */
     public function nights(Subsidiary $subsidiary, RoomCategory $category, int $persons, \DateTimeImmutable $from, \DateTimeImmutable $toExclusive): ?array
@@ -75,6 +75,7 @@ class PriceCalendarService
                 'rules' => $rate['priceRules'] ?? [],
                 'dayPrice' => $rate['dayPrice'] ?? null,
                 'limited' => (bool) ($rate['limited'] ?? false),
+                'extraPersonSurcharge' => $rate['extraPersonSurcharge'] ?? null,
                 'booked' => $day['booked'],
                 'sellable' => max(0, $day['rooms'] - $day['blocked']),
             ];

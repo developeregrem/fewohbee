@@ -30,6 +30,9 @@ class ApartmentType extends AbstractType
             ->add('description', TextType::class, [
                 'label' => 'appartment.description',
             ])
+            ->add('translations', ContentTranslationsType::class, [
+                'fields' => ['description' => ['max_length' => 255]],
+            ])
             ->add('bedsMax', IntegerType::class, [
                 'label' => 'appartment.bedsmax',
                 'constraints' => [

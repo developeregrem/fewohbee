@@ -107,6 +107,11 @@ class ReservationStatusController extends AbstractController
         return new Response('', Response::HTTP_NO_CONTENT);
     }
 
+    /**
+     * @param string $bgColor Background color in #RRGGBB notation
+     *
+     * @return '#000000'|'#ffffff'
+     */
     private function calculateColor($bgColor)
     {
         [$r, $g, $b] = sscanf($bgColor, '#%02x%02x%02x');

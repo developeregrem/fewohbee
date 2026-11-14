@@ -44,7 +44,11 @@ class OnlineBookingConfigType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $subsidiaries = $this->em->getRepository(Subsidiary::class)->findAll();
-        $rooms = $this->em->getRepository(Appartment::class)->findAll();
+        // Event spaces are booked per day, which the booking page cannot do yet: they are not
+        // offered for release until it can (see AppartmentRepository::findForPublicBooking()).
+        $allRooms = $this->em->getRepository(Appartment::class)->findAll();
+        $rooms = array_filter($allRooms, static fn (Appartment $room): bool => !$room->isEventSpace());
+        $hasEventSpaces = count($rooms) < count($allRooms);
         $statuses = $this->em->getRepository(ReservationStatus::class)->findAll();
         $origins = $this->em->getRepository(ReservationOrigin::class)->findAll();
         $builder
@@ -98,6 +102,7 @@ class OnlineBookingConfigType extends AbstractType
             ])
             ->add('roomsMode', ChoiceType::class, [
                 'label' => 'online_booking.settings.rooms_mode',
+                'help' => $hasEventSpaces ? 'online_booking.settings.rooms_mode_event_spaces' : null,
                 'expanded' => true,
                 'choices' => [
                     'online_booking.option.all' => OnlineBookingConfig::ROOMS_MODE_ALL,
@@ -206,6 +211,14 @@ class OnlineBookingConfigType extends AbstractType
                     'class' => 'font-monospace small',
                     'spellcheck' => 'false',
                     'placeholder' => ".fhb-booking-root {\n    font-family: 'Georgia', serif;\n}",
+                ],
+            ])
+            ->add('translations', ContentTranslationsType::class, [
+                'fields' => [
+                    'commentPlaceholder' => ['max_length' => 255],
+                    'paymentTerms' => ['type' => TextareaType::class, 'options' => ['attr' => ['rows' => 8]]],
+                    'cancellationTerms' => ['type' => TextareaType::class, 'options' => ['attr' => ['rows' => 8]]],
+                    'successMessageText' => ['type' => TextareaType::class, 'options' => ['attr' => ['rows' => 6]]],
                 ],
             ])
         ;

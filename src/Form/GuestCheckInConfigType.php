@@ -6,7 +6,11 @@ namespace App\Form;
 
 use App\Entity\Enum\GuestCheckInFieldMode;
 use App\Entity\GuestCheckInConfig;
+use App\Entity\Template;
 use App\Service\PublicUrlService;
+use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
@@ -20,7 +24,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 class GuestCheckInConfigType extends AbstractType
 {
     /** Field groups that can be hidden, offered or required, in the order they appear on the form. */
-    public const FIELD_GROUPS = ['addressMode', 'birthdayMode', 'nationalityMode', 'idDocumentMode', 'contactMode', 'companionsMode'];
+    public const FIELD_GROUPS = ['addressMode', 'birthdayMode', 'nationalityMode', 'idDocumentMode', 'contactMode', 'companyMode', 'companionsMode'];
 
     public function __construct(
         private readonly PublicUrlService $publicUrlService,
@@ -43,6 +47,23 @@ class GuestCheckInConfigType extends AbstractType
             ],
         ]);
 
+        $builder->add('invitationTemplate', EntityType::class, [
+            'class' => Template::class,
+            'required' => false,
+            'placeholder' => 'guest_checkin.settings.invitation_template_none',
+            'label' => 'guest_checkin.settings.invitation_template',
+            'help' => 'guest_checkin.settings.invitation_template_help',
+            'choice_label' => 'name',
+            // Reservation mails only; language variants follow their base template when sending.
+            'query_builder' => static fn (EntityRepository $repository): QueryBuilder => $repository->createQueryBuilder('t')
+                ->join('t.templateType', 'tt')
+                ->where('tt.name = :type')
+                ->andWhere('t.hidden = false')
+                ->andWhere('t.baseTemplate IS NULL')
+                ->setParameter('type', 'TEMPLATE_RESERVATION_EMAIL')
+                ->orderBy('t.name', 'ASC'),
+        ]);
+
         $builder->add('extrasEnabled', CheckboxType::class, [
             'required' => false,
             'label' => 'guest_checkin.settings.extras_enabled',
@@ -53,6 +74,10 @@ class GuestCheckInConfigType extends AbstractType
         foreach (self::FIELD_GROUPS as $field) {
             $builder->add($field, EnumType::class, [
                 'class' => GuestCheckInFieldMode::class,
+                // Company details are offered at most, see GuestCheckInConfig::setCompanyMode().
+                'choices' => 'companyMode' === $field
+                    ? [GuestCheckInFieldMode::HIDDEN, GuestCheckInFieldMode::OPTIONAL]
+                    : GuestCheckInFieldMode::cases(),
                 // For fellow travellers the mode says who is asked, not how a field behaves.
                 'choice_label' => 'companionsMode' === $field
                     ? static fn (GuestCheckInFieldMode $mode): string => 'guest_checkin.companions_mode.'.$mode->value
@@ -80,6 +105,19 @@ class GuestCheckInConfigType extends AbstractType
                 'label' => 'guest_checkin.settings.privacy_text',
                 'help' => 'guest_checkin.settings.privacy_text_help',
                 'attr' => ['rows' => 3, 'maxlength' => 2000],
+            ])
+            ->add('translations', ContentTranslationsType::class, [
+                'fields' => [
+                    'introText' => ['type' => TextareaType::class, 'max_length' => 2000, 'options' => ['attr' => ['rows' => 4]]],
+                    // A privacy page per language; same rules as the base address.
+                    'privacyUrl' => [
+                        'type' => UrlType::class,
+                        'max_length' => 255,
+                        'constraints' => [new Assert\Url(protocols: ['https', 'http'], requireTld: true)],
+                        'options' => ['default_protocol' => 'https', 'attr' => ['placeholder' => 'https://']],
+                    ],
+                    'privacyText' => ['type' => TextareaType::class, 'max_length' => 2000, 'options' => ['attr' => ['rows' => 3]]],
+                ],
             ])
         ;
     }

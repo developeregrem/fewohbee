@@ -60,7 +60,7 @@ class GuestCheckInType extends AbstractType
             $values = [];
             foreach ($options['extras'] as $extra) {
                 $choices[] = $extra['id'];
-                $descriptions[$extra['id']] = $extra['description'];
+                $descriptions[$extra['id']] = $extra['label'] ?? $extra['description'];
                 // A changed price invalidates an old form post instead of silently accepting
                 // a different amount from the one the guest saw on the page.
                 $values[$extra['id']] = $extra['id'].':'.$extra['total'];

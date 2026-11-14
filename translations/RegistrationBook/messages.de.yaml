@@ -1,0 +1,18 @@
+registrationbook.addreservations: 'Einträge hinzufügen'
+registrationbook.address: Anschrift
+registrationbook.appartment: Zi.
+registrationbook.birthday: Geburtstag
+registrationbook.country: Land
+registrationbook.delete.ask: 'Eintrag wirklich löschen?'
+registrationbook.departures: Abreisen
+registrationbook.entry.skip: 'Eintrag überspringen'
+registrationbook.firstname: Vorname
+registrationbook.flash.delete.success: 'Eintrag erfolgreich gelöscht.'
+registrationbook.help.message: 'In dieser Übersicht werden alle Einträge gelistet, die noch nicht in das Meldebuch übernommen wurden.'
+registrationbook.lastname: Nachname
+registrationbook.noentries: '- keine Einträge vorhanden -'
+registrationbook.number: 'lfd. Nr.'
+registrationbook.period: Aufenthalt
+registrationbook.stays: Übern.
+registrationbook.year: Jahr
+reservationbook.flash.add.success: 'Eintrag erfolgreich übernommen.'

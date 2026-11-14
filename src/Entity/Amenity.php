@@ -47,7 +47,11 @@ class Amenity
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $airbnbAmenityId = null;
 
-    /** Room categories that have this amenity assigned (inverse side) */
+    /**
+     * Room categories that have this amenity assigned (inverse side)
+     *
+     * @var Collection<int, RoomCategory>
+     */
     #[ORM\ManyToMany(targetEntity: RoomCategory::class, mappedBy: 'amenities')]
     private Collection $roomCategories;
 
@@ -134,7 +138,11 @@ class Amenity
         return $this;
     }
 
-    /** Returns all room categories that have this amenity assigned */
+    /**
+     * Returns all room categories that have this amenity assigned
+     *
+     * @return Collection<int, RoomCategory>
+     */
     public function getRoomCategories(): Collection
     {
         return $this->roomCategories;

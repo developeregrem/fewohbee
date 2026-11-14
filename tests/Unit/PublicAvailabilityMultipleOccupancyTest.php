@@ -17,6 +17,7 @@ use App\Service\OnlineBooking\OnlineBookingRestrictionService;
 use App\Service\OnlineBooking\PublicAvailabilityService;
 use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\RoomCategoryImageService;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -25,10 +26,13 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class PublicAvailabilityMultipleOccupancyTest extends TestCase
 {
+    /** @var AppartmentRepository&Stub */
     private AppartmentRepository $appartmentRepository;
+    /** @var ReservationRepository&Stub */
     private ReservationRepository $reservationRepository;
     private OnlineBookingConfigService $configService;
     private OnlineBookingRestrictionService $restrictionService;
+    /** @var PublicPricingService&Stub */
     private PublicPricingService $pricingService;
     private RoomCategoryImageService $imageService;
     private PublicAvailabilityService $service;

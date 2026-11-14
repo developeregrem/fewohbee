@@ -80,8 +80,8 @@
                         <li class="list-group-item">
                             <div class="fw-semibold">{{ reservation.appartment.number }} · {{ reservation.appartment.description }}</div>
                             <div class="small text-body-secondary">
-                                {{ reservation.startdate|date('d.m.Y') }} – {{ reservation.enddate|date('d.m.Y') }}
-                                · {{ 'reservation.summary.nights'|trans({'%count%': reservation.startdate.diff(reservation.enddate).days}) }}
+                                {{ reservationMacros.dates(reservation) }}
+                                · {{ reservationMacros.length(reservation) }}
                                 · {{ 'reservation.summary.persons'|trans({'%count%': reservation.persons}) }}
                                 {{ reservationMacros.guest_counts(reservation, guestCategoriesById|default({})) }}
                                 · {{ reservation.reservationStatus|display_name }}
@@ -282,7 +282,8 @@
                 </form>
             </div>
         {% endfor %}
-        {% if hasActiveTouristTax|default(false) %}
+        {# Event spaces are charged no tourist tax, so there is nothing to waive. #}
+        {% if hasActiveTouristTax|default(false) and not attribute(reservations, 0).appartment.isEventSpace %}
             <div class="w-100"><hr class="my-3"></div>
             <div class="col-md-6">
                 <form id="update-kurtaxe-waived" action="{{ path('reservations.update.kurtaxe.waived', {'reservationId': reservationId}) }}">

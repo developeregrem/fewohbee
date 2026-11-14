@@ -10,6 +10,7 @@ use App\Entity\Appartment;
 use App\Entity\OnlineBookingConfig;
 use App\Repository\AppartmentRepository;
 use App\Service\AvailabilityService;
+use App\Service\Localization\ContentTranslator;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -33,6 +34,7 @@ class PublicBookingCalendarService
         private readonly AppartmentRepository $appartmentRepository,
         private readonly AvailabilityService $availabilityService,
         private readonly OnlineBookingRestrictionService $restrictionService,
+        private readonly ?ContentTranslator $contentTranslator = null,
     ) {
     }
 
@@ -255,7 +257,8 @@ class PublicBookingCalendarService
      */
     private function buildPublicLabel(Appartment $room, array $allRooms): string
     {
-        $categoryName = $room->getRoomCategory()?->getName();
+        $category = $room->getRoomCategory();
+        $categoryName = $category?->getName();
         if (null === $categoryName || '' === trim($categoryName)) {
             return (string) $room->getNumber();
         }
@@ -267,8 +270,11 @@ class PublicBookingCalendarService
             }
         }
 
+        // Rooms are told apart by the stored name; guests read it in their language.
+        $label = (string) ($this->contentTranslator?->text($category, 'name') ?? $categoryName);
+
         return $sameCategory > 1
-            ? sprintf('%s – %s', $categoryName, $room->getNumber())
-            : $categoryName;
+            ? sprintf('%s – %s', $label, $room->getNumber())
+            : $label;
     }
 }

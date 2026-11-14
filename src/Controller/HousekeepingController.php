@@ -119,7 +119,7 @@ class HousekeepingController extends AbstractController
     ): Response {
         $em = $doctrine->getManager();
         $formPayload = $request->request->all('housekeeping_row');
-        $dateValue = is_array($formPayload) ? (string) ($formPayload['date'] ?? '') : '';
+        $dateValue = (string) ($formPayload['date'] ?? '');
         $date = $filterService->resolveDate($dateValue);
 
         $status = $em->getRepository(RoomDayStatus::class)->findOneBy([
@@ -199,6 +199,8 @@ class HousekeepingController extends AbstractController
 
     /**
      * Define CSS classes for occupancy badges.
+     *
+     * @return array<string, string>
      */
     private function getOccupancyClasses(): array
     {

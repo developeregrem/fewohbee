@@ -207,7 +207,7 @@ final class EntityChangeLogListenerTest extends KernelTestCase
         $this->em->flush();
 
         self::assertCount(0, $this->fetchLog(),
-            'Decimal columns hydrate as "19.00" but float-typed properties hold 19.0; that strict !== mismatch must not produce log rows.');
+            'Loading a decimal and flushing without edits must not produce log rows.');
     }
 
     public function testRealValueChangesAreStillLoggedAlongsideNullToEmptyNoOps(): void

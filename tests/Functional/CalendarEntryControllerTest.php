@@ -174,6 +174,65 @@ final class CalendarEntryControllerTest extends WebTestCase
         self::assertFalse($this->reload($entry)->isConfirmed(), 'reminder stayed open');
     }
 
+    // ── New-entry form ────────────────────────────────────────────────
+
+    public function testNewEntryFormKeepsDateAndEndTimeOutOfTheWayAtFirst(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createUserWithRoles(['ROLE_RESERVATIONS']));
+        $this->createEntry();
+
+        $crawler = $client->request('GET', '/reservation/calendar-entry/new?date=2026-10-20');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('20.10.2026', $crawler->filter('[data-calendar-entry-form-target="dateSummary"]')->text());
+        self::assertStringContainsString('d-none', (string) $crawler->filter('[data-calendar-entry-form-target="dateFields"]')->attr('class'));
+        self::assertStringContainsString('d-none', (string) $crawler->filter('[data-calendar-entry-form-target="endTimeGroup"]')->attr('class'));
+    }
+
+    public function testNewEntryFormShowsTheRangeAndItsEndTimeWhenTheRangeIsRejected(): void
+    {
+        // Hidden fields would swallow their own error message, so a rejected
+        // range has to come back with the date fields open. The end time is
+        // offered too, without any start time: on a range it sits on the last
+        // day, so "until the 22nd, 19:00" is a complete entry.
+        $client = static::createClient();
+        $client->loginUser($this->createUserWithRoles(['ROLE_RESERVATIONS']));
+        $this->createEntry();
+
+        $crawler = $client->request('GET', '/reservation/calendar-entry/new?date=2026-10-20');
+        $form = $crawler->filter('form')->form([
+            'calendar_entry[title]' => 'Zu lang',
+            'calendar_entry[dateTo]' => '2028-10-22',
+        ]);
+        $crawler = $client->submit($form);
+
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString('d-none', (string) $crawler->filter('[data-calendar-entry-form-target="dateFields"]')->attr('class'));
+        self::assertStringContainsString('d-none', (string) $crawler->filter('[data-calendar-entry-form-target="dateSummary"]')->attr('class'));
+        self::assertStringNotContainsString('d-none', (string) $crawler->filter('[data-calendar-entry-form-target="endTimeGroup"]')->attr('class'));
+    }
+
+    public function testNewEntryFormKeepsTheEndTimeVisibleWhenItIsRejected(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createUserWithRoles(['ROLE_RESERVATIONS']));
+        $this->createEntry();
+
+        $crawler = $client->request('GET', '/reservation/calendar-entry/new?date=2026-10-20');
+        $form = $crawler->filter('form')->form([
+            'calendar_entry[title]' => 'Rückwärts',
+            'calendar_entry[time]' => '10:00',
+            'calendar_entry[endTime]' => '09:00',
+        ]);
+        $crawler = $client->submit($form);
+
+        self::assertResponseIsSuccessful();
+        $endTimeGroup = $crawler->filter('[data-calendar-entry-form-target="endTimeGroup"]');
+        self::assertStringNotContainsString('d-none', (string) $endTimeGroup->attr('class'));
+        self::assertGreaterThan(0, $endTimeGroup->filter('.invalid-feedback')->count());
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────
 
     /**

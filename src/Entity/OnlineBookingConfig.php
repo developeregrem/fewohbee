@@ -6,6 +6,8 @@ namespace App\Entity;
 
 use App\Entity\Enum\PublicBookingMode;
 use App\Entity\Enum\PublicBookingTheme;
+use App\Entity\Translation\ContentTranslatable;
+use App\Entity\Translation\ContentTranslationsTrait;
 use App\Repository\OnlineBookingConfigRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -14,8 +16,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: OnlineBookingConfigRepository::class)]
 #[ORM\Table(name: 'online_booking_config')]
 #[ORM\HasLifecycleCallbacks]
-class OnlineBookingConfig
+class OnlineBookingConfig implements ContentTranslatable
 {
+    use ContentTranslationsTrait;
+
     public const BOOKING_MODE_INQUIRY = 'INQUIRY';
     public const BOOKING_MODE_BOOKING = 'BOOKING';
 
@@ -106,6 +110,11 @@ class OnlineBookingConfig
     public function __construct()
     {
         $this->updatedAt = new \DateTime('now');
+    }
+
+    public static function translatableFields(): array
+    {
+        return ['paymentTerms', 'cancellationTerms', 'successMessageText', 'commentPlaceholder'];
     }
 
     #[ORM\PrePersist]

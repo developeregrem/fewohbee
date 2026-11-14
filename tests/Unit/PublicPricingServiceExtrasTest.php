@@ -175,6 +175,26 @@ final class PublicPricingServiceExtrasTest extends TestCase
         self::assertSame('Doppelzimmer', $byId[30]['categoryName']);
     }
 
+    public function testCatalogListsGlobalExtrasFirstThenEachCategoryByName(): void
+    {
+        $extras = [
+            $this->createPrice(10, 'Zustellbett', 15.00, true),
+            $this->createPrice(20, 'Bettwäsche', 12.00, true, false, $this->single),
+            $this->createPrice(11, 'Überdachter Parkplatz', 8.00, true),
+            $this->createPrice(30, 'Endreinigung', 50.00, true, false, $this->double),
+            $this->createPrice(12, 'Frühstück', 14.00),
+        ];
+        $service = $this->buildService($extras, 7);
+
+        $catalog = $service->catalogExtras($this->samplesForBothCategories(), $this->dateFrom, $this->dateTo, 3, 3);
+
+        // An umlaut sorts with its base letter, not after "Z".
+        self::assertSame(
+            ['Frühstück', 'Überdachter Parkplatz', 'Zustellbett', 'Endreinigung', 'Bettwäsche'],
+            array_column($catalog, 'description'),
+        );
+    }
+
     public function testCatalogListsMultiCategoryExtraOnceNamingEveryCategory(): void
     {
         $cleaning = $this->createPrice(40, 'Endreinigung', 55.00, true, false, [$this->single, $this->double]);
@@ -234,6 +254,22 @@ final class PublicPricingServiceExtrasTest extends TestCase
         self::assertSame(2, $byId[30]['quantity']);
         self::assertSame(100.0, $byId[30]['lineTotal']);
         self::assertTrue($byId[30]['autoQuantity']);
+    }
+
+    public function testResolveListsExtrasInTheOrderOfTheCatalog(): void
+    {
+        // The first booked room brings up its category-bound extra before the other global ones.
+        $extras = [
+            $this->createPrice(10, 'Parking', 8.00, true, false, null, true),
+            $this->createPrice(20, 'Endreinigung', 60.00, true, false, $this->single, true),
+            $this->createPrice(11, 'Breakfast', 14.00, true, false, null, true),
+            $this->createPrice(30, 'Bettwäsche', 12.00, true, false, $this->double, true),
+        ];
+        $service = $this->buildService($extras, 7);
+
+        $resolved = $service->resolveExtras($this->mixedBuckets(), $this->dateFrom, $this->dateTo, 5, 3, []);
+
+        self::assertSame(['Breakfast', 'Parking', 'Bettwäsche', 'Endreinigung'], array_column($resolved, 'description'));
     }
 
     public function testResolveCategoryBoundPerRoomMultipliesByNights(): void

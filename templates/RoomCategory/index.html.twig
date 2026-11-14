@@ -35,7 +35,7 @@
                 <tbody>
                 {% for category in room_categories %}
                     <tr>
-                        <td>{{ category.name }}{% if category.acronym|length > 0 %} ({{ category.acronym }}){% endif %}</td>
+                        <td>{{ category.name }}{% if category.acronym|length > 0 %} ({{ category.acronym }}){% endif %}{% if category.isEventSpace %} <span class="badge text-bg-light border ms-1"><i class="fa-solid fa-people-roof"></i> {{ 'category.kind.event_space'|trans }}</span>{% endif %}</td>
                         <td>
                             <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                                 <i class="fas fa-edit"

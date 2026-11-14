@@ -43,10 +43,11 @@ class Workflow
     #[Assert\NotBlank]
     private string $triggerType = '';
 
+    /** @var array<string, mixed> Configuration fields defined by the selected trigger. */
     #[ORM\Column(type: Types::JSON)]
     private array $triggerConfig = [];
 
-    /** @var list<array{type: string, config: array}> */
+    /** @var list<array{type: string, config?: array<string, mixed>}> */
     #[ORM\Column(type: Types::JSON)]
     private array $conditions = [];
 
@@ -54,6 +55,7 @@ class Workflow
     #[Assert\NotBlank]
     private string $actionType = '';
 
+    /** @var array<string, mixed> Configuration fields defined by the selected action. */
     #[ORM\Column(type: Types::JSON)]
     private array $actionConfig = [];
 
@@ -155,11 +157,13 @@ class Workflow
         return $this;
     }
 
+    /** @return array<string, mixed> */
     public function getTriggerConfig(): array
     {
         return $this->triggerConfig;
     }
 
+    /** @param array<string, mixed> $triggerConfig */
     public function setTriggerConfig(array $triggerConfig): static
     {
         $this->triggerConfig = $triggerConfig;
@@ -167,13 +171,13 @@ class Workflow
         return $this;
     }
 
-    /** @return list<array{type: string, config: array}> */
+    /** @return list<array{type: string, config?: array<string, mixed>}> */
     public function getConditions(): array
     {
         return $this->conditions;
     }
 
-    /** @param list<array{type: string, config: array}> $conditions */
+    /** @param list<array{type: string, config?: array<string, mixed>}> $conditions */
     public function setConditions(array $conditions): static
     {
         $this->conditions = $conditions;
@@ -193,11 +197,13 @@ class Workflow
         return $this;
     }
 
+    /** @return array<string, mixed> */
     public function getActionConfig(): array
     {
         return $this->actionConfig;
     }
 
+    /** @param array<string, mixed> $actionConfig */
     public function setActionConfig(array $actionConfig): static
     {
         $this->actionConfig = $actionConfig;

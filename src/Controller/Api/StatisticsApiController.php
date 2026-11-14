@@ -243,6 +243,10 @@ class StatisticsApiController extends AbstractController
         return array_values(array_unique($result));
     }
 
+    /**
+     * @param list<array<string, float|int|string|null>> $data Utilization, origin or turnover rows
+     * @param array<string, int|string|list<int>|null> $meta
+     */
     private function envelope(array $data, array $meta): JsonResponse
     {
         return new JsonResponse([

@@ -128,7 +128,7 @@ final class BookingTools
 
         return [
             'available' => true,
-            'apartment' => ['id' => $preview->apartment->getId(), 'number' => $preview->apartment->getNumber(), 'description' => $preview->apartment->getDescription()],
+            'apartment' => ['id' => $preview->apartment->getId(), 'number' => $preview->apartment->getNumber(), 'description' => $preview->apartment->getDescription(), 'kind' => $preview->apartment->getKind()->value],
             'arrival' => $stay->arrival->format('Y-m-d'),
             'departure' => $stay->departure->format('Y-m-d'),
             'nights' => $stay->nights(),

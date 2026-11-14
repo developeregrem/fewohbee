@@ -71,7 +71,7 @@ class ReservationQueryService
             if (!$apartment instanceof Appartment) {
                 throw new \InvalidArgumentException("Unknown 'apartmentId'.");
             }
-            if (null !== $subsidiary && $apartment->getObject()?->getId() !== $subsidiary->getId()) {
+            if (null !== $subsidiary && $apartment->getObject()->getId() !== $subsidiary->getId()) {
                 throw new \InvalidArgumentException("Apartment does not belong to the given 'objectId'.");
             }
         }
