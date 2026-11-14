@@ -654,9 +654,6 @@
             "./config/packages/reset_password.yaml"
         ]
     },
-    "theseer/tokenizer": {
-        "version": "1.2.1"
-    },
     "twig/twig": {
         "version": "v3.3.3"
     }
