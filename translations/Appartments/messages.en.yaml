@@ -157,6 +157,7 @@ calendar:
           success_with_skipped: 'Calendar checked: %count% current or future periods found; %skipped% unreadable entries were omitted.'
       error:
         http_status: Remote calendar returned an invalid response.
+        redirect: Remote calendar URL redirects too often. Enter the direct iCal address.
         unreachable: Remote calendar URL is not reachable.
         too_large: Remote calendar is larger than 2 MB.
         invalid_ical: Remote calendar is not a valid iCal feed.

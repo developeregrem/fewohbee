@@ -34,7 +34,7 @@ final class CalendarImportPreviewControllerTest extends WebTestCase
 
         $client->request('POST', '/settings/apartments/sync/import/preview', [
             '_token' => 'invalid',
-            'url' => 'https://example.test/calendar.ics',
+            'url' => 'https://93.184.216.34/calendar.ics',
         ]);
 
         self::assertResponseStatusCodeSame(403);
@@ -53,6 +53,7 @@ final class CalendarImportPreviewControllerTest extends WebTestCase
         self::assertCount(1, $tokenNode);
         $token = (string) $tokenNode->attr('data-calendar-imports-preview-token-value');
 
+        // Use a public IP literal below to avoid DNS; the mock never sends real requests.
         self::getContainer()->set(CalendarImportPreviewService::class, new CalendarImportPreviewService(
             new IcsFeedClient(new MockHttpClient(new MockResponse(<<<'ICS'
 BEGIN:VCALENDAR
@@ -71,7 +72,7 @@ ICS))),
 
         $client->request('POST', '/settings/apartments/sync/import/preview', [
             '_token' => $token,
-            'url' => 'https://example.test/calendar.ics',
+            'url' => 'https://93.184.216.34/calendar.ics',
         ]);
 
         self::assertResponseIsSuccessful();
@@ -81,6 +82,34 @@ ICS))),
         self::assertSame(1, $payload['eventCount'] ?? null);
         self::assertSame('Reserved', $payload['groups'][0]['summary'] ?? null);
         self::assertNull($payload['sharedFilters'] ?? null);
+    }
+
+    public function testPreviewRejectsPrivateFeedWithoutExposingItsContents(): void
+    {
+        $client = self::createClient();
+        $client->disableReboot();
+        $client->loginUser($this->getAdminUser(), 'main');
+        $transport = new MockHttpClient(new MockResponse('BEGIN:VCALENDAR'));
+        self::getContainer()->set(IcsFeedClient::class, new IcsFeedClient($transport));
+        $sync = $this->getCalendarSync();
+
+        $crawler = $client->request('GET', '/settings/apartments/sync/'.$sync->getId().'/edit');
+        self::assertResponseIsSuccessful();
+        $token = $crawler->filter('[data-calendar-imports-preview-token-value]')
+            ->attr('data-calendar-imports-preview-token-value');
+
+        $client->request('POST', '/settings/apartments/sync/import/preview', [
+            '_token' => $token,
+            'url' => 'http://169.254.169.254/calendar.ics',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        $payload = json_decode((string) $client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+        self::assertFalse($payload['success']);
+        self::assertArrayNotHasKey('groups', $payload);
+        self::assertStringNotContainsString('169.254.169.254', $payload['message']);
+        self::assertSame(0, $transport->getRequestsCount());
     }
 
     /** Return a persisted calendar sync used to render a genuine preview CSRF token. */

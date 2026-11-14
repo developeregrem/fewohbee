@@ -14,6 +14,7 @@ final class IcsFeedException extends CalendarSyncException
     ) {
         $translationKey = match ($failure) {
             IcsFeedFailure::HttpStatus => 'calendar.sync.error.http_status',
+            IcsFeedFailure::Redirect => 'calendar.sync.error.redirect',
             IcsFeedFailure::Unreachable => 'calendar.sync.error.unreachable',
             IcsFeedFailure::TooLarge => 'calendar.sync.error.too_large',
         };

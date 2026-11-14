@@ -146,6 +146,7 @@ calendar:
           success_with_skipped: 'Kalender geprüft: %count% aktuelle oder zukünftige Zeiträume gefunden; %skipped% unlesbare Einträge wurden ausgelassen.'
       error:
         http_status: 'Der Kalender liefert eine ungültige Antwort.'
+        redirect: 'Die Kalender-URL leitet zu oft weiter. Trage die direkte iCal-Adresse ein.'
         unreachable: 'Die Kalender-URL ist nicht erreichbar.'
         too_large: 'Der Kalender ist größer als 2 MB.'
         invalid_ical: 'Der Kalender ist kein gültiges iCal-Format.'

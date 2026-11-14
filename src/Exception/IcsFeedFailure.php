@@ -8,6 +8,7 @@ namespace App\Exception;
 enum IcsFeedFailure: string
 {
     case HttpStatus = 'http_status';
+    case Redirect = 'redirect';
     case Unreachable = 'unreachable';
     case TooLarge = 'too_large';
 }

@@ -6,12 +6,16 @@ namespace App\Tests\Functional;
 
 use App\Entity\Calendar;
 use App\Entity\CalendarEntry;
+use App\Exception\IcsFeedException;
+use App\Exception\IcsFeedFailure;
 use App\Repository\CalendarEntryRepository;
 use App\Service\Calendar\Sync\CalendarEntrySyncService;
+use App\Service\Calendar\Sync\Ics\IcsFeedClient;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
+use Symfony\Component\HttpClient\MockHttpClient;
 
 /** Verify that CalendarEntrySyncService expands multi-day (DTSTART..DTEND) VEVENTs into one CalendarEntry per day. */
 final class CalendarEntrySyncServiceTest extends KernelTestCase
@@ -27,6 +31,7 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
 
     private EntityManagerInterface $em;
     private CalendarEntrySyncService $service;
+    private MockHttpClient $transport;
     private string $originalTimezone;
 
     protected function setUp(): void
@@ -35,6 +40,8 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
         self::mockTime(new \DateTimeImmutable(self::TODAY, new \DateTimeZone('Europe/Berlin')));
         self::bootKernel();
         $this->em = static::getContainer()->get(ManagerRegistry::class)->getManager();
+        $this->transport = new MockHttpClient();
+        static::getContainer()->set(IcsFeedClient::class, new IcsFeedClient($this->transport));
         $this->service = static::getContainer()->get(CalendarEntrySyncService::class);
 
         // The import reads feed instants in the application timezone, which is
@@ -50,6 +57,24 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
     {
         date_default_timezone_set($this->originalTimezone);
         parent::tearDown();
+    }
+
+    public function testStoredPrivateFeedIsRejectedWithoutImportingEntries(): void
+    {
+        $calendar = $this->createCalendar('Private feed '.uniqid());
+        $calendar->setIcsUrl('http://127.0.0.1/calendar.ics');
+        $this->em->flush();
+
+        try {
+            $this->service->sync($calendar);
+            self::fail('Expected an IcsFeedException.');
+        } catch (IcsFeedException $exception) {
+            self::assertSame(IcsFeedFailure::Unreachable, $exception->failure);
+        }
+
+        self::assertSame(0, $this->transport->getRequestsCount());
+        self::assertSame([], $this->entriesForCalendar($calendar));
+        self::assertNull($calendar->getLastSyncedAt());
     }
 
     public function testMultiDayEventExpandsIntoOneEntryPerDay(): void
