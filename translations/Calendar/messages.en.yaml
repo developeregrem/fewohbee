@@ -41,6 +41,7 @@ calendar:
   sync:
     error:
       http_status: "The calendar URL returned HTTP status %status%."
+      redirect: "The calendar URL redirects too often. Enter the direct iCal address."
       unreachable: "The calendar URL is unreachable."
       too_large: "The calendar is larger than 2 MB."
       invalid_ical: "The calendar is not a valid iCal feed."

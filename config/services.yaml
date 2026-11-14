@@ -32,6 +32,8 @@ parameters:
     env(FROM_NAME): ''
     env(RETURN_PATH): ''
     env(MAILER_DSN): 'null://null'
+    # self-hosted exceptions for internal iCal feed hosts (IP addresses or CIDR subnets).
+    env(ICS_FEED_ALLOWLIST): ''
     # define the redis host
     env(REDIS_HOST): 'redis'
     # define the legacy/default Redis index
@@ -101,6 +103,10 @@ services:
     App\Service\SmtpPasswordCrypto:
         arguments:
             $appSecret: '%env(APP_SECRET)%'
+
+    App\Service\Calendar\Sync\Ics\IcsFeedClient:
+        arguments:
+            $allowList: '%env(csv:ICS_FEED_ALLOWLIST)%'
     
     App\Service\AppSettingsService:
         arguments:

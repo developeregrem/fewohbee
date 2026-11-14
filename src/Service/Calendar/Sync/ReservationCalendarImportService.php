@@ -48,6 +48,7 @@ class ReservationCalendarImportService
         } catch (IcsFeedException $exception) {
             $key = match ($exception->failure) {
                 IcsFeedFailure::HttpStatus => 'calendar.sync.import.error.http_status',
+                IcsFeedFailure::Redirect => 'calendar.sync.import.error.redirect',
                 IcsFeedFailure::Unreachable => 'calendar.sync.import.error.unreachable',
                 IcsFeedFailure::TooLarge => 'calendar.sync.import.error.too_large',
             };

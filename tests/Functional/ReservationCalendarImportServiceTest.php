@@ -37,10 +37,25 @@ final class ReservationCalendarImportServiceTest extends KernelTestCase
         $this->em = static::getContainer()->get(ManagerRegistry::class)->getManager();
     }
 
+    public function testStoredPrivateFeedRecordsAnErrorWithoutImportingReservations(): void
+    {
+        $import = $this->createImport('http://192.168.1.1/calendar.ics', CalendarSyncImport::CONFLICT_MARK);
+        $service = $this->createServiceWithResponses([
+            $import->getUrl() => "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n",
+        ]);
+
+        $service->syncImport($import);
+
+        $translator = static::getContainer()->get(TranslatorInterface::class);
+        self::assertSame($translator->trans('calendar.sync.import.error.unreachable'), $import->getLastSyncError());
+        self::assertNotNull($import->getLastSyncAt());
+        self::assertSame([], $this->getReservationRepository()->findBy(['calendarSyncImport' => $import]));
+    }
+
     /** Ensure a valid iCal feed creates a reservation with import metadata. */
     public function testImportCreatesReservation(): void
     {
-        $import = $this->createImport('https://example.test/ical/create', CalendarSyncImport::CONFLICT_MARK);
+        $import = $this->createImport('https://93.184.216.34/ical/create', CalendarSyncImport::CONFLICT_MARK);
         $uid = 'uid-create-1';
         $start = new \DateTimeImmutable('+2 days');
         $end = new \DateTimeImmutable('+4 days');
@@ -68,7 +83,7 @@ final class ReservationCalendarImportServiceTest extends KernelTestCase
     public function testEmptyCalendarCompletesSuccessfully(): void
     {
         $import = $this->createImport(
-            'https://example.test/ical/empty',
+            'https://93.184.216.34/ical/empty',
             CalendarSyncImport::CONFLICT_MARK,
         );
         $service = $this->createServiceWithResponses([
@@ -89,7 +104,7 @@ ICS,
     /** Ensure a user-confirmed portal block label does not create a reservation. */
     public function testImportSkipsUserExcludedSummaryVariation(): void
     {
-        $import = $this->createImport('https://example.test/ical/excluded', CalendarSyncImport::CONFLICT_MARK);
+        $import = $this->createImport('https://93.184.216.34/ical/excluded', CalendarSyncImport::CONFLICT_MARK);
         $import->setExcludedSummaryTerms(['Not available']);
         $this->em->flush();
         $uid = 'uid-excluded-1';
@@ -112,7 +127,7 @@ ICS,
     /** Verify that an existing reservation keeps manually edited fields when the UID matches. */
     public function testImportUpdatesReservationWhenUidMatches(): void
     {
-        $import = $this->createImport('https://example.test/ical/update', CalendarSyncImport::CONFLICT_MARK);
+        $import = $this->createImport('https://93.184.216.34/ical/update', CalendarSyncImport::CONFLICT_MARK);
         $uid = 'uid-update-1';
         $oldStart = new \DateTime('+1 day');
         $oldEnd = new \DateTime('+2 days');
@@ -147,7 +162,7 @@ ICS,
         bool $blockCurrentRoom,
         bool $useRoomBlock,
     ): void {
-        $import = $this->createImport('https://example.test/ical/moved', $strategy);
+        $import = $this->createImport('https://93.184.216.34/ical/moved', $strategy);
         $uid = 'uid-moved';
         $start = new \DateTimeImmutable('today +3 days');
         $end = new \DateTimeImmutable('today +5 days');
@@ -227,7 +242,7 @@ ICS,
     /** Verify that conflict updates also preserve manually edited fields. */
     public function testImportMarksExistingReservationAsConflictWithoutOverwritingManualFields(): void
     {
-        $import = $this->createImport('https://example.test/ical/update-conflict', CalendarSyncImport::CONFLICT_MARK);
+        $import = $this->createImport('https://93.184.216.34/ical/update-conflict', CalendarSyncImport::CONFLICT_MARK);
         $uid = 'uid-update-conflict-1';
         $reservation = $this->createReservation($import, $uid, new \DateTime('+1 day'), new \DateTime('+2 days'));
         $manualOrigin = $this->createReservationOrigin('Manual Origin Conflict');
@@ -259,7 +274,7 @@ ICS,
     /** Verify that the mark strategy creates a conflict reservation for overlaps. */
     public function testConflictStrategyMarkCreatesConflictReservation(): void
     {
-        $import = $this->createImport('https://example.test/ical/mark', CalendarSyncImport::CONFLICT_MARK);
+        $import = $this->createImport('https://93.184.216.34/ical/mark', CalendarSyncImport::CONFLICT_MARK);
         $this->createReservation($import, 'uid-existing-1', new \DateTime('+2 days'), new \DateTime('+4 days'));
         $uid = 'uid-mark-1';
         $start = new \DateTimeImmutable('+3 days');
@@ -279,7 +294,7 @@ ICS,
     /** Verify that the skip strategy ignores conflicting events. */
     public function testConflictStrategySkipIgnoresConflictingReservation(): void
     {
-        $import = $this->createImport('https://example.test/ical/skip', CalendarSyncImport::CONFLICT_SKIP);
+        $import = $this->createImport('https://93.184.216.34/ical/skip', CalendarSyncImport::CONFLICT_SKIP);
         $this->createReservation($import, 'uid-existing-2', new \DateTime('+2 days'), new \DateTime('+4 days'));
         $uid = 'uid-skip-1';
         $start = new \DateTimeImmutable('+3 days');
@@ -297,7 +312,7 @@ ICS,
     /** Verify that the overwrite strategy marks conflicts and stores the new reservation. */
     public function testConflictStrategyOverwriteMarksExistingAndCreatesNew(): void
     {
-        $import = $this->createImport('https://example.test/ical/overwrite', CalendarSyncImport::CONFLICT_OVERWRITE);
+        $import = $this->createImport('https://93.184.216.34/ical/overwrite', CalendarSyncImport::CONFLICT_OVERWRITE);
         $existing = $this->createReservation($import, 'uid-existing-3', new \DateTime('+2 days'), new \DateTime('+4 days'));
         $uid = 'uid-overwrite-1';
         $start = new \DateTimeImmutable('+3 days');
@@ -318,7 +333,7 @@ ICS,
     /** Ensure canceled reservations do not trigger conflicts during import. */
     public function testCanceledReservationDoesNotTriggerConflict(): void
     {
-        $import = $this->createImport('https://example.test/ical/canceled', CalendarSyncImport::CONFLICT_MARK);
+        $import = $this->createImport('https://93.184.216.34/ical/canceled', CalendarSyncImport::CONFLICT_MARK);
         $canceledStatus = $this->getCanceledStatus();
         $this->createReservationWithStatus(
             $import,
@@ -358,7 +373,7 @@ ICS,
         $switchDay = $this->nextDstSwitchDay($intoDst);
         $start = $switchDay->modify('-10 days');
         $end = $switchDay->modify('+5 days');
-        $import = $this->createImport('https://example.test/ical/dst-'.($intoDst ? 'spring' : 'autumn'), CalendarSyncImport::CONFLICT_MARK);
+        $import = $this->createImport('https://93.184.216.34/ical/dst-'.($intoDst ? 'spring' : 'autumn'), CalendarSyncImport::CONFLICT_MARK);
         $this->createReservation($import, 'uid-dst-following', \DateTime::createFromImmutable($end), \DateTime::createFromImmutable($end->modify('+3 days')));
         $uid = 'uid-dst-stay';
         $service = $this->createServiceWithResponses([
@@ -404,6 +419,7 @@ ICS,
 
     /**
      * Build a ReservationCalendarImportService with mocked HTTP responses keyed by URL.
+     * Public IP literals avoid DNS lookups; the mock never sends real requests.
      *
      * @param array<string, string> $responses
      */

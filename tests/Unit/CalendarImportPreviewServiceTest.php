@@ -52,7 +52,7 @@ END:VEVENT
 END:VCALENDAR
 ICS);
 
-        $preview = $service->preview('https://example.test/booking.ics', new \DateTimeZone('UTC'));
+        $preview = $service->preview('https://93.184.216.34/booking.ics', new \DateTimeZone('UTC'));
 
         self::assertSame(3, $preview->eventCount);
         self::assertSame(0, $preview->skippedCount);
@@ -83,7 +83,7 @@ END:VEVENT
 END:VCALENDAR
 ICS);
 
-        $preview = $service->preview('https://example.test/airbnb.ics', new \DateTimeZone('UTC'));
+        $preview = $service->preview('https://93.184.216.34/airbnb.ics', new \DateTimeZone('UTC'));
 
         self::assertSame(2, $preview->eventCount);
         self::assertCount(2, $preview->groups);
@@ -102,14 +102,14 @@ PRODID:-//New property//Calendar//EN
 END:VCALENDAR
 ICS);
 
-        $preview = $service->preview('https://example.test/empty.ics', new \DateTimeZone('UTC'));
+        $preview = $service->preview('https://93.184.216.34/empty.ics', new \DateTimeZone('UTC'));
 
         self::assertSame(0, $preview->eventCount);
         self::assertSame(0, $preview->skippedCount);
         self::assertSame([], $preview->groups);
     }
 
-    /** Build the preview service with a single in-memory HTTP response. */
+    /** Public IP literals avoid DNS lookups; all HTTP responses stay in memory. */
     private function createService(string $content): CalendarImportPreviewService
     {
         return new CalendarImportPreviewService(
