@@ -1,0 +1,40 @@
+reservationorigin.add: Προσθήκη προέλευσης
+reservationorigin.business: Επαγγελματική
+reservationorigin.color: Χρώμα
+reservationorigin.color.enable: Εμφάνιση χρωματικής ένδειξης
+reservationorigin.color.help: Το χρώμα εμφανίζεται ως ένδειξη στις κρατήσεις 
+  στην επισκόπηση κρατήσεων.
+reservationorigin.delete.ask: Θέλετε σίγουρα να διαγράψετε την προέλευση 
+  κράτησης;
+reservationorigin.description: Προέλευση κράτησης
+reservationorigin.flash.create.check_prices: Ελέγξτε τις κατηγορίες τιμών σας 
+  και βεβαιωθείτε ότι ισχύουν και για αυτήν τη νέα προέλευση κράτησης.
+reservationorigin.flash.create.success: Η προέλευση κράτησης δημιουργήθηκε με 
+  επιτυχία.
+reservationorigin.flash.delete.inuse.reservations: Η προέλευση κράτησης δεν 
+  μπορεί να διαγραφεί, επειδή χρησιμοποιείται σε υπάρχουσες κρατήσεις.
+reservationorigin.flash.delete.success: Η προέλευση κράτησης διαγράφηκε με 
+  επιτυχία.
+reservationorigin.flash.edit.success: Η προέλευση κράτησης ενημερώθηκε με 
+  επιτυχία.
+reservationorigin.flash.edit.ota_fees_enabled: Το αν οι επιμέρους υπηρεσίες 
+  περιλαμβάνονται στις χρεώσεις πύλης ορίζεται σε κάθε τιμή μέσω της επιλογής 
+  «Συμπερίληψη στις χρεώσεις πύλης». Ελέγξτε τις υπάρχουσες τιμές.
+reservationorigin.flash.surcharge_invalid: Η προμήθεια και η χρέωση πληρωμής 
+  πρέπει να είναι ποσοστά μεταξύ 0 και 100 με το πολύ δύο δεκαδικά ψηφία.
+reservationorigin.flash.surcharge_required: Με ενεργοποιημένες τις χρεώσεις OTA 
+  απαιτείται τουλάχιστον προμήθεια ή χρέωση πληρωμής.
+reservationorigin.name: Περιγραφή
+reservationorigin.guest_surcharge_enabled: Χρεώσεις OTA
+reservationorigin.commission_percent: Προμήθεια
+reservationorigin.payment_fee_percent: Χρέωση πληρωμής
+reservationorigin.payment_collection: Η πληρωμή εισπράττεται από
+reservationorigin.tourist_tax_collection: Ποιος εισπράττει τον φόρο διαμονής;
+reservationorigin.tourist_tax_collection.hint: Επιλέξτε «Κατάλυμα», αν ο 
+  επισκέπτης πληρώνει τον φόρο διαμονής επί τόπου. Επιλέξτε «Πύλη», αν η πύλη 
+  τον εισπράττει μαζί με την τιμή της κράτησης. Αυτό καθορίζει αν η χρέωση 
+  πληρωμής της πύλης ισχύει και για τον φόρο διαμονής.
+reservationorigin.collection.property: Κατάλυμα
+reservationorigin.collection.portal: Πύλη
+reservationorigin.private: Ιδιωτική
+reservationorigin.title: Προέλευση κράτησης

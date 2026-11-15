@@ -1,0 +1,125 @@
+app_settings:
+  nav:
+    label: Γενικά
+  page_title: Γενικές ρυθμίσεις
+  flash:
+    saved: Οι ρυθμίσεις αποθηκεύτηκαν.
+  save: Αποθήκευση ρυθμίσεων
+  save_hint: Οι αλλαγές ισχύουν αμέσως.
+  section:
+    public_address: Δημόσια διεύθυνση
+    public_address_desc: Η διεύθυνση στην οποία το FewohBee είναι προσβάσιμο από
+      το διαδίκτυο. Από αυτήν δημιουργούνται οι σύνδεσμοι που αποστέλλονται 
+      στους επισκέπτες, π.χ. για το online check-in.
+    currency: Νόμισμα
+    currency_desc: Κωδικός και σύμβολο νομίσματος που χρησιμοποιούνται σε 
+      τιμολόγια και στην εμφάνιση τιμών.
+    invoices: Τιμολόγια
+    invoices_desc: Ρυθμίσεις για τη δημιουργία και την εξαγωγή τιμολογίων.
+    guests: Επισκέπτες
+    guests_desc: Προσφωνήσεις και άλλες ρυθμίσεις διαχείρισης επισκεπτών.
+    confirmation: Επιβεβαίωση κράτησης
+    confirmation_desc: Τι προετοιμάζει το κουμπί «Επιβεβαίωση» στα στοιχεία της 
+      κράτησης. Το email και τα συνημμένα του μπορούν ακόμη να αλλάξουν πριν από
+      την αποστολή.
+    notifications: Ειδοποιήσεις
+    notifications_desc: Ειδοποιήσεις μέσω email για νέες κρατήσεις και εισαγωγές
+      ημερολογίου.
+    mail: Email / SMTP
+    mail_desc: Αποστολέας και διαπιστευτήρια SMTP για τα εξερχόμενα email της 
+      εφαρμογής.
+  notification_fallback_hint: Δεν έχει ρυθμιστεί παραλήπτης – οι ειδοποιήσεις θα
+    αποστέλλονται στο <strong>%email%</strong> (διεύθυνση αποστολέα).
+  mail_disabled_hint: Ο κεντρικός διακόπτης MAIL_ENABLED είναι 
+    απενεργοποιημένος. Η σύνδεση SMTP μπορεί να ελεγχθεί, αλλά η εφαρμογή δεν θα
+    αποστέλλει email.
+  public_base_url:
+    preset_hint: Ορίζεται από τον πάροχο φιλοξενίας σας και δεν μπορεί να 
+      αλλάξει εδώ.
+    fallback_hint: Αυτήν τη στιγμή χρησιμοποιείται το %url% από τη διαμόρφωση 
+      του διακομιστή.
+    missing_hint: Όσο δεν έχει οριστεί διεύθυνση, δεν μπορούν να δημιουργηθούν 
+      σύνδεσμοι για επισκέπτες.
+    warning_local: Αυτή η διεύθυνση πιθανότατα δεν είναι προσβάσιμη από το 
+      διαδίκτυο. Οι επισκέπτες δεν θα μπορούν να ανοίξουν συνδέσμους προς αυτήν.
+    warning_insecure: Η διεύθυνση δεν χρησιμοποιεί HTTPS. Οι επισκέπτες στέλνουν
+      προσωπικά δεδομένα μέσω αυτής· αλλάξτε σε https://.
+  form:
+    public_base_url: Διεύθυνση (URL)
+    public_base_url_help: Πλήρης διεύθυνση μαζί με το https://, π.χ. 
+      https://fewohbee.my-guesthouse.com
+    currency: Κωδικός νομίσματος
+    currency_symbol: Σύμβολο νομίσματος
+    invoice_filename_pattern: Όνομα αρχείου εξαγωγής τιμολογίου
+    invoice_filename_pattern_help: 'Σύμβολα κράτησης θέσης: <code>&lt;company&gt;</code>,
+      <code>&lt;lastname&gt;</code>, <code>&lt;firstname&gt;</code>, <code>&lt;status&gt;</code>,
+      <code>&lt;payment&gt;</code>, <code>&lt;number&gt;</code>, <code>&lt;date&gt;</code>.
+      Σύνταξη εναλλακτικής τιμής: <code>&lt;company|lastname&gt;</code>'
+    invoice_number_pattern: Εύρος αριθμών τιμολογίων (προεπιλογή)
+    invoice_number_pattern_help: 'Σύμβολα κράτησης θέσης: <code>&lt;year&gt;</code>
+      (2026), <code>&lt;year2&gt;</code> (26), <code>&lt;month&gt;</code> (08), <code>&lt;day&gt;</code>
+      (17), <code>&lt;number&gt;</code> (αύξων αριθμός, πλάτος μέσω <code>&lt;number:4&gt;</code>).
+      Παράδειγμα: το <code>RE-&lt;year&gt;-&lt;number:4&gt;</code> παράγει <code>RE-2026-0001</code>.
+      Τα καταλύματα μπορούν να ορίσουν δικό τους εύρος. Αφήστε το κενό για να συνεχίσει
+      η αρίθμηση από τον τελευταίο αριθμό που χρησιμοποιήθηκε.'
+    customer_salutations: Προσφωνήσεις
+    customer_salutations_help: Η προσφώνηση στην πρώτη στήλη είναι η προεπιλογή.
+      Αν μια μετάφραση μείνει κενή, χρησιμοποιείται η προσφώνηση στην 
+      προεπιλεγμένη γλώσσα. Οι επισκέπτες βλέπουν την προσφώνηση στη γλώσσα τους
+      (π.χ. στην online κράτηση ή στα email).
+    customer_salutations_add: Προσθήκη προσφώνησης
+    confirmation_template: Πρότυπο email
+    confirmation_template_help: Χωρίς πρότυπο δεν εμφανίζεται κουμπί. Αν το 
+      πρότυπο έχει παραλλαγή στη γλώσσα του κατόχου της κράτησης, 
+      χρησιμοποιείται αυτή.
+    confirmation_template_none: Κανένα (απόκρυψη του κουμπιού)
+    confirmation_attachments: Συνημμένα
+    confirmation_attachments_help: Αυτά τα PDF επισυνάπτονται ήδη όταν ανοίγει 
+      το email.
+    confirmation_send_immediately: Άμεση αποστολή
+    confirmation_send_immediately_help: Το κουμπί στέλνει το email με τα 
+      συνημμένα του απευθείας στον κάτοχο της κράτησης, χωρίς να το ανοίγει 
+      πρώτα για επεξεργασία.
+    notification_email: Email παραλήπτη
+    notification_email_help: Αν μείνει κενό, ως παραλήπτης χρησιμοποιείται η 
+      ρυθμισμένη διεύθυνση αποστολέα.
+    notification_email_placeholder: π.χ. owner@hotel.tld
+    mail_from_email: Email αποστολέα
+    mail_from_email_placeholder: π.χ. info@hotel.tld
+    mail_from_name: Όνομα αποστολέα
+    mail_from_name_placeholder: π.χ. Example Hotel
+    mail_return_path: Διεύθυνση επιστροφής (Return path)
+    mail_return_path_help: Διεύθυνση για τεχνικές επιστροφές (bounces). Αφήστε 
+      το κενό, αν είναι ίδια με τον αποστολέα.
+    mail_copy: Αποστολή αντιγράφου στον αποστολέα
+    mail_copy_help: Αποστολή των εξερχόμενων email στη διεύθυνση του αποστολέα 
+      ως κρυφή κοινοποίηση (BCC).
+    smtp_host: Διακομιστής SMTP
+    smtp_port: Θύρα
+    smtp_encryption: Κρυπτογράφηση
+    smtp_encryption_starttls: STARTTLS
+    smtp_encryption_ssl: SSL/TLS
+    smtp_encryption_none: Καμία
+    smtp_username: Όνομα χρήστη
+    smtp_password: Κωδικός πρόσβασης
+    smtp_password_help: Αφήστε το κενό για να διατηρηθεί ο αποθηκευμένος κωδικός
+      πρόσβασης.
+  smtp_test:
+    button: Έλεγχος σύνδεσης SMTP
+    success: Η σύνδεση και η είσοδος στο SMTP ήταν επιτυχείς.
+    invalid: Διορθώστε τις ρυθμίσεις email και SMTP πριν από τον έλεγχο.
+    failure: 'Ο έλεγχος SMTP απέτυχε: %message%'
+    generic_error: Ο έλεγχος SMTP απέτυχε.
+  notification_mail:
+    online_booking_subject: Λήφθηκε νέα online κράτηση
+    calendar_import_subject: Νέα κράτηση μέσω εισαγωγής ημερολογίου
+    greeting: Γεια σας,
+    online_booking_intro: 'λήφθηκε μια νέα online κράτηση:'
+    calendar_import_intro: 'δημιουργήθηκε μια νέα κράτηση μέσω εισαγωγής ημερολογίου:'
+    room: Δωμάτιο
+    period: Περίοδος
+    guests: Επισκέπτες
+    booker: Κάτοχος κράτησης
+    origin: Προέλευση
+    open_app: Άνοιγμα εφαρμογής
+    footer: Αυτό το μήνυμα δημιουργήθηκε αυτόματα.

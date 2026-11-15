@@ -1,0 +1,272 @@
+invoice.action: Ενέργεια
+invoice.add.another.reservation: Προσθήκη άλλης κράτησης
+invoice.appartment: Γραμμές δωματίων
+invoice.appartment.persons: '{1} %count% άτομο|]1,Inf] %count% άτομα'
+invoice.appartment.position.beds: Κρεβάτια
+invoice.appartment.position.category: Κατηγορία
+invoice.appartment.position.description: Περιγραφή
+invoice.appartment.position.enddate: Έως
+invoice.appartment.position.number: Δωμάτιο
+invoice.appartment.position.person: Άτομο
+invoice.appartment.position.persons: Άτομα
+invoice.appartment.position.price: Τιμή
+invoice.appartment.position.pricecategory: Κατηγορία τιμής
+invoice.appartment.position.startdate: Από
+invoice.appartment.position.vat: Φόρος
+invoice.brutto: Μικτό
+invoice.company: Εταιρεία
+invoice.containing.vat: Συμπεριλαμβάνεται ΦΠΑ
+invoice.customer.recommendation: Προεπιλογή
+invoice.customer.section.contact: Επικοινωνία
+invoice.customer.section.address: Διεύθυνση
+invoice.customer.section.communication: Τηλέφωνο & email
+invoice.customer.section.einvoice: Στοιχεία ηλεκτρονικού τιμολογίου
+invoice.customer.section.payment: Στοιχεία πληρωμής
+invoice.customer.einvoice.hint: Απαιτείται μόνο για την αποστολή ηλεκτρονικών 
+  τιμολογίων σε δημόσιες αρχές (XRechnung). Οι ιδιώτες και οι επαγγελματίες 
+  επισκέπτες συνήθως δεν χρειάζονται αυτά τα πεδία.
+invoice.customer.payment.hint: Απαιτείται μόνο για πληρωμή με κάρτα ή άμεση 
+  χρέωση SEPA.
+invoice.date: Ημερομηνία τιμολογίου
+invoice.date2: Ημερομηνία
+invoice.delete.ask: Να διαγραφεί αυτό το τιμολόγιο;
+invoice.description: Διαχείριση τιμολογίων
+invoice.details: Στοιχεία τιμολογίου
+invoice.enddate: Έως
+invoice.flash.create.success: Το τιμολόγιο δημιουργήθηκε με επιτυχία.
+invoice.flash.delete.not.possible: Δεν ήταν δυνατή η διαγραφή του τιμολογίου.
+invoice.flash.delete.success: Το τιμολόγιο διαγράφηκε με επιτυχία.
+invoice.flash.edit.success: Το τιμολόγιο ενημερώθηκε με επιτυχία.
+invoice.guest: Επισκέπτης
+invoice.id: Αριθμός τιμολογίου
+invoice.id.last: 'Τελευταίος: '
+invoice.number.missing.error: Εισαγάγετε αριθμό τιμολογίου πριν συνεχίσετε.
+invoice.number.duplicate.error: Αυτός ο αριθμός τιμολογίου χρησιμοποιείται ήδη. 
+  Επιλέξτε διαφορετικό.
+invoice.number.range.hint: 'Εύρος αριθμών: %range%'
+invoice.number.range.global: Προεπιλογή
+invoice.lastname: Επώνυμο
+invoice.miscellaneous: Διάφορα
+invoice.miscellaneous.position.amount: Ποσότητα
+invoice.miscellaneous.position.amount.flat_help: "Κατ' αποκοπή: 1x ανά κράτηση"
+invoice.netto: Καθαρό
+invoice.number: Αριθμός τιμολογίου
+invoice.number.short: Αρ. τιμ.
+invoice.einvoice: Ηλεκτρονικό τιμολόγιο
+invoice.open.reservations.filter.customer: Αναζήτηση κρατήσεων ανά επισκέπτη
+invoice.open.reservations.filter.time: Αναζήτηση κρατήσεων σε περίοδο
+invoice.position.add.appartment: Προσθήκη γραμμής δωματίου
+invoice.position.add.miscellaneous: Προσθήκη γραμμής διαφόρων
+invoice.position.additional: Πρόσθετες υπηρεσίες
+invoice.position.amount: Ποσότητα
+invoice.position.appartment: Δωμάτιο
+invoice.position.service: Υπηρεσία
+invoice.position.stays: Διανυκτερεύσεις
+invoice.price.single: Τιμή μονάδας
+invoice.price.total: Σύνολο
+invoice.remark: Παρατηρήσεις
+invoice.reservation: Κράτηση
+invoice.reservations.unavailable: Τουλάχιστον μία από τις επιλεγμένες κρατήσεις 
+  δεν είναι πλέον διαθέσιμη. Ξεκινήστε ξανά τη δημιουργία τιμολογίου και 
+  επιλέξτε ξανά τις κρατήσεις.
+invoice.select.customer.search.input.placeholder: Επώνυμο επισκέπτη
+invoice.select.open.reservation: Επιλογή κράτησης χωρίς τιμολόγιο
+invoice.startdate: Από
+invoice.status: Κατάσταση
+invoice.status.canceled: ακυρωμένο
+invoice.status.unpaid: Ανοιχτό
+invoice.status.paid: Εξοφλημένο
+invoice.status.prepaid: μερικώς εξοφλημένο
+invoice.template: Επιλογή προτύπου τιμολογίου
+invoice.template.bound_count: '{1} 1 πρότυπο επιλέγεται αυτόματα ανάλογα με τον τρόπο
+  πληρωμής|]1,Inf[ %count% πρότυπα επιλέγονται αυτόματα ανάλογα με τον τρόπο πληρωμής'
+invoice.template.none_found: Δεν υπάρχει κατάλληλο πρότυπο τιμολογίου για αυτό 
+  το τιμολόγιο. Δημιουργήστε ένα πρότυπο τιμολογίου χωρίς τρόπο πληρωμής, το 
+  οποίο δεν είναι ενσωματωμένο.
+invoice.title: Διαχείριση τιμολογίων
+invoice.vat: ΦΠΑ
+invoice.vatwarning: Χρησιμοποιείτε κατηγορίες τιμών τόσο με ΦΠΑ όσο και χωρίς. 
+  Αυτός ο συνδυασμός μπορεί να οδηγήσει σε ασυνεπείς καταστάσεις. Συνιστάται η 
+  χρήση ενιαίων κατηγοριών τιμών.
+invoice.settings.text: Ρυθμίσεις
+invoice.settings.no_settings: Δεν υπάρχουν άλλες διαθέσιμες ρυθμίσεις. Προσθέστε
+  μία.
+invoice.settings.add: Προσθήκη νέων ρυθμίσεων
+invoice.settings.companyName: Επωνυμία εταιρείας
+invoice.settings.taxNumber: Αριθμός φορολογικού μητρώου
+invoice.settings.vatID: ΑΦΜ ΕΕ (VAT ID)
+invoice.settings.vatID.hint: Για τα ηλεκτρονικά τιμολόγια απαιτείται ΑΦΜ ΕΕ (VAT
+  ID) ή αριθμός μητρώου (ο αριθμός φορολογικού μητρώου μόνος του δεν αρκεί).
+invoice.settings.registrationNumber: Αριθμός μητρώου
+invoice.settings.registrationNumber.hint: π.χ. αριθμός ΓΕΜΗ ή εμπορικού μητρώου 
+  (HRB/HRA). Εναλλακτικά του ΑΦΜ ΕΕ για ηλεκτρονικά τιμολόγια.
+invoice.settings.selleridentifier.required: Εισαγάγετε ΑΦΜ ΕΕ (VAT ID) ή αριθμό 
+  μητρώου — τα ηλεκτρονικά τιμολόγια απαιτούν ένα από τα δύο (ο αριθμός 
+  φορολογικού μητρώου μόνος του δεν αρκεί).
+invoice.settings.contactName: Όνομα επαφής
+invoice.settings.contactDepartment: Τμήμα
+invoice.settings.contactPhone: Αριθμός τηλεφώνου
+invoice.settings.contactMail: Email
+invoice.settings.companyInvoiceMail: Email τιμολογίων
+invoice.settings.companyAddress: Διεύθυνση
+invoice.settings.companyPostCode: Ταχυδρομικός κώδικας
+invoice.settings.companyCity: Πόλη
+invoice.settings.companyCountry: Χώρα
+invoice.settings.accountIBAN: IBAN
+invoice.settings.accountName: Δικαιούχος λογαριασμού
+invoice.settings.accountBIC: BIC
+invoice.settings.paymentTerms: Όροι πληρωμής
+invoice.settings.paymentDueDays: Ημέρες προθεσμίας πληρωμής
+invoice.settings.einvoiceProfile: Προφίλ ηλεκτρονικού τιμολογίου
+invoice.settings.einvoiceProfile.xrechnung: XRechnung (B2G)
+invoice.settings.einvoiceProfile.en16931: ZUGFeRD (EN 16931) – συνιστάται
+invoice.settings.einvoiceProfile.help: Το ZUGFeRD αρκεί για τις περισσότερες 
+  επιχειρήσεις και τους περισσότερους επισκέπτες. Επιλέξτε XRechnung μόνο αν το 
+  χρειάζεστε συγκεκριμένα (π.χ. B2G).
+invoice.settings.profile.hint.en16931: 'ZUGFeRD: Τα PDF των τιμολογίων σας περιέχουν
+  αυτόματα δεδομένα ηλεκτρονικού τιμολογίου αναγνώσιμα από μηχανή. Δεν απαιτούνται
+  άλλα στοιχεία πέρα από τα παρακάτω πεδία.'
+invoice.settings.profile.hint.xrechnung: 'XRechnung: Το όνομα επαφής, το τηλέφωνο
+  και το email είναι υποχρεωτικά, και κάθε τιμολόγιο χρειάζεται αναφορά αγοραστή (Leitweg-ID)
+  και τρόπο πληρωμής.'
+invoice.settings.section.profile: Προφίλ ηλεκτρονικού τιμολογίου
+invoice.settings.section.company: Εταιρεία
+invoice.settings.section.contact: Επικοινωνία
+invoice.settings.section.tax: Φορολογικά
+invoice.settings.section.payment: Πληρωμή
+invoice.settings.xrechnung.contact.error: Αυτό το πεδίο είναι υποχρεωτικό για το
+  προφίλ XRechnung.
+invoice.settings.form.error: Δεν αποθηκεύτηκε τίποτα. Διορθώστε τα επισημασμένα 
+  πεδία παρακάτω.
+invoice.settings.xrechnung.required.hint: '* Αυτά τα πεδία είναι υποχρεωτικά για το
+  προφίλ XRechnung (B2G).'
+invoice.settings.help.general: Τα στοιχεία που εισάγονται εδώ απαιτούνται για 
+  την ψηφιακή εξαγωγή τιμολογίων (ηλεκτρονικό τιμολόγιο).
+invoice.settings.help.invoiceMail: Καθορίζει τη διεύθυνση email στην οποία 
+  μπορεί να σταλεί η απάντηση σε ένα τιμολόγιο.
+invoice.settings.flash.create.success: Οι νέες ρυθμίσεις προστέθηκαν με 
+  επιτυχία.
+invoice.settings.flash.edit.success: Οι ρυθμίσεις ενημερώθηκαν με επιτυχία.
+invoice.settings.flash.delete.success: Οι ρυθμίσεις διαγράφηκαν με επιτυχία.
+invoice.settings.title.einvoice: Ηλεκτρονικό τιμολόγιο
+invoice.settings.title.template: Πρότυπο τιμολογίου
+invoice.settings.active.error: Δεν έχουν ρυθμιστεί στοιχεία τιμολόγησης για αυτό
+  το τιμολόγιο. Δημιουργήστε μια προεπιλεγμένη εγγραφή ή μία για το κατάλυμά του
+  στις ρυθμίσεις τιμολογίων.
+invoice.settings.section.scope: Εμβέλεια
+invoice.settings.scope: Αυτά τα στοιχεία τιμολόγησης ισχύουν για
+invoice.settings.scope.help: Αυτά τα στοιχεία χρησιμοποιούνται μόνο για το 
+  ηλεκτρονικό τιμολόγιο (XML). Ό,τι εμφανίζεται στο τιμολόγιο PDF προέρχεται από
+  το πρότυπο τιμολογίου και δεν επηρεάζεται. Αν διαχειρίζεστε πολλά καταλύματα 
+  με διαφορετικές εταιρείες, δημιουργήστε μία εγγραφή ανά κατάλυμα.
+invoice.settings.scope.default: Προεπιλογή – όλα τα καταλύματα χωρίς δικά τους 
+  στοιχεία τιμολόγησης
+invoice.settings.scope.unused: Δεν χρησιμοποιείται
+invoice.settings.no_default.hint: Καμία εγγραφή δεν έχει οριστεί ως προεπιλογή. 
+  Τα καταλύματα χωρίς δικά τους στοιχεία τιμολόγησης – και τα τιμολόγια χωρίς 
+  κατάλυμα – δεν μπορούν επομένως να παράγουν ηλεκτρονικό τιμολόγιο.
+invoice.settings.scope.new: Νέα στοιχεία τιμολόγησης
+invoice.settings.subsidiary.taken: Σε αυτό το κατάλυμα έχουν ήδη ανατεθεί 
+  στοιχεία τιμολόγησης. Μπορεί να υπάρχει μόνο μία εγγραφή ανά κατάλυμα.
+invoice.settings.creditorReference.label: Αναγνωριστικό δικαιούχου (Creditor ID)
+invoice.settings.creditorReference.hint: Το μοναδικό αναγνωριστικό για την άμεση
+  χρέωση SEPA
+invoice.settings.paymentterm.error: Πρέπει να συμπληρωθεί τουλάχιστον ένα από τα
+  πεδία «Όροι πληρωμής» ή «Ημέρες προθεσμίας πληρωμής».
+invoice.einvoice.violation.invoiceNumber: Λείπει ο αριθμός τιμολογίου 
+  (επεξεργασία τιμολογίου)
+invoice.einvoice.violation.invoiceDate: Λείπει η ημερομηνία τιμολογίου 
+  (επεξεργασία τιμολογίου)
+invoice.einvoice.violation.buyerName: Λείπει το όνομα ή η εταιρεία του παραλήπτη
+  (επεξεργασία τιμολογίου)
+invoice.einvoice.violation.buyerStreet: Λείπει η οδός του παραλήπτη (επεξεργασία
+  τιμολογίου)
+invoice.einvoice.violation.buyerCountry: Λείπει η χώρα του παραλήπτη 
+  (επεξεργασία τιμολογίου)
+invoice.einvoice.violation.buyerPostCodeCity: Λείπει ο ταχυδρομικός κώδικας ή η 
+  πόλη του παραλήπτη (επεξεργασία τιμολογίου)
+invoice.einvoice.violation.buyerEmail: Λείπει η διεύθυνση email του παραλήπτη 
+  (επεξεργασία τιμολογίου)
+invoice.einvoice.violation.buyerReference: Λείπει η αναφορά αγοραστή 
+  (Leitweg-ID) (επεξεργασία τιμολογίου)
+invoice.einvoice.violation.paymentMeans: Δεν έχει επιλεγεί τρόπος πληρωμής 
+  (επεξεργασία τιμολογίου)
+invoice.einvoice.violation.paymentTerms: Δεν έχουν οριστεί ούτε όροι πληρωμής 
+  ούτε ημέρες προθεσμίας πληρωμής (επεξεργασία ρυθμίσεων)
+invoice.einvoice.violation.sellerName: Λείπει η επωνυμία της εταιρείας 
+  (επεξεργασία ρυθμίσεων)
+invoice.einvoice.violation.sellerAddress: Η διεύθυνση της εταιρείας (οδός, 
+  ταχυδρομικός κώδικας, πόλη, χώρα) είναι ελλιπής (επεξεργασία ρυθμίσεων)
+invoice.einvoice.violation.sellerIdentifier: Λείπει ο ΑΦΜ ΕΕ (VAT ID) ή ο 
+  αριθμός μητρώου — ο αριθμός φορολογικού μητρώου μόνος του δεν αρκεί για 
+  ηλεκτρονικά τιμολόγια (επεξεργασία ρυθμίσεων)
+invoice.einvoice.violation.sellerElectronicAddress: Λείπει το email τιμολογίων 
+  της εταιρείας (ηλεκτρονική διεύθυνση) (επεξεργασία ρυθμίσεων)
+invoice.einvoice.violation.sellerContact: Λείπει το όνομα επαφής, το τηλέφωνο ή 
+  το email (επεξεργασία ρυθμίσεων)
+invoice.einvoice.violation.accountIBAN: Λείπει το IBAN (επεξεργασία ρυθμίσεων)
+invoice.einvoice.violation.accountIBANBIC: Λείπει το IBAN ή το BIC (επεξεργασία 
+  ρυθμίσεων)
+invoice.einvoice.violation.cardNumber: Λείπει ο αριθμός κάρτας για πληρωμή με 
+  κάρτα (επεξεργασία τιμολογίου)
+invoice.einvoice.violation.customerIBAN: Λείπει το IBAN του επισκέπτη για άμεση 
+  χρέωση (επεξεργασία τιμολογίου)
+invoice.einvoice.violation.mandateReference: Λείπει η αναφορά εντολής για άμεση 
+  χρέωση (υποχρεωτική για XRechnung· επεξεργασία τιμολογίου)
+invoice.einvoice.violation.creditorReference: Λείπει το αναγνωριστικό δικαιούχου
+  (Creditor ID) για άμεση χρέωση (επεξεργασία ρυθμίσεων)
+invoice.einvoice.violation.positions: Το τιμολόγιο δεν έχει γραμμές
+invoice.einvoice.fixlocation.invoice: μπορεί να διορθωθεί στο τιμολόγιο
+invoice.einvoice.fixlocation.settings: μπορεί να διορθωθεί στις ρυθμίσεις 
+  τιμολογίων
+invoice.einvoice.status.ready: Το ηλεκτρονικό τιμολόγιο είναι έτοιμο – η λήψη 
+  PDF περιλαμβάνει δεδομένα ηλεκτρονικού τιμολογίου αναγνώσιμα από μηχανή
+invoice.einvoice.ready.short: Ηλεκτρονικό τιμολόγιο έτοιμο
+invoice.einvoice.notready.short: 'Ηλεκτρονικό τιμολόγιο: λείπουν στοιχεία'
+invoice.einvoice.status.missing: Το ηλεκτρονικό τιμολόγιο δεν είναι ακόμη 
+  δυνατό, λείπουν πληροφορίες
+invoice.einvoice.status.notconfigured: Η ηλεκτρονική τιμολόγηση δεν έχει 
+  ρυθμιστεί
+invoice.einvoice.export.fallback: Δεν ήταν δυνατή η δημιουργία του ηλεκτρονικού 
+  τιμολογίου· δημιουργήθηκε αντί αυτού ένα απλό PDF.
+invoice.einvoice.attach.auto: Θα επισυναφθεί ως ηλεκτρονικό τιμολόγιο (PDF με 
+  ενσωματωμένο XML)
+invoice.paymentmeans.label: Τρόπος πληρωμής
+CASH: Πληρωμή με μετρητά
+CHEQUE: Επιταγή
+CREDIT_TRANSFER: Τραπεζική μεταφορά (εκτός SEPA)
+CARD_PAYMENT: Πληρωμή με κάρτα
+CREDIT_CARD_PAYMENT: Πληρωμή με πιστωτική κάρτα
+SEPA_CREDIT_TRANSFER: Τραπεζική μεταφορά SEPA
+SEPA_DIRECT_DEBIT: Άμεση χρέωση SEPA
+invoice.misc.package.hint: Αυτό το πακέτο θα χωριστεί σε πολλές γραμμές κατά την
+  αποθήκευση.
+invoice.tourist_tax.heading: Φόρος διαμονής
+invoice.apartment_modifier.heading: Προσαυξήσεις / εκπτώσεις
+invoice.apartment_modifier.position: '%category% — %modifier% (%nights% × %count%)'
+invoice.apartment_extra_person.position: Προσαύξηση ανά επιπλέον άτομο (%nights%
+  × %count%)
+invoice.apartment_modifier.label.surcharge_absolute: Προσαύξηση %value%
+invoice.apartment_modifier.label.discount_percent: Έκπτωση %value%%
+invoice.apartment_modifier.label.flat_rate: Κατ' αποκοπή τιμή %value%
+invoice.apartment_modifier.label.free: Δωρεάν
+invoice.tourist_tax.position: '%tax% — %category% (%nights% × %count%)'
+invoice.tourist_tax.position.percent_per_room: '%tax% (%percent% %% της τιμής διανυκτέρευσης,
+  %nights%)'
+invoice.tourist_tax.position.nights: '{0} %count% διανυκτερεύσεις|{1} %count% διανυκτέρευση|]1,Inf]
+  %count% διανυκτερεύσεις'
+invoice.tourist_tax.position.persons: '{0} %count% άτομα|{1} %count% άτομο|]1,Inf]
+  %count% άτομα'
+invoice.tourist_tax.no_positions: Δεν υπολογίστηκαν γραμμές φόρου διαμονής για 
+  αυτήν την κράτηση.
+invoice.payment_qr.remittance: Τιμολόγιο %number%
+invoice.payment_due_date: Πληρωτέο έως
+invoice.payment_due.date: Ημερομηνία λήξης
+invoice.payment_due.choose: Επιλέξτε προθεσμία
+invoice.payment_due.period: '{0}Άμεσα πληρωτέο|{1}%count% ημέρα|]1,Inf]%count% ημέρες'
+invoice.payment_due.standard: προεπιλογή
+invoice.payment_due.custom: Δική σας προθεσμία
+invoice.payment_due.days: ημέρες
+invoice.payment_due.first_arrival: Έως την άφιξη
+invoice.payment_due.last_departure: Έως την αναχώρηση
+invoice.payment_due.date.missing: Εισαγάγετε μια έγκυρη ημερομηνία λήξης.

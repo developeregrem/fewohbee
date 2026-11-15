@@ -1,0 +1,34 @@
+housekeeping.title: Καθαριότητα
+housekeeping.view.day: Ημέρα
+housekeeping.view.week: Εβδομάδα
+housekeeping.date: Ημερομηνία
+housekeeping.subsidiary: Κατάλυμα
+housekeeping.subsidiary.all: Όλα τα καταλύματα
+housekeeping.apply: Εφαρμογή
+housekeeping.export.day: Εξαγωγή CSV (ημέρα)
+housekeeping.export.week: Εξαγωγή CSV (εβδομάδα)
+housekeeping.room: Δωμάτιο
+housekeeping.occupancy: Πληρότητα
+housekeeping.filter.occupancy: Φίλτρο πληρότητας
+housekeeping.guests: Επισκέπτες
+housekeeping.guests.short: Επισκ.
+housekeeping.guest.short: Επισκ.
+housekeeping.reservation: Κράτηση
+housekeeping.status: Κατάσταση
+housekeeping.assigned_to: Ανατέθηκε σε
+housekeeping.note: Σημείωση
+housekeeping.save: Αποθήκευση
+housekeeping.unassigned: Χωρίς ανάθεση
+housekeeping.no_rooms: Δεν βρέθηκαν δωμάτια.
+housekeeping.status.open: Ανοιχτό
+housekeeping.status.in_progress: Σε εξέλιξη
+housekeeping.status.cleaned: Καθαρίστηκε
+housekeeping.status.inspected: Ελέγχθηκε
+housekeeping.occupancy.free: Ελεύθερο
+housekeeping.occupancy.stayover: Συνεχιζόμενη διαμονή
+housekeeping.occupancy.arrival: Άφιξη
+housekeeping.occupancy.departure: Αναχώρηση
+housekeeping.occupancy.turnover: Αλλαγή επισκεπτών
+housekeeping.occupancy.blocked: Αποκλεισμένο
+housekeeping.summary.arrive: Άφιξη
+housekeeping.summary.depart: Αναχώρηση

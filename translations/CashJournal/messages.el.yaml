@@ -1,0 +1,10 @@
+journal.entry.add: Προσθήκη εγγραφής
+journal.entry.date: Ημερομηνία
+journal.entry.edit: Επεξεργασία εγγραφής
+journal.entry.remark: Παρατήρηση
+journal.month: Μήνας
+journal.positions: Εγγραφές
+journal.positions.desc: Προσθέτει έναν πίνακα με όλες τις εγγραφές του φύλλου 
+  ταμείου. Κατά την εξαγωγή εμφανίζονται όλες οι γραμμές, ενώ εδώ στο πρότυπο 
+  εμφανίζεται μόνο μία.
+journal.year: Έτος

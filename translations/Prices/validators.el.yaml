@@ -1,0 +1,12 @@
+price_rules.validation.name: Εισαγάγετε ένα όνομα.
+price_rules.validation.amount: Εισαγάγετε μια μεταβολή πάνω από 0 %, έως 99 % 
+  για μείωση και έως 500 % για αύξηση.
+price_rules.validation.days: Εισαγάγετε αριθμό ημερών από 0 έως 730.
+price_rules.validation.occupancy: Εισαγάγετε πληρότητα από 0 έως 100 %.
+price_rules.validation.weekdays: Επιλέξτε τουλάχιστον μία διανυκτέρευση.
+price_rules.validation.period: Εισαγάγετε και τις δύο διανυκτερεύσεις. Η 
+  τελευταία δεν μπορεί να είναι πριν από την πρώτη.
+price_rules.validation.subsidiaries: Επιλέξτε τουλάχιστον ένα κατάλυμα ή όλα τα 
+  καταλύματα.
+price_rules.validation.categories: Επιλέξτε τουλάχιστον μία κατηγορία δωματίου ή
+  όλες.

@@ -1,0 +1,361 @@
+workflow:
+  nav:
+    label: Αυτοματισμοί
+  page_title: Αυτοματισμοί
+  page_description: Ορίστε κανόνες που εκτελούνται αυτόματα όταν συμβαίνουν 
+    ορισμένα γεγονότα.
+  new: Νέος αυτοματισμός
+  edit: Επεξεργασία αυτοματισμού
+  save: Αποθήκευση αυτοματισμού
+  back_to_list: Πίσω στη λίστα
+  confirm_delete: Να διαγραφεί πράγματι αυτός ο αυτοματισμός;
+  delete: Διαγραφή αυτοματισμού
+  section:
+    system: Αυτοματισμοί συστήματος
+    user: Οι αυτοματισμοί σας
+  empty_state: Δεν υπάρχουν ακόμη αυτοματισμοί. Δημιουργήστε τον πρώτο σας 
+    αυτοματισμό!
+  flash:
+    created: Ο αυτοματισμός δημιουργήθηκε.
+    updated: Ο αυτοματισμός αποθηκεύτηκε.
+    deleted: Ο αυτοματισμός διαγράφηκε.
+    cannot_delete_system: Οι αυτοματισμοί συστήματος δεν μπορούν να διαγραφούν.
+  form:
+    section_general: Γενικά
+    section_trigger: Έναυσμα – Πότε;
+    section_trigger_desc: Επιλέξτε το γεγονός που πρέπει να ξεκινά αυτόν τον 
+      αυτοματισμό.
+    section_condition: Συνθήκη – Μόνο αν;
+    section_condition_desc: 'Προαιρετικά: Προσθέστε μία ή περισσότερες συνθήκες φιλτραρίσματος
+      (πρέπει να ικανοποιούνται όλες). Χωρίς συνθήκες ο αυτοματισμός εκτελείται σε
+      κάθε έναυσμα.'
+    add_condition: Προσθήκη συνθήκης
+    remove_condition: Αφαίρεση
+    section_action: Ενέργεια – Τότε;
+    section_action_desc: Επιλέξτε τι πρέπει να συμβεί όταν ενεργοποιηθεί το 
+      έναυσμα.
+    name: Όνομα
+    description: Περιγραφή
+    trigger_type: Έναυσμα
+    condition_type: Συνθήκη
+    action_type: Ενέργεια
+    select_trigger: Επιλέξτε έναυσμα …
+    select_action: Επιλέξτε ενέργεια …
+    no_condition: Χωρίς συνθήκη (εκτέλεση πάντα)
+    template: Πρότυπο email
+    recipient_type: Παραλήπτης
+    recipient_booker: Email επισκέπτη / κατόχου κράτησης
+    recipient_invoice: Διεύθυνση email τιμολογίων
+    recipient_notification: Email ειδοποιήσεων (%email%)
+    recipient_custom: Προσαρμοσμένη διεύθυνση email
+    custom_recipient: Προσαρμοσμένη διεύθυνση email
+    debit_account: Λογαριασμός χρέωσης
+    debit_account_help: Λογαριασμός που χρεώνεται (π.χ. ταμείο, τράπεζα)
+    fallback_credit_account: Λογαριασμός πίστωσης (εναλλακτικός)
+    fallback_credit_account_help: Χρησιμοποιείται όταν ένας συντελεστής ΦΠΑ δεν 
+      έχει ρυθμισμένο λογαριασμό εσόδων
+    booking_entry_remark: Παρατήρηση (προαιρετικά)
+    booking_entry_remark_help: Αν μείνει κενό, ως κείμενο εγγραφής 
+      χρησιμοποιείται το όνομα του λογαριασμού εσόδων (π.χ. «Έσοδα ΦΠΑ 7%»).
+    invoice_pdf_template: Πρότυπο τιμολογίου (PDF)
+    invoice_pdf_template_help: Αφήστε το κενό για να χρησιμοποιηθεί το 
+      προεπιλεγμένο πρότυπο τιμολογίου.
+    invoice_pdf_template_attachment_help: Πρότυπο των συνημμένων τιμολογίων. 
+      Αφήστε το κενό για να χρησιμοποιηθεί το προεπιλεγμένο πρότυπο τιμολογίου.
+    attachment_mode: Συνημμένο τιμολογίου
+    attachment_mode.einvoice_preferred: PDF ηλεκτρονικού τιμολογίου αν είναι 
+      δυνατό, αλλιώς απλό PDF
+    attachment_mode.einvoice_required: Μόνο PDF ηλεκτρονικού τιμολογίου 
+      (παράλειψη όταν τα δεδομένα είναι ελλιπή)
+    attachment_mode.pdf_only: Απλό PDF χωρίς δεδομένα ηλεκτρονικού τιμολογίου
+    attach_xml: Επισύναψη και αρχείου XML
+    attach_xml.no: Όχι
+    attach_xml.yes: Ναι (συνιστάται για XRechnung)
+    attachments: Συνημμένα
+    attachments_help: Αυτά τα έγγραφα επισυνάπτονται αυτόματα στο email.
+    attachments_add: Προσθήκη συνημμένου
+    attachments_empty: Δεν υπάρχουν ακόμη κατάλληλα πρότυπα PDF. Δημιουργήστε 
+      πρώτα ένα έγγραφο PDF στις Ρυθμίσεις → Πρότυπα (π.χ. όροι και προϋποθέσεις
+      ή κανονισμός λειτουργίας).
+    attachments_select: Επιλέξτε έγγραφο …
+    attachments_stale: Δεν είναι πλέον διαθέσιμο
+    attachments.group_documents: Πρότυπα εγγράφων
+    attachments.group_invoice: Τιμολόγιο
+    attachments.invoice_pdf: Τιμολόγιο ως PDF (όλα εκτός των ακυρωμένων)
+    attachments.invoice_pdf_open: Τιμολόγιο ως PDF (μόνο ανεξόφλητα)
+    attachment_policy: Αν δεν είναι δυνατή η δημιουργία ενός συνημμένου
+    attachment_policy_help: Για παράδειγμα, όταν μια κράτηση δεν έχει ακόμη 
+      τιμολόγιο.
+    attachment_policy.skip_missing: Αποστολή του email παρ' όλα αυτά (χωρίς το 
+      συνημμένο που λείπει)
+    attachment_policy.require_all: Να μη σταλεί το email
+    percentage_entry_percent_source: Πηγή ποσοστού
+    percentage_entry_percent_source_help: Από πού προέρχεται το ποσοστό. Το «Από
+      την προέλευση» το διαβάζει από την προέλευση κράτησης του τιμολογίου - τις
+      ίδιες τιμές που εμφανίζονται στον επισκέπτη - αντί να το πληκτρολογείτε 
+      εδώ. Το «Χειροκίνητα» χρησιμοποιεί το παρακάτω πεδίο.
+    percentage_entry_percent_source_manual: Χειροκίνητα
+    percentage_entry_percent_source_commission: Προμήθεια από την προέλευση
+    percentage_entry_percent_source_payment_fee: Χρέωση πληρωμής από την 
+      προέλευση
+    percentage_entry_percent: Ποσοστό (χειροκίνητα)
+    percentage_entry_percent_help: Μερίδιο της επιλεγμένης βάσης υπολογισμού, 
+      π.χ. 12 για προμήθεια ή 1.4 για χρέωση πληρωμής. Χρησιμοποιείται μόνο όταν
+      η πηγή είναι «Χειροκίνητα». Χωρίς συνθήκη που να το περιορίζει, 
+      καταχωρίζεται κάθε τιμολόγιο.
+    percentage_entry_amount_base: Βάση υπολογισμού
+    percentage_entry_amount_base_help: 'Το ποσό στο οποίο εφαρμόζεται το ποσοστό.
+      Το «Τμήμα του μικτού ποσού τιμολογίου που υπόκειται σε προμήθεια» παραλείπει
+      ό,τι δεν χρεώνει προμήθεια μια πύλη: έναν φόρο διαμονής που τιμολογείται χωριστά
+      και ό,τι δεν ήταν μέρος της κράτησης μέσω πύλης - ορίζεται στην τιμή ή στη γραμμή
+      του τιμολογίου.'
+    percentage_entry_amount_base_commissionable: Τμήμα του μικτού ποσού 
+      τιμολογίου που υπόκειται σε προμήθεια
+    percentage_entry_amount_base_gross: Ολόκληρο το μικτό ποσό τιμολογίου
+    percentage_entry_debit_account: Λογαριασμός χρέωσης
+    percentage_entry_debit_account_help: Λογαριασμός στον οποίο καταχωρίζεται η 
+      κράτηση ποσού (έξοδο ή αντίστροφη επιβάρυνση).
+    percentage_entry_credit_account: Λογαριασμός πίστωσης
+    percentage_entry_credit_account_help: Λογαριασμός από τον οποίο αφαιρείται η
+      κράτηση ποσού - συνήθως ο ίδιος στον οποίο καταχωρίστηκε το τιμολόγιο.
+    percentage_entry_tax_rate: Συντελεστής ΦΠΑ
+    percentage_entry_remark: Παρατήρηση
+    percentage_entry_remark_help: Το %number% αντικαθίσταται από τον αριθμό 
+      τιμολογίου, π.χ. «Προμήθεια %number%».
+    percentage_entry_requires_document: Αναμένει αριθμό παραστατικού
+    percentage_entry_requires_document_help: Η εγγραφή χρονολογείται την ημέρα 
+      εκτέλεσης του αυτοματισμού και ανήκει σε εκείνον τον μήνα. Τη σημειώνει ως
+      «Λείπει παραστατικό» όσο δεν έχει συμπληρωθεί αριθμός παραστατικού. Ο 
+      μήνας μπορεί τότε να κλείσει μόνο αφού αυτός δοθεί. Ορίστε «Όχι» όταν δεν 
+      εκδίδεται ξεχωριστό παραστατικό για αυτήν την κράτηση ποσού.
+    percentage_entry_requires_document_yes: Ναι
+    percentage_entry_requires_document_no: Όχι
+    notification_note: Επεξήγηση (προαιρετικά)
+    notification_note_help: Εξηγεί στο παράθυρο ειδοποιήσεων γιατί εμφανίστηκε η
+      ειδοποίηση, π.χ. «Ληξιπρόθεσμη πληρωμή».
+    notification_severity: Σημασία
+    notification_severity_help: Μόνο το «Κρίσιμη» επισημαίνει το παράθυρο 
+      ειδοποιήσεων με κόκκινο.
+    notification_severity_info: Πληροφορία
+    notification_severity_warning: Προειδοποίηση
+    notification_severity_critical: Κρίσιμη
+    notification_role: Ορατή σε
+    notification_role_help: Ποιος βλέπει την ειδοποίηση.
+    notification_role_everyone: Όλους τους συνδεδεμένους χρήστες
+    notification_role_reservations: Κρατήσεις
+    notification_role_invoices: Τιμολόγια
+    notification_role_operations: Λειτουργία
+    notification_role_admin: Μόνο διαχειριστές
+  trigger:
+    online_booking_created: Λήφθηκε νέα online κράτηση
+    calendar_import_created: Νέα κράτηση μέσω εισαγωγής ημερολογίου
+    assistant_booking_created: Νέα κράτηση από βοηθό AI
+    guest_checkin_submitted: Ο επισκέπτης έκανε online check-in
+    guest_checkin_confirmed: Το check-in ολοκληρώθηκε (επιβεβαιώθηκε online ή 
+      στη ρεσεψιόν)
+    reservation_created: Δημιουργήθηκε νέα κράτηση (χειροκίνητα)
+    invoice_created: Δημιουργήθηκε νέο τιμολόγιο
+    invoice_status_changed: Άλλαξε η κατάσταση τιμολογίου
+    reservation_status_changed: Άλλαξε η κατάσταση κράτησης
+    reservation_days_before_start: X ημέρες πριν από την ημερομηνία άφιξης
+    reservation_days_after_end: X ημέρες μετά την ημερομηνία αναχώρησης
+    invoice_days_after_date: X ημέρες μετά την ημερομηνία τιμολογίου
+    invoice_days_after_due_date: X ημέρες μετά την ημερομηνία λήξης του 
+      τιμολογίου
+    schedule_monthly: Μηνιαία σε συγκεκριμένη ημέρα
+    days_before: Ημέρες πριν
+    days_after: Ημέρες μετά
+    days_after_due_date: Ημέρες μετά την ημερομηνία λήξης
+    days_after_due_date_help: 0 = την ημερομηνία λήξης, 1 = την επόμενη ημέρα, 
+      -3 = τρεις ημέρες πριν. Μετράει η ημερομηνία λήξης που είναι αποθηκευμένη 
+      στο τιμολόγιο.
+    day_of_month: Ημέρα του μήνα
+    run_on_days: Ποιες ημέρες να εκτελείται;
+    run_on_days_help: Αν η ημερομηνία-στόχος πέφτει σε εξαιρούμενη ημέρα, η 
+      εκτέλεση γίνεται την επόμενη επιτρεπόμενη ημέρα – δεν χάνεται τίποτα.
+    run_on_days.daily: Κάθε ημέρα
+    run_on_days.mon_fri: Δευτέρα έως Παρασκευή
+    run_on_days.mon_sat: Δευτέρα έως Σάββατο
+    run_at_hour: Όχι πριν από
+    run_at_hour_help: Η εκτέλεση ξεκινά στον πρώτο κύκλο κατά ή μετά από αυτήν 
+      την ώρα. 00:00 σημαίνει όσο το δυνατόν νωρίτερα.
+  condition:
+    invoice_status_is: Η κατάσταση τιμολογίου είναι
+    reservation_status_is: Η κατάσταση κράτησης είναι
+    reservation_has_booker_email: Ο κάτοχος της κράτησης έχει διεύθυνση email
+    invoice_has_email: Το τιμολόγιο έχει διεύθυνση email
+    invoice_payment_means_is: Ο τρόπος πληρωμής είναι
+    reservation_origin_is: Η προέλευση είναι
+    invoice_reservation_origin_is: Η προέλευση κράτησης είναι
+    reservation_has_invoice: Υπάρχει τιμολόγιο
+    has_invoice.label: Ποιο τιμολόγιο πρέπει να υπάρχει;
+    has_invoice.any: Οποιοδήποτε τιμολόγιο (εκτός των ακυρωμένων)
+    has_invoice.open: Τουλάχιστον ένα ανεξόφλητο τιμολόγιο
+    reservation_guest_checkin: Online check-in
+    guest_checkin.label: Κατάσταση του online check-in
+    guest_checkin.open: Ακόμη ανοιχτό (ο επισκέπτης μπορεί ακόμη να κάνει online
+      check-in)
+    guest_checkin.submitted: Έγινε online check-in, αναμένει έλεγχο
+    guest_checkin.confirmed: Έγινε check-in (επιβεβαιώθηκε online ή στη 
+      ρεσεψιόν)
+    guest_checkin.completed: Όχι πλέον ανοιχτό (αναμένει έλεγχο ή έγινε 
+      check-in)
+  action:
+    send_invoice_email: Αποστολή τιμολογίου μέσω email (με συνημμένο 
+      PDF/ηλεκτρονικό τιμολόγιο)
+    send_template_email: Αποστολή email με χρήση προτύπου
+    send_general_email: Αποστολή γενικού email με χρήση προτύπου
+    send_notification_email: Αποστολή email ειδοποίησης
+    create_booking_entry: Δημιουργία λογιστικής εγγραφής
+    create_percentage_entry: Δημιουργία ποσοστιαίας λογιστικής εγγραφής
+    change_invoice_status: Αλλαγή κατάστασης τιμολογίου
+    change_payment_means: Αλλαγή τρόπου πληρωμής
+    change_reservation_status: Αλλαγή κατάστασης κράτησης
+    create_in_app_notification: Εμφάνιση ειδοποίησης στην εφαρμογή
+  preview:
+    title: Δοκιμαστική εκτέλεση
+    description: Δείχνει ποιες εγγραφές θα επηρεάζονταν αυτήν τη στιγμή από αυτό
+      το έναυσμα και αυτήν τη συνθήκη – χωρίς να εκτελείται καμία ενέργεια. Το 
+      χρονοδιάγραμμα (ημέρες της εβδομάδας και ώρα) δεν λαμβάνεται υπόψη εδώ.
+    run: Εκτέλεση δοκιμαστικής εκτέλεσης
+    loading: Φόρτωση …
+    empty: Δεν βρέθηκαν αντίστοιχες εγγραφές.
+    count_one: Βρέθηκε %count% εγγραφή
+    count: Βρέθηκαν %count% εγγραφές
+  logs:
+    title: Αρχείο εκτελέσεων
+    loading: Φόρτωση …
+    empty: Δεν έχουν καταγραφεί ακόμη εκτελέσεις.
+    date: Ημερομηνία
+    status: Κατάσταση
+    entity: Εγγραφή
+    message: Μήνυμα
+    status_success: Επιτυχία
+    status_skipped: Παραλείφθηκε
+    status_error: Σφάλμα
+  system:
+    confirm_online_booking:
+      name: Επιβεβαίωση κράτησης προς τον επισκέπτη
+      description: Στέλνει μια ρυθμιζόμενη επιβεβαίωση στη διεύθυνση email του 
+        κατόχου της κράτησης μετά από μια online κράτηση.
+    notify_online_booking:
+      name: Ειδοποίηση μέσω email για online κρατήσεις
+      description: Στέλνει ένα email ειδοποίησης όταν λαμβάνεται μια νέα online 
+        κράτηση.
+    notify_calendar_import:
+      name: Ειδοποίηση μέσω email για κρατήσεις από εισαγωγή ημερολογίου
+      description: Στέλνει ένα email ειδοποίησης όταν δημιουργείται μια νέα 
+        κράτηση μέσω εισαγωγής ημερολογίου.
+    example_booking_confirmation:
+      name: 'Παράδειγμα: Επιβεβαίωση κράτησης μέσω email'
+      description: Στέλνει επιβεβαίωση κράτησης στον επισκέπτη για κάθε νέα 
+        κράτηση (απαιτείται πρότυπο email).
+    example_arrival_reminder:
+      name: 'Παράδειγμα: Υπενθύμιση άφιξης (3 ημέρες πριν)'
+      description: Στέλνει ένα email υπενθύμισης στον επισκέπτη 3 ημέρες πριν 
+        από την ημερομηνία άφιξης.
+    example_invoice_reminder:
+      name: 'Παράδειγμα: Υπενθύμιση πληρωμής (14 ημέρες μετά την ημερομηνία τιμολογίου)'
+      description: Στέλνει υπενθύμιση πληρωμής 14 ημέρες μετά την ημερομηνία 
+        τιμολογίου, αν το τιμολόγιο είναι ακόμη ανοιχτό.
+    example_send_invoice_email:
+      name: 'Παράδειγμα: Αποστολή τιμολογίου μέσω email'
+      description: Στέλνει κάθε νέο τιμολόγιο στη διεύθυνση email τιμολογίων, με
+        το τιμολόγιο συνημμένο ως PDF ηλεκτρονικού τιμολογίου όταν είναι δυνατό 
+        (απαιτείται πρότυπο email).
+    example_invoice_paid_reservation_status:
+      name: 'Παράδειγμα: Αλλαγή κατάστασης κράτησης κατά την πληρωμή'
+      description: Αλλάζει την κατάσταση κράτησης όλων των συνδεδεμένων 
+        κρατήσεων όταν ένα τιμολόγιο σημειώνεται ως εξοφλημένο.
+    notify_online_booking_inapp:
+      name: Εμφάνιση online κρατήσεων στο παράθυρο ειδοποιήσεων
+      description: Δημιουργεί μια καταχώριση στο παράθυρο ειδοποιήσεων για κάθε 
+        online κράτηση.
+    notify_assistant_booking:
+      name: Εμφάνιση κρατήσεων βοηθού AI στο παράθυρο ειδοποιήσεων
+      description: Δημιουργεί μια καταχώριση στο παράθυρο ειδοποιήσεων για κάθε 
+        κράτηση που δημιούργησε ένας βοηθός AI.
+      note: Δημιουργήθηκε από βοηθό AI.
+    example_guest_checkin_invitation:
+      name: 'Παράδειγμα: Πρόσκληση σε online check-in (7 ημέρες πριν)'
+      description: Στέλνει τον σύνδεσμο online check-in στον επισκέπτη 7 ημέρες 
+        πριν από την άφιξη, εκτός αν έχει ήδη κάνει check-in (απαιτείται πρότυπο
+        email με το μπλοκ «Σύνδεσμος online check-in»).
+    notify_calendar_import_inapp:
+      name: Εμφάνιση εισαγωγών ημερολογίου στο παράθυρο ειδοποιήσεων
+      description: Δημιουργεί μια καταχώριση στο παράθυρο ειδοποιήσεων για κάθε 
+        εισαγόμενη κράτηση.
+  log:
+    condition_not_met: Η συνθήκη δεν ικανοποιήθηκε
+    skipped_no_template: 'Παραλείφθηκε: δεν έχει ρυθμιστεί πρότυπο'
+    skipped_template_not_found: 'Παραλείφθηκε: το πρότυπο #%id% δεν βρέθηκε'
+    skipped_template_incompatible: 'Παραλείφθηκε: ο τύπος προτύπου «%type%» δεν είναι
+      συμβατός (αναμενόταν «%expected%»)'
+    skipped_no_recipient: 'Παραλείφθηκε: δεν ήταν δυνατός ο προσδιορισμός του παραλήπτη
+      (τύπος: %type%)'
+    email_sent: Το email στάλθηκε στο %recipient% με χρήση του προτύπου 
+      «%template%»
+    skipped_no_notification_email: 'Παραλείφθηκε: δεν έχει ρυθμιστεί email ειδοποιήσεων'
+    skipped_unsupported_entity: 'Παραλείφθηκε: μη υποστηριζόμενος τύπος εγγραφής'
+    notification_online_booking_sent: '{1}Η ειδοποίηση online κράτησης στάλθηκε στο
+      %recipient% (%count% κράτηση)|]1,Inf[Η ειδοποίηση online κράτησης στάλθηκε στο
+      %recipient% (%count% κρατήσεις)'
+    notification_calendar_import_sent: Η ειδοποίηση εισαγωγής ημερολογίου 
+      στάλθηκε στο %recipient%
+    booking_entries_created: Δημιουργήθηκαν %count% λογιστικές εγγραφές για το 
+      τιμολόγιο %number%
+    skipped_no_amounts: 'Παραλείφθηκε: το τιμολόγιο δεν περιέχει ποσά προς καταχώριση'
+    skipped_no_percentage: 'Παραλείφθηκε: δεν έχει ρυθμιστεί έγκυρο ποσοστό'
+    skipped_mixed_rates: 'Παραλείφθηκε: οι κρατήσεις αυτού του τιμολογίου έγιναν με
+      διαφορετικούς συντελεστές (%rates%). Μία μόνο κράτηση ποσού δεν μπορεί να τις
+      αναπαραστήσει - καταχωρίστε την χειροκίνητα.'
+    skipped_mixed_collection: 'Παραλείφθηκε: ορισμένες διαμονές αυτού του τιμολογίου
+      πληρώθηκαν μέσω της πύλης και άλλες απευθείας στο κατάλυμα. Από αυτό δεν προκύπτει
+      επί ποιου ποσού χρεώνεται η χρέωση πληρωμής - καταχωρίστε την χειροκίνητα.'
+    percentage_entry_created: Δημιουργήθηκε εγγραφή %amount% (%percent% % του 
+      %base%) για το τιμολόγιο %number%
+    skipped_invalid_config: 'Παραλείφθηκε: μη έγκυρη διαμόρφωση'
+    skipped_status_not_found: 'Παραλείφθηκε: η κατάσταση κράτησης δεν βρέθηκε'
+    skipped_no_reservations: 'Παραλείφθηκε: το τιμολόγιο δεν έχει συνδεδεμένες κρατήσεις'
+    skipped_no_pdf_template: 'Παραλείφθηκε: δεν έχει ρυθμιστεί προεπιλεγμένο πρότυπο
+      PDF τιμολογίου'
+    skipped_einvoice_invalid: 'Παραλείφθηκε: το ηλεκτρονικό τιμολόγιο για το τιμολόγιο
+      %number% δεν είναι δυνατό – %fields%'
+    invoice_email_sent: Το τιμολόγιο %number% στάλθηκε στο %recipient% με 
+      συνημμένο PDF ηλεκτρονικού τιμολογίου
+    invoice_email_sent_fallback: Το τιμολόγιο %number% στάλθηκε στο %recipient% 
+      με συνημμένο απλό PDF (η δημιουργία ηλεκτρονικού τιμολογίου απέτυχε)
+    invoice_status_changed: Η κατάσταση του τιμολογίου %number% άλλαξε σε 
+      «%status%»
+    payment_means_changed: Ο τρόπος πληρωμής του τιμολογίου %number% άλλαξε σε 
+      «%code%»
+    reservation_status_changed: '{1}Η κατάσταση %count% κράτησης άλλαξε σε «%status%»|]1,Inf[Η
+      κατάσταση %count% κρατήσεων άλλαξε σε «%status%»'
+    attachment_template_not_found: 'Το συνημμένο παραλείφθηκε: το πρότυπο #%id% δεν
+      βρέθηκε'
+    attachment_template_incompatible: 'Το συνημμένο παραλείφθηκε: το «%name%» δεν
+      είναι πρότυπο PDF'
+    attachment_invoice_template_not_found: 'Συνημμένο τιμολογίου: το πρότυπο #%id%
+      δεν βρέθηκε, χρησιμοποιήθηκε αντί αυτού το προεπιλεγμένο πρότυπο τιμολογίου'
+    attachment_invoice_template_incompatible: 'Συνημμένο τιμολογίου: το «%name%» δεν
+      είναι πρότυπο τιμολογίου, χρησιμοποιήθηκε αντί αυτού το προεπιλεγμένο πρότυπο
+      τιμολογίου'
+    attachment_no_reservation: 'Το συνημμένο παραλείφθηκε: το «%name%» απαιτεί κράτηση'
+    attachment_render_failed: 'Δεν ήταν δυνατή η δημιουργία του συνημμένου «%name%»:
+      %error%'
+    attachment_no_invoice: 'Το συνημμένο παραλείφθηκε: δεν υπάρχει τιμολόγιο'
+    attachment_no_open_invoice: 'Το συνημμένο παραλείφθηκε: δεν υπάρχει ανεξόφλητο
+      τιμολόγιο'
+    attachment_warnings: 'Σημείωση: %warnings%'
+    skipped_attachment_missing: 'Παραλείφθηκε: λείπει ένα απαιτούμενο συνημμένο –
+      %reason%'
+    skipped_attachments_too_large: 'Παραλείφθηκε: τα συνημμένα είναι πολύ μεγάλα για
+      αποστολή μέσω email (%size% MB)'
+    email_sent_with_attachments: 'Το email στάλθηκε στο %recipient% (πρότυπο: «%template%»,
+      %count% συνημμένο)|Το email στάλθηκε στο %recipient% (πρότυπο: «%template%»,
+      %count% συνημμένα)'
+    notification_created: 'Δημιουργήθηκε ειδοποίηση: %title%'
+  error:
+    name_required: Εισαγάγετε ένα όνομα.
+    trigger_required: Επιλέξτε ένα έγκυρο έναυσμα.
+    action_required: Επιλέξτε μια έγκυρη ενέργεια.

@@ -1,0 +1,36 @@
+notification:
+  title: Ειδοποιήσεις
+  empty: Όλα εντάξει — δεν υπάρχουν εκκρεμότητες.
+  reservation_conflict:
+    title: Έλεγχος %count% εισαγωγών
+    body_conflicts: Επικαλυπτόμενες κρατήσεις από εισαγωγή ημερολογίου.
+    body_reviews: Εισαγόμενες κρατήσεις χωρίς ανατεθειμένο επισκέπτη.
+  receipt_proposal:
+    title: '{1}Ένα παραστατικό αναμένει έγκριση|]1,Inf[%count% παραστατικά αναμένουν
+      έγκριση'
+    body: Υποβλήθηκαν από βοηθό τεχνητής νοημοσύνης – ελέγξτε τα και καταχωρίστε
+      τα στο ημερολόγιο εγγραφών.
+  calendar_reminder:
+    title: '%count% υπενθυμίσεις ημερολογίου'
+    body: Καταχωρίσεις με προθεσμία σήμερα που χρειάζονται ακόμη επιβεβαίωση.
+  guest_checkin_review:
+    title: 'Έλεγχος online check-in: %name%'
+    body: Δωμάτιο %room% από %from%
+  release_note:
+    title: Νέα στο fewohbee %version%
+    body: Δείτε τι άλλαξε.
+  stored:
+    reservation: Νέα κράτηση από %name% — δωμάτιο %room% από %from%
+    reservation_multi: Νέα κράτηση από %name% — %count% δωμάτια από %from%
+    reservation_generic: Κράτηση %name% — δωμάτιο %room% από %from%
+    reservation_anonymous: Νέα κράτηση — δωμάτιο %room% από %from%
+    reservation_multi_anonymous: Νέα κράτηση — %count% δωμάτια από %from%
+    reservation_generic_anonymous: Κράτηση — δωμάτιο %room% από %from%
+    guest_checkin_submitted: Online check-in από %name% — δωμάτιο %room% από 
+      %from%
+    guest_checkin_submitted_anonymous: Το online check-in συμπληρώθηκε — δωμάτιο
+      %room% από %from%
+    calendar_import: Εισαγόμενη κράτηση από %source% — δωμάτιο %room% από %from%
+    invoice: Τιμολόγιο %number%
+  mark_all_read: Σήμανση όλων ως αναγνωσμένων
+  mark_read: Σήμανση ως αναγνωσμένου

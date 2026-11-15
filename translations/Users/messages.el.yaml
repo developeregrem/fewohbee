@@ -1,0 +1,30 @@
+user.action: Ενέργεια
+user.active: Ενεργός
+user.delete.ask: Θέλετε σίγουρα να διαγράψετε αυτόν τον χρήστη;
+user.email: Email
+user.firstname: Όνομα
+user.flash.create.success: Ο χρήστης προστέθηκε με επιτυχία.
+user.flash.delete.success: Ο χρήστης διαγράφηκε με επιτυχία.
+user.flash.edit.success: Ο χρήστης ενημερώθηκε με επιτυχία.
+user.flash.username.na: Το επιλεγμένο όνομα σύνδεσης χρησιμοποιείται ήδη!
+user.lastaction: Τελευταία ενέργεια
+user.lastname: Επώνυμο
+user.password: Κωδικός πρόσβασης
+user.password.error: Ο κωδικός πρόσβασής σας ίσως είναι πολύ σύντομος.
+user.password.hint: Ο κωδικός πρόσβασης πρέπει να έχει τουλάχιστον 8 χαρακτήρες.
+user.role: Ρόλος
+user.username: Όνομα χρήστη
+ROLE_ADMIN: Διαχειριστής
+ROLE_RESERVATIONS: Κρατήσεις
+ROLE_CUSTOMERS: Επισκέπτες
+ROLE_INVOICES: Τιμολόγια
+ROLE_REGISTRATIONBOOK: Μητρώο επισκεπτών
+ROLE_STATISTICS: Στατιστικά
+ROLE_CASHJOURNAL: Βιβλίο ταμείου
+ROLE_RESERVATIONS_RO: Κρατήσεις (μόνο ανάγνωση)
+ROLE_OPERATIONS: Λειτουργία
+user.oidc.badge: SSO
+user.oidc.unlink: Αποσύνδεση λογαριασμού SSO
+user.oidc.unlink_confirm: Η σύνδεση με τον λογαριασμό SSO θα αφαιρεθεί. Ο 
+  χρήστης παραμένει και θα αντιστοιχιστεί ξανά στην επόμενη σύνδεση μέσω SSO.
+user.oidc.flash.unlinked: Η σύνδεση SSO αφαιρέθηκε.

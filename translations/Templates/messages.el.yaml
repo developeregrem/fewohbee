@@ -1,0 +1,401 @@
+TEMPLATE_CASHJOURNAL_PDF: PDF ημερολογίου εγγραφών
+TEMPLATE_FILE_PDF: Αρχείο PDF
+TEMPLATE_GDPR_PDF: PDF για εξαγωγή ΓΚΠΔ
+TEMPLATE_GENERAL_EMAIL: Γενικό πρότυπο email
+TEMPLATE_NEWSLETTER_EMAIL: Ενημερωτικό δελτίο μέσω email
+TEMPLATE_INVOICE_EMAIL: Πρότυπο email για τιμολόγια
+TEMPLATE_INVOICE_PDF: Τιμολόγιο PDF
+TEMPLATE_RESERVATION_EMAIL: Πρότυπο email για κρατήσεις
+TEMPLATE_RESERVATION_PDF: Πρότυπο PDF για κρατήσεις
+TEMPLATE_OPERATIONS_PDF: Πρότυπο PDF για αναφορές λειτουργίας
+TEMPLATE_REGISTRATION_PDF: Δελτίο εγγραφής PDF
+templates.editor.operations.header_footer: Κεφαλίδα και υποσέλιδο αναφοράς
+templates.editor.operations.header_footer.desc: Τυπική κεφαλίδα/υποσέλιδο με 
+  περίοδο και φίλτρα
+templates.editor.operations.reservations_table: Όλες οι κρατήσεις στο διάστημα
+templates.editor.operations.reservations_table.desc: Απλός πίνακας με δωμάτιο, 
+  επισκέπτη, άτομα και περίοδο
+templates.editor.operations.housekeeping_day: Ημερήσιος πίνακας καθαριότητας
+templates.editor.operations.housekeeping_day.desc: Ημερήσια προβολή με 
+  πληρότητα, κατάσταση, ανάθεση και σημειώσεις
+templates.editor.operations.housekeeping_week: Εβδομαδιαίος πίνακας καθαριότητας
+templates.editor.operations.housekeeping_week.desc: Εβδομαδιαίο πλέγμα με 
+  πληρότητα, κατάσταση και αριθμό επισκεπτών
+templates.operations.housekeeping_day: Ημερήσια προβολή καθαριότητας
+templates.operations.housekeeping_week: Εβδομαδιαία προβολή καθαριότητας
+templates.operations.frontdesk_checklist: Λίστα ελέγχου υποδοχής
+templates.operations.meals_checklist: Λίστα ελέγχου γευμάτων
+templates.operations.management_monthly_summary: Μηνιαία σύνοψη διοίκησης
+templates.operations.tourist_tax_monthly: Μηνιαία αναφορά φόρου διαμονής
+templates.operations.import.title: Δεν υπάρχουν πρότυπα για αναφορές 
+  λειτουργίας.
+templates.operations.import.text: Μπορείτε να εισαγάγετε τώρα τα προεπιλεγμένα 
+  πρότυπα αναφορών.
+templates.operations.import.button: Εισαγωγή προτύπων
+templates.operations.import.success: Τα πρότυπα εισήχθησαν.
+templates.operations.import.failed: Δεν ήταν δυνατή η εισαγωγή προτύπων.
+templates.operations.import.already_present: Τα πρότυπα αναφορών λειτουργίας 
+  υπάρχουν ήδη.
+templates.operations.import.missing_type: Δεν βρέθηκε ο τύπος προτύπου για 
+  αναφορές λειτουργίας.
+templates.add: Προσθήκη προτύπου
+templates.fonts.open: Διαχείριση προσαρμοσμένων γραμματοσειρών
+templates.fonts.title: Προσαρμοσμένες γραμματοσειρές PDF
+templates.fonts.description: Ανεβάστε τα δικά σας αρχεία γραμματοσειρών. Το 
+  FewohBee αναγνωρίζει αυτόματα την οικογένεια και τα διαθέσιμα στυλ και κάνει 
+  διαθέσιμες στον επεξεργαστή προτύπων PDF τις οικογένειες που έχουν κανονική 
+  γραμματοσειρά.
+templates.fonts.empty: Δεν έχουν εγκατασταθεί ακόμη προσαρμοσμένες 
+  γραμματοσειρές.
+templates.fonts.upload.label: Αρχεία γραμματοσειρών
+templates.fonts.upload.help: Επιλέξτε ένα ή περισσότερα αρχεία TTF ή συμβατά 
+  αρχεία OTF. Ανεβάστε την κανονική γραμματοσειρά καθώς και όποιες έντονες και 
+  πλάγιες χρειάζεστε.
+templates.fonts.upload.button: Ανέβασμα γραμματοσειρών
+templates.fonts.license_hint: Ανεβάζοντας μια γραμματοσειρά, επιβεβαιώνετε ότι η
+  άδειά της επιτρέπει την προβλεπόμενη χρήση και την ενσωμάτωση σε έγγραφα PDF. 
+  Το FewohBee δεν ελέγχει το ίδιο τους όρους της άδειας.
+templates.fonts.style.r: Κανονική
+templates.fonts.style.b: Έντονη
+templates.fonts.style.i: Πλάγια
+templates.fonts.style.bi: Έντονη πλάγια
+templates.fonts.missing_regular: Λείπει η κανονική γραμματοσειρά
+templates.fonts.delete.ask: Να διαγραφεί αυτή η οικογένεια γραμματοσειρών;
+templates.fonts.delete.hint: Η γραμματοσειρά δεν θα είναι πλέον διαθέσιμη για 
+  νέα PDF. Τα υπάρχοντα πρότυπα θα χρησιμοποιούν μια εναλλακτική γραμματοσειρά.
+templates.fonts.flash.no_file: Επιλέξτε τουλάχιστον ένα αρχείο γραμματοσειράς.
+templates.fonts.flash.uploaded: '{1} Εγκαταστάθηκε ένα αρχείο γραμματοσειράς.|]1,Inf[
+  Εγκαταστάθηκαν %count% αρχεία γραμματοσειρών.'
+templates.fonts.flash.upload_failed: 'Δεν ήταν δυνατή η εγκατάσταση του «%filename%»:
+  %reason%'
+templates.fonts.flash.deleted: Η οικογένεια γραμματοσειρών διαγράφηκε.
+templates.fonts.flash.not_found: Η οικογένεια γραμματοσειρών δεν υπάρχει πλέον.
+templates.fonts.validation.upload: Το ανέβασμα δεν ολοκληρώθηκε.
+templates.fonts.validation.size: Το αρχείο γραμματοσειράς είναι κενό ή 
+  μεγαλύτερο από 10 MB.
+templates.fonts.validation.extension: Υποστηρίζονται μόνο αρχεία TTF και OTF.
+templates.fonts.validation.mime: Το αρχείο που ανέβηκε δεν αναγνωρίζεται ως 
+  γραμματοσειρά.
+templates.fonts.validation.invalid: Το αρχείο δεν είναι υποστηριζόμενη 
+  γραμματοσειρά Unicode TrueType.
+templates.fonts.validation.storage: Ο χώρος αποθήκευσης γραμματοσειρών δεν είναι
+  εγγράψιμος. Ελέγξτε τα δικαιώματα της εγκατάστασης.
+templates.attachment: Συνημμένο
+templates.attachment.notfound: Το συνημμένο δεν βρέθηκε.
+templates.correspondence.created: Ημερομηνία
+templates.correspondence.delete.ok: Η καταχώριση διαγράφηκε με επιτυχία.
+templates.correspondence.name: Όνομα
+templates.correspondence.notfound: Η καταχώριση δεν βρέθηκε.
+templates.default: Προεπιλεγμένο πρότυπο
+templates.hidden: Ενσωματωμένο πρότυπο
+templates.hidden.tooltip: "Ενεργό: Το πρότυπο προορίζεται για ενσωμάτωση σε άλλα πρότυπα
+  και γι' αυτό δεν εμφανίζεται στην επιλογή προτύπων."
+templates.flash.payment_means.conflict: Το «%name%» είναι ήδη το προεπιλεγμένο 
+  πρότυπο για %means%. Αφαιρέστε πρώτα την ανάθεσή του.
+templates.flash.payment_means.no_unbound: Ένα πρότυπο τιμολογίου πρέπει να 
+  μείνει χωρίς τρόπο πληρωμής – ισχύει για όλα τα υπόλοιπα τιμολόγια.
+templates.payment_means: Προεπιλεγμένο πρότυπο για τρόπο πληρωμής
+templates.payment_means.all: Κανένας – για όλα τα υπόλοιπα τιμολόγια
+templates.payment_means.tooltip: Τα τιμολόγια με αυτόν τον τρόπο πληρωμής 
+  δημιουργούνται αυτόματα με αυτό το πρότυπο.
+templates.delete.ask: Θέλετε σίγουρα να διαγράψετε το πρότυπο;
+templates.description: Πρότυπα για email, τιμολόγια κ.λπ.
+templates.edit: Επεξεργασία προτύπου
+templates.editor.address: Διεύθυνση
+templates.editor.appartment.positions: Γραμμές δωματίων
+templates.editor.appartment.positions.desc: Εισάγει έναν πίνακα με όλες τις 
+  γραμμές δωματίων, μαζί με τις ημερομηνίες διαμονής, την ποσότητα, την τιμή 
+  μονάδας, τον ΦΠΑ και τη συνολική τιμή.
+templates.editor.brutto: Μικτό σύνολο
+templates.editor.brutto.desc: Εμφανίζει το μικτό σύνολο του τιμολογίου.
+templates.editor.city: Πόλη
+templates.editor.company: Εταιρεία
+templates.editor.firstname: Όνομα
+templates.editor.footer: Υποσέλιδο
+templates.editor.footer.desc: Προσθέτει ένα υποσέλιδο που εμφανίζεται στο κάτω 
+  μέρος κάθε σελίδας.
+templates.editor.invoice.date: Ημερομηνία τιμολογίου
+templates.editor.invoice.date.desc: Εμφανίζει την ημερομηνία τιμολογίου σε μορφή
+  ημέρα-μήνας-έτος.
+templates.editor.invoice.number: Αριθμός τιμολογίου
+templates.editor.invoice.number.desc: Εμφανίζει τον αριθμό τιμολογίου.
+templates.editor.lastname: Επώνυμο
+templates.editor.misc.positions: Γραμμές διαφόρων
+templates.editor.misc.positions.desc: Εισάγει έναν πίνακα με όλες τις γραμμές 
+  διαφόρων του τιμολογίου. Οι φόροι διαμονής, οι προσαυξήσεις και οι εκπτώσεις 
+  εξαιρούνται, επειδή έχουν δικά τους αποσπάσματα.
+templates.editor.apartment_modifier.positions: Γραμμές προσαυξήσεων / εκπτώσεων
+templates.editor.apartment_modifier.positions.desc: Εισάγει έναν πίνακα με όλες 
+  τις γραμμές προσαυξήσεων / εκπτώσεων δωματίων. Ο πίνακας εμφανίζεται μόνο όταν
+  υπάρχουν τέτοιες γραμμές στο τιμολόγιο.
+templates.editor.origin_name: Πύλη με χρεώσεις (όνομα)
+templates.editor.origin_name.desc: Εισάγει το όνομα της πύλης, δηλαδή την 
+  προέλευση κράτησης (π.χ. Booking.com). Εμφανίζεται μόνο όταν έχει οριστεί 
+  προμήθεια ή χρέωση πληρωμής για αυτήν την προέλευση κράτησης και παραλείπεται,
+  για παράδειγμα, στις απευθείας κρατήσεις.
+templates.editor.origin_commission: Προμήθεια OTA
+templates.editor.origin_commission.desc: Εισάγει την προμήθεια της πύλης 
+  κρατήσεων ως ποσό. Παραλείπεται όταν δεν ισχύει προμήθεια ή όταν οι κρατήσεις 
+  του τιμολογίου έγιναν με διαφορετικούς συντελεστές.
+templates.editor.origin_payment_fee: Χρέωση πληρωμής OTA
+templates.editor.origin_payment_fee.desc: Εισάγει τη χρέωση πληρωμής της πύλης 
+  κρατήσεων ως ποσό. Παραλείπεται όταν δεν ισχύει χρέωση πληρωμής ή όταν οι 
+  κρατήσεις του τιμολογίου διαφέρουν ως προς τον συντελεστή ή τον τρόπο πληρωμής
+  τους.
+templates.editor.tourist_tax.positions: Γραμμές φόρου διαμονής
+templates.editor.opening_hours: Ώρες λειτουργίας του καταλύματος
+templates.editor.check_in_times: Ώρες check-in του καταλύματος
+templates.editor.guest_checkin_link: Σύνδεσμος online check-in
+templates.editor.guest_checkin_link.desc: Σύνδεσμος με τον οποίο ο επισκέπτης 
+  συμπληρώνει την ώρα άφιξης και τα στοιχεία εγγραφής πριν φτάσει. Κάθε κράτηση 
+  έχει τον δικό της σύνδεσμο. Η παράγραφος παραλείπεται όσο το online check-in 
+  είναι απενεργοποιημένο, για ακυρωμένες κρατήσεις και μετά την αναχώρηση.
+templates.editor.guest_checkin_qr: Κωδικός QR online check-in
+templates.editor.guest_checkin_qr.desc: Κωδικός QR του συνδέσμου online 
+  check-in, π.χ. για μια εκτυπωμένη επιβεβαίωση κράτησης. Ο αριθμός είναι η 
+  ανάλυση της εικόνας σε pixel. Ο κωδικός παραλείπεται όποτε παραλείπεται και ο 
+  σύνδεσμος.
+templates.editor.check_in_times.desc: Εκτυπώνει το διάστημα check-in και την ώρα
+  check-out του καταλύματος σε μία γραμμή, π.χ. "Check-in 17:00-20:00 - 
+  Check-out έως 10:00". Πρόκειται για κανόνες του καταλύματος, όχι για την ώρα 
+  άφιξης της συγκεκριμένης κράτησης. Η παράγραφος παραλείπεται όταν δεν έχουν 
+  ρυθμιστεί ώρες.
+templates.editor.opening_hours.desc: Εκτυπώνει τις εβδομαδιαίες ώρες λειτουργίας
+  του καταλύματος σε μία γραμμή, π.χ. "Δευ–Παρ 08:00–12:00, 16:00–19:00". Η 
+  παράγραφος παραλείπεται όταν δεν έχουν ρυθμιστεί ώρες.
+templates.editor.payment_qr: Κωδικός QR πληρωμής (GiroCode)
+templates.editor.payment_qr.desc: Εισάγει έναν κωδικό QR που συμπληρώνει μια 
+  μεταφορά SEPA στην τραπεζική εφαρμογή του πληρωτή. Ο αριθμός είναι η ανάλυση 
+  της εικόνας σε pixel· το πόσο μεγάλη εμφανίζεται στη σελίδα καθορίζεται από το
+  πλάτος της ίδιας της εικόνας, το οποίο ορίζει η λαβή αλλαγής μεγέθους. Ο 
+  κωδικός εμφανίζεται μόνο όταν τα τραπεζικά στοιχεία έχουν ρυθμιστεί στις 
+  ρυθμίσεις τιμολογίων και η εγκατάσταση λειτουργεί σε ευρώ.
+templates.editor.payment_due_date: Ημερομηνία λήξης πληρωμής
+templates.editor.payment_due_date.desc: Εισάγει την ημερομηνία λήξης του 
+  τιμολογίου. Συμπληρώνεται εκ των προτέρων από την προθεσμία πληρωμής των 
+  ρυθμίσεων τιμολογίων κατά τη δημιουργία του τιμολογίου και μπορεί να αλλάξει 
+  ανά τιμολόγιο· η εκτυπωμένη ημερομηνία και το ηλεκτρονικό τιμολόγιο συμφωνούν 
+  πάντα. Η γραμμή παραλείπεται όταν το τιμολόγιο δεν έχει ημερομηνία λήξης.
+templates.editor.tourist_tax.positions.desc: Εισάγει έναν πίνακα με όλες τις 
+  γραμμές φόρου διαμονής / φόρου καταλύματος. Ο πίνακας εμφανίζεται μόνο όταν 
+  υπάρχουν τέτοιες γραμμές στο τιμολόγιο.
+templates.editor.misc.total: Συνολική τιμή όλων των άλλων στοιχείων
+templates.editor.misc.total.desc: Επιστρέφει τη συνολική τιμή όλων των άλλων 
+  στοιχείων.
+templates.editor.netto: Καθαρό σύνολο
+templates.editor.netto.desc: Εμφανίζει το καθαρό σύνολο του τιμολογίου.
+templates.editor.phone: Τηλέφωνο
+templates.editor.price.sum: Συνολική τιμή
+templates.editor.price.sum.desc: Εμφανίζει τη συνολική τιμή όλων των δωματίων 
+  και των διαφόρων στοιχείων.
+templates.editor.price.total: Συνολική τιμή όλων των δωματίων
+templates.editor.price.total.desc: Επιστρέφει τη συνολική τιμή όλων των 
+  δωματίων.
+templates.editor.remarks: Παρατηρήσεις
+templates.editor.vat: Συμπεριλαμβάνεται ΦΠΑ.
+templates.editor.vat.desc: Εισάγει έναν πίνακα που αναλύει τα καθαρά ποσά ανά 
+  συντελεστή ΦΠΑ.
+templates.editor.zip: Ταχυδρομικός κώδικας
+templates.flash.create.success: Το πρότυπο δημιουργήθηκε με επιτυχία.
+templates.flash.delete.inuse.reservations: Το πρότυπο δεν μπορεί να διαγραφεί, 
+  επειδή χρησιμοποιείται σε υπάρχουσες κρατήσεις.
+templates.flash.delete.success: Το πρότυπο διαγράφηκε με επιτυχία.
+templates.flash.delete.has_variants: Το πρότυπο έχει γλωσσικές παραλλαγές. 
+  Διαγράψτε πρώτα τις γλωσσικές παραλλαγές.
+templates.flash.variant.created: Η γλωσσική παραλλαγή δημιουργήθηκε. Τώρα 
+  μεταφράστε το κείμενο και το θέμα.
+templates.flash.variant.invalid: Δεν μπορεί να δημιουργηθεί γλωσσική παραλλαγή 
+  για αυτήν τη γλώσσα.
+templates.variant.add: Προσθήκη γλωσσικής παραλλαγής
+templates.variant.badge: Γλωσσική παραλλαγή
+templates.variant.of: Γλωσσική παραλλαγή του «%name%». Τα αυτόματα email προς 
+  επισκέπτες σε αυτήν τη γλώσσα τη χρησιμοποιούν αντί για το πρότυπο.
+templates.variant.delete_hint: Διαγράψτε πρώτα τις γλωσσικές παραλλαγές αυτού 
+  του προτύπου.
+templates.flash.edit.success: Το πρότυπο ενημερώθηκε με επιτυχία.
+templates.name: Όνομα
+templates.notfound: Δεν βρέθηκε πρότυπο. Βεβαιωθείτε ότι υπάρχει πρότυπο για την
+  επιλεγμένη ενέργεια.
+templates.params: Διάταξη PDF
+templates.params.help: Προσανατολισμός και περιθώρια για τα παραγόμενα PDF (όλα 
+  τα περιθώρια σε mm).
+templates.params.orientation: Προσανατολισμός
+templates.params.orientation.portrait: Κατακόρυφος (P)
+templates.params.orientation.landscape: Οριζόντιος (L)
+templates.params.format: Μορφή σελίδας
+templates.params.margin_top: Πάνω περιθώριο (mm)
+templates.params.margin_bottom: Κάτω περιθώριο (mm)
+templates.params.margin_left: Αριστερό περιθώριο (mm)
+templates.params.margin_right: Δεξί περιθώριο (mm)
+templates.params.margin_header: Περιθώριο κεφαλίδας (mm)
+templates.params.margin_footer: Περιθώριο υποσέλιδου (mm)
+templates.preview: Προεπισκόπηση
+templates.preview.context: Πλαίσιο προεπισκόπησης
+templates.preview.render: Δημιουργία προεπισκόπησης
+templates.preview.render.error.generic: Δεν ήταν δυνατή η απόδοση του προτύπου. 
+  Ελέγξτε τα σύμβολα κράτησης θέσης και τη λογική του προτύπου.
+templates.preview.render.error.syntax: Συντακτικό σφάλμα στο πρότυπο. Ελέγξτε 
+  τους βρόχους, τις συνθήκες και τα σύμβολα κράτησης θέσης.
+templates.preview.render.error.variable: Η μεταβλητή «%variable%» δεν βρέθηκε.
+templates.preview.render.error.filter: Το φίλτρο «%filter%» δεν είναι διαθέσιμο.
+templates.preview.render.error.property: Το χαρακτηριστικό «%property%» δεν 
+  βρέθηκε στο «%class%».
+templates.preview.result: Αποτέλεσμα προεπισκόπησης
+templates.preview.empty: Επιλέξτε ένα πλαίσιο και δημιουργήστε την 
+  προεπισκόπηση.
+templates.preview.noprovider: Δεν υπάρχει διαθέσιμος πάροχος προεπισκόπησης για 
+  αυτόν τον τύπο προτύπου.
+templates.preview.noprovider.help: Η προεπισκόπηση δεν είναι ακόμη διαθέσιμη για
+  αυτόν τον τύπο προτύπου.
+templates.preview.invoice.number: Αριθμός τιμολογίου
+templates.preview.invoice.number.placeholder: π.χ. 2026-0001
+templates.preview.invoice.number.help: Εισαγάγετε έναν υπάρχοντα αριθμό 
+  τιμολογίου ή αφήστε το κενό για δείγμα δεδομένων.
+templates.preview.invoice.notfound: Το τιμολόγιο «%value%» δεν βρέθηκε. 
+  Εμφανίζεται δείγμα δεδομένων.
+templates.preview.reservation: Αναγνωριστικά κρατήσεων
+templates.preview.reservation.placeholder: π.χ. 101, 102
+templates.preview.reservation.help: Εισαγάγετε ένα ή περισσότερα αναγνωριστικά 
+  κρατήσεων (χωρισμένα με κόμμα) ή αφήστε το κενό για δείγμα δεδομένων.
+templates.preview.reservation.notfound: Οι κρατήσεις «%value%» δεν βρέθηκαν. 
+  Εμφανίζεται δείγμα δεδομένων.
+templates.preview.date_start: Ημερομηνία έναρξης
+templates.preview.date_end: Ημερομηνία λήξης
+templates.preview.subsidiary: Κατάλυμα
+templates.preview.subsidiary.all: Όλα τα καταλύματα
+templates.preview.occupancy: Τύποι πληρότητας
+templates.preview.cashjournal.year: Έτος ημερολογίου
+templates.preview.cashjournal.year.placeholder: π.χ. 2026
+templates.preview.cashjournal.year.help: Εισαγάγετε το έτος του ημερολογίου ως 
+  αριθμό.
+templates.preview.cashjournal.month: Μήνας ημερολογίου
+templates.preview.cashjournal.month.placeholder: 1-12
+templates.preview.cashjournal.month.help: Εισαγάγετε τον μήνα του ημερολογίου ως
+  αριθμό από 1 έως 12.
+templates.preview.cashjournal.notfound: Η περίοδος ημερολογίου «%value%» δεν 
+  βρέθηκε. Εμφανίζεται δείγμα δεδομένων.
+templates.preview.gdpr.customer_id: Αναγνωριστικό επισκέπτη
+templates.preview.gdpr.customer_id.placeholder: π.χ. 42
+templates.preview.gdpr.customer_id.help: Εισαγάγετε ένα υπάρχον αναγνωριστικό 
+  επισκέπτη ή αφήστε το κενό για τα πιο πρόσφατα δεδομένα/δείγμα δεδομένων.
+templates.preview.gdpr.customer_notfound: Ο επισκέπτης «%value%» δεν βρέθηκε. 
+  Εμφανίζεται δείγμα δεδομένων.
+templates.preview.download_pdf: Λήψη PDF
+templates.preview.snippet.booker_firstname: Όνομα κατόχου κράτησης
+templates.preview.snippet.booker_lastname: Επώνυμο κατόχου κράτησης
+templates.preview.snippet.reservation_dates: Ημερομηνίες κράτησης
+templates.preview.snippet.reservation_total: Σύνολο κράτησης
+templates.preview.snippet.reservation_loop: Επαναλαμβανόμενο μπλοκ κράτησης
+templates.preview.snippet.reservation_apartment_positions_row: Πίνακας γραμμών 
+  δωματίων κράτησης
+templates.preview.snippet.reservation_misc_positions_line: Γραμμή διαφόρων 
+  στοιχείων κράτησης
+templates.preview.snippet.invoice_number: Αριθμός τιμολογίου
+templates.preview.snippet.invoice_date: Ημερομηνία τιμολογίου
+templates.preview.snippet.invoice_totals: Σύνολα τιμολογίου
+templates.preview.snippet.invoice_positions: Πίνακας γραμμών τιμολογίου
+templates.preview.snippet.invoice_appartments: Πίνακας δωματίων τιμολογίου
+templates.preview.snippet.operations_period: Περίοδος αναφοράς
+templates.preview.snippet.operations_dayviews: Επαναλαμβανόμενο μπλοκ ημερήσιας 
+  επισκόπησης
+templates.preview.snippet.bookingjournal.month: Μήνας ημερολογίου
+templates.preview.snippet.bookingjournal.year: Έτος ημερολογίου
+templates.preview.snippet.bookingjournal.period: Περίοδος ημερολογίου
+templates.preview.snippet.bookingjournal.entries_count: Αριθμός εγγραφών 
+  ημερολογίου
+templates.preview.snippet.bookingjournal.positions: Πίνακας εγγραφών ημερολογίου
+templates.preview.snippet.gdpr.general_name: Όνομα επισκέπτη
+templates.preview.snippet.gdpr.general_birthday: Ημερομηνία γέννησης επισκέπτη
+templates.preview.snippet.gdpr.general_nationality: Υπηκοότητα επισκέπτη
+templates.preview.snippet.gdpr.general_id_document: Έγγραφο ταυτότητας επισκέπτη
+templates.preview.snippet.gdpr.general_remark: Παρατήρηση επισκέπτη
+templates.preview.snippet.gdpr.addresses: Μπλοκ διευθύνσεων (επανάληψη)
+templates.preview.snippet.gdpr.reservations: Μπλοκ διανυκτερεύσεων (επανάληψη)
+templates.preview.snippet.pdf_header: Μπλοκ κεφαλίδας PDF
+templates.preview.snippet.pdf_footer: Μπλοκ υποσέλιδου PDF
+templates.editor.toolbar.bold: Έντονα
+templates.editor.toolbar.italic: Πλάγια
+templates.editor.toolbar.underline: Υπογράμμιση
+templates.editor.toolbar.bullets: Λίστα με κουκκίδες
+templates.editor.toolbar.ordered: Αριθμημένη λίστα
+templates.editor.toolbar.link: Εισαγωγή συνδέσμου
+templates.editor.toolbar.table: Εισαγωγή πίνακα
+templates.editor.toolbar.image: Εισαγωγή εικόνας
+templates.editor.toolbar.image_email_unsupported: Οι εικόνες υποστηρίζονται μόνο
+  σε πρότυπα PDF
+templates.editor.toolbar.table_row_add: Προσθήκη γραμμής
+templates.editor.toolbar.table_row_delete: Διαγραφή γραμμής
+templates.editor.toolbar.table_col_add: Προσθήκη στήλης
+templates.editor.toolbar.table_col_delete: Διαγραφή στήλης
+templates.editor.toolbar.table_delete: Διαγραφή πίνακα
+templates.editor.toolbar.font_family: Γραμματοσειρά
+templates.editor.toolbar.font_size: Μέγεθος γραμματοσειράς
+templates.editor.toolbar.align_left: Στοίχιση αριστερά
+templates.editor.toolbar.align_center: Στοίχιση στο κέντρο
+templates.editor.toolbar.align_right: Στοίχιση δεξιά
+templates.editor.toolbar.beautify: Μορφοποίηση κώδικα
+templates.editor.toolbar.code: Κώδικας
+templates.editor.toolbar.visual: Οπτική
+templates.editor.toolbar.variable: Εισαγωγή μεταβλητής
+templates.editor.variable_picker.title: Εισαγωγή μεταβλητής
+templates.editor.variable_picker.insert_loop: Εισαγωγή βρόχου
+templates.editor.alert.protected_content: Αυτό το πρότυπο περιέχει σύνταξη Twig 
+  ή προηγμένες οδηγίες και μπορεί να επεξεργαστεί μόνο σε λειτουργία κώδικα.
+templates.editor.alert.table_row_required: Τοποθετήστε πρώτα τον δρομέα στη 
+  γραμμή του πίνακα.
+templates.editor.row.repeat_toggle: Επανάληψη γραμμής
+templates.editor.row.repeat_collection: Συλλογή (π.χ. apartmentPositions)
+templates.editor.row.repeat_as: Μεταβλητή στοιχείου (π.χ. position)
+templates.editor.row.repeat_key: Μεταβλητή κλειδιού (προαιρετικά)
+templates.editor.row.repeat_clear: Κατάργηση επανάληψης
+templates.editor.row.repeat_hint: Ρυθμίστε τη συμπεριφορά επανάληψης για την 
+  επιλεγμένη γραμμή του πίνακα.
+templates.editor.row.if_toggle: Υπό συνθήκη γραμμή
+templates.editor.row.if_condition: Συνθήκη (π.χ. reservation.persons > 1)
+templates.editor.row.if_clear: Κατάργηση συνθήκης
+templates.editor.snippets.placeholder: Εισαγωγή αποσπάσματος
+templates.editor.snippets.insert: Εισαγωγή
+templates.editor.snippets.sidebar: Δομικά στοιχεία
+templates.editor.tab.edit: Επεξεργασία
+templates.editor.tab.preview: Προεπισκόπηση
+templates.recipient: Παραλήπτης
+templates.recipient.from_invoice: Ο παραλήπτης άλλαξε στο email του τιμολογίου 
+  %number%.
+templates.savefile.success: Το αρχείο αποθηκεύτηκε με επιτυχία.
+templates.savefile.reservations.required: Επιλέξτε τουλάχιστον μία κράτηση πριν 
+  αποθηκεύσετε το αρχείο.
+templates.select.reservations: Επιλογή κράτησης
+templates.select.template: Επιλογή προτύπου
+templates.sendemail.preview: Αποστολή μηνύματος
+templates.sendemail.success: Το μήνυμα στάλθηκε με επιτυχία.
+templates.subject: Θέμα
+templates.subject.help: Υποστηρίζονται σύμβολα κράτησης θέσης όπως [[ 
+  reservation1.booker.lastname ]]. Αν μείνει κενό, ως θέμα χρησιμοποιείται το 
+  όνομα.
+templates.title: Πρότυπα
+templates.editor.template_includes: Πρότυπα
+templates.include.error.circular: 'Εντοπίστηκε κυκλική ενσωμάτωση προτύπου (ID: %id%)'
+templates.include.error.notfound: 'Το ενσωματωμένο πρότυπο δεν βρέθηκε (ID: %id%)'
+templates.include.error.incompatible: Το πρότυπο «%name%» (%type%) δεν είναι 
+  συμβατό με αυτόν τον τύπο προτύπου
+templates.type: Τύπος προτύπου
+templates.guest_checkin_invitation.name: Πρόσκληση σε online check-in
+templates.journal.name: Ημερολόγιο εγγραφών
+templates.preview.snippet.pdf_header.desc: Προσθέτει μια κεφαλίδα που 
+  εμφανίζεται στο πάνω μέρος κάθε σελίδας PDF.
+templates.preview.snippet.bookingjournal.positions.desc: Εισάγει έναν πίνακα με 
+  όλες τις εγγραφές του επιλεγμένου μήνα, μαζί με λογαριασμούς, ποσά και 
+  παραστατικά.
+templates.preview.snippet.gdpr.addresses.desc: Εισάγει ένα μπλοκ ανά 
+  αποθηκευμένη διεύθυνση επισκέπτη με στοιχεία ταχυδρομικής διεύθυνσης και 
+  επικοινωνίας.
+templates.preview.snippet.gdpr.reservations.desc: Εισάγει ένα μπλοκ ανά κράτηση 
+  με διαμονή, πηγή κράτησης, αριθμό επισκεπτών και τιμολόγια.
+templates.editor.reservation.appartment_positions.desc: Εισάγει έναν πίνακα με 
+  όλα τα κρατημένα δωμάτια, τις ημερομηνίες διαμονής, τον αριθμό επισκεπτών και 
+  τις τιμές.
+templates.editor.reservation.misc_positions.desc: Εισάγει όλες τις πρόσθετες 
+  γραμμές της κράτησης, μία ανά γραμμή, με περιγραφή και συνολική τιμή.
+templates.send: Αποστολή
+templates.file.label: Ετικέτα
+templates.correspondence.delete.ask: Να διαγραφεί αυτό το έγγραφο;

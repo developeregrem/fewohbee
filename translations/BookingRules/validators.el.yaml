@@ -1,0 +1,7 @@
+booking_rules.validation.categories: Επιλέξτε τουλάχιστον μία κατηγορία ή όλες 
+  τις κατηγορίες.
+booking_rules.validation.weekdays: Επιλέξτε τουλάχιστον μία ημέρα.
+booking_rules.validation.period: Εισαγάγετε μια έγκυρη περίοδο. Η τελευταία 
+  ημέρα δεν μπορεί να είναι πριν από την πρώτη.
+booking_rules.validation.min_nights: Εισαγάγετε ελάχιστη διαμονή από 1 έως 365 
+  διανυκτερεύσεις.

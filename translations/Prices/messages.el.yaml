@@ -1,0 +1,348 @@
+price.abbreviation.alldays: Όλες οι ημέρες
+price.abbreviation.friday: Παρ
+price.abbreviation.monday: Δευ
+price.abbreviation.saturday: Σάβ
+price.abbreviation.sunday: Κυρ
+price.abbreviation.thursday: Πέμ
+price.abbreviation.tuesday: Τρί
+price.abbreviation.wednesday: Τετ
+price.active: Ενεργή
+price.alldays: Όλες οι ημέρες
+price.appartment: Δωμάτιο
+price.appartment.hint: 'Συμπληρώνεται μόνο αν έχει επιλεγεί τύπος: τιμή δωματίου.'
+price.breakfast: Πρωινό
+price.category: Κατηγορία
+price.category.all: Όλες οι κατηγορίες
+price.category.misc.hint: 'Προαιρετικό: χωρίς επιλογή η τιμή ισχύει για κάθε κατηγορία
+  δωματίου.'
+price.overview.section.appartment: Τιμές δωματίων
+price.overview.section.miscellaneous: Άλλες τιμές
+price.category.appartment.hint: Η τιμή ισχύει για κάθε επιλεγμένη κατηγορία 
+  δωματίου.
+price.collapsable.group.1.description: Γενικά
+price.collapsable.group.2.description: Πληροφορίες περιόδου
+price.collapsable.group.3.description: Ειδικά για δωμάτια
+price.collapsable.group.4.description: Πακέτο με πολλούς συντελεστές ΦΠΑ 
+  (προαιρετικό)
+price.package.enable: Ρύθμιση ως πακέτο
+price.package.hint: Χωρίστε αυτήν την τιμή σε στοιχεία με διαφορετικούς 
+  συντελεστές ΦΠΑ (π.χ. φαγητό 7%, ποτά 19%). Τα στοιχεία εμφανίζονται ως 
+  ξεχωριστές γραμμές τιμολογίου.
+price.package.col.description: Περιγραφή
+price.package.col.vat: ΦΠΑ
+price.package.col.allocation_type: Τύπος
+price.package.col.value: Τιμή
+price.package.col.remainder: Υπόλοιπο
+price.package.col.revenue_account: Λογαριασμός εσόδων
+price.revenue_account: Λογαριασμός εσόδων
+price.revenue_account.default: Προεπιλογή (από τον συντελεστή ΦΠΑ)
+price.revenue_account.help: Προαιρετικό και χρησιμοποιείται μόνο σε ροές 
+  εργασιών. Καθορίζει σε ποιον λογαριασμό εσόδων καταχωρίζεται αυτή η τιμή στο 
+  ημερολόγιο εγγραφών. Αν μείνει κενό, χρησιμοποιείται ο προεπιλεγμένος 
+  λογαριασμός του συντελεστή ΦΠΑ (π.χ. 8300 για 7%, 8400 για 19%). Χρήσιμο όταν 
+  ορισμένα έσοδα (φαγητό, ποτά, φόρος διαμονής) πρέπει να πηγαίνουν σε 
+  ξεχωριστούς λογαριασμούς.
+price.package.remainder.help: Χαρακτηρίζει αυτό το στοιχείο ως υπόλοιπο. Η τιμή 
+  του υπολογίζεται αυτόματα από ό,τι απομένει αφού αφαιρεθούν όλα τα άλλα 
+  στοιχεία από τη συνολική τιμή. Χρήσιμο όταν συνδυάζονται ποσοστιαία στοιχεία 
+  και στοιχεία σταθερού ποσού ή για την απορρόφηση λεπτών στρογγυλοποίησης. Μόνο
+  ένα στοιχείο ανά πακέτο μπορεί να χαρακτηριστεί ως υπόλοιπο.
+price.package.add_row: Προσθήκη στοιχείου
+price.package.taxrates.empty: Δεν έχουν ρυθμιστεί συντελεστές ΦΠΑ. Ρυθμίστε 
+  συντελεστές ΦΠΑ στις ρυθμίσεις του ημερολογίου εγγραφών πριν δημιουργήσετε 
+  στοιχεία πακέτου.
+price.package.overview.badge: Πακέτο (%count%)
+price.package.overview.tooltip: Περιέχει %count% στοιχεία πακέτου.
+price.package.sum_preview: Προεπισκόπηση αθροίσματος
+price.package.allocation.percent: Ποσοστό
+price.package.allocation.amount: Ποσό
+price.package.error.description_required: Κάθε στοιχείο πακέτου απαιτεί 
+  περιγραφή.
+price.package.error.vat_negative: Ο ΦΠΑ ενός στοιχείου πακέτου δεν μπορεί να 
+  είναι αρνητικός.
+price.package.error.value_required: Κάθε στοιχείο πακέτου απαιτεί τιμή 
+  μεγαλύτερη από μηδέν (εκτός αν έχει χαρακτηριστεί ως υπόλοιπο).
+price.package.error.multiple_remainder: Μόνο ένα στοιχείο πακέτου μπορεί να 
+  χαρακτηριστεί ως υπόλοιπο.
+price.package.error.sum_mismatch: Τα στοιχεία του πακέτου δεν αθροίζονται στη 
+  συνολική τιμή.
+price.package.error.percent_over_100: Τα ποσοστιαία στοιχεία υπερβαίνουν το 
+  100%.
+price.package.error.amount_over_total: Τα στοιχεία σταθερού ποσού υπερβαίνουν τη
+  συνολική τιμή.
+price.daysinweek: Ημέρες ισχύος της εβδομάδας
+price.delete.ask: Θέλετε πράγματι να διαγράψετε αυτήν την τιμή;
+price.description: Περιγραφή
+price.double: Δίκλινο δωμάτιο (1 διανυκτέρευση)
+price.end: Έως
+price.flash.create.conflict: 'Δεν ήταν δυνατή η αποθήκευση της κατηγορίας τιμής, επειδή
+  υπάρχουν συγκρούσεις με τις εξής ενεργές κατηγορίες:'
+price.flash.create.success: Η τιμή δημιουργήθηκε με επιτυχία.
+price.flash.delete.success: Η κατηγορία τιμής διαγράφηκε με επιτυχία.
+price.flash.edit.success: Η τιμή ενημερώθηκε με επιτυχία.
+price.flash.mixed_room_kinds: Μια τιμή ισχύει είτε για διαμονή είτε για χώρους 
+  εκδηλώσεων. Επιλέξτε κατηγορίες δωματίων μόνο ενός είδους δωματίου.
+price.friday: Παρασκευή
+price.from: Από
+price.inactive: Ανενεργή
+price.includesvat: με ΦΠΑ
+price.isflatprice: κατ' αποκοπή
+price.perroom: ανά διανυκτέρευση (αλλιώς ανά άτομο)
+price.defaultactiveinreservationcreation: ενεργή από προεπιλογή κατά τη 
+  δημιουργία κράτησης
+price.bookableonline: Διαθέσιμη για online κράτηση και check-in
+price.brokered: Συμπερίληψη στις χρεώσεις πύλης
+price.brokered.hint: Καθορίζει αν η πύλη χρεώνει προμήθεια ή χρέωση πληρωμής για
+  αυτήν την υπηρεσία. Απενεργοποιήστε το για υπηρεσίες που προστίθενται επί 
+  τόπου, όπως ένα πρωινό που παραγγέλθηκε στη ρεσεψιόν.
+price.mandatoryonline: Υποχρεωτική στην online κράτηση
+price.mandatoryonline.hint: Ο επισκέπτης δεν μπορεί να αποεπιλέξει αυτό το 
+  στοιχείο.
+price.visibility.label: Ορατότητα & διαθεσιμότητα
+price.calculation_type.label: Τρόπος υπολογισμού
+price.calculation_type.flat: Κατ' αποκοπή τιμή (ανά κράτηση)
+price.calculation_type.per_person: Ανά διανυκτέρευση, ανά άτομο
+price.calculation_type.per_person.day: Ανά ημέρα, ανά άτομο
+price.calculation_type.per_room: Ανά διανυκτέρευση, ανά δωμάτιο
+price.calculation_type.per_room.day: Ανά ημέρα, ανά δωμάτιο
+price.calculation_type.per_person.help: Κάθε επισκέπτης πληρώνει αυτήν την τιμή.
+  Εδώ ισχύουν οι προσαρμογές ανά κατηγορία επισκέπτη (π.χ. για παιδιά).
+price.calculation_type.per_room.help: Το δωμάτιο κοστίζει αυτήν την τιμή, όσοι 
+  επισκέπτες κι αν διαμένουν σε αυτό. Προαιρετικά με προσαύξηση ανά επιπλέον 
+  άτομο.
+price.calculation_type.per_room.help.day: Το δωμάτιο κοστίζει αυτήν την τιμή ανά
+  ημέρα, όσα άτομα κι αν το χρησιμοποιούν. Προαιρετικά με προσαύξηση ανά 
+  επιπλέον άτομο.
+price.calculation_type.flat.help: Ένα σταθερό ποσό ανά κράτηση, ανεξάρτητα από 
+  διανυκτερεύσεις και επισκέπτες.
+price.calculation_type.flat.help.day: Ένα σταθερό ποσό ανά κράτηση, ανεξάρτητα 
+  από ημέρες και άτομα.
+price.minstay: Η τιμή ισχύει από … διανυκτερεύσεις
+price.minstay.day: Η τιμή ισχύει από … ημέρες
+price.miscellaneous: Άλλη τιμή
+price.monday: Δευτέρα
+price.numberofbeds: Αριθμός κρεβατιών
+price.numberofpersons: Αριθμός ατόμων
+price.numberofpersons.scope.exact: ακριβώς
+price.numberofpersons.scope.up_to: έως
+price.numberofpersons.help.exact: Η τιμή ισχύει μόνο όταν κρατούνται ακριβώς 
+  τόσα άτομα.
+price.numberofpersons.help.up_to: Η τιμή ισχύει και για λιγότερα άτομα. Πάνω από
+  αυτόν τον αριθμό προστίθεται η προσαύξηση ανά επιπλέον άτομο.
+price.numberofpersons.up_to_count: έως %count%
+price.extra_person_surcharge: Προσαύξηση ανά επιπλέον άτομο
+price.extra_person_surcharge.disabled: Μόνο για τον τρόπο υπολογισμού «Ανά 
+  διανυκτέρευση, ανά δωμάτιο».
+price.extra_person_surcharge.disabled.day: Μόνο για τον τρόπο υπολογισμού «Ανά 
+  ημέρα, ανά δωμάτιο».
+price.extra_person_surcharge.exact: Ποσό που προστίθεται για κάθε άτομο πάνω από
+  τον αριθμό ατόμων. Αφήστε το κενό αν η τιμή ισχύει μόνο για ακριβώς αυτόν τον 
+  αριθμό ατόμων.
+price.extra_person_surcharge.example: 'Κάθε επιπλέον άτομο έως τον αριθμό κρεβατιών
+  κοστίζει την προσαύξηση. Παράδειγμα για %persons% άτομα: %base% + 2 × %surcharge%
+  = %total% ανά διανυκτέρευση.'
+price.extra_person_surcharge.example.day: 'Κάθε επιπλέον άτομο έως τον μέγιστο αριθμό
+  ατόμων του δωματίου κοστίζει την προσαύξηση. Παράδειγμα για %persons% άτομα: %base%
+  + 2 × %surcharge% = %total% ανά ημέρα.'
+price.extra_person_surcharge.short: +%amount% ανά επιπλέον άτομο
+price.extra_person_surcharge.unit: '%currency% ανά διανυκτέρευση'
+price.extra_person_surcharge.unit.day: '%currency% ανά ημέρα'
+price.origin: Προέλευση
+price.price: Τιμή
+price.saturday: Σάββατο
+price.season: Περίοδος
+price.season.hint: Οι κατηγορίες με περίοδο έχουν προτεραιότητα έναντι των 
+  κατηγοριών χωρίς περίοδο.
+price.seasonend: Τέλος περιόδου
+price.seasonstart: Αρχή περιόδου
+price.single: Μονόκλινο δωμάτιο (1 διανυκτέρευση)
+price.sunday: Κυριακή
+price.thursday: Πέμπτη
+price.tuesday: Τρίτη
+price.type: Τύπος
+price.vat: Φόρος
+price.wednesday: Τετάρτη
+price.weekdays: Ημέρες της εβδομάδας
+price.period.description: Ονομασία της περιόδου (προαιρετικά), π.χ. έκθεση ή 
+  γιορτή της πόλης
+price.persons: Άτ.
+price.flash.delete.deactivated_in_use: "{1}Αυτή η τιμή εξακολουθεί να αποτελεί μέρος
+  της συμφωνημένης τιμής μιας κράτησης, γι' αυτό απενεργοποιήθηκε αντί να διαγραφεί.|]1,Inf[Αυτή
+  η τιμή εξακολουθεί να αποτελεί μέρος της συμφωνημένης τιμής %count% κρατήσεων, γι'
+  αυτό απενεργοποιήθηκε αντί να διαγραφεί."
+price_rules.tab.prices: Βασικές τιμές
+price_rules.tab.rules: Κανόνες τιμών
+price_rules.title: Κανόνες τιμών
+price_rules.intro: Οι κανόνες τιμών μεταβάλλουν τις βασικές τιμές κατά ένα 
+  ποσοστό, π.χ. τα Σαββατοκύριακα, για κρατήσεις της τελευταίας στιγμής ή όταν η
+  πληρότητα είναι υψηλή. Αν ισχύουν πολλοί κανόνες, αθροίζονται. Οι υπάρχουσες 
+  κρατήσεις διατηρούν την τιμή τους.
+price_rules.load_error: Δεν ήταν δυνατή η φόρτωση της φόρμας.
+price_rules.list: Κανόνες
+price_rules.add: Προσθήκη κανόνα
+price_rules.edit: Επεξεργασία κανόνα
+price_rules.empty: Δεν υπάρχουν ακόμη κανόνες τιμών. Χωρίς κανόνες ισχύουν οι 
+  βασικές τιμές.
+price_rules.disabled: ανενεργός
+price_rules.enable: Ενεργοποίηση
+price_rules.disable: Απενεργοποίηση
+price_rules.saved: Ο κανόνας τιμής αποθηκεύτηκε.
+price_rules.save: Αποθήκευση
+price_rules.name: Όνομα
+price_rules.condition: Συνθήκη
+price_rules.condition_always: Πάντα
+price_rules.condition_last_minute: Τελευταία στιγμή
+price_rules.condition_early_bird: Έγκαιρη κράτηση
+price_rules.condition_occupancy_high: Υψηλή πληρότητα
+price_rules.condition_occupancy_low: Χαμηλή πληρότητα
+price_rules.condition_help_always: Ισχύει για κάθε διανυκτέρευση. Περιορίστε τον
+  παρακάτω σε ημέρες της εβδομάδας ή σε μια περίοδο, π.χ. για Σαββατοκύριακα, τη
+  σεζόν ή μια εκδήλωση.
+price_rules.condition_help_last_minute: 'Ισχύει για διανυκτερεύσεις που απέχουν το
+  πολύ τόσες ημέρες. 0 σημαίνει: μόνο απόψε.'
+price_rules.condition_help_early_bird: Ισχύει για διανυκτερεύσεις που απέχουν 
+  τουλάχιστον τόσες ημέρες.
+price_rules.condition_help_occupancy_high: Ισχύει όταν έχει κρατηθεί τουλάχιστον
+  αυτό το ποσοστό των δωματίων τη συγκεκριμένη νύχτα. Μετρούν όλα τα δωμάτια του
+  καταλύματος ή μόνο αυτά των επιλεγμένων κατηγοριών δωματίων.
+price_rules.condition_help_occupancy_low: Ισχύει για διανυκτερεύσεις που απέχουν
+  το πολύ τόσες ημέρες και στις οποίες έχει κρατηθεί το πολύ αυτό το ποσοστό των
+  δωματίων.
+price_rules.occupancy: Πληρότητα
+price_rules.days: Ημέρες πριν από τη διανυκτέρευση
+price_rules.raise: Αύξηση
+price_rules.lower: Μείωση
+price_rules.section.when: Πότε;
+price_rules.section.amount: Κατά πόσο;
+price_rules.section.subsidiaries: Για ποια καταλύματα;
+price_rules.section.categories: Για ποια δωμάτια;
+price_rules.section.nights: Μόνο σε ορισμένες διανυκτερεύσεις
+price_rules.weekdays: Διανυκτερεύσεις
+price_rules.first_night: Πρώτη διανυκτέρευση
+price_rules.last_night: Τελευταία διανυκτέρευση
+price_rules.period_help: Προαιρετικό. Περιλαμβάνονται και οι δύο 
+  διανυκτερεύσεις. Χωρίς περίοδο ο κανόνας ισχύει όλο το έτος.
+price_rules.all_subsidiaries: Όλα τα καταλύματα
+price_rules.all_categories: Όλες οι κατηγορίες δωματίων
+price_rules.when.always: Κάθε διανυκτέρευση
+price_rules.when.last_minute: '{0}Μόνο απόψε|{1}Έως 1 ημέρα πριν|]1,Inf[Έως %count%
+  ημέρες πριν'
+price_rules.when.early_bird: '{0}Κάθε διανυκτέρευση|{1}Από 1 ημέρα πριν|]1,Inf[Από
+  %count% ημέρες πριν'
+price_rules.when.occupancy_high: Από %occupancy% % πληρότητα
+price_rules.when.occupancy_low: '{0}Έως %occupancy% % πληρότητα, μόνο απόψε|{1}Έως
+  %occupancy% % πληρότητα, έως 1 ημέρα πριν|]1,Inf[Έως %occupancy% % πληρότητα, έως
+  %count% ημέρες πριν'
+price_rules.when.weekdays: Διανυκτερεύσεις %days%
+price_rules.template.intro: Επιλέξτε σε τι πρέπει να αντιδρά ο κανόνας. Μπορείτε
+  να προσαρμόσετε κάθε τιμή στη συνέχεια.
+price_rules.template.weekend: Σαββατοκύριακο
+price_rules.template.weekend_help: Οι διανυκτερεύσεις Παρασκευής και Σαββάτου 
+  κοστίζουν περισσότερο
+price_rules.template.season: Σεζόν ή εκδήλωση
+price_rules.template.season_help: Για μια περίοδο, π.χ. υψηλή σεζόν, έκθεση ή 
+  γιορτή της πόλης
+price_rules.template.last_minute: Τελευταία στιγμή
+price_rules.template.last_minute_help: Προσφέρετε ελεύθερες διανυκτερεύσεις 
+  φθηνότερα λίγο πριν
+price_rules.template.early_bird: Έγκαιρη κράτηση
+price_rules.template.early_bird_help: Έκπτωση για κρατήσεις πολύ νωρίτερα
+price_rules.template.occupancy_high: Υψηλή πληρότητα
+price_rules.template.occupancy_high_help: Κοστίζει περισσότερο όταν απομένουν 
+  λίγα δωμάτια
+price_rules.template.occupancy_low: Χαμηλή πληρότητα
+price_rules.template.occupancy_low_help: Κοστίζει λιγότερο όταν πολλά είναι 
+  ακόμη ελεύθερα λίγο πριν
+price_rules.preview.incomplete: Συμπληρώστε τα πεδία για να δείτε τι κάνει ο 
+  κανόνας.
+price_rules.preview.none: Με τα σημερινά δεδομένα, ο κανόνας δεν ισχύει για 
+  καμία από τις επόμενες %nights% διανυκτερεύσεις.
+price_rules.preview.matches: '{1}Με τα σημερινά δεδομένα, ισχύει για μία από τις επόμενες
+  %nights% διανυκτερεύσεις.|]1,Inf[Με τα σημερινά δεδομένα, ισχύει για %count% από
+  τις επόμενες %nights% διανυκτερεύσεις.'
+price_rules.preview.example: 'Παράδειγμα %room%, %persons% επισκέπτες, %night%:'
+price_rules.preview.limited: Μαζί με τους άλλους κανόνες συμπληρώνεται το όριο.
+price_rules.limits.title: Όρια και στρογγυλοποίηση
+price_rules.limits.edit: Αλλαγή
+price_rules.limits.summary: Οι κανόνες μειώνουν μια τιμή το πολύ κατά %decrease%
+  % και την αυξάνουν το πολύ κατά %increase% %.
+price_rules.limits.summary_rounding_whole: Οι μεταβαλλόμενες τιμές 
+  στρογγυλοποιούνται σε ακέραια ποσά.
+price_rules.limits.summary_rounding_none: Οι μεταβαλλόμενες τιμές δεν 
+  στρογγυλοποιούνται.
+price_rules.limits.help: Αν ισχύουν πολλοί κανόνες, αθροίζονται. Αυτά τα όρια 
+  ισχύουν για το άθροισμα.
+price_rules.limits.max_decrease: Μείωση το πολύ κατά
+price_rules.limits.max_increase: Αύξηση το πολύ κατά
+price_rules.limits.rounding: Στρογγυλοποίηση
+price_rules.limits.rounding_whole: Σε ακέραια ποσά
+price_rules.limits.rounding_none: Χωρίς στρογγυλοποίηση
+price_rules.limits.saved: Τα όρια αποθηκεύτηκαν.
+price.period.rules_hint: Ποσοστιαίες προσαυξήσεις ή εκπτώσεις στις τιμές 
+  δωματίων, π.χ. τα Σαββατοκύριακα ή για μια εκδήλωση, ρυθμίζονται ευκολότερα ως
+  κανόνας τιμής.
+price.period.rules_link: Μετάβαση στους κανόνες τιμών
+price_rules.occupancy_across: Κοινός υπολογισμός πληρότητας των επιλεγμένων 
+  καταλυμάτων
+price_rules.occupancy_across_help: Χρήσιμο όταν πολλά καταλύματα αποτελούν ένα 
+  σπίτι, π.χ. ένα ανά όροφο. Διαφορετικά κάθε κατάλυμα υπολογίζεται χωριστά.
+price_rules.when.across: καταλύματα μαζί
+price_rules.tab.calendar: Ημερολόγιο τιμών
+price_calendar.title: Ημερολόγιο τιμών
+price_calendar.intro: 'Το ημερολόγιο τιμών δείχνει πόσο κοστίζει σήμερα μια διανυκτέρευση:
+  βασική τιμή, κανόνες τιμών και ημερήσιες τιμές μαζί. Κάθε ημέρα αντιστοιχεί στη
+  διανυκτέρευση που ξεκινά από αυτήν. Πατήστε σε μια διανυκτέρευση για να ορίσετε
+  την τιμή της.'
+price_calendar.subsidiary: Κατάλυμα
+price_calendar.category: Κατηγορία δωματίου
+price_calendar.persons: Επισκέπτες
+price_calendar.persons_count: '{1}1 επισκέπτης|]1,Inf[%count% επισκέπτες'
+price_calendar.nothing: Δεν υπάρχουν δωμάτια ή τιμές για αυτήν την επιλογή.
+price_calendar.previous: Προηγούμενος μήνας
+price_calendar.next: Επόμενος μήνας
+price_calendar.legend.rules: Κανόνας τιμής
+price_calendar.legend.day_price: Ημερήσια τιμή
+price_calendar.legend.tap: Πατήστε σε μια διανυκτέρευση για να την αλλάξετε
+price_calendar.occupancy: Πληρότητα
+price_calendar.booked: '%booked% από %rooms% κρατημένα'
+price_calendar.source.manual: Ημερήσια τιμή
+price_calendar.source.assistant: Ημερήσια τιμή από τον βοηθό AI
+price_calendar.source.api: Ημερήσια τιμή μέσω της πρόσβασης API «%label%»
+price_calendar.day_price_for: '{1}για 1 επισκέπτη|]1,Inf[για %count% επισκέπτες'
+price_calendar.base: Βασική τιμή
+price_calendar.price: Τιμή για αυτήν τη διανυκτέρευση
+price_calendar.column_price: Τιμή
+price_calendar.column_new: Νέα
+price_calendar.limited: Διατηρήθηκε εντός του ρυθμισμένου ορίου.
+price_calendar.no_price: Δεν υπάρχει τιμή για αυτήν τη διανυκτέρευση ή υπάρχει 
+  μόνο κατ' αποκοπή τιμή.
+price_calendar.amount: '{1}Ημερήσια τιμή για 1 επισκέπτη|]1,Inf[Ημερήσια τιμή για
+  %count% επισκέπτες'
+price_calendar.more_nights: Εφαρμογή σε περισσότερες διανυκτερεύσεις
+price_calendar.last_night: Έως και τη διανυκτέρευση
+price_calendar.save: Αποθήκευση ημερήσιας τιμής
+price_calendar.reset_button: Επιστροφή στο αυτόματο
+price_calendar.help: Οι άλλες πληρότητες αλλάζουν αναλογικά. Μια ημερήσια τιμή 
+  αντικαθιστά τους κανόνες τιμών στις διανυκτερεύσεις της. Οι υπάρχουσες 
+  κρατήσεις διατηρούν την τιμή τους.
+price_calendar.saved: Η ημερήσια τιμή αποθηκεύτηκε.
+price_calendar.reset: Για αυτές τις διανυκτερεύσεις ισχύουν ξανά η βασική τιμή 
+  και οι κανόνες τιμών.
+price_calendar.error.amount: Εισαγάγετε τιμή μεγαλύτερη από 0.
+price_calendar.error.range: Η τελευταία διανυκτέρευση δεν μπορεί να είναι πριν 
+  από την πρώτη· έως 366 διανυκτερεύσεις τη φορά.
+price_calendar.error.weekdays: Επιλέξτε τουλάχιστον μία διανυκτέρευση.
+price_calendar.month_1: Ιανουάριος
+price_calendar.month_2: Φεβρουάριος
+price_calendar.month_3: Μάρτιος
+price_calendar.month_4: Απρίλιος
+price_calendar.month_5: Μάιος
+price_calendar.month_6: Ιούνιος
+price_calendar.month_7: Ιούλιος
+price_calendar.month_8: Αύγουστος
+price_calendar.month_9: Σεπτέμβριος
+price_calendar.month_10: Οκτώβριος
+price_calendar.month_11: Νοέμβριος
+price_calendar.month_12: Δεκέμβριος
+price_calendar.night_title: Διανυκτέρευση από %from% έως %to%
+price_calendar.last_night_help: Η διανυκτέρευση που ξεκινά αυτήν την ημέρα.

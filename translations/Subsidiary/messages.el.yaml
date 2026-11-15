@@ -1,0 +1,69 @@
+object.action: Ενέργεια
+object.check_in: Check-in και check-out
+object.check_in.from: check-in από
+object.check_in.help: Κανόνες του καταλύματος για άφιξη και αναχώρηση. Μπορούν 
+  να εισαχθούν σε πρότυπα επιστολών και email με το απόσπασμα «Ώρες check-in του
+  καταλύματος» και να ανακτηθούν μέσω του REST API. Αφήστε το κενό για να μη 
+  δημοσιευτεί τίποτα.
+object.check_in.until: check-in έως
+object.check_in.value.from: Check-in από %from%
+object.check_in.value.window: Check-in %from% - %until%
+object.check_in.window: Check-in
+object.check_in.window.help: Το δεύτερο πεδίο είναι το ανώτερο όριο. Αφήστε το 
+  κενό, αν είναι δυνατή και μεταγενέστερη άφιξη. Ώρα λήξης πριν από την ώρα 
+  έναρξης σημαίνει ότι το διάστημα εκτείνεται μετά τα μεσάνυχτα, π.χ. 
+  17:00-02:00.
+object.check_in_note: Σημείωση για τις ώρες check-in
+object.check_in_note.help: Ελεύθερο κείμενο που εκτυπώνεται μαζί με τις ώρες — 
+  για όλα όσα δεν μπορούν να εκφράσουν δύο τιμές ώρας.
+object.check_in_note.placeholder: π.χ. μεταγενέστερη άφιξη κατόπιν συνεννόησης, 
+  απλώς τηλεφωνήστε μας
+object.check_out.until: Check-out έως
+object.check_out.value: Check-out έως %until%
+object.delete.ask: Θέλετε σίγουρα να διαγράψετε αυτό το κατάλυμα;
+object.description: Περιγραφή
+object.flash.check_in_window.invalid: Το διάστημα check-in δεν είναι έγκυρο. 
+  Δώστε ώρα έναρξης και ώρα λήξης που να διαφέρει από αυτήν ή αφήστε το δεύτερο 
+  πεδίο κενό.
+object.flash.create.success: Το κατάλυμα δημιουργήθηκε με επιτυχία.
+object.flash.delete.error.still.in.use: Το κατάλυμα δεν μπορεί να διαγραφεί, 
+  επειδή έχει ακόμη δωμάτια που του έχουν ανατεθεί.
+object.flash.delete.success: Το κατάλυμα διαγράφηκε με επιτυχία.
+object.flash.edit.success: Το κατάλυμα ενημερώθηκε με επιτυχία.
+object.flash.opening_hours.incomplete: Ένα από τα διαστήματα ωρών λειτουργίας 
+  είναι συμπληρωμένο μόνο κατά το ήμισυ. Δώστε και το «από» και το «έως» ή 
+  αφήστε και τα δύο πεδία κενά.
+object.flash.invoice_number_pattern.invalid: Το εύρος αριθμών τιμολογίων δεν 
+  είναι έγκυρο. Χρειάζεται ακριβώς ένα σύμβολο κράτησης θέσης <number> και 
+  μπορεί να χρησιμοποιεί μόνο γνωστά σύμβολα κράτησης θέσης.
+object.invoice_number_pattern: Δικό του εύρος αριθμών τιμολογίων
+object.invoice_number_pattern.help: 'Αφήστε το κενό για να χρησιμοποιηθεί το προεπιλεγμένο
+  εύρος από τις ρυθμίσεις. Σύμβολα κράτησης θέσης: <code>&lt;year&gt;</code>, <code>&lt;year2&gt;</code>,
+  <code>&lt;month&gt;</code>, <code>&lt;day&gt;</code>, <code>&lt;number:4&gt;</code>.
+  Τα τιμολόγια για δωμάτια αυτού του καταλύματος παίρνουν τότε δικό τους αύξοντα αριθμό.'
+object.invoice_number_pattern.placeholder: π.χ. RE-<year>-<number:4>
+object.name: Κατάλυμα
+object.opening_hours: Ώρες λειτουργίας
+object.opening_hours.from: από
+object.opening_hours.help: Αφήστε το κενό για «κλειστό». Οι ώρες μπορούν να 
+  εισαχθούν σε πρότυπα επιστολών και email με το απόσπασμα «Ώρες λειτουργίας του
+  καταλύματος» και να ανακτηθούν μέσω του REST API.
+object.opening_hours_note: Σημείωση για τις ώρες λειτουργίας
+object.opening_hours_note.help: Ελεύθερο κείμενο που εκτυπώνεται μαζί με τις 
+  ώρες — για όλα όσα δεν μπορεί να εκφράσει ένα εβδομαδιαίο πρόγραμμα.
+object.opening_hours_note.placeholder: π.χ. εκτός αυτών των ωρών κατόπιν 
+  συνεννόησης, τηλ. 0123 456
+object.opening_hours.period.1: Διάστημα 1
+object.opening_hours.period.2: Διάστημα 2
+object.opening_hours.to: έως
+object.tab.general: Γενικά
+object.tab.invoice_data: Στοιχεία τιμολόγησης
+object.tab.service_times: Ώρες εξυπηρέτησης
+object.title: Διαχείριση καταλυμάτων
+object.weekday.1: Δευτέρα
+object.weekday.2: Τρίτη
+object.weekday.3: Τετάρτη
+object.weekday.4: Πέμπτη
+object.weekday.5: Παρασκευή
+object.weekday.6: Σάββατο
+object.weekday.7: Κυριακή

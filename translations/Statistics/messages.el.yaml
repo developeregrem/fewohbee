@@ -1,0 +1,71 @@
+statistics:
+  origin:
+    description: Προέλευση
+    monthly: Μηνιαία επισκόπηση προέλευσης
+    title: Προέλευση
+    yearly: Ετήσια επισκόπηση προέλευσης
+  turnover:
+    description: Έσοδα
+    help: 'Έσοδα: τιμολόγια (μικτά) ανά ημερομηνία τιμολογίου, με την κατάσταση που
+      επιλέγεται παρακάτω. Πρόβλεψη: αναμενόμενα έσοδα από τις κρατήσεις που δεν έχουν
+      ακόμη συνυπολογιστεί εκεί, ανά μήνα αναχώρησης. Οι ακυρωμένες κρατήσεις και
+      οι συγκρούσεις δεν υπολογίζονται.'
+    monthly: μηνιαία έσοδα
+    title: Έσοδα
+    yearly: ετήσια έσοδα
+    series:
+      invoiced: Τιμολόγια (ανά ημερομηνία τιμολογίου)
+      invoiced_year: Τιμολόγια %year% (ανά ημερομηνία τιμολογίου)
+      forecast: Πρόβλεψη (ανά μήνα αναχώρησης)
+      forecast_year: Πρόβλεψη %year% (ανά μήνα αναχώρησης)
+    forecast:
+      show: Εμφάνιση πρόβλεψης από κρατήσεις
+      include_invoiced: Συμπερίληψη κρατήσεων με τιμολόγιο
+      tooltip:
+        reservations: '{0}καμία κράτηση|{1}μία κράτηση|]1,Inf[%count% κρατήσεις'
+        invoiced: '{1}εκ των οποίων %amount% από μία κράτηση με τιμολόγιο|]1,Inf[εκ
+          των οποίων %amount% από %count% κρατήσεις με τιμολόγιο'
+  utilization:
+    description: Πληρότητα
+    monthly: Μηνιαία πληρότητα
+    title: Πληρότητα
+    yearly: Ετήσια επισκόπηση πληρότητας
+  tourism:
+    title: Τουρισμός
+    description: Τουρισμός
+    arrivals: Αφίξεις
+    arrivals_by_country: Αφίξεις ανά χώρα
+    beds_total: Κλίνες
+    by_country_table: Αφίξεις και διανυκτερεύσεις ανά χώρα
+    country: Χώρα
+    no_warnings: Δεν υπάρχουν προειδοποιήσεις
+    overnights: Διανυκτερεύσεις
+    overnights_by_country: Διανυκτερεύσεις ανά χώρα
+    regenerate: Επανυπολογισμός στιγμιότυπου
+    rooms_total: Δωμάτια
+    summary: Σύνοψη
+    turnover: Έσοδα
+    utilization: Πληρότητα
+    warnings: Σημειώσεις/Προειδοποιήσεις
+    room_label: Δωμάτιο
+    show_by_state: Εμφάνιση ανά περιφέρεια/επαρχία
+    state: Περιφέρεια/Επαρχία
+    by_state_table: Αφίξεις και διανυκτερεύσεις ανά περιφέρεια/επαρχία
+    arrivals_by_state: Αφίξεις ανά περιφέρεια/επαρχία
+    overnights_by_state: Διανυκτερεύσεις ανά περιφέρεια/επαρχία
+    no_state_data: Δεν υπάρχουν διαθέσιμα δεδομένα περιφερειών. Συμπληρώστε τον 
+      πίνακα PostalCodeData για να ενεργοποιήσετε στατιστικά ανά περιφέρεια. 
+      Δείτε τις <a 
+      href="https://github.com/developeregrem/fewohbee/wiki/City-Lookup" 
+      target="_blank">οδηγίες</a>.
+    guest_category: Κατηγορία επισκέπτη
+    overnights_by_guest_category: Διανυκτερεύσεις ανά κατηγορία επισκέπτη
+    by_country_and_category_table: 'Διανυκτερεύσεις: χώρα × κατηγορία επισκέπτη'
+    no_category_data: Δεν υπάρχουν διαθέσιμα δεδομένα κατηγοριών επισκεπτών.
+    total: Σύνολο
+    last_calculated: 'Τελευταίος υπολογισμός:'
+  snapshot:
+    warning:
+      persons_mismatch: Ο αριθμός ατόμων διαφέρει από τον αριθμό επισκεπτών· 
+        ελέγξτε αν η κράτηση είναι πλήρης.
+statistics.blocked.room_days: Ημέρες αποκλεισμένων δωματίων

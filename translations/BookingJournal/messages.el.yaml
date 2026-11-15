@@ -1,0 +1,442 @@
+accounting.settings.title: Ρυθμίσεις ημερολογίου εγγραφών
+accounting.settings.back_to_journal: Πίσω στο ημερολόγιο
+accounting.settings.back: Πίσω στις ρυθμίσεις
+accounting.settings.flash.saved: Οι ρυθμίσεις αποθηκεύτηκαν με επιτυχία.
+accounting.settings.flash.preset_invalid: Επιλέχθηκε μη έγκυρο προκαθορισμένο 
+  σχέδιο.
+accounting.settings.flash.preset_loaded: 'Το προκαθορισμένο σχέδιο %preset% φορτώθηκε:
+  δημιουργήθηκαν %accounts% λογαριασμοί, %taxRates% συντελεστές ΦΠΑ, %workflows% αυτοματισμοί.'
+accounting.settings.flash.preset_stale_account_refs: 'Προειδοποίηση: %count% τιμές/στοιχεία
+  εξακολουθούν να παραπέμπουν σε λογαριασμούς εσόδων από άλλο προκαθορισμένο σχέδιο.
+  Ελέγξτε τα στις ρυθμίσεις τιμών.'
+accounting.settings.preset.title: Λογιστικό σχέδιο
+accounting.settings.preset.help: Επιλέξτε ένα προκαθορισμένο σχέδιο με τυπικές 
+  αρχικές τιμές για τη Γερμανία, την Αυστρία ή την Ελβετία. Οι λογαριασμοί και 
+  οι συντελεστές ΦΠΑ που λείπουν προστίθενται αυτόματα· όλες οι τιμές μπορούν 
+  στη συνέχεια να προσαρμοστούν ελεύθερα και, αν χρειάζεται, να συμπληρωθούν με 
+  πρόσθετες ρυθμίσεις ανά χώρα.
+accounting.settings.preset.label: Προκαθορισμένο σχέδιο
+accounting.settings.preset.load: Φόρτωση προκαθορισμένου σχεδίου
+accounting.settings.preset.confirm: Η φόρτωση ενός προκαθορισμένου σχεδίου θα 
+  προσθέσει τους λογαριασμούς και τους συντελεστές ΦΠΑ που λείπουν. Οι 
+  υπάρχουσες καταχωρίσεις δεν θα αλλάξουν. Συνέχεια;
+accounting.settings.preset.current: 'Ενεργό προκαθορισμένο σχέδιο: %preset%'
+accounting.settings.preset.seed_workflows: Δημιουργία παραδειγμάτων αυτοματισμών
+accounting.settings.preset.seed_workflows_help: Δημιουργεί προρυθμισμένους 
+  αυτοματισμούς για αυτόματες εγγραφές κατά την πληρωμή τιμολογίων (μετρητά, 
+  τραπεζική μεταφορά, κάρτα). Οι υπάρχοντες αυτοματισμοί προκαθορισμένων σχεδίων
+  δεν θα διπλασιαστούν.
+accounting.settings.preset.skr03: SKR03 (Γερμανία)
+accounting.settings.preset.skr04: SKR04 (Γερμανία)
+accounting.settings.preset.ekr_at: EKR (Αυστρία)
+accounting.settings.preset.kmu_ch: KMU (Ελβετία)
+accounting.settings.datev.title: Ρυθμίσεις εξαγωγής DATEV
+accounting.settings.datev.help: Αυτές οι τιμές απαιτούνται για την εξαγωγή CSV 
+  DATEV. Ζητήστε τις σωστές τιμές από τον φοροτεχνικό σας.
+accounting.settings.advisor_number: Αριθμός συμβούλου
+accounting.settings.advisor_number.placeholder: π.χ. 29098
+accounting.settings.client_number: Αριθμός πελάτη
+accounting.settings.client_number.placeholder: π.χ. 55003
+accounting.settings.fiscal_year_start: Έναρξη οικονομικού έτους (μήνας)
+accounting.settings.account_number_length: Μήκος αριθμού λογαριασμού
+accounting.settings.dictation_code: Κωδικός υπαγόρευσης
+accounting.settings.remark_labels.title: Ετικέτες παρατηρήσεων εγγραφών
+accounting.settings.remark_labels.intro: Αυτές οι ετικέτες χρησιμοποιούνται μόνο
+  από ενέργειες αυτοματισμών (π.χ. αυτόματες λογιστικές εγγραφές κατά την 
+  πληρωμή τιμολογίων).
+accounting.settings.remark_labels.help: Προαιρετικές ετικέτες για την αυτόματη 
+  παρατήρηση στο ημερολόγιο εγγραφών. Χωρίζονται σε κύρια υπηρεσία (γραμμές 
+  δωματίων/κύριες γραμμές) και διάφορες υπηρεσίες. Ίδιος λογαριασμός + ΦΠΑ 
+  ομαδοποιούνται ανά ενότητα· η ετικέτα συνδυάζεται με το όνομα του λογαριασμού 
+  ως παρατήρηση (π.χ. <b>"Διαμονή – Έσοδα 7%"</b>). Όταν είναι κενή, γράφεται 
+  μόνο το όνομα του λογαριασμού.
+accounting.settings.main_position_label: Κύρια υπηρεσία
+accounting.settings.main_position_label.placeholder: π.χ. Διαμονή, Ενοικίαση 
+  σκάφους, Δίδακτρα σεμιναρίου
+accounting.settings.misc_position_label: Διάφορες υπηρεσίες
+accounting.settings.misc_position_label.placeholder: π.χ. Διάφορα, Πρόσθετα
+accounting.settings.invoice_number_patterns.title: Εντοπισμός αριθμών τιμολογίων
+accounting.settings.invoice_number_patterns.help: Κατά την εισαγωγή κινήσεων 
+  τραπεζικού λογαριασμού, το κείμενο της αιτιολογίας αναζητείται για αριθμούς 
+  που ταιριάζουν με τα εύρη αριθμών των τιμολογίων σας. Αναγνωρίζεται ακριβώς 
+  ό,τι εκδίδετε.
+accounting.settings.invoice_number_patterns.intro: Αναγνωρίζονται αυτά τα εύρη 
+  αριθμών. Αλλάζουν εκεί όπου ισχύουν — καθολικά στις ρυθμίσεις, ανά κατάλυμα 
+  στη διαχείριση καταλυμάτων.
+accounting.settings.invoice_number_patterns.none: Δεν έχει ρυθμιστεί ακόμη εύρος
+  αριθμών. Μέχρι τότε, οι τραπεζικές συναλλαγές δεν μπορούν να αντιστοιχιστούν 
+  αυτόματα σε τιμολόγια.
+accounting.settings.invoice_number_patterns.recent: 'Οι αριθμοί τιμολογίων που εκδώσατε
+  πιο πρόσφατα:'
+accounting.settings.invoice_number_patterns.scope: Ισχύει για
+accounting.settings.invoice_number_patterns.pattern: Μοτίβο
+accounting.settings.invoice_number_patterns.example: Παράδειγμα
+accounting.settings.invoice_number_patterns.global: Προεπιλογή
+accounting.settings.invoice_number_patterns.link_global: Επεξεργασία 
+  προεπιλεγμένου εύρους αριθμών
+accounting.settings.invoice_number_patterns.link_branch: Διαχείριση καταλυμάτων
+accounting.opening_balance.title: Υπόλοιπο έναρξης
+accounting.opening_balance.help: Εισάγεται μία φορά ανά έτος. Το ποσό 
+  καταχωρίζεται αυτόματα ως εγγραφή έναρξης την 1η Ιανουαρίου.
+accounting.opening_balance.year: Έτος
+accounting.opening_balance.cash: Ταμείο
+accounting.opening_balance.bank: Τράπεζα
+accounting.opening_balance.booking_info: 'Καταχωρίζεται στον λογαριασμό: %account%'
+accounting.opening_balance.no_account: Δεν έχει ρυθμιστεί λογαριασμός υπολοίπου 
+  έναρξης. Φορτώστε πρώτα ένα προκαθορισμένο λογιστικό σχέδιο.
+accounting.opening_balance.flash.saved: Το υπόλοιπο έναρξης αποθηκεύτηκε.
+accounting.opening_balance.flash.no_account: Δεν έχει ρυθμιστεί λογαριασμός 
+  υπολοίπου έναρξης — φορτώστε ένα προκαθορισμένο σχέδιο.
+accounting.accounts.title: Λογαριασμοί
+accounting.accounts.help: Διαχειριστείτε τους λογαριασμούς για εγγραφές χρέωσης 
+  και πίστωσης (π.χ. ταμείο, τράπεζα, έσοδα).
+accounting.accounts.add: Προσθήκη λογαριασμού
+accounting.accounts.edit: Επεξεργασία λογαριασμού
+accounting.accounts.number: Αρ. λογαριασμού
+accounting.accounts.name: Όνομα
+accounting.accounts.type: Τύπος
+accounting.accounts.system_role: Ρόλος συστήματος
+accounting.accounts.cash: Ταμείο
+accounting.accounts.is_cash: Αυτός είναι ο λογαριασμός ταμείου
+accounting.accounts.bank: Τράπεζα
+accounting.accounts.is_bank: Αυτός είναι ο τραπεζικός λογαριασμός
+accounting.accounts.opening_balance: Έναρξη
+accounting.accounts.is_opening_balance: Αυτός είναι ο λογαριασμός υπολοίπου 
+  έναρξης
+accounting.accounts.is_auto: Αυτόματος λογαριασμός (DATEV)
+accounting.accounts.is_auto.help: 'Για τους αυτόματους λογαριασμούς DATEV, το DATEV
+  υπολογίζει το ίδιο τον φόρο από το λογιστικό σχέδιο. Το κλειδί BU παραλείπεται κατά
+  την εξαγωγή όποτε εμπλέκεται αυτός ο λογαριασμός (χρέωσης ή πίστωσης). Τυπικά: SKR03
+  8300/8400, SKR04 4300/4400, λογαριασμοί §13b.'
+accounting.accounts.is_auto.badge: Αυτόματος
+accounting.accounts.sachverhalt_lul: Sachverhalt L+L
+accounting.accounts.sachverhalt_lul.help: Κωδικός DATEV για τη στήλη AQ, π.χ. 7 
+  = §13b υπηρεσία ΕΕ (Booking.com, Airbnb), 4 = §13b κατασκευαστική υπηρεσία, 1 
+  = ενδοκοινοτική απόκτηση. Αφήστε το κενό αν δεν χρειάζεται.
+accounting.accounts.funktion_lul: Funktion erg. L+L
+accounting.accounts.funktion_lul.help: Κωδικός DATEV για τη στήλη AR 
+  (συντελεστής ΦΠΑ + έκπτωση ΦΠΑ εισροών), π.χ. 190 = 19% με έκπτωση ΦΠΑ 
+  εισροών, 101 = 7% με έκπτωση ΦΠΑ εισροών. Αφήστε το κενό αν δεν χρειάζεται.
+accounting.accounts.sort_order: Σειρά ταξινόμησης
+accounting.accounts.system_locked: Λογαριασμός συστήματος (δεν μπορεί να 
+  διαγραφεί)
+accounting.accounts.empty: Δεν έχουν ρυθμιστεί λογαριασμοί. Φορτώστε ένα 
+  προκαθορισμένο σχέδιο για να ξεκινήσετε.
+accounting.accounts.delete.ask: Θέλετε πράγματι να διαγράψετε αυτόν τον 
+  λογαριασμό;
+accounting.accounts.flash.created: Ο λογαριασμός δημιουργήθηκε με επιτυχία.
+accounting.accounts.flash.updated: Ο λογαριασμός ενημερώθηκε με επιτυχία.
+accounting.accounts.flash.deleted: Ο λογαριασμός διαγράφηκε με επιτυχία.
+accounting.accounts.flash.cannot_delete_system: Οι λογαριασμοί συστήματος δεν 
+  μπορούν να διαγραφούν.
+accounting.accounts.flash.cannot_delete_in_use: Αυτός ο λογαριασμός δεν μπορεί 
+  να διαγραφεί, επειδή χρησιμοποιείται ακόμη σε εγγραφές ημερολογίου, 
+  συντελεστές ΦΠΑ, τιμές ή αυτοματισμούς. Αφαιρέστε πρώτα τις αναφορές στις 
+  ρυθμίσεις· οι λογαριασμοί που χρησιμοποιούνται σε εγγραφές ημερολογίου πρέπει 
+  να παραμείνουν.
+accounting.accounts.type.asset: Ενεργητικό
+accounting.accounts.type.liability: Παθητικό
+accounting.accounts.type.revenue: Έσοδα
+accounting.accounts.type.expense: Έξοδα
+accounting.taxrates.manage_link: Διαχείριση συντελεστών ΦΠΑ
+accounting.taxrates.title: Συντελεστές ΦΠΑ
+accounting.taxrates.help: Διαχειριστείτε τους συντελεστές ΦΠΑ για τις εγγραφές. 
+  Το κλειδί BU του DATEV απαιτείται για την εξαγωγή.
+accounting.taxrates.add: Προσθήκη συντελεστή ΦΠΑ
+accounting.taxrates.edit: Επεξεργασία συντελεστή ΦΠΑ
+accounting.taxrates.name_header: Όνομα
+accounting.taxrates.name.placeholder: π.χ. ΦΠΑ 19%
+accounting.taxrates.rate: Συντελεστής
+accounting.taxrates.bukey_short: Κλειδί BU
+accounting.taxrates.bukey.output_abbr: Εκρ.
+accounting.taxrates.bukey.input_abbr: Εισρ.
+accounting.taxrates.output_bukey: Κλειδί BU ΦΠΑ εκροών
+accounting.taxrates.output_bukey.placeholder: π.χ. 3
+accounting.taxrates.output_bukey.help: 'Χρησιμοποιείται σε εγγραφές εσόδων. DE: 2
+  = 7%, 3 = 19%. Αφήστε το κενό για αφορολόγητους συντελεστές ή αν χρησιμοποιούνται
+  μόνο αυτόματοι λογαριασμοί.'
+accounting.taxrates.input_bukey: Κλειδί BU ΦΠΑ εισροών
+accounting.taxrates.input_bukey.placeholder: π.χ. 9
+accounting.taxrates.input_bukey.help: 'Χρησιμοποιείται σε εγγραφές εξόδων. DE: 8 =
+  7%, 9 = 19%. Αφήστε το κενό για αφορολόγητους συντελεστές.'
+accounting.taxrates.valid: Ισχύς
+accounting.taxrates.valid_from: Ισχύει από
+accounting.taxrates.valid_to: Ισχύει έως
+accounting.taxrates.revenue_account: Λογαριασμός εσόδων
+accounting.taxrates.revenue_account.help: Χρησιμοποιείται ως λογαριασμός 
+  πίστωσης για αυτόματες εγγραφές με αυτόν τον συντελεστή ΦΠΑ.
+accounting.taxrates.is_default: Προεπιλεγμένος συντελεστής
+accounting.taxrates.default: Προεπιλογή
+accounting.taxrates.always_valid: Πάντα
+accounting.taxrates.empty: Δεν έχουν ρυθμιστεί συντελεστές ΦΠΑ. Φορτώστε ένα 
+  προκαθορισμένο σχέδιο για να ξεκινήσετε.
+accounting.taxrates.delete.ask: Θέλετε πράγματι να διαγράψετε αυτόν τον 
+  συντελεστή ΦΠΑ;
+accounting.taxrates.flash.created: Ο συντελεστής ΦΠΑ δημιουργήθηκε με επιτυχία.
+accounting.taxrates.flash.updated: Ο συντελεστής ΦΠΑ ενημερώθηκε με επιτυχία.
+accounting.taxrates.flash.deleted: Ο συντελεστής ΦΠΑ διαγράφηκε με επιτυχία.
+accounting.taxrates.flash.cannot_delete_in_use: Αυτός ο συντελεστής ΦΠΑ δεν 
+  μπορεί να διαγραφεί, επειδή χρησιμοποιείται ήδη σε εγγραφές του ημερολογίου 
+  εγγραφών. Χρησιμοποιήστε τα πεδία ισχύος για να αποτρέψετε τη μελλοντική χρήση
+  του.
+accounting.taxrates.flash.cannot_delete_in_workflow: Αυτός ο συντελεστής ΦΠΑ δεν
+  μπορεί να διαγραφεί, επειδή ένας αυτοματισμός καταχωρίζει με αυτόν. Επιλέξτε 
+  πρώτα διαφορετικό συντελεστή ΦΠΑ στον αυτοματισμό.
+accounting.journal.batch.add: Προσθήκη μήνα
+accounting.journal.batch.year: Έτος
+accounting.journal.batch.month: Μήνας
+accounting.journal.batch.status: Κατάσταση
+accounting.journal.batch.entries_count: Εγγραφές
+accounting.journal.batch.closed: Κλειστός
+accounting.journal.batch.exported: Εξήχθη
+accounting.journal.batch.open: Ανοιχτός
+accounting.journal.batch.new: Δημιουργία νέου μήνα
+accounting.journal.batch.empty: Δεν έχουν δημιουργηθεί ακόμη μήνες.
+accounting.journal.batch.close: Κλείσιμο μήνα
+accounting.journal.batch.reopen: Επανάνοιγμα μήνα
+accounting.journal.batch.previous_month: 'Προηγούμενος μήνας: %month%'
+accounting.journal.batch.next_month: 'Επόμενος μήνας: %month%'
+accounting.journal.batch.previous_page: 'Προηγούμενη σελίδα: %page% από %pages%'
+accounting.journal.batch.next_page: 'Επόμενη σελίδα: %page% από %pages%'
+accounting.journal.batch.previous_year: Προηγούμενο έτος
+accounting.journal.batch.next_year: Επόμενο έτος
+accounting.journal.filter.all: Όλες οι εγγραφές
+accounting.journal.filter.cashbook: Προβολή βιβλίου ταμείου
+accounting.journal.filter.bankbook: Προβολή τράπεζας
+accounting.journal.cashbook.incomes: Έσοδα
+accounting.journal.cashbook.expenses: Έξοδα
+accounting.journal.cashbook.counter_account: Αντιλογ.
+accounting.journal.cashbook.start: Αρχικό υπόλοιπο ταμείου
+accounting.journal.cashbook.end: Τελικό υπόλοιπο ταμείου
+accounting.journal.cashbook.start_help: Υπόλοιπο ταμείου στην αρχή του μήνα 
+  (σχετικό μόνο για την προβολή βιβλίου ταμείου).
+accounting.journal.bankbook.incomes: Εισερχόμενα
+accounting.journal.bankbook.expenses: Εξερχόμενα
+accounting.journal.bankbook.counter_account: Αντιλογ.
+accounting.journal.bankbook.start: Αρχικό υπόλοιπο τράπεζας
+accounting.journal.bankbook.end: Τελικό υπόλοιπο τράπεζας
+accounting.journal.cashbook.direction: Τύπος
+accounting.journal.cashbook.category: Αντίθετος λογαριασμός
+accounting.journal.export: Εξαγωγή
+accounting.journal.export.datev: Δέσμη εγγραφών DATEV (CSV)
+accounting.journal.export.year: Ετήσια εξαγωγή DATEV
+accounting.journal.export.year.help: Εξαγωγή όλων των εγγραφών του επιλεγμένου 
+  έτους σε ένα ενιαίο αρχείο CSV DATEV.
+accounting.journal.year_view.title: Δέσμη εγγραφών
+accounting.journal.year_view.help: Όλες οι εγγραφές του επιλεγμένου έτους σε 
+  έναν πίνακα με δυνατότητα ταξινόμησης.
+accounting.journal.year_view.toggle_filters: Φίλτρα
+accounting.journal.year_view.filter_placeholder: Φίλτρο …
+accounting.journal.year_view.filter_compare_placeholder_date: π.χ. >=2026-06-01
+accounting.journal.year_view.filter_compare_hint_date: 'Συγκρίσεις: > < >= <= = !=
+  — συνδυάστε για εύρος, π.χ. >=2026-06-01 <=2026-08-31 (διαφορετικά αναζήτηση κειμένου)'
+accounting.journal.year_view.filter_compare_placeholder_number: π.χ. > 100
+accounting.journal.year_view.filter_compare_hint_number: 'Συγκρίσεις: > < >= <= =
+  != — συνδυάστε περισσότερες, π.χ. >=100 <=500 (διαφορετικά αναζήτηση κειμένου)'
+accounting.journal.year_view.closed_month: Ο μήνας έκλεισε – δεν επιτρέπεται 
+  επεξεργασία
+accounting.journal.export.no_batches: Δεν υπάρχουν εγγραφές για αυτό το έτος.
+accounting.journal.export.no_settings: Ρυθμίστε πρώτα τις ρυθμίσεις εξαγωγής 
+  DATEV.
+accounting.journal.export.warn_intro: Οι παρακάτω εγγραφές είναι ελλιπείς. Η 
+  εξαγωγή εξακολουθεί να είναι δυνατή – οι διορθώσεις μπορούν να γίνουν εδώ ή 
+  αργότερα στο DATEV.
+accounting.journal.export.force: Εξαγωγή παρ' όλα αυτά
+accounting.journal.export.warn.missing_advisor_number: λείπει ο αριθμός 
+  συμβούλου στις ρυθμίσεις του ημερολογίου.
+accounting.journal.export.warn.missing_client_number: λείπει ο αριθμός πελάτη 
+  στις ρυθμίσεις του ημερολογίου.
+accounting.journal.export.warn.no_debit: 'Εγγραφή #%doc%: λείπει ο λογαριασμός χρέωσης.'
+accounting.journal.export.warn.no_credit: 'Εγγραφή #%doc%: λείπει ο λογαριασμός πίστωσης.'
+accounting.journal.export.warn.no_output_bukey: 'Εγγραφή #%doc%: εγγραφή εσόδων με
+  συντελεστή ΦΠΑ «%taxrate%» – λείπει το κλειδί BU εκροών.'
+accounting.journal.export.warn.no_input_bukey: 'Εγγραφή #%doc%: εγγραφή εξόδων με
+  συντελεστή ΦΠΑ «%taxrate%» – λείπει το κλειδί BU εισροών.'
+accounting.journal.entry.add: Προσθήκη εγγραφής
+accounting.journal.entry.edit: Επεξεργασία εγγραφής
+accounting.journal.entry.duplicate: Αντιγραφή εγγραφής
+accounting.journal.entry.date: Ημερομηνία
+accounting.journal.entry.doc_number: Αρ. παραστ.
+accounting.journal.entry.amount: Ποσό
+accounting.journal.entry.debit: Χρέωση
+accounting.journal.entry.credit: Πίστωση
+accounting.journal.entry.tax_rate: Συντελεστής ΦΠΑ
+accounting.journal.entry.invoice: Αρ. τιμολογίου
+accounting.journal.entry.requires_document: Αναμένεται παραστατικό
+accounting.journal.entry.requires_document_help: Η εγγραφή αναμένει αριθμό 
+  παραστατικού. Ο μήνας δεν μπορεί να κλείσει όσο αυτός λείπει.
+accounting.journal.entry.remark: Παρατήρηση
+accounting.journal.entry.empty: Δεν υπάρχουν ακόμη εγγραφές.
+accounting.journal.entry.delete_ask: Να διαγραφεί αυτή η εγγραφή;
+accounting.journal.back: Πίσω στο ημερολόγιο
+accounting.journal.flash.batch_created: Ο μήνας δημιουργήθηκε με επιτυχία.
+accounting.journal.flash.batch_closed: Ο μήνας έκλεισε.
+accounting.journal.flash.batch_missing_document_numbers: 'Ο μήνας δεν μπορεί να κλείσει:
+  %count% εγγραφή/εγγραφές αναμένουν ακόμη αριθμό παραστατικού.'
+accounting.journal.entry.missing_document: Λείπει παραστατικό
+accounting.journal.entry.missing_document_hint: Αυτή η εγγραφή καταχωρίστηκε 
+  πριν από το παραστατικό στο οποίο αναφέρεται. Ο μήνας μπορεί να κλείσει μόνο 
+  αφού δοθεί ο αριθμός.
+accounting.journal.flash.batch_reopened: Ο μήνας άνοιξε ξανά.
+accounting.journal.flash.entry_created: Η εγγραφή δημιουργήθηκε με επιτυχία.
+accounting.journal.flash.entry_updated: Η εγγραφή ενημερώθηκε με επιτυχία.
+accounting.journal.flash.entry_deleted: Η εγγραφή διαγράφηκε με επιτυχία.
+journal.error.journal.closed: Αυτός ο μήνας έχει κλείσει. Δεν επιτρέπονται 
+  αλλαγές.
+preset.account.cash: Ταμείο
+preset.account.cash_at: Ταμείο
+preset.account.bank: Τράπεζα
+preset.account.receivables: Απαιτήσεις από πελάτες
+preset.account.receivables_credit_card: Απαιτήσεις από πιστωτικές κάρτες
+preset.account.credit_card_settlement: Εκκαθάριση πιστωτικών καρτών
+preset.account.input_tax: ΦΠΑ εισροών
+preset.account.input_tax_reduced: ΦΠΑ εισροών (μειωμένος συντελεστής)
+preset.account.input_tax_standard: ΦΠΑ εισροών (κανονικός συντελεστής)
+preset.account.vat: ΦΠΑ εκροών
+preset.account.vat_reduced: ΦΠΑ εκροών (μειωμένος συντελεστής)
+preset.account.vat_standard: ΦΠΑ εκροών (κανονικός συντελεστής)
+preset.account.vat_ch: Οφειλόμενος ΦΠΑ
+preset.account.transit: Μεταβατικοί λογαριασμοί
+preset.account.revenue_accommodation: Έσοδα διαμονής 7%
+preset.account.revenue_accommodation_10: Έσοδα διαμονής 10%
+preset.account.revenue_accommodation_13: Έσοδα διαμονής 13%
+preset.account.revenue_accommodation_ch: Έσοδα διαμονής 3.8%
+preset.account.revenue_standard: Έσοδα (κανονικός συντελεστής)
+preset.account.revenue_standard_ch: Έσοδα ΦΠΑ 8.1%
+preset.account.service_revenue_ch: Έσοδα από υπηρεσίες
+preset.account.revenue_20: Έσοδα ΦΠΑ 20%
+preset.account.revenue_tax_free: Αφορολόγητα έσοδα
+preset.account.revenue_deductions: Μειώσεις εσόδων (προμήθειες)
+preset.account.office_supplies: Αναλώσιμα γραφείου
+preset.account.other_expenses: Λοιπά έξοδα
+preset.account.other_operating_expenses: Λοιπά λειτουργικά έξοδα
+preset.account.premises: Έξοδα χώρων
+preset.account.rent_real_estate: Ενοίκια (ακίνητα)
+preset.account.cleaning: Καθαρισμός
+preset.account.insurance: Ασφάλιστρα
+preset.account.maintenance: Συντήρηση
+preset.account.maintenance_cleaning: Συντήρηση / Καθαρισμός
+preset.account.opening_balance: Υπόλοιπο έναρξης
+preset.account.reverse_charge_eu_19: Αντίστροφη επιβάρυνση ΕΕ 19% (Booking.com, 
+  Airbnb)
+preset.account.advance_payments_7: Ληφθείσες προκαταβολές ΦΠΑ 7%
+preset.account.advance_payments_19: Ληφθείσες προκαταβολές ΦΠΑ 19%
+preset.taxrate.tax_free: 0% αφορολόγητο
+preset.taxrate.de_7: ΦΠΑ 7%
+preset.taxrate.de_19: ΦΠΑ 19%
+preset.taxrate.at_10: ΦΠΑ 10% (διαμονή)
+preset.taxrate.at_13: ΦΠΑ 13% (διαμονή από 11/2018)
+preset.taxrate.at_20: ΦΠΑ 20%
+preset.taxrate.ch_2_6: ΦΠΑ 2.6% (μειωμένος)
+preset.taxrate.ch_3_8: ΦΠΑ 3.8% (διαμονή)
+preset.taxrate.ch_8_1: ΦΠΑ 8.1%
+preset.workflow.booking_cash: 'Εγγραφή: Πληρωμή με μετρητά'
+preset.workflow.booking_cash.desc: 'Δημιουργεί αυτόματα μια λογιστική εγγραφή (χρέωση:
+  ταμείο) όταν ένα τιμολόγιο εξοφλείται με μετρητά.'
+preset.workflow.booking_transfer: 'Εγγραφή: Τραπεζική μεταφορά'
+preset.workflow.booking_transfer.desc: 'Δημιουργεί αυτόματα μια λογιστική εγγραφή
+  (χρέωση: τράπεζα) όταν ένα τιμολόγιο εξοφλείται με τραπεζική μεταφορά.'
+preset.workflow.booking_card: 'Εγγραφή: Πληρωμή με κάρτα'
+preset.workflow.booking_card.desc: 'Δημιουργεί αυτόματα μια λογιστική εγγραφή (χρέωση:
+  εκκαθάριση πιστωτικών καρτών) όταν ένα τιμολόγιο εξοφλείται με κάρτα.'
+journal.action: Ενέργεια
+accounting.receipt_proposal.title: Προτάσεις παραστατικών
+accounting.receipt_proposal.subtitle: Παραστατικά που διάβασε και υπέβαλε ένας 
+  βοηθός AI. Τίποτα δεν καταχωρίζεται μέχρι να τα ελέγξετε και να τα 
+  επιβεβαιώσετε εδώ.
+accounting.receipt_proposal.open: Ανοιχτές
+accounting.receipt_proposal.none_open: Δεν υπάρχουν ανοιχτές προτάσεις 
+  παραστατικών.
+accounting.receipt_proposal.supplier: Προμηθευτής
+accounting.receipt_proposal.receipt_number: Αρ. παραστατικού
+accounting.receipt_proposal.total: Σύνολο
+accounting.receipt_proposal.payment: Πληρώθηκε με
+accounting.receipt_proposal.payment_bank: Τράπεζα / κάρτα
+accounting.receipt_proposal.payment_cash: Μετρητά
+accounting.receipt_proposal.payment_unknown: άγνωστο
+accounting.receipt_proposal.submitted: Υποβλήθηκε
+accounting.receipt_proposal.review: Έλεγχος
+accounting.receipt_proposal.recently_decided: Πρόσφατα ολοκληρωμένες
+accounting.receipt_proposal.details: Λεπτομέρειες
+accounting.receipt_proposal.status.open: Ανοιχτή
+accounting.receipt_proposal.status.booked: Καταχωρίστηκε
+accounting.receipt_proposal.status.discarded: Απορρίφθηκε
+accounting.receipt_proposal.review_title: Έλεγχος παραστατικού από %supplier%
+accounting.receipt_proposal.as_read: Πώς διάβασε ο βοηθός AI το παραστατικό
+accounting.receipt_proposal.note: Σημείωση από τον βοηθό AI
+accounting.receipt_proposal.payment_choice: Σε ποια πληρωμή ανήκει το 
+  παραστατικό;
+accounting.receipt_proposal.payment_choice_help: Το FewohBee αναζήτησε εγγραφές 
+  του ίδιου ποσού γύρω από την ημερομηνία του παραστατικού. Επιλέξτε την 
+  αντίστοιχη και θα επιμεριστεί. Αν δεν υπάρχει, καταχωρίστε το παραστατικό ως 
+  νέο.
+accounting.receipt_proposal.split_entry: Επιμερισμός της εγγραφής της %date% 
+  ύψους %amount% (%debit% προς %credit%)
+accounting.receipt_proposal.booked_already.title: Πιθανώς έχει ήδη καταχωριστεί
+accounting.receipt_proposal.booked_already.text: 'Γύρω από την ημερομηνία του παραστατικού
+  υπάρχουν εγγραφές που ταιριάζουν με αυτό το παραστατικό: αναφέρουν τον προμηθευτή
+  ή αθροίζονται στο σύνολο του παραστατικού.'
+accounting.receipt_proposal.booked_already.hint: Αν ανήκουν σε αυτό το 
+  παραστατικό, απορρίψτε την πρόταση. Αν καταχωριστεί ως νέα, η αγορά θα υπάρχει
+  δύο φορές στο ημερολόγιο.
+accounting.receipt_proposal.no_candidates: Δεν υπάρχει αντίστοιχη πληρωμή στο 
+  ημερολόγιο. Αν έρθει ακόμη με ένα αντίγραφο κίνησης λογαριασμού, καταχωρίστε 
+  το παραστατικό μετά την εισαγωγή, διαφορετικά η πληρωμή θα καταλήξει δύο φορές
+  στο ημερολόγιο.
+accounting.receipt_proposal.book_new: Νέα καταχώριση στον λογαριασμό %account% 
+  στις %date%
+accounting.receipt_proposal.book_new_hint: Κάντε νέα καταχώριση μόνο αν καμία 
+  από τις παραπάνω εγγραφές δεν είναι η πληρωμή, διαφορετικά θα καταλήξει δύο 
+  φορές στο ημερολόγιο.
+accounting.receipt_proposal.parts: Τμήματα
+accounting.receipt_proposal.parts_help: Ένα τμήμα ανά λογαριασμό και συντελεστή 
+  ΦΠΑ, μικτά ποσά. Κατά τον επιμερισμό μιας εγγραφής, τα τμήματα πρέπει να 
+  αθροίζονται ακριβώς στο ποσό της (%total% σύμφωνα με το παραστατικό).
+accounting.receipt_proposal.part_text: Όπως διαβάστηκε
+accounting.receipt_proposal.account: Λογαριασμός
+accounting.receipt_proposal.no_tax_rate: κανένας
+accounting.receipt_proposal.discard: Απόρριψη
+accounting.receipt_proposal.book: Καταχώριση
+accounting.receipt_proposal.flash.booked: Το παραστατικό καταχωρίστηκε.
+accounting.receipt_proposal.flash.discarded: Η πρόταση παραστατικού απορρίφθηκε.
+accounting.receipt_proposal.error.not_open: Αυτή η πρόταση παραστατικού έχει ήδη
+  ολοκληρωθεί.
+accounting.receipt_proposal.error.account_missing: 'Γραμμή %line%: επιλέξτε λογαριασμό.'
+accounting.receipt_proposal.error.payment_missing: Επιλέξτε σε ποια πληρωμή 
+  ανήκει το παραστατικό.
+accounting.receipt_booking.error.lines_count: Ένα παραστατικό χρειάζεται 1 έως 
+  %max% τμήματα.
+accounting.receipt_booking.error.amount_invalid: 'Γραμμή %line%: εισαγάγετε ποσό μεγαλύτερο
+  από 0 με το πολύ δύο δεκαδικά ψηφία.'
+accounting.receipt_booking.error.sum_mismatch: Τα τμήματα αθροίζονται σε %sum%, 
+  αλλά η εγγραφή είναι καταχωρισμένη με %booked%. Κατά τον επιμερισμό, το σύνολο
+  πρέπει να ταιριάζει ακριβώς.
+accounting.receipt_booking.error.unknown_entry: Η επιλεγμένη εγγραφή δεν υπάρχει
+  πλέον.
+accounting.receipt_booking.error.entry_opening_balance: Οι εγγραφές υπολοίπου 
+  έναρξης δεν μπορούν να επιμεριστούν.
+accounting.receipt_booking.error.entry_from_invoice: Αυτή η εγγραφή 
+  καταχωρίστηκε από τιμολόγιο στο FewohBee και δεν μπορεί να επιμεριστεί.
+accounting.receipt_booking.error.entry_already_split: Αυτή η εγγραφή έχει ήδη 
+  επιμεριστεί.
+accounting.receipt_booking.error.entry_not_a_payment: Μόνο εγγραφές σε 
+  λογαριασμό ταμείου ή τράπεζας μπορούν να επιμεριστούν.
+accounting.receipt_booking.error.payment_account_missing: Επιλέξτε λογαριασμό 
+  πληρωμής.
+accounting.receipt_booking.error.payment_account_invalid: Ο λογαριασμός πληρωμής
+  πρέπει να είναι λογαριασμός ταμείου ή τράπεζας.
+accounting.receipt_booking.error.unknown_account: 'Γραμμή %line%: ο λογαριασμός %account%
+  δεν υπάρχει.'
+accounting.receipt_booking.error.payment_account_as_part: 'Γραμμή %line%: ο %account%
+  είναι λογαριασμός ταμείου ή τράπεζας. Επιλέξτε τον λογαριασμό αυτού που αγοράστηκε.'
+accounting.receipt_booking.error.tax_rate_invalid: 'Γραμμή %line%: μη έγκυρος συντελεστής
+  ΦΠΑ.'
+accounting.receipt_booking.error.tax_rate_missing: 'Γραμμή %line%: κανένας συντελεστής
+  ΦΠΑ %rate% % δεν ισχύει στις %date%.'
+accounting.receipt_booking.error.month_closed: Ο μήνας καταχώρισης 
+  %month%/%year% έχει κλείσει.
+accounting.receipt_booking.warning.invoice_number_used: Ο αριθμός τιμολογίου 
+  %number% χρησιμοποιείται ήδη από μια εγγραφή της %date%.
+accounting.receipt_booking.warning.possible_duplicate: Υπάρχει ήδη εγγραφή ύψους
+  %amount% στον λογαριασμό %account% στις %date%. Αν πρόκειται για αυτήν την 
+  πληρωμή, επιμερίστε την αντί αυτού.

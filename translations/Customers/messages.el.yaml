@@ -1,0 +1,69 @@
+CUSTOMER_ADDRESS_TYPE_ADDITIONAL: άλλη
+CUSTOMER_ADDRESS_TYPE_BUSINESS: Επαγγελματική
+CUSTOMER_ADDRESS_TYPE_PRIVATE: Ιδιωτική
+customer.action: Ενέργεια
+customer.additional: Πρόσθετα
+customer.address: Διεύθυνση
+customer.address.add: Προσθήκη νέας διεύθυνσης
+customer.address.delete: Αφαίρεση διεύθυνσης
+customer.addresstype: Τύπος
+customer.birthday: Ημερομηνία γέννησης
+customer.nationality: Υπηκοότητα
+customer.nationality_unknown: Δεν έχει οριστεί
+customer.locale: Γλώσσα για email
+customer.locale_help: Τα αυτόματα email προς αυτόν τον επισκέπτη χρησιμοποιούν 
+  τη γλωσσική παραλλαγή του προτύπου, αν υπάρχει.
+customer.city: Πόλη
+customer.company: Εταιρεία
+customer.contact: Επικοινωνία
+customer.contactdata: Στοιχεία επικοινωνίας
+customer.count.books: Αριθμός κρατήσεων
+customer.country: Χώρα
+customer.delete.ask: 'Επιβεβαιώνετε τη διαγραφή αυτού του επισκέπτη; Σημείωση: Όλες
+  οι προηγούμενες κρατήσεις θα εμφανίζονται στη συνέχεια ως κρατήσεις ενός «διαγραμμένου»
+  επισκέπτη.'
+customer.details: Στοιχεία επισκέπτη
+customer.email: Email
+Family: Οικογένεια
+customer.fax: Φαξ
+customer.firstname: Όνομα
+customer.flash.create.success: Ο επισκέπτης δημιουργήθηκε με επιτυχία.
+customer.flash.delete.error.still.in.use: Ο επισκέπτης δεν μπορεί να διαγραφεί, 
+  επειδή χρησιμοποιείται ακόμη σε μελλοντική ή τρέχουσα κράτηση.
+customer.flash.delete.success: Ο επισκέπτης διαγράφηκε με επιτυχία.
+customer.flash.edit.success: Ο επισκέπτης ενημερώθηκε με επιτυχία.
+customer.id.number: Αριθμός ταυτότητας
+customer.id.type.driving_licence: Δίπλωμα οδήγησης
+customer.id.type.name: Τύπος εγγράφου ταυτότητας
+customer.id.type.national_id: Δελτίο ταυτότητας
+customer.id.type.passport: Διαβατήριο
+customer.lastname: Επώνυμο
+customer.mobilephone: Κινητό τηλέφωνο
+Mr: Κύριος
+Ms: Κυρία
+customer.person: Άτομο
+customer.phone: Τηλέφωνο
+customer.remark: Παρατήρηση
+customer.salutation: Προσφώνηση
+customer.search.addresses: Αναζήτηση διευθύνσεων…
+customer.template: Πρότυπο
+customer.zip: Ταχυδρομικός κώδικας
+customer.buyerVatId: ΑΦΜ (αγοραστή)
+customer.invoiceEmail.label: Email για τιμολόγια
+customer.invoiceEmail.placeholder: μόνο αν διαφέρει
+customer.buyerReference.label: Αναφορά πελάτη
+customer.buyerReference.placeholder: π.χ. Leitweg-ID
+customer.buyerReference.hint: Ένας χαρακτηρισμός που ορίζεται από τον επισκέπτη 
+  και χρησιμοποιείται για σκοπούς εσωτερικού ελέγχου, γνωστός και ως Leitweg-ID.
+customer.cardNumber: Αριθμός κάρτας
+customer.cardNumber.hint: Εισαγάγετε μόνο τα τελευταία 4-6 ψηφία του αριθμού 
+  κάρτας, ποτέ ολόκληρο τον αριθμό.
+customer.cardHolder.label: Κάτοχος κάρτας
+customer.cardHolder.hint: Τα πεδία «Κάτοχος κάρτας» (προαιρετικό) και «Αριθμός 
+  κάρτας» (υποχρεωτικό) αποτελούν μέρος του τρόπου πληρωμής με κάρτα.
+customer.accountIBAN.label: IBAN
+customer.accountIBAN.hint: Για τον τρόπο πληρωμής με άμεση χρέωση πρέπει να 
+  συμπληρωθούν το IBAN και ο αριθμός αναφοράς εντολής.
+customer.mandateReference.label: Αριθμός αναφοράς εντολής
+customer.reservation.history: Ιστορικό κρατήσεων
+customer.reservation.history.empty: Δεν βρέθηκαν κρατήσεις.

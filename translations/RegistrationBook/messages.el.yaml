@@ -1,0 +1,19 @@
+registrationbook.addreservations: Προσθήκη καταχωρίσεων
+registrationbook.address: Διεύθυνση
+registrationbook.appartment: Δωμάτιο
+registrationbook.birthday: Ημερομηνία γέννησης
+registrationbook.country: Χώρα
+registrationbook.delete.ask: Να διαγραφεί αυτή η καταχώριση;
+registrationbook.departures: Αναχωρήσεις
+registrationbook.entry.skip: Παράλειψη καταχώρισης
+registrationbook.firstname: Όνομα
+registrationbook.flash.delete.success: Η καταχώριση διαγράφηκε με επιτυχία.
+registrationbook.help.message: Σε αυτήν την επισκόπηση εμφανίζονται όλες οι 
+  καταχωρίσεις που δεν έχουν μεταφερθεί ακόμη στο μητρώο επισκεπτών.
+registrationbook.lastname: Επώνυμο
+registrationbook.noentries: '- Δεν υπάρχουν καταχωρίσεις -'
+registrationbook.number: Α/Α
+registrationbook.period: Περίοδος
+registrationbook.stays: Διαν.
+registrationbook.year: Έτος
+reservationbook.flash.add.success: Η καταχώριση προστέθηκε με επιτυχία.

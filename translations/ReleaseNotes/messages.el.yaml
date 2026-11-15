@@ -1,0 +1,10 @@
+release_notes:
+  page_title: Τι νέο υπάρχει
+  nav: Τι νέο υπάρχει
+  installed_version: 'Εγκατεστημένη έκδοση: %version%'
+  current: Τρέχουσα
+  all: Όλες οι αλλαγές
+  got_it: Εντάξει
+  empty: Δεν περιλαμβάνονται σημειώσεις έκδοσης σε αυτήν την εγκατάσταση.
+  announce:
+    title: Νέα στο fewohbee %version%
