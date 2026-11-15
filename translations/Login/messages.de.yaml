@@ -6,7 +6,7 @@ login:
     placeholder: Passwort
   pwforgotten:
     button: 'Passwort anfordern'
-    description: 'Sollten Sie ihr Passwort vergessen haben, können Sie auf dieser Seite ein neues anfordern. '
+    description: 'Sollten Sie ihr Passwort vergessen haben, können Sie auf dieser Seite ein neues anfordern.'
     email: E-Mail
     flash:
       error: 'Bitte geben Sie ihre E-Mail Adressen ein.'
