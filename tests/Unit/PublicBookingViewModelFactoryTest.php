@@ -47,6 +47,25 @@ final class PublicBookingViewModelFactoryTest extends TestCase
         self::assertSame('DE', $this->makeFactory()->defaultCountry($request));
     }
 
+    public function testDefaultCountryIgnoresTheRegionOfALessPreferredLanguage(): void
+    {
+        // Firefox's default header for German: "de" has no region, "en-US" comes second.
+        $request = Request::create('/book');
+        $request->setDefaultLocale('de');
+        $request->headers->set('Accept-Language', 'de,en-US;q=0.7,en;q=0.3');
+
+        self::assertSame('DE', $this->makeFactory()->defaultCountry($request));
+    }
+
+    public function testDefaultCountryFallsBackWithoutABrowserLanguage(): void
+    {
+        $request = Request::create('/book');
+        $request->setDefaultLocale('de');
+        $request->headers->remove('Accept-Language');
+
+        self::assertSame('DE', $this->makeFactory()->defaultCountry($request));
+    }
+
     public function testDefaultCountryStaysEmptyWhenTheLanguageIsNoCountry(): void
     {
         // "en" is no country code; the old "EN" preselection was invalid.
