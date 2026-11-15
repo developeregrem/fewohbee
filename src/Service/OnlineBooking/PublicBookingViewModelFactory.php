@@ -38,14 +38,19 @@ class PublicBookingViewModelFactory
     }
 
     /**
-     * Country preselected for the booker: the region of the browser language (en-GB → GB),
-     * else the country named like the installation language (de → DE). Empty when neither
-     * is a country.
+     * Country preselected for the booker: the region of the preferred browser language
+     * (en-GB → GB), else the country named like the installation language (de → DE).
+     * Empty when neither is a country.
+     *
+     * Only the preferred language counts: Firefox sends "de,en-US;q=0.7" by default, and
+     * scanning on to the first language with a region would preselect the US for a guest
+     * who prefers German.
      */
     public function defaultCountry(Request $request): string
     {
-        foreach ($request->getLanguages() as $language) {
-            $region = (string) \Locale::getRegion($language);
+        $preferred = $request->getLanguages()[0] ?? null;
+        if (null !== $preferred) {
+            $region = (string) \Locale::getRegion($preferred);
             if ('' !== $region && Countries::exists($region)) {
                 return $region;
             }
