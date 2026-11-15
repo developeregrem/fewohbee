@@ -257,3 +257,25 @@ reservation.selected.reservations: Επιλεγμένες κρατήσεις
 reservation.filter.by_period: Κατά περίοδο
 reservation.filter.by_guest: Κατά επισκέπτη
 reservation.correspondences.empty: Δεν υπάρχει ακόμη αλληλογραφία.
+reservation.move.other_kind: Ένας χώρος εκδηλώσεων μπορεί να ανταλλαγεί μόνο με 
+  άλλον χώρο εκδηλώσεων και ένα δωμάτιο διαμονής μόνο με άλλο δωμάτιο διαμονής.
+reservation.table.event_space_days: κράτηση ανά ημέρα
+calendar_entry.form.end_time_until: Ώρα λήξης (προαιρετικά)
+calendar_entry.form.on_date: Στις %date%
+calendar_entry.form.change_date: άλλη ημερομηνία ή περισσότερες ημέρες
+reservation.summary.days: '{0}0 ημέρες|{1}1 ημέρα|]1,Inf[%count% ημέρες'
+reservation.event_space.period: '%days% έως και τις %date%'
+reservation.event_space.end_help: Για χώρους εκδηλώσεων, το «Έως» είναι η 
+  τελευταία ημέρα.
+reservation.origin.missing: Για να μπορέσετε να δημιουργήσετε κράτηση, πρέπει 
+  πρώτα να προσθέσετε μια προέλευση κράτησης στις ρυθμίσεις.
+reservation.flash.origin.required: Επιλέξτε μια έγκυρη προέλευση κράτησης. Αν 
+  δεν υπάρχει ακόμη, δημιουργήστε πρώτα μία στις ρυθμίσεις.
+reservation.confirmation.button: Επιβεβαίωση
+reservation.confirmation.title: Αποστολή επιβεβαίωσης
+reservation.confirmation.sent: Η επιβεβαίωση στάλθηκε.
+reservation.confirmation.not_sent: 'Η επιβεβαίωση δεν στάλθηκε: %reason%'
+reservation.confirmation.failed: Δεν ήταν δυνατή η αποστολή της επιβεβαίωσης. 
+  Ελέγξτε τις ρυθμίσεις email.
+reservation.confirmation.no_recipient: Ο κάτοχος της κράτησης δεν έχει διεύθυνση
+  email.
