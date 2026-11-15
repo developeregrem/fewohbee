@@ -122,6 +122,29 @@ final class TemplateWorkspaceControllerTest extends WebTestCase
         self::assertSame('Original template text', $saved->getText());
     }
 
+    public function testATemplateUsingAFeatureOutsideTheSandboxIsNotSaved(): void
+    {
+        $client = self::createClient();
+        $client->loginUser($this->getAdminUser(), 'main');
+        $template = $this->createTemplate('TEMPLATE_RESERVATION_EMAIL', 'Original template text');
+        $id = $template->getId();
+        $crawler = $client->request('GET', '/settings/templates/'.$id.'/edit-page');
+
+        $client->request('POST', '/settings/templates/'.$id.'/edit', [
+            '_csrf_token' => $crawler->filter('input[name="_csrf_token"]')->last()->attr('value'),
+            'type-'.$id => (string) $template->getTemplateType()->getId(),
+            'name-'.$id => 'Sandbox probe',
+            'text-'.$id => "<p>[[ source('base.html.twig') ]]</p>",
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('.alert-warning', '"source"');
+        $em = self::getContainer()->get('doctrine')->getManager();
+        $em->flush();
+        $em->clear();
+        self::assertSame('Original template text', $em->getRepository(Template::class)->find($id)?->getText());
+    }
+
     private function createTemplate(string $typeName, string $text): Template
     {
         /** @var EntityManagerInterface $em */

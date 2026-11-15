@@ -193,6 +193,14 @@ templates.preview.render.error.syntax: Template syntax error. Please check loops
 templates.preview.render.error.variable: "Variable \"%variable%\" not found."
 templates.preview.render.error.filter: "Filter \"%filter%\" is not available."
 templates.preview.render.error.property: "Attribute \"%property%\" was not found on \"%class%\"."
+templates.preview.render.error.function: "Function \"%function%\" is not available."
+templates.preview.render.error.sandbox.tag: "The tag \"%name%\" is not allowed in templates."
+templates.preview.render.error.sandbox.filter: "The filter \"%name%\" is not allowed in templates."
+templates.preview.render.error.sandbox.function: "The function \"%name%\" is not allowed in templates."
+templates.preview.render.error.sandbox.test: "The test \"is %name%\" is not allowed in templates."
+templates.preview.render.error.sandbox.method: "Calling \"%name%\" is not allowed in templates."
+templates.preview.render.error.sandbox.property: "The attribute \"%name%\" is not allowed in templates."
+templates.preview.render.error.sandbox.generic: This instruction is not allowed in templates.
 templates.preview.result: Preview result
 templates.preview.empty: Select a context and render the preview.
 templates.preview.noprovider: No preview provider available for this template type.

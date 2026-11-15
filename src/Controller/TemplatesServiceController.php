@@ -157,6 +157,9 @@ class TemplatesServiceController extends AbstractController
             } elseif ($ts->leavesNoUnboundInvoiceTemplate($template)) {
                 $error = true;
                 $this->addFlash('warning', 'templates.flash.payment_means.no_unbound');
+            } elseif (null !== $violation = $ts->findSandboxViolation($template)) {
+                $error = true;
+                $this->addFlash('warning', $violation);
             } else {
                 $em = $doctrine->getManager();
                 $em->persist($template);
@@ -199,6 +202,10 @@ class TemplatesServiceController extends AbstractController
             } elseif ($ts->leavesNoUnboundInvoiceTemplate($template)) {
                 $error = true;
                 $this->addFlash('warning', 'templates.flash.payment_means.no_unbound');
+                $em->clear();
+            } elseif (null !== $violation = $ts->findSandboxViolation($template)) {
+                $error = true;
+                $this->addFlash('warning', $violation);
                 $em->clear();
             } else {
                 $em->persist($template);

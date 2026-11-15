@@ -107,6 +107,24 @@ services:
     App\Service\Calendar\Sync\Ics\IcsFeedClient:
         arguments:
             $allowList: '%env(csv:ICS_FEED_ALLOWLIST)%'
+
+    # User-authored templates: only these extensions exist in the sandbox; TemplateSecurityPolicy
+    # decides which of their filters/functions templates may use.
+    App\Service\TemplateSandbox\TemplateSandbox:
+        arguments:
+            $extensions:
+                - '@App\Twig\AppTwigExtensions'
+                - '@App\Twig\CalendarEntryTimeExtension'
+                - '@App\Twig\CheckInTimesExtension'
+                - '@App\Twig\ContentTranslationExtension'
+                - '@App\Twig\DisplayNameExtension'
+                - '@App\Twig\GuestCheckInExtension'
+                - '@App\Twig\OpeningHoursExtension'
+                - '@App\Twig\PaymentQrExtension'
+            # Same unknown-variable behaviour as the application environment (twig.strict_variables).
+            $strictVariables: "@=service('twig').isStrictVariables()"
+            $cache: '%kernel.cache_dir%/twig_sandbox'
+            $autoReload: '%kernel.debug%'
     
     App\Service\AppSettingsService:
         arguments:

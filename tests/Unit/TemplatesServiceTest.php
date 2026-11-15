@@ -20,6 +20,7 @@ use App\Service\TemplatePreview\InvoiceEmailTemplatePreviewProvider;
 use App\Service\TemplatePreview\InvoiceTemplatePreviewProvider;
 use App\Service\TemplatePreview\TemplateRenderParamsResolver;
 use App\Service\TemplatesService;
+use App\Service\TemplateSandbox\TemplateSandbox;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Filesystem;
@@ -31,8 +32,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Twig\Environment;
-use Twig\Loader\ArrayLoader;
 
 final class TemplatesServiceTest extends TestCase
 {
@@ -54,15 +53,10 @@ final class TemplatesServiceTest extends TestCase
                 yield from $reservations;
             })(),
         };
-        $template = $this->makeTemplate(
-            5,
-            'Reservations',
+        $output = $this->createService()->renderTemplateString(
             '{% for item in reservations %}{{ item.id }}:{{ item.remark }};{% endfor %}',
-            'TEMPLATE_RESERVATION_EMAIL',
+            ['reservations' => $input],
         );
-        $service = $this->createServiceWithTemplates([5 => $template]);
-
-        $output = $service->renderTemplateForReservations('5', $input);
 
         self::assertSame('7:&lt;b&gt;First&lt;/b&gt;;9:Second;', $output);
     }
@@ -78,8 +72,8 @@ final class TemplatesServiceTest extends TestCase
     #[DataProvider('renderFailures')]
     public function testFriendlyErrorsKeepTheirCauseAndRestoreStrictVariables(bool $subject, bool $strict, string $text, string $message): void
     {
-        $twig = new Environment(new ArrayLoader(), ['strict_variables' => $strict]);
-        $service = $this->createService($twig);
+        $sandbox = $this->createSandbox($strict);
+        $service = $this->createService($sandbox);
 
         try {
             if ($subject) {
@@ -93,7 +87,7 @@ final class TemplatesServiceTest extends TestCase
             self::assertInstanceOf(\Twig\Error\Error::class, $e->getPrevious());
         }
 
-        self::assertSame($strict, $twig->isStrictVariables());
+        self::assertSame($strict, $sandbox->isStrictVariables());
     }
 
     /** @return iterable<string, array{bool, bool, string, string}> */
@@ -732,7 +726,7 @@ final class TemplatesServiceTest extends TestCase
         );
 
         $service = new TemplatesService(
-            new Environment(new ArrayLoader()),
+            $this->createSandbox(),
             $this->createStub(EntityManagerInterface::class),
             $requestStack,
             new MpdfService($requestStack, $customFonts, sys_get_temp_dir().'/mpdf-test', 'de'),
@@ -1019,7 +1013,7 @@ final class TemplatesServiceTest extends TestCase
         $localeSwitcher = new \Symfony\Component\Translation\LocaleSwitcher('de', []);
         $intlDefault = \Locale::getDefault();
         $service = new TemplatesService(
-            new Environment(new ArrayLoader()),
+            $this->createSandbox(),
             $this->createStub(EntityManagerInterface::class),
             new RequestStack(),
             $this->createStub(MpdfService::class),
@@ -1051,7 +1045,7 @@ final class TemplatesServiceTest extends TestCase
         $em->method('getRepository')->willReturn($repo);
 
         return new TemplatesService(
-            new Environment(new ArrayLoader()),
+            $this->createSandbox(),
             $em,
             new RequestStack(),
             $this->createStub(MpdfService::class),
@@ -1061,16 +1055,26 @@ final class TemplatesServiceTest extends TestCase
         );
     }
 
-    private function createService(?Environment $twig = null): TemplatesService
+    private function createSandbox(bool $strictVariables = false): TemplateSandbox
     {
-        $twig ??= new Environment(new ArrayLoader());
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator
+            ->method('trans')
+            ->willReturnCallback(static fn (string $id, array $params = []): string => strtr($id, $params));
+
+        return new TemplateSandbox($translator, strictVariables: $strictVariables);
+    }
+
+    private function createService(?TemplateSandbox $sandbox = null): TemplatesService
+    {
+        $sandbox ??= $this->createSandbox();
         $translator = $this->createStub(TranslatorInterface::class);
         $translator
             ->method('trans')
             ->willReturnCallback(static fn (string $id, array $params = []): string => strtr($id, $params));
 
         return new TemplatesService(
-            $twig,
+            $sandbox,
             $this->createStub(EntityManagerInterface::class),
             new RequestStack(),
             $this->createStub(MpdfService::class),
@@ -1087,7 +1091,7 @@ final class TemplatesServiceTest extends TestCase
      */
     private function createServiceWithTemplates(array $templates): TemplatesService
     {
-        $twig = new Environment(new ArrayLoader());
+        $sandbox = $this->createSandbox();
         $translator = $this->createStub(TranslatorInterface::class);
         $translator
             ->method('trans')
@@ -1104,7 +1108,7 @@ final class TemplatesServiceTest extends TestCase
             ->willReturn($repo);
 
         return new TemplatesService(
-            $twig,
+            $sandbox,
             $em,
             new RequestStack(),
             $this->createStub(MpdfService::class),
@@ -1120,7 +1124,7 @@ final class TemplatesServiceTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new TemplatesService(
-            new Environment(new ArrayLoader()),
+            $this->createSandbox(),
             $this->createStub(EntityManagerInterface::class),
             new RequestStack(),
             $this->createStub(MpdfService::class),

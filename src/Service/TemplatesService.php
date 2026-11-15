@@ -23,6 +23,7 @@ use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Repository\TemplateRepository;
 use App\Service\TemplatePreview\TemplateRenderParamsResolver;
+use App\Service\TemplateSandbox\TemplateSandbox;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use League\Flysystem\FilesystemException;
@@ -31,7 +32,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Translation\LocaleSwitcher;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Twig\Environment;
+use Twig\Error\Error;
+use Twig\Sandbox\SecurityError;
+use Twig\Sandbox\SecurityNotAllowedFilterError;
+use Twig\Sandbox\SecurityNotAllowedFunctionError;
+use Twig\Sandbox\SecurityNotAllowedMethodError;
+use Twig\Sandbox\SecurityNotAllowedPropertyError;
+use Twig\Sandbox\SecurityNotAllowedTagError;
+use Twig\Sandbox\SecurityNotAllowedTestError;
 
 class TemplatesService
 {
@@ -78,7 +86,7 @@ class TemplatesService
     ];
 
     public function __construct(
-        private Environment $twig,
+        private readonly TemplateSandbox $sandbox,
         private EntityManagerInterface $em,
         private RequestStack $requestStack,
         private MpdfService $mpdfs,
@@ -191,18 +199,6 @@ class TemplatesService
         return true;
     }
 
-    /** @param iterable<Reservation> $reservations */
-    public function renderTemplateForReservations(int|string $templateId, iterable $reservations): string
-    {
-        $template = $this->em->getRepository(Template::class)->find($templateId);
-
-        $templateStr = $this->twig->createTemplate($template->getText());
-
-        return $templateStr->render([
-            'reservations' => $reservations,
-        ]);
-    }
-
     public function renderTemplate(int $templateId, mixed $param): string
     {
         $template = $this->em->getRepository(Template::class)->find($templateId);
@@ -216,9 +212,8 @@ class TemplatesService
             $hostTypeName = $template->getTemplateType()?->getName();
             $text = $this->resolveTemplateIncludes($template->getText(), $hostTypeName, locale: $template->getLocale());
             $str = $this->replaceTwigSyntax($text);
-            $templateStr = $this->twig->createTemplate($str);
 
-            return $templateStr->render($params);
+            return $this->sandbox->render($str, $params);
         });
     }
 
@@ -230,25 +225,14 @@ class TemplatesService
      */
     public function renderTemplateString(string $templateText, array $params, ?string $hostTypeName = null, ?string $locale = null): string
     {
-        $wasStrictVariables = $this->twig->isStrictVariables();
-
         try {
-            // enable strict variables to show friendly error messages as it is disabled globally
-            if (!$wasStrictVariables) {
-                $this->twig->enableStrictVariables();
-            }
-
             $text = $this->resolveTemplateIncludes($templateText, $hostTypeName, locale: $locale);
             $str = $this->replaceTwigSyntax($text);
-            $templateStr = $this->twig->createTemplate($str);
 
-            return $templateStr->render($params);
+            // Strict variables turn unknown placeholders into friendly errors instead of empty output.
+            return $this->sandbox->render($str, $params, strictVariables: true);
         } catch (\Throwable $e) {
             throw new \RuntimeException($this->buildFriendlyTemplateErrorMessage($e), 0, $e);
-        } finally {
-            if (!$wasStrictVariables) {
-                $this->twig->disableStrictVariables();
-            }
         }
     }
 
@@ -280,25 +264,50 @@ class TemplatesService
      */
     public function renderSubjectString(string $subject, array $params): string
     {
-        $wasStrictVariables = $this->twig->isStrictVariables();
-
         try {
-            if (!$wasStrictVariables) {
-                $this->twig->enableStrictVariables();
-            }
-
             $str = $this->replaceTwigSyntax($subject);
-            $templateStr = $this->twig->createTemplate($str);
+            $rendered = $this->sandbox->render($str, $params, strictVariables: true);
 
             // Subjects are single-line; collapse any accidental newlines.
-            return trim(preg_replace('/\s*\R\s*/', ' ', $templateStr->render($params)));
+            return trim(preg_replace('/\s*\R\s*/', ' ', $rendered));
         } catch (\Throwable $e) {
             throw new \RuntimeException($this->buildFriendlyTemplateErrorMessage($e), 0, $e);
-        } finally {
-            if (!$wasStrictVariables) {
-                $this->twig->disableStrictVariables();
+        }
+    }
+
+    /**
+     * Check a template's body and subject against the template sandbox, without sample data.
+     *
+     * Finds disallowed tags, filters, functions and tests without sample data (see
+     * {@see TemplateSandbox::validate()}). Methods and properties depend on the data and are
+     * checked while rendering. Syntax errors are not reported here; preview and rendering do.
+     *
+     * @return string|null Friendly message for the first violation, null when the template is allowed
+     */
+    public function findSandboxViolation(Template $template): ?string
+    {
+        try {
+            $text = $this->resolveTemplateIncludes(
+                (string) $template->getText(),
+                $template->getTemplateType()?->getName(),
+                locale: $template->getLocale(),
+            );
+        } catch (\RuntimeException) {
+            // Broken includes are reported by preview and rendering; included templates are checked on their own.
+            $text = (string) $template->getText();
+        }
+
+        foreach ([$text, (string) $template->getSubject()] as $source) {
+            try {
+                $this->sandbox->validate($this->replaceTwigSyntax($source));
+            } catch (SecurityError $e) {
+                return $this->buildFriendlyTemplateErrorMessage($e);
+            } catch (Error) {
+                // Syntax errors stay as tolerant as before; preview and rendering report them.
             }
         }
+
+        return null;
     }
 
     /**
@@ -306,6 +315,12 @@ class TemplatesService
      */
     private function buildFriendlyTemplateErrorMessage(\Throwable $e): string
     {
+        for ($cause = $e; null !== $cause; $cause = $cause->getPrevious()) {
+            if ($cause instanceof SecurityError) {
+                return $this->buildSandboxErrorMessage($cause);
+            }
+        }
+
         $message = trim($e->getMessage());
 
         if (preg_match('/Neither the property "([^"]+)".*?class "([^"]+)"/i', $message, $matches)) {
@@ -330,6 +345,12 @@ class TemplatesService
             ]);
         }
 
+        if (preg_match('/Unknown "([^"]+)" function/i', $message, $matches)) {
+            return $this->translator->trans('templates.preview.render.error.function', [
+                '%function%' => $matches[1],
+            ]);
+        }
+
         if (preg_match('/Unexpected token|SyntaxError|Unable to parse/i', $message)) {
             return $this->translator->trans('templates.preview.render.error.syntax');
         }
@@ -340,6 +361,22 @@ class TemplatesService
         }
 
         return $generic;
+    }
+
+    /** Name what the template sandbox rejected, without exposing internal class names. */
+    private function buildSandboxErrorMessage(SecurityError $e): string
+    {
+        [$key, $name] = match (true) {
+            $e instanceof SecurityNotAllowedTagError => ['tag', $e->getTagName()],
+            $e instanceof SecurityNotAllowedFilterError => ['filter', $e->getFilterName()],
+            $e instanceof SecurityNotAllowedFunctionError => ['function', $e->getFunctionName()],
+            $e instanceof SecurityNotAllowedTestError => ['test', $e->getTestName()],
+            $e instanceof SecurityNotAllowedMethodError => ['method', $e->getMethodName()],
+            $e instanceof SecurityNotAllowedPropertyError => ['property', $e->getPropertyName()],
+            default => ['generic', ''],
+        };
+
+        return $this->translator->trans('templates.preview.render.error.sandbox.'.$key, ['%name%' => $name]);
     }
 
     /**
