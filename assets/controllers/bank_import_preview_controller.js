@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Modal, Tooltip } from 'bootstrap';
 import { enableDeletePopover, enableTooltips, disposeTooltips } from '../js/utils.js';
 
 /**
@@ -299,7 +300,6 @@ export default class extends Controller {
             const icon = header.querySelector('.sort-icon');
             if (!icon) return;
             icon.innerHTML = `<i class="fas ${isActive ? (direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}" aria-hidden="true"></i>`;
-            window.FontAwesome?.dom?.i2svg?.({ node: icon });
         });
     }
 
@@ -494,9 +494,8 @@ export default class extends Controller {
         first.className = cls;
         first.setAttribute('title', title);
         first.innerHTML = `<i class="fas ${icon}"></i>`;
-        window.FontAwesome?.dom?.i2svg?.({ node: first });
         // Refresh tooltip.
-        const tooltip = window.bootstrap?.Tooltip?.getInstance(first);
+        const tooltip = Tooltip.getInstance(first);
         if (tooltip) tooltip.setContent({ '.tooltip-inner': title });
     }
 
@@ -1169,7 +1168,7 @@ export default class extends Controller {
     // ── Modal helpers ─────────────────────────────────────────────────
 
     _showModal(element) {
-        const modal = window.bootstrap?.Modal?.getOrCreateInstance(element);
+        const modal = Modal.getOrCreateInstance(element);
         modal?.show();
     }
 

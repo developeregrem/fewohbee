@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Offcanvas } from 'bootstrap';
 
 /* stimulusFetch: 'lazy' */
 
@@ -24,7 +25,7 @@ export default class extends Controller {
         const phone = window.innerWidth < PHONE_WIDTH;
         this.offcanvasTarget.classList.toggle('offcanvas-bottom', phone);
         this.offcanvasTarget.classList.toggle('offcanvas-end', !phone);
-        window.bootstrap.Offcanvas.getOrCreateInstance(this.offcanvasTarget).show();
+        Offcanvas.getOrCreateInstance(this.offcanvasTarget).show();
 
         try {
             const response = await fetch(button.dataset.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });

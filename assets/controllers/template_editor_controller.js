@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Popover } from 'bootstrap';
 import { Editor, Extension, Node } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -1167,12 +1168,12 @@ export default class extends Controller {
 
     /** Dispose popovers before replacing dynamic snippet elements. */
     disposeSnippetPopovers() {
-        if (!this.hasSnippetSidebarTarget || !window.bootstrap?.Popover) {
+        if (!this.hasSnippetSidebarTarget) {
             return;
         }
 
         this.snippetSidebarTarget.querySelectorAll('[data-bs-toggle="popover"]').forEach((element) => {
-            window.bootstrap.Popover.getInstance(element)?.dispose();
+            Popover.getInstance(element)?.dispose();
         });
     }
 

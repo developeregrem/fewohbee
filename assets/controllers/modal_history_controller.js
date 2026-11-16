@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Modal } from 'bootstrap';
 
 /* stimulusFetch: 'lazy' */
 
@@ -72,7 +73,7 @@ export default class extends Controller {
         }
         if (this.entryPushed) {
             this.entryPushed = false;
-            window.bootstrap.Modal.getOrCreateInstance(this.element).hide();
+            Modal.getOrCreateInstance(this.element).hide();
         }
     }
 

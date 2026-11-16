@@ -1,3 +1,5 @@
+// Bootstrap's data attributes (data-bs-toggle …) work once the module is loaded
+import 'bootstrap';
 import './stimulus_bootstrap.js';
 import './js/csrf_protection.js';
 /*

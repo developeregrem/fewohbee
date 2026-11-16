@@ -65,7 +65,6 @@ export default class extends Controller {
             if (!icon) return;
             const cls = isActive ? (direction === 'ascending' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort';
             icon.innerHTML = `<i class="fas ${cls}" aria-hidden="true"></i>`;
-            window.FontAwesome?.dom?.i2svg?.({ node: icon });
         });
     }
 }

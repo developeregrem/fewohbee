@@ -1,4 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
+import { Collapse } from 'bootstrap';
+import autoComplete from '@tarekraafat/autocomplete.js';
 import { request as httpRequest } from '../js/http.js';
 
 /* stimulusFetch: 'lazy' */
@@ -156,17 +158,15 @@ export default class extends Controller {
         if (!this.hasAddressSearchTarget || !this.hasAddressLookupUrlValue) {
             return;
         }
-        this.waitForAutocomplete(() => this.addAutocompleteAddressLookup(this.addressSearchTarget));
+        this.addAutocompleteAddressLookup(this.addressSearchTarget);
     }
 
     initCityLookup() {
         if (!this.hasAccordionTarget || !this.hasCityLookupUrlValue) {
             return;
         }
-        this.waitForAutocomplete(() => {
-            this.accordionTarget.querySelectorAll('input[name*="zip-"]').forEach((input) => {
-                this.addAutocompleteCityLookup(input);
-            });
+        this.accordionTarget.querySelectorAll('input[name*="zip-"]').forEach((input) => {
+            this.addAutocompleteCityLookup(input);
         });
     }
 
@@ -180,7 +180,7 @@ export default class extends Controller {
         }
         input.dataset.customersCityLookupAttached = 'true';
         // eslint-disable-next-line no-new
-        new window.autoComplete({
+        new autoComplete({
             selector: () => input,
             threshold: 3,
             cache: true,
@@ -240,7 +240,7 @@ export default class extends Controller {
         const addressUrlTemplate = this.addressLookupUrlValue;
         input.dataset.customersAddressLookupAttached = 'true';
         // eslint-disable-next-line no-new
-        new window.autoComplete({
+        new autoComplete({
             selector: () => input,
             threshold: 2,
             cache: true,
@@ -359,8 +359,8 @@ export default class extends Controller {
         } else {
             this.accordionTarget.appendChild(clone);
         }
-        if (collapse && window.bootstrap) {
-            const bsCollapse = new window.bootstrap.Collapse(collapse, { toggle: false });
+        if (collapse) {
+            const bsCollapse = new Collapse(collapse, { toggle: false });
             if (showNew) {
                 bsCollapse.show();
             }
@@ -371,17 +371,6 @@ export default class extends Controller {
             this.addAutocompleteCityLookup(collapse.querySelector('input[name*="zip-"]'));
         }
         return clone;
-    }
-
-    waitForAutocomplete(callback, attempt = 0) {
-        if (window.autoComplete) {
-            callback();
-            return;
-        }
-        if (attempt > 10) {
-            return;
-        }
-        window.setTimeout(() => this.waitForAutocomplete(callback, attempt + 1), 200);
     }
 
     async fetchJson(url) {

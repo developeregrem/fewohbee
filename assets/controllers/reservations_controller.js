@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Modal, Popover } from 'bootstrap';
 import { onSwipe, horizontalSwipeDirection } from '../js/swipe.js';
 import {
     request as httpRequest,
@@ -13,8 +14,27 @@ import {
     enableDeletePopover,
 } from '../js/utils.js';
 import { createSimpleHtmlEditor } from '../js/simple-html-editor.js';
+import { modalLoader } from '../js/loader.js';
 
 /* stimulusFetch: 'lazy' */
+
+/** The shared dialog of base.html.twig that the reservation views load their content into. */
+function modalCenter() {
+    return Modal.getOrCreateInstance(document.getElementById('modalCenter'));
+}
+
+/** Whether an existing element takes no room on the page (hidden itself or through a parent). */
+function isHidden(element) {
+    return !!element && element.getClientRects().length === 0;
+}
+
+/** Undoes an inline display: none; an element that a stylesheet keeps hidden is shown as a block. */
+function showElement(element) {
+    element.style.display = '';
+    if (getComputedStyle(element).display === 'none') {
+        element.style.display = 'block';
+    }
+}
 
 export default class extends Controller {
     static values = {
@@ -197,7 +217,7 @@ export default class extends Controller {
                 return;
             }
             tip.querySelectorAll('.js-calendar-entry-delete').forEach((trigger) => {
-                window.bootstrap?.Popover?.getInstance(trigger)?.dispose();
+                Popover.getInstance(trigger)?.dispose();
             });
         });
     }
@@ -227,7 +247,7 @@ export default class extends Controller {
     afterReservationDeleted(data) {
         let result = {};
         try { result = JSON.parse(data); } catch (_) { /* no message to show */ }
-        $('#modalCenter').modal('hide');
+        modalCenter().hide();
         if (result.message) {
             this.showTableAlert(result.message, result.type || 'info');
         }
@@ -245,7 +265,7 @@ export default class extends Controller {
             enableDeletePopover({
                 root: trigger,
                 onSuccess: () => {
-                    $('#modalCenter').modal('hide');
+                    modalCenter().hide();
                     this.getNewTable();
                 },
             });
@@ -277,12 +297,12 @@ export default class extends Controller {
      * leave both stranded in the body, anchored to a removed cell.
      */
     afterCalendarEntryDeleted(deleteTrigger) {
-        window.bootstrap?.Popover?.getInstance(deleteTrigger)?.hide();
+        Popover.getInstance(deleteTrigger)?.hide();
 
         const dayTip = deleteTrigger.closest('.popover');
         if (dayTip) {
             const dayTrigger = document.querySelector(`[aria-describedby="${dayTip.id}"]`);
-            window.bootstrap?.Popover?.getInstance(dayTrigger)?.hide();
+            Popover.getInstance(dayTrigger)?.hide();
         }
 
         this.getNewTable();
@@ -418,7 +438,7 @@ export default class extends Controller {
             method: 'POST',
             data: { _token: event.currentTarget.dataset.token || '' },
             onSuccess: () => {
-                $('#modalCenter').modal('hide');
+                modalCenter().hide();
                 this.getNewTable();
             },
         });
@@ -453,7 +473,7 @@ export default class extends Controller {
                     this.modalContent.innerHTML = data;
                     return;
                 }
-                $('#modalCenter').modal('hide');
+                modalCenter().hide();
                 this.getNewTable();
             }
         });
@@ -473,7 +493,7 @@ export default class extends Controller {
         const url = event.currentTarget.dataset.url;
         if (!url) return;
         setModalTitle(this.translate('roomblock.title'));
-        $('#modalCenter').modal('show');
+        modalCenter().show();
         httpRequest({
             url,
             method: 'GET',
@@ -486,7 +506,7 @@ export default class extends Controller {
         const url = event.currentTarget.dataset.url;
         if (!url) return;
         setModalTitle(this.translate('roomblock.list.title'));
-        $('#modalCenter').modal('show');
+        modalCenter().show();
         httpRequest({
             url,
             method: 'GET',
@@ -499,7 +519,7 @@ export default class extends Controller {
         const url = event.currentTarget.dataset.url;
         if (!url) return;
         setModalTitle(this.translate('roomblock.title'));
-        $('#modalCenter').modal('show');
+        modalCenter().show();
         httpRequest({
             url,
             method: 'GET',
@@ -753,10 +773,10 @@ export default class extends Controller {
         // with a mouse; a second tap on the same reservation opens it. Compared
         // by id, because the annual view draws one element per day.
         const bar = event.currentTarget;
-        if (!this.isDesktopWeekMode() && bar.matches('.reservation-inner, .reservation-popover') && window.jQuery) {
+        if (!this.isDesktopWeekMode() && bar.matches('.reservation-inner, .reservation-popover')) {
             if (this.tapPopoverReservationId !== bar.dataset.reservationId) {
                 this.hideTapPopover();
-                $(bar).popover('show');
+                Popover.getOrCreateInstance(bar).show();
                 this.tapPopoverBar = bar;
                 this.tapPopoverReservationId = bar.dataset.reservationId;
                 return;
@@ -774,8 +794,8 @@ export default class extends Controller {
 
     /** Touch: closes the popover a first tap on a reservation opened. */
     hideTapPopover() {
-        if (this.tapPopoverBar && window.jQuery) {
-            $(this.tapPopoverBar).popover('hide');
+        if (this.tapPopoverBar) {
+            Popover.getInstance(this.tapPopoverBar)?.hide();
         }
         this.tapPopoverBar = null;
         this.tapPopoverReservationId = null;
@@ -1170,13 +1190,7 @@ export default class extends Controller {
         this.tablePopoverTriggers().forEach((trigger) => {
             const tipId = trigger.getAttribute('aria-describedby');
             const tip = tipId ? document.getElementById(tipId) : null;
-            const instance = window.bootstrap?.Popover?.getInstance(trigger);
-
-            if (instance) {
-                instance.dispose();
-            } else if (window.jQuery?.fn?.popover) {
-                $(trigger).popover('dispose');
-            }
+            Popover.getInstance(trigger)?.dispose();
 
             // dispose() normally removes the tip. Keep this fallback for tips
             // created by an older table/controller instance.
@@ -1208,7 +1222,7 @@ export default class extends Controller {
      */
     setTablePopoversEnabled(enabled) {
         this.tablePopoverTriggers().forEach((trigger) => {
-            const instance = window.bootstrap?.Popover?.getInstance(trigger);
+            const instance = Popover.getInstance(trigger);
             if (!instance) {
                 return;
             }
@@ -1966,15 +1980,18 @@ export default class extends Controller {
         // A hovered popover can cover rows above the source reservation. Hide
         // and disable all reservation popovers until the drag has finished.
         const setReservationPopoversEnabled = (enabled) => {
-            if (!window.jQuery) {
-                return;
-            }
-
-            const popovers = $(table).find('.reservation-inner');
-            if (!enabled) {
-                popovers.popover('hide');
-            }
-            popovers.popover(enabled ? 'enable' : 'disable');
+            table.querySelectorAll('.reservation-inner').forEach((bar) => {
+                const popover = Popover.getInstance(bar);
+                if (!popover) {
+                    return;
+                }
+                if (enabled) {
+                    popover.enable();
+                } else {
+                    popover.hide();
+                    popover.disable();
+                }
+            });
         };
 
         // Called after a successful drop, a rejected drop, and drag cancel.
@@ -2151,22 +2168,20 @@ export default class extends Controller {
     }
 
     initPopovers() {
-        if (!window.jQuery) {
-            return;
-        }
         // Reservation bars of the table (.reservation-inner) and days of the
         // annual view (.reservation-popover): with a mouse the popover stays
         // while the pointer moves onto it, so its phone and e-mail links can be
         // clicked; on touch screens a first tap shows it (openReservationAction).
         // The width follows the longest line, see "Reservation popover" in app.css
         const bars = '.reservation-inner, .reservation-popover';
-        $(bars).popover({ placement: 'top', html: true, trigger: 'manual', customClass: 'reservation-bar-popover' });
+        document.querySelectorAll(bars).forEach((bar) => Popover.getOrCreateInstance(bar, {
+            placement: 'top', html: true, trigger: 'manual', customClass: 'reservation-bar-popover',
+        }));
         if (this.isDesktopWeekMode()) {
             this.initHoverPopovers(this.tableContainer?.querySelectorAll(bars) ?? []);
         }
-        $('.room-info').popover({ html: true });
-        $('.holiday-info').popover();
-        $('.calendar-info').popover();
+        document.querySelectorAll('.room-info').forEach((info) => Popover.getOrCreateInstance(info, { html: true }));
+        document.querySelectorAll('.holiday-info, .calendar-info').forEach((info) => Popover.getOrCreateInstance(info));
 
         this.initClickPopoverDismissal();
         this.initCalendarEntryModal();
@@ -2183,7 +2198,7 @@ export default class extends Controller {
             clearTimeout(this.hoverPopoverTimer);
             this.hoverPopoverTimer = setTimeout(() => {
                 if (this.hoverPopoverBar) {
-                    window.bootstrap?.Popover?.getInstance(this.hoverPopoverBar)?.hide();
+                    Popover.getInstance(this.hoverPopoverBar)?.hide();
                 }
                 this.hoverPopoverBar = null;
             }, 200);
@@ -2195,10 +2210,10 @@ export default class extends Controller {
                     return;
                 }
                 if (this.hoverPopoverBar) {
-                    window.bootstrap?.Popover?.getInstance(this.hoverPopoverBar)?.hide();
+                    Popover.getInstance(this.hoverPopoverBar)?.hide();
                 }
                 this.hoverPopoverBar = bar;
-                window.bootstrap?.Popover?.getInstance(bar)?.show();
+                Popover.getInstance(bar)?.show();
             });
             bar.addEventListener('mouseleave', scheduleHide);
             // Hidden from elsewhere too (dialog opens, drag starts): the next
@@ -2259,7 +2274,7 @@ export default class extends Controller {
                 method: 'GET',
                 target: modalContent,
             });
-            $('#modalCenter').modal('show');
+            modalCenter().show();
         });
     }
 
@@ -2291,7 +2306,7 @@ export default class extends Controller {
                 method: 'GET',
                 target: modalContent,
             });
-            $('#modalCenter').modal('show');
+            modalCenter().show();
         });
     }
 
@@ -2307,7 +2322,7 @@ export default class extends Controller {
 
         document.addEventListener('click', (event) => {
             document.querySelectorAll('.holiday-info, .calendar-info').forEach((trigger) => {
-                const instance = window.bootstrap?.Popover.getInstance(trigger);
+                const instance = Popover.getInstance(trigger);
                 if (!instance || trigger.contains(event.target)) {
                     return;
                 }
@@ -2501,7 +2516,7 @@ export default class extends Controller {
                 if (apartmentId && firstDay) {
                     this.selectableAddAppartmentToSelection(apartmentId, firstDay, lastDay || firstDay);
                     setModalTitle(this.translate('nav.reservation.add'));
-                    $('#modalCenter').modal('toggle');
+                    modalCenter().toggle();
                 }
                 return;
             }
@@ -2530,7 +2545,7 @@ export default class extends Controller {
             if (apartments.length > 0) {
                 this.selectableAddMultipleAppartmentsToSelection(apartments);
                 setModalTitle(this.translate('nav.reservation.add'));
-                $('#modalCenter').modal('toggle');
+                modalCenter().toggle();
             }
         };
 
@@ -2709,7 +2724,6 @@ export default class extends Controller {
         const createNew = event.currentTarget.dataset.createNew === 'true';
         if (!url) return;
         window.lastClickedReservationId = id;
-        //$('.modal-header .modal-title').text(this.translate('templates.select.reservations'));
         httpRequest({
             url,
             method: 'POST',
@@ -2723,7 +2737,7 @@ export default class extends Controller {
         if (!targetUrl) {
             return false;
         }
-        $('#modalCenter .modal-title').text(this.translate('nav.reservation.add'));
+        setModalTitle(this.translate('nav.reservation.add'));
         const data = httpSerializeSelectors(['#objects']) + '&createNewReservation=' + createNewReservation;
         httpRequest({
             url: targetUrl,
@@ -2875,9 +2889,12 @@ export default class extends Controller {
     }
 
     getAvailableAppartmentsForPeriod(mode, url = null) {
-        $('#available-appartments').html('');
+        const available = document.getElementById('available-appartments');
+        if (available) {
+            available.innerHTML = '';
+        }
         iniStartOrEndDate('from', 'end', 1);
-        if ($('#from').val() !== '' && $('#end').val() !== '') {
+        if (document.getElementById('from')?.value !== '' && document.getElementById('end')?.value !== '') {
             const form = document.getElementById('reservation-period');
             const targetUrl = url || (mode === 'edit'
                 ? form?.dataset.availableEditUrl
@@ -2905,7 +2922,7 @@ export default class extends Controller {
 
     addAppartmentToSelection(id, url = null) {
         const targetUrl = url || document.getElementById('reservation-period')?.dataset.addAppartmentUrl || this.getContextValue('addAppartmentUrl');
-        const content = window.modalLoader || '';
+        const content = modalLoader;
         if (!targetUrl) {
             return false;
         }
@@ -2994,7 +3011,7 @@ export default class extends Controller {
         if (!targetUrl) {
             return false;
         }
-        const content = window.modalLoader || '';
+        const content = modalLoader;
         const message = '<div class="col-md-10 col-md-offset-1">' +
             '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
             '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
@@ -3007,8 +3024,14 @@ export default class extends Controller {
         if (onRoomStep && !document.querySelector('#selectedAppartments [data-selected-room]')) {
             this.showFeedback(message);
         } else {
-            $('#breadcrumb-appartments').wrap('<a href="#" />');
-            $('#breadcrumb-customer').removeClass('d-none');
+            const roomsCrumb = document.getElementById('breadcrumb-appartments');
+            if (roomsCrumb) {
+                const link = document.createElement('a');
+                link.href = '#';
+                roomsCrumb.replaceWith(link);
+                link.append(roomsCrumb);
+            }
+            document.getElementById('breadcrumb-customer')?.classList.remove('d-none');
             httpRequest({
                 url: targetUrl,
                 method: 'POST',
@@ -3027,9 +3050,9 @@ export default class extends Controller {
         if (!url) {
             return false;
         }
-        const content = window.modalLoader || '';
+        const content = modalLoader;
         const safeTab = tab || '';
-        $('#customer-selection .btn-primary').addClass('d-none');
+        document.querySelectorAll('#customer-selection .btn-primary').forEach((button) => button.classList.add('d-none'));
         const extraParams = customersContainer?.dataset.customersExtraParams || '';
         httpRequest({
             url,
@@ -3052,8 +3075,11 @@ export default class extends Controller {
             method: 'POST',
             target: document.getElementById('customers'),
             onSuccess: (data) => {
-                $('#customers').html(data);
-                $('#customer-selection .btn-primary').removeClass('d-none');
+                const customers = document.getElementById('customers');
+                if (customers) {
+                    customers.innerHTML = data;
+                }
+                document.querySelectorAll('#customer-selection .btn-primary').forEach((button) => button.classList.remove('d-none'));
             }
         });
         return false;
@@ -3096,12 +3122,15 @@ export default class extends Controller {
     }
 
     toggleAppartmentOptions(id) {
-        const elm = $('#appartment-' + id);
-        if (elm.hasClass('d-none')) {
-            $('.appartment-options').addClass('d-none');
-            elm.removeClass('d-none');
+        const elm = document.getElementById('appartment-' + id);
+        if (!elm) {
+            return false;
+        }
+        if (elm.classList.contains('d-none')) {
+            document.querySelectorAll('.appartment-options').forEach((options) => options.classList.add('d-none'));
+            elm.classList.remove('d-none');
         } else {
-            elm.addClass('d-none');
+            elm.classList.add('d-none');
         }
         return false;
     }
@@ -3140,7 +3169,7 @@ export default class extends Controller {
         }
         
         setModalTitle(this.translate('reservation.details'));
-        $('#modalCenter').modal('show');
+        modalCenter().show();
         httpRequest({
             url,
             method: 'GET',
@@ -3159,7 +3188,7 @@ export default class extends Controller {
         if (!targetUrl) {
             return false;
         }
-        $('#modalCenter .modal-title').text(this.translate('nav.reservation.edit'));
+        setModalTitle(this.translate('nav.reservation.edit'));
         httpRequest({
             url: targetUrl,
             method: 'GET',
@@ -3214,7 +3243,7 @@ export default class extends Controller {
         let targetUrl = url;
         if (!targetUrl) {
             const template = this.getContextValue('editReservationCustomerChangeUrlTemplate');
-            const reservationId = $('#reservation-id').val();
+            const reservationId = document.getElementById('reservation-id')?.value;
             targetUrl = template && reservationId ? template.replace('placeholder', reservationId) : null;
         }
         if (!targetUrl) {
@@ -3238,11 +3267,15 @@ export default class extends Controller {
     }
 
     toggleMoreInfo(fieldId) {
-        const elm = $('#' + fieldId);
-        if (elm.is(':hidden')) {
-            elm.fadeIn().removeClass('hide');
+        const elm = document.getElementById(fieldId);
+        if (!elm) {
+            return false;
+        }
+        if (isHidden(elm)) {
+            elm.classList.remove('hide');
+            showElement(elm);
         } else {
-            elm.hide();
+            elm.style.display = 'none';
         }
         return false;
     }
@@ -3320,8 +3353,11 @@ export default class extends Controller {
             data: { inProcess },
             target: this.modalContent,
             onSuccess: (data) => {
-                $('#modalCenter .modal-title').text(this.translate('templates.edit'));
-                $('#modal-content-ajax').html(data);
+                setModalTitle(this.translate('templates.edit'));
+                const modalBody = document.getElementById('modal-content-ajax');
+                if (modalBody) {
+                    modalBody.innerHTML = data;
+                }
             }
         });
         return false;
@@ -3411,7 +3447,7 @@ export default class extends Controller {
             data: { reservationId },
             target: this.modalContent,
             onSuccess: (data) => {
-                $('#modalCenter .modal-title').text(this.translate('templates.preview'));
+                setModalTitle(this.translate('templates.preview'));
                 const modalBody = document.getElementById('modal-content-ajax');
                 if (modalBody) {
                     modalBody.innerHTML = data;
@@ -3422,36 +3458,48 @@ export default class extends Controller {
     }
 
     toggleReservationEditAppartments(id) {
-        const box = $('#box-available-appartments');
-        if (box.is(':hidden')) {
+        const box = document.getElementById('box-available-appartments');
+        const options = document.getElementById('appartment-' + id);
+        const save = document.getElementById('reservation-edit-save');
+        const selected = document.getElementById('selectedAppartments');
+        if (isHidden(box)) {
             this.getAvailableAppartmentsForPeriod('edit');
-            box.fadeIn().removeClass('d-none');
-            $('#appartment-' + id).addClass('d-none');
-            $('#reservation-edit-save').hide();
-            $('#selectedAppartments').addClass('text-secondary');
+            box.classList.remove('d-none');
+            showElement(box);
+            options?.classList.add('d-none');
+            if (save) {
+                save.style.display = 'none';
+            }
+            selected?.classList.add('text-secondary');
         } else {
-            box.addClass('d-none');
-            $('#reservation-edit-save').show();
-            $('#selectedAppartments').removeClass('text-secondary');
-            // d-none is !important, fadeIn() alone cannot show the options again
-            $('#appartment-' + id).hide().removeClass('d-none').fadeIn();
+            box?.classList.add('d-none');
+            if (save) {
+                showElement(save);
+            }
+            selected?.classList.remove('text-secondary');
+            if (options) {
+                options.classList.remove('d-none');
+                showElement(options);
+            }
         }
         return false;
     }
 
     editUpdateReservation(appartmentId, optionsElement = null) {
-        const reservationId = $('#reservation-id').val() || appartmentId;
+        const reservationId = document.getElementById('reservation-id')?.value || appartmentId;
         // Use the clicked room's cell for dynamically loaded options. The
         // footer button for the current room falls back to its stable ID.
-        const optsContainer = $(optionsElement || '#appartment-options-' + appartmentId);
-        const status = optsContainer.find('select[name="status"]').val();
-        const guestCounts = optsContainer.find('input[name="guestCounts"]').val();
-        const persons = optsContainer.find('input[name="persons"]').val();
-        if (!optsContainer.length || !status || guestCounts === undefined || persons === undefined) {
+        const optsContainer = typeof optionsElement === 'string'
+            ? document.querySelector(optionsElement)
+            : (optionsElement || document.getElementById('appartment-options-' + appartmentId));
+        const status = optsContainer?.querySelector('select[name="status"]')?.value;
+        const guestCounts = optsContainer?.querySelector('input[name="guestCounts"]')?.value;
+        const persons = optsContainer?.querySelector('input[name="persons"]')?.value;
+        if (!optsContainer || !status || guestCounts === undefined || persons === undefined) {
             return false;
         }
 
-        const overrideEl = optsContainer.find('input[name="adultRuleOverride"]')[0];
+        const overrideEl = optsContainer.querySelector('input[name="adultRuleOverride"]');
         const params = new URLSearchParams();
         params.append('status', status);
         params.append('guestCounts', guestCounts);
@@ -3468,7 +3516,7 @@ export default class extends Controller {
         httpRequest({
             url,
             method: 'POST',
-            data: (options + '&id=' + reservationId + '&aid=' + appartmentId + '&from=' + $('#from').val() + '&end=' + $('#end').val()),
+            data: (options + '&id=' + reservationId + '&aid=' + appartmentId + '&from=' + document.getElementById('from')?.value + '&end=' + document.getElementById('end')?.value),
             target: this.modalContent,
             onSuccess: (data) => {
                 if (this.modalContent) {

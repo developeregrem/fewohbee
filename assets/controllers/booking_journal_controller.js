@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Offcanvas } from 'bootstrap';
 import { enableDeletePopover, enableTooltips, disposeTooltips } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
@@ -28,6 +29,13 @@ export default class extends Controller {
         const template = select.dataset.urlTemplate;
         if (!template) return;
         window.location.href = template.replace('__YEAR__', encodeURIComponent(select.value));
+    }
+
+    /** Reloads the batch with the entries filter chosen in the select. */
+    navigateToFilter(event) {
+        const select = event.currentTarget;
+        if (!select.dataset.url) return;
+        window.location.href = `${select.dataset.url}?filter=${encodeURIComponent(select.value)}`;
     }
 
     openOpeningBalance(event) {
@@ -87,7 +95,7 @@ export default class extends Controller {
         this.offcanvasTitleTarget.textContent = title;
         this.offcanvasBodyTarget.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>';
 
-        const offcanvas = window.bootstrap.Offcanvas.getOrCreateInstance(this.offcanvasTarget);
+        const offcanvas = Offcanvas.getOrCreateInstance(this.offcanvasTarget);
         offcanvas.show();
 
         try {

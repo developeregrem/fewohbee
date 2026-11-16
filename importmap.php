@@ -108,4 +108,9 @@ return [
     '@lezer/javascript' => ['version' => '1.5.6'],
     '@codemirror/streamparser' => ['version' => '6.0.0'],
     'bootstrap/dist/css/bootstrap.min.css' => ['version' => '5.3.8', 'type' => 'css'],
+    'bootstrap' => ['version' => '5.3.8'],
+    '@popperjs/core' => ['version' => '2.11.8'],
+    'chart.js/auto' => ['version' => '4.5.1'],
+    '@tarekraafat/autocomplete.js' => ['version' => '10.2.7'],
+    '@kurkle/color' => ['version' => '0.3.4'],
 ];

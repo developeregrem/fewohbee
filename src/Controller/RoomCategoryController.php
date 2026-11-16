@@ -94,15 +94,10 @@ class RoomCategoryController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/delete', name: 'room_category_delete', methods: ['GET', 'DELETE'])]
+    #[Route('/{id}/delete', name: 'room_category_delete', methods: ['DELETE'])]
     public function delete(ManagerRegistry $doctrine, Request $request, RoomCategory $roomCategory): Response
     {
-        if ('GET' === $request->getMethod()) {
-            // initial get load (ask for deleting)
-            return $this->render('common/form_delete_ask.html.twig', [
-                'id' => $roomCategory->getId(),
-            ]);
-        } elseif ($this->isCsrfTokenValid('delete'.$roomCategory->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$roomCategory->getId(), $request->request->get('_token'))) {
             if ($roomCategory->getPrices()->count() > 0 || $roomCategory->getApartments()->count() > 0) {
                 $this->addFlash('warning', 'category.flash.delete.error.still.in.use');
             } else {

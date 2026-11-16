@@ -22,7 +22,7 @@ export default class extends Controller {
 
     setRail(enabled) {
         document.documentElement.classList.toggle(RAIL_CLASS, enabled);
-        const path = window.config?.basePath || '/';
+        const path = document.documentElement.dataset.basePath || '/';
         document.cookie = `${COOKIE}=${enabled ? 'rail' : 'full'}; path=${path}; max-age=31536000; samesite=lax`;
         // Views that size themselves to the window (reservation table) measure again
         window.dispatchEvent(new Event('resize'));

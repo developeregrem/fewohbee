@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Dropdown, Modal } from 'bootstrap';
 import {
     request as httpRequest,
     serializeForm as httpSerializeForm,
@@ -64,7 +65,7 @@ export default class extends Controller {
         }
         // Closing first lets the dialog take its back-button history entry off before the reload
         modal.addEventListener('hidden.bs.modal', () => window.setTimeout(() => window.location.reload(), 100), { once: true });
-        window.bootstrap.Modal.getOrCreateInstance(modal).hide();
+        Modal.getOrCreateInstance(modal).hide();
     }
 
     async initTooltips() {
@@ -515,7 +516,7 @@ export default class extends Controller {
 
     _closePaymentDueMenu(element) {
         const toggle = element.closest('.input-group')?.querySelector('[data-bs-toggle="dropdown"]');
-        if (toggle && window.bootstrap) window.bootstrap.Dropdown.getInstance(toggle)?.hide();
+        if (toggle) Dropdown.getInstance(toggle)?.hide();
     }
 
     _setPaymentDueDate(scope, isoDate) {

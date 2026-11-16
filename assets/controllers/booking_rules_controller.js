@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Offcanvas } from 'bootstrap';
 import { enableDeletePopover } from '../js/utils.js';
 
 const SCROLL_KEY = 'booking-rules:scroll-target';
@@ -54,7 +55,7 @@ export default class extends Controller {
         this.offcanvasBodyTarget.innerHTML =
             '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>';
 
-        window.bootstrap.Offcanvas.getOrCreateInstance(this.offcanvasTarget).show();
+        Offcanvas.getOrCreateInstance(this.offcanvasTarget).show();
 
         try {
             const response = await fetch(button.dataset.url, {

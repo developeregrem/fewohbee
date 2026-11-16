@@ -1,5 +1,6 @@
 /* stimulusFetch: 'lazy' */
 import { Controller } from '@hotwired/stimulus';
+import { Modal } from 'bootstrap';
 import { request as httpRequest } from '../js/http.js';
 import { setModalTitle } from '../js/utils.js';
 
@@ -52,7 +53,7 @@ export default class extends Controller {
 
         setModalTitle(event.currentTarget.dataset.modalTitle || '');
         httpRequest({ url, target: modalContent });
-        window.bootstrap?.Modal?.getOrCreateInstance(modalElement)?.show();
+        Modal.getOrCreateInstance(modalElement)?.show();
     }
 
     markReadAction(event) {

@@ -1,3 +1,4 @@
+import { Popover, Tooltip } from 'bootstrap';
 export function setLocalStorageItemIfNotExists(key, value, forceUpdate = false) {
     if (localStorage.getItem(key) === null || forceUpdate) {
         localStorage.setItem(key, value);
@@ -34,54 +35,11 @@ function _whenDomReady() {
 }
 
 /**
- * Polls for Bootstrap Popover/Tooltip availability. Resolves to true if available, false on timeout.
+ * Resolves to true once the document is parsed. Bootstrap is a module import and the icons are a
+ * webfont, so nothing else has to be awaited before components are initialised.
  */
-function _whenBootstrapReady(maxAttempts = 30, intervalMs = 50) {
-    return new Promise((resolve) => {
-        let attempt = 0;
-        const check = () => {
-            if (window.bootstrap && window.bootstrap.Popover && window.bootstrap.Tooltip) {
-                resolve(true);
-                return;
-            }
-            if (++attempt >= maxAttempts) {
-                resolve(false);
-                return;
-            }
-            setTimeout(check, intervalMs);
-        };
-        check();
-    });
-}
-
-/**
- * Forces Font Awesome (SVG/JS mode) to convert all pending <i> icons to <svg> now
- * and waits for completion. No-op if FA is absent or in webfont mode.
- */
-async function _ensureFontAwesomeRendered() {
-    const fa = window.FontAwesome;
-    if (!fa || !fa.dom || typeof fa.dom.i2svg !== 'function') {
-        return;
-    }
-    try {
-        await fa.dom.i2svg();
-    } catch {
-        /* silent */
-    }
-}
-
-/**
- * Resolves once the DOM is parsed, Bootstrap is available, and Font Awesome
- * has replaced all queued <i> icons with <svg>. Callers should await this
- * before initializing Bootstrap components that target FA icons.
- */
-export async function whenBootstrapAndIconsReady() {
+export async function whenDomReady() {
     await _whenDomReady();
-    const bootstrapReady = await _whenBootstrapReady();
-    if (!bootstrapReady) {
-        return false;
-    }
-    await _ensureFontAwesomeRendered();
     return true;
 }
 
@@ -91,10 +49,10 @@ export async function whenBootstrapAndIconsReady() {
  */
 let _allowListPatched = false;
 function _patchTooltipAllowList() {
-    if (_allowListPatched || !window.bootstrap?.Tooltip?.Default?.allowList) {
+    if (_allowListPatched) {
         return;
     }
-    const allowList = window.bootstrap.Tooltip.Default.allowList;
+    const allowList = Tooltip.Default.allowList;
     allowList.form = ['action'];
     allowList.input = ['type', 'name', 'value'];
     // 'type' only - class/title already pass through the '*' wildcard entry.
@@ -114,15 +72,15 @@ function _patchTooltipAllowList() {
 
 /**
  * Initialize Bootstrap tooltips on all `[data-bs-toggle="tooltip"]` elements
- * within the given root element. Waits for Bootstrap and Font Awesome.
+ * within the given root element.
  * Returns a Promise that resolves to the array of created Tooltip instances.
  */
 export async function enableTooltips(root = document) {
-    const ready = await whenBootstrapAndIconsReady();
+    const ready = await whenDomReady();
     if (!ready) return [];
     const rootEl = root?.querySelectorAll ? root : document;
     return [...rootEl.querySelectorAll('[data-bs-toggle="tooltip"]')]
-        .map((el) => window.bootstrap.Tooltip.getOrCreateInstance(el));
+        .map((el) => Tooltip.getOrCreateInstance(el));
 }
 
 /**
@@ -131,7 +89,7 @@ export async function enableTooltips(root = document) {
 export function disposeTooltips(root = document) {
     const rootEl = root?.querySelectorAll ? root : document;
     rootEl.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
-        const instance = window.bootstrap?.Tooltip?.getInstance?.(el);
+        const instance = Tooltip.getInstance?.(el);
         if (instance) instance.dispose();
     });
 }
@@ -142,21 +100,20 @@ export function disposeTooltips(root = document) {
  * are handled by enableDeletePopover with their own click semantics).
  */
 export async function enablePopovers(root = document) {
-    const ready = await whenBootstrapAndIconsReady();
+    const ready = await whenDomReady();
     if (!ready) return [];
     const rootEl = root?.querySelectorAll ? root : document;
     return [...rootEl.querySelectorAll('[data-bs-toggle="popover"]')]
         .filter((el) => el.dataset.popover !== 'delete')
-        .map((el) => window.bootstrap.Popover.getOrCreateInstance(el));
+        .map((el) => Popover.getOrCreateInstance(el));
 }
 
 /**
  * Creates a confirmation popover (yes/no) when clicking on an element which has the
- * data-popover="delete" attribute assigned. Internally waits for Bootstrap and Font
- * Awesome to be ready, so callers do not need to worry about load timing.
+ * data-popover="delete" attribute assigned.
  */
 export function enableDeletePopover({ onSuccess, root = document } = {}) {
-    whenBootstrapAndIconsReady().then((ready) => {
+    whenDomReady().then((ready) => {
         if (ready) {
             _enableDeletePopoverNow({ onSuccess, root });
         }
@@ -193,14 +150,14 @@ function _enableDeletePopoverNow({ onSuccess, root }) {
                 if (otherEl === popoverTriggerEl) {
                     return;
                 }
-                const otherInstance = window.bootstrap.Popover.getInstance(otherEl);
+                const otherInstance = Popover.getInstance(otherEl);
                 if (otherInstance) {
                     otherInstance.hide();
                 }
             });
         });
         const title = popoverTriggerEl.getAttribute('data-title') || popoverTriggerEl.getAttribute('title') || '';
-        const popover = new window.bootstrap.Popover(popoverTriggerEl, {
+        const popover = new Popover(popoverTriggerEl, {
             html: true,
             title: title
         });
@@ -211,7 +168,7 @@ function _enableDeletePopoverNow({ onSuccess, root }) {
                     const action = form ? form.action : null;
                     const targetSelector = popoverTriggerEl.getAttribute('data-delete-target');
                     const target = targetSelector ? document.querySelector(targetSelector) : null;
-                    const instance = window.bootstrap.Popover.getInstance(popoverTriggerEl);
+                    const instance = Popover.getInstance(popoverTriggerEl);
                     if (instance) {
                         instance.hide();
                     }
@@ -234,7 +191,7 @@ function _enableDeletePopoverNow({ onSuccess, root }) {
                     if (form) {
                         form.reset();
                     }
-                    const instance = window.bootstrap.Popover.getInstance(popoverTriggerEl);
+                    const instance = Popover.getInstance(popoverTriggerEl);
                     if (instance) {
                         instance.hide();
                     }

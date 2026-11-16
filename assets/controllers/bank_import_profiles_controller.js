@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Offcanvas } from 'bootstrap';
 import { enableDeletePopover, enableTooltips, disposeTooltips } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
@@ -28,7 +29,7 @@ export default class extends Controller {
         this.offcanvasTitleTarget.textContent = title;
         this.offcanvasBodyTarget.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>';
 
-        const offcanvas = window.bootstrap.Offcanvas.getOrCreateInstance(this.offcanvasTarget);
+        const offcanvas = Offcanvas.getOrCreateInstance(this.offcanvasTarget);
         offcanvas.show();
 
         try {

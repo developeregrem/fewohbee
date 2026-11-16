@@ -95,15 +95,10 @@ class UserServiceController extends AbstractController
     }
 
     /** @param int|string $id Route ID, including numeric strings */
-    #[Route('/{id}/delete', name: 'users.delete.user', methods: ['GET', 'DELETE'])]
+    #[Route('/{id}/delete', name: 'users.delete.user', methods: ['DELETE'])]
     public function deleteUserAction(Request $request, $id, UserService $us, User $user): Response
     {
-        if ('GET' === $request->getMethod()) {
-            // initial get load (ask for deleting)
-            return $this->render('common/form_delete_ask.html.twig', [
-                'id' => $user->getId(),
-            ]);
-        } elseif ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {
             $status = $us->deleteUser($user);
 
             $this->addFlash('success', 'user.flash.delete.success');

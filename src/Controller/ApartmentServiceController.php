@@ -114,15 +114,10 @@ class ApartmentServiceController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/delete', name: 'appartments.delete.appartment', methods: ['GET', 'DELETE'])]
+    #[Route('/{id}/delete', name: 'appartments.delete.appartment', methods: ['DELETE'])]
     public function delete(ManagerRegistry $doctrine, Request $request, AppartmentService $as, Appartment $apartment): Response
     {
-        if ('GET' === $request->getMethod()) {
-            // initial get load (ask for deleting)
-            return $this->render('common/form_delete_ask.html.twig', [
-                'id' => $apartment->getId(),
-            ]);
-        } elseif ($this->isCsrfTokenValid('delete'.$apartment->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$apartment->getId(), $request->request->get('_token'))) {
             $status = $as->deleteAppartment($apartment);
 
             if ($status) {

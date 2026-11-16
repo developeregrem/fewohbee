@@ -350,6 +350,12 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
 - Every page must work in the light and the dark scheme, on a phone, a tablet and a desktop. The
   styleguide at `/_styleguide` (debug only) shows tokens and building blocks in both schemes; add
   a new building block there.
+- On phones the interface should feel like an app. Wherever entries can be created, touch
+  screens get the round add button (`fab-add`; the same action as `fab-add-inline` in the page
+  header for the desktop, `fab-add-dropdown` when there are several kinds). Where a view pages
+  through a sequence (month, year, day, pages of a list), a sideways swipe pages as well: use the
+  `swipe-nav` controller and keep the arrows or the select visible. Prefer stacked lists
+  (`data-table-stack`) to tables that scroll sideways.
 - A page names itself with the `page_title` block; the frame shows it in the top bar on phones.
   Navigation entries are described once in `templates/layout/_app_nav.html.twig`.
 - `btn-secondary` is the neutral button, `btn-primary` the one main action of a view. Use

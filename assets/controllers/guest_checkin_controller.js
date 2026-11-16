@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Collapse } from 'bootstrap';
 import { request } from '../js/http.js';
 import { enableDeletePopover } from '../js/utils.js';
 
@@ -151,7 +152,7 @@ export default class extends Controller {
         this.fetchLink(this.regenerateUrlValue, () => {
             this.linkBoxTarget.classList.remove('d-none');
             if (this.hasRegenerateBoxTarget) {
-                window.bootstrap?.Collapse.getOrCreateInstance(this.regenerateBoxTarget).hide();
+                Collapse.getOrCreateInstance(this.regenerateBoxTarget).hide();
             }
         });
     }

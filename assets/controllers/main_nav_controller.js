@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Offcanvas } from 'bootstrap';
 
 /*
  * Main navigation (side menu below lg, templates/layout/_app_nav.html.twig). Closes the menu
@@ -20,7 +21,7 @@ export default class extends Controller {
     }
 
     resetForCache() {
-        window.bootstrap?.Offcanvas?.getInstance(this.element)?.dispose();
+        Offcanvas.getInstance(this.element)?.dispose();
         this.element.classList.remove('show', 'showing', 'hiding');
         this.element.removeAttribute('aria-modal');
         this.element.removeAttribute('role');

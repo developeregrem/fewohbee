@@ -41,7 +41,8 @@
         <div class="col d-flex align-items-center gap-3 flex-wrap">
             <h4 class="mb-0 text-nowrap">{{ getLocalizedMonth(batch.month, 'MMMM', app.request.locale) }} {{ batch.year }}</h4>
             <select class="form-select form-select-sm" style="width: 12rem"
-                    onchange="window.location.href='{{ path('journal.batch.entries', {'id': batch.id}) }}?filter=' + this.value">
+                    data-action="change->booking-journal#navigateToFilter"
+                    data-url="{{ path('journal.batch.entries', {'id': batch.id}) }}">
                 <option value="all"{% if filter == 'all' %} selected{% endif %}>{{ 'accounting.journal.filter.all'|trans }}</option>
                 <option value="cashbook"{% if filter == 'cashbook' %} selected{% endif %}>{{ 'accounting.journal.filter.cashbook'|trans }}</option>
                 <option value="bankbook"{% if filter == 'bankbook' %} selected{% endif %}>{{ 'accounting.journal.filter.bankbook'|trans }}</option>

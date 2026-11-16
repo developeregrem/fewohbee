@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
-import { whenBootstrapAndIconsReady } from '../js/utils.js';
+import { Popover } from 'bootstrap';
+import { whenDomReady } from '../js/utils.js';
 
 /**
  * Generic confirm-before-submit guard.
@@ -22,7 +23,7 @@ export default class extends Controller {
         this.popover = null;
         this.submitter = null;
         this.element.addEventListener('submit', this._guard);
-        this.readyPromise = whenBootstrapAndIconsReady().then((ready) => {
+        this.readyPromise = whenDomReady().then((ready) => {
             this.ready = ready;
             return ready;
         });
@@ -60,7 +61,7 @@ export default class extends Controller {
     _showPopover(anchor) {
         this._hidePopover();
 
-        this.popover = new window.bootstrap.Popover(anchor, {
+        this.popover = new Popover(anchor, {
             content: () => this._buildContent(),
             html: true,
             placement: 'top',

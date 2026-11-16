@@ -2,6 +2,7 @@
  * Shared HTTP helpers for Stimulus controllers and legacy scripts.
  */
 import { generateCsrfHeaders, generateCsrfToken } from './csrf_protection.js';
+import { modalLoader } from './loader.js';
 
 export function serializeData(data) {
     if (!data) {
@@ -103,7 +104,7 @@ export function request({ url, method = 'GET', data = null, target = null, loade
 
     const targetEl = typeof target === 'string' ? document.querySelector(target) : target;
     if (targetEl && loader) {
-        targetEl.innerHTML = window.modalLoader || '';
+        targetEl.innerHTML = modalLoader;
     }
 
     fetch(finalUrl, fetchOptions)

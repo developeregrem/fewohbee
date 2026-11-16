@@ -1,9 +1,10 @@
 import { Controller } from '@hotwired/stimulus';
+import { Popover } from 'bootstrap';
 import {
     disposeTooltips,
     enableTooltips,
     iniStartOrEndDate,
-    whenBootstrapAndIconsReady,
+    whenDomReady,
 } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
@@ -29,10 +30,10 @@ export default class extends Controller {
     }
 
     async initPopovers() {
-        const ready = await whenBootstrapAndIconsReady();
+        const ready = await whenDomReady();
         if (!ready) return;
         this.element.querySelectorAll('[data-bs-toggle="popover"]').forEach((el) => {
-            window.bootstrap.Popover.getOrCreateInstance(el);
+            Popover.getOrCreateInstance(el);
         });
     }
 

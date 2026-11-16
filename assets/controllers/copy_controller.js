@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Popover } from 'bootstrap';
 
 /**
  * Handles copy-to-clipboard buttons that may be loaded via Turbo/AJAX.
@@ -43,9 +44,7 @@ export default class extends Controller {
 
     showHint(input, button) {
         const hint = this.hintValue || button.dataset.hint;
-        const Popover = window.bootstrap?.Popover;
-
-        if (!Popover || !hint) {
+        if (!hint) {
             return;
         }
 

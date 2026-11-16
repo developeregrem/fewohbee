@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import Chart from 'chart.js/auto';
 
 /* stimulusFetch: 'lazy' */
 
@@ -126,7 +127,7 @@ export default class extends Controller {
 
     async drawTurnoverChart(type, url) {
         this.toggleRefreshSpinner(type, true);
-        if (!url || !(await this.waitForChart())) return;
+        if (!url) return;
         const canvas = this[`${type}ChartTarget`];
         if (!canvas) return;
 
@@ -169,11 +170,11 @@ export default class extends Controller {
                 },
             };
 
-            const existing = window.Chart.getChart(canvas);
+            const existing = Chart.getChart(canvas);
             if (existing) {
                 existing.destroy();
             }
-            new window.Chart(canvas, cfg);
+            new Chart(canvas, cfg);
         } finally {
             this.toggleRefreshSpinner(type, false);
         }
@@ -260,7 +261,7 @@ export default class extends Controller {
 
     async drawUtilizationChart(type, url, yearOnly) {
         this.toggleRefreshSpinner(type, true);
-        if (!url || !(await this.waitForChart())) return;
+        if (!url) return;
         const canvas = this[`${type}ChartTarget`];
         if (!canvas) return;   
 
@@ -298,11 +299,11 @@ export default class extends Controller {
                 },
             };
 
-            const existing = window.Chart.getChart(canvas);
+            const existing = Chart.getChart(canvas);
             if (existing) {
                 existing.destroy();
             }
-            new window.Chart(canvas, cfg);
+            new Chart(canvas, cfg);
         } finally {
             this.toggleRefreshSpinner(type, false);
         }
@@ -346,7 +347,7 @@ export default class extends Controller {
 
     async drawOriginChart(type, url, yearOnly) {
         this.toggleRefreshSpinner(type, true);
-        if (!url || !(await this.waitForChart())) return;
+        if (!url) return;
         const canvas = this[`${type}ChartTarget`];
         if (!canvas) return;
 
@@ -385,9 +386,9 @@ export default class extends Controller {
                 },
             };
 
-            const existing = window.Chart.getChart(canvas);
+            const existing = Chart.getChart(canvas);
             if (existing) existing.destroy();
-            new window.Chart(canvas, cfg);
+            new Chart(canvas, cfg);
         } finally {
             this.toggleRefreshSpinner(type, false);
         }
@@ -405,17 +406,6 @@ export default class extends Controller {
         params.append('yearStart', (yearOnly ? this.yearlyStartYearTarget : this.monthlyStartYearTarget).value);
         params.append('yearEnd', (yearOnly ? this.yearlyEndYearTarget : this.monthlyEndYearTarget).value);
         return params;
-    }
-
-    async waitForChart() {
-        if (window.Chart) return true;
-        const attempts = 10;
-        const delay = 75;
-        for (let i = 0; i < attempts; i += 1) {
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            if (window.Chart) return true;
-        }
-        return false;
     }
 
     toggleRefreshSpinner(type, active) {
@@ -641,7 +631,6 @@ export default class extends Controller {
     }
 
     async drawSnapshotCharts(tourism, countryNames) {
-        if (!(await this.waitForChart())) return;
         const byState = this.isStateView;
         const arrivals = byState ? (tourism.arrivals_by_state || {}) : (tourism.arrivals_by_country || {});
         const overnights = byState ? (tourism.overnights_by_state || {}) : (tourism.overnights_by_country || {});
@@ -655,9 +644,9 @@ export default class extends Controller {
 
         if (this.hasSnapshotArrivalsChartTarget) {
             const canvas = this.snapshotArrivalsChartTarget;
-            const existing = window.Chart.getChart(canvas);
+            const existing = Chart.getChart(canvas);
             if (existing) existing.destroy();
-            new window.Chart(canvas, {
+            new Chart(canvas, {
                 type: 'bar',
                 data: {
                     labels,
@@ -677,9 +666,9 @@ export default class extends Controller {
 
         if (this.hasSnapshotOvernightsChartTarget) {
             const canvas = this.snapshotOvernightsChartTarget;
-            const existing = window.Chart.getChart(canvas);
+            const existing = Chart.getChart(canvas);
             if (existing) existing.destroy();
-            new window.Chart(canvas, {
+            new Chart(canvas, {
                 type: 'bar',
                 data: {
                     labels,
@@ -735,16 +724,15 @@ export default class extends Controller {
 
     async drawSnapshotByGuestCategoryChart(tourism, guestCategories) {
         if (!this.hasSnapshotByGuestCategoryChartTarget) return;
-        if (!(await this.waitForChart())) return;
         const byCategory = tourism.overnights_by_guest_category || {};
         const entries = Object.entries(byCategory)
             .map(([catId, nights]) => ({ label: this.categoryLabel(catId, guestCategories), value: Number(nights) || 0 }))
             .sort((a, b) => b.value - a.value);
 
         const canvas = this.snapshotByGuestCategoryChartTarget;
-        const existing = window.Chart.getChart(canvas);
+        const existing = Chart.getChart(canvas);
         if (existing) existing.destroy();
-        new window.Chart(canvas, {
+        new Chart(canvas, {
             type: 'bar',
             data: {
                 labels: entries.map((e) => e.label),

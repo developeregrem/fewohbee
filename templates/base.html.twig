@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ app.request.locale }}" data-bs-theme="light" data-theme-preference="{{ app.user ? app.user.themePreference : 'auto' }}" data-controller="theme"
+      data-base-path="{{ app.request.basepath }}"
       {#- The collapsed sidebar is remembered in a cookie (app_shell_controller.js) and rendered here, so nothing jumps on load #}
       {%- if app.request.cookies.get('feb_nav') == 'rail' %} class="app-nav-rail"{% endif %}>
 <head>
@@ -11,14 +12,12 @@
     {# First, so that Bootstrap and the theme (stylesheets imported by assets/app.js) come before a page's own stylesheets #}
     {% block importmap %}{{ importmap('app') }}{% endblock %}
     {% block stylesheets %}
+        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/fontawesome.min.css">
+        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/solid.min.css">
+        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/regular.min.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/autocompletejs/autoComplete.custom.css">
     {% endblock %}
     {% block javascripts %}
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.7.1.min.js" defer></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-7.1.0.min.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min-2.10.2.js" defer></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.8.js" defer></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/autoComplete.min.10.2.7.js" defer></script>
     {% endblock %}
     <link rel="icon" type="image/png" href="{{ app.request.basepath }}/img/favicon.png" />
 </head>
@@ -42,8 +41,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
                 <div id="modal-content-ajax">
-                     <div class="modal-body">
-                        <img src="{{ app.request.basepath }}/img/ajax-loader.gif"/>
+                     <div class="modal-body py-5 text-center">
+                        <div class="spinner-border text-secondary" role="status" aria-live="polite"></div>
                     </div>
                 </div>
             </div>
@@ -77,25 +76,6 @@
     {% endblock %}
     </div>
 
-    <script>
-        // Guard against Turbo re-evaluating this script and redeclaring globals
-        if (!window.FebConfig) {
-            window.FebConfig = class {
-                constructor() {
-                    this.basePath = '{{ app.request.basepath }}';
-
-                    Object.seal(this);
-                }
-            };
-        }
-        window.config = window.config || new window.FebConfig();
-        window.loader = window.loader || '<img src="' + window.config.basePath + '/img/ajax-loader.gif" />';
-        if (!window.loaderNode) {
-            window.loaderNode = document.createElement("img");
-            window.loaderNode.src = window.config.basePath + "/img/ajax-loader.gif";
-        }
-        window.modalLoader = window.modalLoader || '<div class="modal-body">' + window.loader + '</div>';
-    </script>
     {% block bodyjs %}
         
     {% endblock %}

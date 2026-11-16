@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { Dropdown } from 'bootstrap';
 import { request } from '../js/http.js';
 
 /**
@@ -14,7 +15,7 @@ export default class extends Controller {
 
     send({ params: { intent } }) {
         const toggle = this.element.querySelector('[data-bs-toggle="dropdown"]');
-        window.bootstrap?.Dropdown.getInstance(toggle)?.hide();
+        Dropdown.getInstance(toggle)?.hide();
         request({
             url: this.urlValue,
             method: 'POST',
