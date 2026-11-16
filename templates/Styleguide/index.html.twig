@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ parent() }} - Styleguide{% endblock %}
+
+{% block page_title %}Styleguide{% endblock %}
+
+{# Developer reference (StyleguideController): shows the same samples in both colour schemes.
+   Texts are deliberately not translated. #}
+{% block content %}
+    <div class="container-fluid">
+        <header class="page-header">
+            <div class="page-header-text">
+                <h1 class="page-title">Styleguide</h1>
+                <p class="page-subtitle">Design tokens and building blocks, light and dark. Theme: <code>themes/fewohbee.css</code></p>
+            </div>
+        </header>
+        <div class="row g-3">
+            {% for scheme in ['light', 'dark'] %}
+                <div class="col-12 col-xxl-6">
+                    <div class="styleguide-scheme" data-bs-theme="{{ scheme }}">
+                        <h2 class="h6 text-uppercase text-body-secondary mb-3">{{ scheme }}</h2>
+                        {% include 'Styleguide/_samples.html.twig' with { scheme: scheme } %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

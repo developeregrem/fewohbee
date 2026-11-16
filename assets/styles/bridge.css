@@ -1,0 +1,558 @@
+/*
+ * Bridge between the design tokens (tokens.css) and Bootstrap.
+ *
+ * Bootstrap is loaded unmodified. Part of it reads CSS variables at runtime, part of it has
+ * colours compiled in (button variants, focus rings, checked inputs, …). This file points the
+ * variables at the tokens and overrides the compiled-in values, so a theme only has to set
+ * tokens. Nothing here may contain a colour of its own.
+ */
+
+/* ------------------------------------------------------------------ Root variables */
+
+:root,
+[data-bs-theme="light"],
+[data-bs-theme="dark"] {
+    --bs-font-sans-serif: var(--feb-font-sans);
+    --bs-font-monospace: var(--feb-font-mono);
+    --bs-body-font-size: var(--feb-font-size);
+    --bs-body-line-height: var(--feb-line-height);
+
+    /* Bootstrap paints cards, dialogs, menus, tables and fields in the body background, so that
+       is the surface; the canvas behind them is set on <body> below. */
+    --bs-body-bg: var(--feb-surface);
+    --bs-body-bg-rgb: var(--feb-surface-rgb);
+    --bs-body-color: var(--feb-text);
+    --bs-body-color-rgb: var(--feb-text-rgb);
+    --bs-emphasis-color: var(--feb-text);
+    --bs-emphasis-color-rgb: var(--feb-text-rgb);
+    --bs-heading-color: var(--feb-text);
+    --bs-secondary-color: var(--feb-text-muted);
+    --bs-secondary-color-rgb: var(--feb-text-muted-rgb);
+    --bs-tertiary-color: var(--feb-text-subtle);
+    --bs-tertiary-color-rgb: var(--feb-text-subtle-rgb);
+    --bs-secondary-bg: var(--feb-surface-3);
+    --bs-secondary-bg-rgb: var(--feb-surface-3-rgb);
+    --bs-tertiary-bg: var(--feb-surface-2);
+    --bs-tertiary-bg-rgb: var(--feb-surface-2-rgb);
+
+    --bs-border-color: var(--feb-border);
+    --bs-border-color-translucent: var(--feb-border);
+    --bs-border-radius: var(--feb-radius);
+    --bs-border-radius-sm: var(--feb-radius-sm);
+    --bs-border-radius-lg: var(--feb-radius-lg);
+    --bs-border-radius-xl: var(--feb-radius-xl);
+    --bs-box-shadow: var(--feb-shadow-md);
+    --bs-box-shadow-sm: var(--feb-shadow-sm);
+    --bs-box-shadow-lg: var(--feb-shadow-lg);
+
+    --bs-link-color: var(--feb-primary-text);
+    --bs-link-color-rgb: var(--feb-primary-text-rgb);
+    --bs-link-hover-color: var(--feb-primary-text);
+    --bs-link-hover-color-rgb: var(--feb-primary-text-rgb);
+    --bs-focus-ring-color: var(--feb-focus-ring);
+    --bs-code-color: var(--feb-danger-text);
+
+    --bs-primary: var(--feb-primary);
+    --bs-primary-rgb: var(--feb-primary-rgb);
+    --bs-secondary: var(--feb-neutral);
+    --bs-secondary-rgb: var(--feb-neutral-rgb);
+    --bs-success: var(--feb-success);
+    --bs-success-rgb: var(--feb-success-rgb);
+    --bs-info: var(--feb-info);
+    --bs-info-rgb: var(--feb-info-rgb);
+    --bs-warning: var(--feb-warning);
+    --bs-warning-rgb: var(--feb-warning-rgb);
+    --bs-danger: var(--feb-danger);
+    --bs-danger-rgb: var(--feb-danger-rgb);
+    /* "light" and "dark" follow the colour scheme: a light fill and the text colour */
+    --bs-light: var(--feb-surface-2);
+    --bs-light-rgb: var(--feb-surface-2-rgb);
+    --bs-dark: var(--feb-text);
+    --bs-dark-rgb: var(--feb-text-rgb);
+
+    --bs-primary-text-emphasis: var(--feb-primary-text);
+    --bs-primary-bg-subtle: var(--feb-primary-subtle);
+    --bs-primary-border-subtle: var(--feb-primary-subtle-border);
+    --bs-secondary-text-emphasis: var(--feb-text-muted);
+    --bs-secondary-bg-subtle: var(--feb-surface-2);
+    --bs-secondary-border-subtle: var(--feb-border);
+    --bs-success-text-emphasis: var(--feb-success-text);
+    --bs-success-bg-subtle: color-mix(in srgb, var(--feb-success) 12%, var(--feb-surface));
+    --bs-success-border-subtle: color-mix(in srgb, var(--feb-success) 32%, var(--feb-surface));
+    --bs-info-text-emphasis: var(--feb-info-text);
+    --bs-info-bg-subtle: color-mix(in srgb, var(--feb-info) 10%, var(--feb-surface));
+    --bs-info-border-subtle: color-mix(in srgb, var(--feb-info) 30%, var(--feb-surface));
+    --bs-warning-text-emphasis: var(--feb-warning-text);
+    --bs-warning-bg-subtle: color-mix(in srgb, var(--feb-warning) 16%, var(--feb-surface));
+    --bs-warning-border-subtle: color-mix(in srgb, var(--feb-warning) 45%, var(--feb-surface));
+    --bs-danger-text-emphasis: var(--feb-danger-text);
+    --bs-danger-bg-subtle: color-mix(in srgb, var(--feb-danger) 10%, var(--feb-surface));
+    --bs-danger-border-subtle: color-mix(in srgb, var(--feb-danger) 30%, var(--feb-surface));
+    --bs-light-text-emphasis: var(--feb-text-muted);
+    --bs-light-bg-subtle: var(--feb-surface-2);
+    --bs-light-border-subtle: var(--feb-border);
+    --bs-dark-text-emphasis: var(--feb-text);
+    --bs-dark-bg-subtle: var(--feb-surface-3);
+    --bs-dark-border-subtle: var(--feb-border-strong);
+
+    --bs-form-valid-color: var(--feb-success-text);
+    --bs-form-valid-border-color: var(--feb-success);
+    --bs-form-invalid-color: var(--feb-danger-text);
+    --bs-form-invalid-border-color: var(--feb-danger);
+}
+
+body {
+    background-color: var(--feb-canvas);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+    font-weight: var(--feb-font-weight-strong);
+    letter-spacing: -.01em;
+}
+
+/* Links carry no underline in the interface; a plain text link shows one on hover */
+a {
+    text-decoration: none;
+}
+
+a:not([class]):hover {
+    text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------ Coloured text and fills */
+
+/* Bootstrap colours text with the fill colour, which is too light for a warning and too dark
+   for most colours in the dark scheme */
+.text-primary { color: var(--feb-primary-text) !important; }
+.text-success { color: var(--feb-success-text) !important; }
+.text-info { color: var(--feb-info-text) !important; }
+.text-warning { color: var(--feb-warning-text) !important; }
+.text-danger { color: var(--feb-danger-text) !important; }
+.text-secondary { color: var(--feb-text-muted) !important; }
+
+/* Text on a fill: compiled in as black or white for Bootstrap's default palette */
+.text-bg-primary { color: var(--feb-on-primary) !important; }
+.text-bg-info,
+.text-bg-secondary,
+.text-bg-success,
+.text-bg-danger { color: #fff !important; }
+.text-bg-warning { color: var(--feb-on-warning) !important; }
+.text-bg-light { color: var(--feb-text) !important; }
+.text-bg-dark { color: var(--feb-surface) !important; }
+
+.badge {
+    --bs-badge-font-weight: var(--feb-font-weight-strong);
+    --bs-badge-border-radius: var(--feb-radius-sm);
+    --bs-badge-padding-x: .55em;
+    --bs-badge-padding-y: .32em;
+}
+
+.badge.bg-warning { --bs-badge-color: var(--feb-on-warning); }
+.badge.bg-light { --bs-badge-color: var(--feb-text); }
+.badge.bg-dark { --bs-badge-color: var(--feb-surface); }
+
+/* ------------------------------------------------------------------ Buttons */
+
+.btn {
+    --bs-btn-font-size: var(--feb-font-size);
+    --bs-btn-font-weight: var(--feb-font-weight-medium);
+    --bs-btn-padding-x: .85rem;
+    --bs-btn-padding-y: .4rem;
+    --bs-btn-border-radius: var(--feb-radius);
+    --bs-btn-focus-box-shadow: 0 0 0 .2rem var(--feb-focus-ring);
+}
+
+.btn-sm,
+.btn-group-sm > .btn {
+    --bs-btn-font-size: var(--feb-font-size-sm);
+    --bs-btn-padding-x: .6rem;
+    --bs-btn-padding-y: .25rem;
+    --bs-btn-border-radius: var(--feb-radius-sm);
+}
+
+.btn-lg,
+.btn-group-lg > .btn {
+    --bs-btn-border-radius: var(--feb-radius-lg);
+}
+
+/* Each coloured variant names its fill, the text on it and the colour it has as text; the
+   shared rules below derive hover, active and disabled states from those three. */
+.btn-primary, .btn-outline-primary { --feb-btn-fill: var(--feb-primary); --feb-btn-on: var(--feb-on-primary); --feb-btn-ink: var(--feb-primary-text); }
+.btn-success, .btn-outline-success { --feb-btn-fill: var(--feb-success); --feb-btn-on: #fff; --feb-btn-ink: var(--feb-success-text); }
+.btn-info, .btn-outline-info { --feb-btn-fill: var(--feb-info); --feb-btn-on: #fff; --feb-btn-ink: var(--feb-info-text); }
+.btn-warning, .btn-outline-warning { --feb-btn-fill: var(--feb-warning); --feb-btn-on: var(--feb-on-warning); --feb-btn-ink: var(--feb-warning-text); }
+.btn-danger, .btn-outline-danger { --feb-btn-fill: var(--feb-danger); --feb-btn-on: #fff; --feb-btn-ink: var(--feb-danger-text); }
+
+.btn-primary,
+.btn-success,
+.btn-info,
+.btn-warning,
+.btn-danger {
+    --bs-btn-color: var(--feb-btn-on);
+    --bs-btn-bg: var(--feb-btn-fill);
+    --bs-btn-border-color: var(--feb-btn-fill);
+    --bs-btn-hover-color: var(--feb-btn-on);
+    --bs-btn-hover-bg: color-mix(in srgb, var(--feb-btn-fill) 88%, #000);
+    --bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+    --bs-btn-active-color: var(--feb-btn-on);
+    --bs-btn-active-bg: color-mix(in srgb, var(--feb-btn-fill) 78%, #000);
+    --bs-btn-active-border-color: var(--bs-btn-active-bg);
+    --bs-btn-disabled-color: var(--feb-btn-on);
+    --bs-btn-disabled-bg: var(--feb-btn-fill);
+    --bs-btn-disabled-border-color: var(--feb-btn-fill);
+    box-shadow: var(--feb-shadow-xs);
+}
+
+.btn-outline-primary,
+.btn-outline-success,
+.btn-outline-info,
+.btn-outline-warning,
+.btn-outline-danger {
+    --bs-btn-color: var(--feb-btn-ink);
+    --bs-btn-border-color: color-mix(in srgb, var(--feb-btn-ink) 45%, var(--feb-surface));
+    --bs-btn-hover-color: var(--feb-btn-ink);
+    --bs-btn-hover-bg: color-mix(in srgb, var(--feb-btn-ink) 10%, var(--feb-surface));
+    --bs-btn-hover-border-color: var(--feb-btn-ink);
+    --bs-btn-active-color: var(--feb-btn-ink);
+    --bs-btn-active-bg: color-mix(in srgb, var(--feb-btn-ink) 18%, var(--feb-surface));
+    --bs-btn-active-border-color: var(--feb-btn-ink);
+    --bs-btn-disabled-color: var(--feb-btn-ink);
+    --bs-btn-disabled-border-color: color-mix(in srgb, var(--feb-btn-ink) 45%, var(--feb-surface));
+}
+
+/* The neutral button: the default for everything that is not the main action */
+.btn-secondary,
+.btn-light,
+.btn-outline-secondary,
+.btn-outline-dark,
+.btn-outline-light {
+    --bs-btn-color: var(--feb-text);
+    --bs-btn-bg: var(--feb-surface);
+    --bs-btn-border-color: var(--feb-border-strong);
+    --bs-btn-hover-color: var(--feb-text);
+    --bs-btn-hover-bg: var(--feb-surface-2);
+    --bs-btn-hover-border-color: var(--feb-border-strong);
+    --bs-btn-active-color: var(--feb-text);
+    --bs-btn-active-bg: var(--feb-surface-3);
+    --bs-btn-active-border-color: var(--feb-border-strong);
+    --bs-btn-disabled-color: var(--feb-text-subtle);
+    --bs-btn-disabled-bg: var(--feb-surface);
+    --bs-btn-disabled-border-color: var(--feb-border);
+}
+
+.btn-secondary,
+.btn-light {
+    box-shadow: var(--feb-shadow-xs);
+}
+
+.btn-outline-secondary,
+.btn-outline-dark,
+.btn-outline-light {
+    --bs-btn-color: var(--feb-text-muted);
+    --bs-btn-bg: transparent;
+    --bs-btn-disabled-bg: transparent;
+}
+
+.btn-dark {
+    --bs-btn-color: var(--feb-surface);
+    --bs-btn-bg: var(--feb-text);
+    --bs-btn-border-color: var(--feb-text);
+    --bs-btn-hover-color: var(--feb-surface);
+    --bs-btn-hover-bg: color-mix(in srgb, var(--feb-text) 85%, var(--feb-surface));
+    --bs-btn-hover-border-color: var(--bs-btn-hover-bg);
+    --bs-btn-active-color: var(--feb-surface);
+    --bs-btn-active-bg: color-mix(in srgb, var(--feb-text) 75%, var(--feb-surface));
+    --bs-btn-active-border-color: var(--bs-btn-active-bg);
+    --bs-btn-disabled-color: var(--feb-surface);
+    --bs-btn-disabled-bg: var(--feb-text);
+    --bs-btn-disabled-border-color: var(--feb-text);
+}
+
+.btn-link {
+    --bs-btn-color: var(--feb-primary-text);
+    --bs-btn-hover-color: var(--feb-primary-text);
+    --bs-btn-active-color: var(--feb-primary-text);
+    --bs-btn-disabled-color: var(--feb-text-subtle);
+    text-decoration: none;
+}
+
+/* ------------------------------------------------------------------ Forms */
+
+.form-control,
+.form-select {
+    border-color: var(--feb-border-strong);
+}
+
+/* Fields keep Bootstrap's 1rem on touch screens: iOS zooms into anything smaller on focus */
+@media (hover: hover) and (pointer: fine) {
+    .form-control:not(.form-control-sm):not(.form-control-lg),
+    .form-select:not(.form-select-sm):not(.form-select-lg),
+    .input-group-text {
+        font-size: var(--feb-font-size);
+    }
+}
+
+.form-control::placeholder {
+    color: var(--feb-text-subtle);
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+    border-color: var(--feb-primary-text);
+    box-shadow: 0 0 0 .2rem var(--feb-focus-ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+    background-color: var(--feb-surface-2);
+    color: var(--feb-text-muted);
+}
+
+.form-label,
+.col-form-label {
+    font-weight: var(--feb-font-weight-medium);
+}
+
+.form-text {
+    color: var(--feb-text-muted);
+}
+
+.input-group-text {
+    background-color: var(--feb-surface-2);
+    border-color: var(--feb-border-strong);
+    color: var(--feb-text-muted);
+}
+
+.form-check-input {
+    border-color: var(--feb-border-strong);
+}
+
+.form-check-input:checked,
+.form-check-input[type="checkbox"]:indeterminate {
+    background-color: var(--feb-primary);
+    border-color: var(--feb-primary);
+}
+
+/* The switch's knob turns blue on focus in Bootstrap; keep the neutral one */
+.form-switch .form-check-input:focus:not(:checked) {
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28128, 128, 128, 0.6%29'/%3e%3c/svg%3e");
+}
+
+.form-range::-webkit-slider-thumb {
+    background-color: var(--feb-primary);
+}
+
+.form-range::-moz-range-thumb {
+    background-color: var(--feb-primary);
+}
+
+.form-range:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 1px var(--feb-surface), 0 0 0 .2rem var(--feb-focus-ring);
+}
+
+.form-range:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 1px var(--feb-surface), 0 0 0 .2rem var(--feb-focus-ring);
+}
+
+/* ------------------------------------------------------------------ Containers */
+
+.card {
+    --bs-card-border-color: var(--feb-border);
+    --bs-card-border-radius: var(--feb-radius-lg);
+    --bs-card-inner-border-radius: calc(var(--feb-radius-lg) - 1px);
+    --bs-card-cap-bg: transparent;
+    box-shadow: var(--feb-shadow-xs);
+}
+
+.card-header {
+    font-weight: var(--feb-font-weight-strong);
+}
+
+.modal {
+    --bs-modal-border-color: var(--feb-border);
+    --bs-modal-border-radius: var(--feb-radius-xl);
+    --bs-modal-inner-border-radius: calc(var(--feb-radius-xl) - 1px);
+    --bs-modal-header-border-color: var(--feb-border);
+    --bs-modal-footer-border-color: var(--feb-border);
+    --bs-modal-box-shadow: var(--feb-shadow-lg);
+}
+
+.modal-content {
+    box-shadow: var(--feb-shadow-lg);
+}
+
+.modal-title {
+    font-size: 1.05rem;
+    font-weight: var(--feb-font-weight-strong);
+}
+
+.modal-backdrop {
+    --bs-backdrop-bg: rgb(var(--feb-shadow-rgb));
+    --bs-backdrop-opacity: .45;
+}
+
+.offcanvas,
+.offcanvas-sm,
+.offcanvas-md,
+.offcanvas-lg,
+.offcanvas-xl,
+.offcanvas-xxl {
+    --bs-offcanvas-border-color: var(--feb-border);
+    --bs-offcanvas-box-shadow: var(--feb-shadow-lg);
+}
+
+.dropdown-menu {
+    --bs-dropdown-font-size: var(--feb-font-size);
+    --bs-dropdown-border-color: var(--feb-border);
+    --bs-dropdown-border-radius: var(--feb-radius-lg);
+    --bs-dropdown-inner-border-radius: calc(var(--feb-radius-lg) - 1px);
+    --bs-dropdown-padding-y: .375rem;
+    --bs-dropdown-divider-bg: var(--feb-border);
+    --bs-dropdown-link-hover-bg: var(--feb-surface-2);
+    --bs-dropdown-link-active-color: var(--feb-primary-text);
+    --bs-dropdown-link-active-bg: var(--feb-primary-subtle);
+    --bs-dropdown-header-color: var(--feb-text-muted);
+    box-shadow: var(--feb-shadow-md);
+}
+
+.popover {
+    --bs-popover-font-size: var(--feb-font-size);
+    --bs-popover-border-color: var(--feb-border);
+    --bs-popover-border-radius: var(--feb-radius-lg);
+    --bs-popover-inner-border-radius: calc(var(--feb-radius-lg) - 1px);
+    --bs-popover-header-bg: var(--feb-surface-2);
+    --bs-popover-box-shadow: var(--feb-shadow-md);
+    box-shadow: var(--feb-shadow-md);
+}
+
+.popover-header {
+    font-size: var(--feb-font-size);
+    font-weight: var(--feb-font-weight-strong);
+}
+
+.tooltip {
+    --bs-tooltip-font-size: var(--feb-font-size-sm);
+    --bs-tooltip-border-radius: var(--feb-radius-sm);
+}
+
+.alert {
+    --bs-alert-border-radius: var(--feb-radius-lg);
+}
+
+.accordion {
+    --bs-accordion-border-color: var(--feb-border);
+    --bs-accordion-border-radius: var(--feb-radius-lg);
+    --bs-accordion-inner-border-radius: calc(var(--feb-radius-lg) - 1px);
+    --bs-accordion-active-color: var(--feb-text);
+    --bs-accordion-active-bg: var(--feb-surface-2);
+    --bs-accordion-btn-focus-box-shadow: 0 0 0 .2rem var(--feb-focus-ring);
+    --bs-accordion-btn-active-icon: var(--bs-accordion-btn-icon);
+}
+
+.accordion-button {
+    font-size: var(--feb-font-size);
+    font-weight: var(--feb-font-weight-medium);
+}
+
+.list-group {
+    --bs-list-group-border-color: var(--feb-border);
+    --bs-list-group-border-radius: var(--feb-radius-lg);
+    --bs-list-group-action-hover-bg: var(--feb-surface-2);
+    --bs-list-group-action-active-bg: var(--feb-surface-3);
+    --bs-list-group-active-color: var(--feb-on-primary);
+    --bs-list-group-active-bg: var(--feb-primary);
+    --bs-list-group-active-border-color: var(--feb-primary);
+}
+
+.progress,
+.progress-stacked {
+    --bs-progress-bg: var(--feb-surface-3);
+    --bs-progress-bar-bg: var(--feb-primary);
+}
+
+/* ------------------------------------------------------------------ Navigation elements */
+
+/* Tabs as an underlined row instead of folder tabs */
+.nav-tabs {
+    --bs-nav-tabs-border-color: var(--feb-border);
+    --bs-nav-tabs-border-radius: 0;
+    --bs-nav-tabs-link-hover-border-color: transparent transparent var(--feb-border-strong);
+    --bs-nav-tabs-link-active-color: var(--feb-primary-text);
+    --bs-nav-tabs-link-active-bg: transparent;
+    --bs-nav-tabs-link-active-border-color: transparent transparent var(--feb-primary-text);
+    --bs-nav-link-color: var(--feb-text-muted);
+    --bs-nav-link-hover-color: var(--feb-text);
+}
+
+.nav-tabs .nav-link {
+    border-width: 0 0 2px;
+    font-weight: var(--feb-font-weight-medium);
+}
+
+.nav-pills {
+    --bs-nav-pills-border-radius: var(--feb-radius);
+    --bs-nav-pills-link-active-color: var(--feb-on-primary);
+    --bs-nav-pills-link-active-bg: var(--feb-primary);
+}
+
+.pagination {
+    --bs-pagination-font-size: var(--feb-font-size);
+    --bs-pagination-color: var(--feb-text);
+    --bs-pagination-bg: var(--feb-surface);
+    --bs-pagination-border-color: var(--feb-border);
+    --bs-pagination-border-radius: var(--feb-radius);
+    --bs-pagination-hover-color: var(--feb-text);
+    --bs-pagination-hover-bg: var(--feb-surface-2);
+    --bs-pagination-hover-border-color: var(--feb-border);
+    --bs-pagination-focus-color: var(--feb-text);
+    --bs-pagination-focus-bg: var(--feb-surface-2);
+    --bs-pagination-focus-box-shadow: 0 0 0 .2rem var(--feb-focus-ring);
+    --bs-pagination-active-color: var(--feb-on-primary);
+    --bs-pagination-active-bg: var(--feb-primary);
+    --bs-pagination-active-border-color: var(--feb-primary);
+    --bs-pagination-disabled-color: var(--feb-text-subtle);
+    --bs-pagination-disabled-bg: var(--feb-surface);
+    --bs-pagination-disabled-border-color: var(--feb-border);
+}
+
+/* ------------------------------------------------------------------ Tables */
+
+.table {
+    --bs-table-border-color: var(--feb-border);
+    --bs-table-hover-bg: var(--feb-surface-2);
+    --bs-table-hover-color: var(--feb-text);
+    --bs-table-striped-bg: rgba(var(--feb-text-rgb), .025);
+    --bs-table-striped-color: var(--feb-text);
+    --bs-table-active-bg: var(--feb-surface-3);
+    --bs-table-active-color: var(--feb-text);
+}
+
+/* Compiled in for the light scheme only */
+.table-light,
+.table-secondary,
+.table-danger,
+.table-warning,
+.table-success,
+.table-info,
+.table-primary {
+    --bs-table-color: var(--feb-text);
+    --bs-table-border-color: var(--feb-border);
+    --bs-table-striped-color: var(--feb-text);
+    --bs-table-active-color: var(--feb-text);
+    --bs-table-hover-color: var(--feb-text);
+    --bs-table-striped-bg: color-mix(in srgb, var(--bs-table-bg) 96%, var(--feb-text));
+    --bs-table-active-bg: color-mix(in srgb, var(--bs-table-bg) 90%, var(--feb-text));
+    --bs-table-hover-bg: color-mix(in srgb, var(--bs-table-bg) 94%, var(--feb-text));
+}
+
+.table-light { --bs-table-bg: var(--feb-surface-2); }
+.table-secondary { --bs-table-bg: var(--feb-surface-3); }
+.table-primary { --bs-table-bg: var(--bs-primary-bg-subtle); }
+.table-success { --bs-table-bg: var(--bs-success-bg-subtle); }
+.table-info { --bs-table-bg: var(--bs-info-bg-subtle); }
+.table-warning { --bs-table-bg: var(--bs-warning-bg-subtle); }
+.table-danger { --bs-table-bg: var(--bs-danger-bg-subtle); }

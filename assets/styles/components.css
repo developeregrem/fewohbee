@@ -1,0 +1,310 @@
+/*
+ * Building blocks shared by the pages: a list of records as a card (toolbar, table, footer),
+ * small pieces used inside it. Everything is built from the design tokens.
+ */
+
+/* ------------------------------------------------------------------ Record list */
+
+/* A sheet holding toolbar, table and footer of one list */
+.data-card {
+    overflow: hidden;
+}
+
+.data-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--feb-border);
+}
+
+.data-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem 1rem;
+    padding: .75rem 1rem;
+    border-top: 1px solid var(--feb-border);
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+}
+
+.data-footer .pagination {
+    flex-wrap: wrap;
+    row-gap: .25rem;
+    margin: 0;
+}
+
+.data-table {
+    margin: 0;
+}
+
+.data-table > thead {
+    --bs-table-bg: var(--feb-surface-2);
+}
+
+.data-table > thead > tr > th {
+    padding: .5rem 1rem;
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+    font-weight: var(--feb-font-weight-strong);
+    white-space: nowrap;
+}
+
+.data-table > tbody > tr > td {
+    padding: .5rem 1rem;
+}
+
+.data-table > tbody > tr:last-child > td {
+    border-bottom-width: 0;
+}
+
+/* The cell that names the record; opens it */
+.data-table-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .75rem;
+    min-width: 0;
+    color: inherit;
+}
+
+.data-table-link-text {
+    min-width: 0;
+    font-weight: var(--feb-font-weight-strong);
+    overflow-wrap: anywhere;
+}
+
+.data-table-link:hover .data-table-link-text {
+    color: var(--feb-primary-text);
+}
+
+.data-table-actions {
+    width: 1%;
+    white-space: nowrap;
+}
+
+/* The record's number: present for those who look for it, out of the way for everyone else */
+.data-table > thead > tr > .data-table-id,
+.data-table > tbody > tr > .data-table-id {
+    width: 1%;
+    padding-right: 0;
+    color: var(--feb-text-subtle);
+    font-size: var(--feb-font-size-sm);
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+    white-space: nowrap;
+}
+
+/*
+ * data-table-stack: below md each row becomes a block of its own instead of a line of cells -
+ * the name first, the cells marked cell-meta as muted lines beneath it, the actions at the
+ * right. Cells without content take no room; cell-wide only shows in the table layout.
+ */
+@media (max-width: 767.98px) {
+    .data-table-stack {
+        --bs-table-bg: transparent;
+        --bs-table-hover-bg: transparent;
+    }
+
+    .data-table-stack > thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+
+    .data-table-stack > tbody > tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        column-gap: .5rem;
+        align-items: center;
+        padding: .625rem .5rem .625rem 1rem;
+        border-bottom: 1px solid var(--feb-border);
+    }
+
+    .data-table-stack > tbody > tr:last-child {
+        border-bottom: 0;
+    }
+
+    .data-table-stack > tbody > tr > td {
+        display: block;
+        grid-column: 1;
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        text-align: start !important;
+    }
+
+    .data-table-stack > tbody > tr > td:empty,
+    .data-table-stack .cell-wide {
+        display: none;
+    }
+
+    .data-table-stack > tbody > tr > .cell-meta {
+        /* In line with the name next to the avatar */
+        padding-left: 3rem;
+        color: var(--feb-text-muted);
+        font-size: var(--feb-font-size-sm);
+    }
+
+    /* First column of the table, last line of the block */
+    .data-table-stack > tbody > tr > .data-table-id {
+        order: 1;
+        color: var(--feb-text-subtle);
+    }
+
+    .data-table-stack > tbody > tr > .cell-actions {
+        grid-row: 1 / span 6;
+        grid-column: 2;
+        width: auto;
+    }
+}
+
+@media (min-width: 768px) {
+    .data-table-stack .cell-narrow {
+        display: none;
+    }
+}
+
+/* ------------------------------------------------------------------ Forms */
+
+/*
+ * Label-and-field rows written one after the other without a margin of their own: they were
+ * kept apart by the tall fields of the former theme. Transitional - rows built with the form
+ * theme or with a spacing class bring their own margin and are left alone.
+ */
+.row:not([class*="mb-"]):has(> .col-form-label) + .row:not([class*="mt-"]):has(> .col-form-label) {
+    margin-top: .625rem;
+}
+
+/* ------------------------------------------------------------------ Small pieces */
+
+/* A search field with the magnifier inside */
+.search-field {
+    position: relative;
+    flex: 1 1 16rem;
+    max-width: 28rem;
+}
+
+.search-field-icon {
+    position: absolute;
+    top: 50%;
+    left: .8rem;
+    color: var(--feb-text-subtle);
+    font-size: .85rem;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.search-field .form-control {
+    padding-left: 2.25rem;
+}
+
+/* Initials of a person */
+.avatar {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background-color: var(--feb-primary-subtle);
+    color: var(--feb-primary-text);
+    font-size: .8rem;
+    font-weight: var(--feb-font-weight-strong);
+    text-transform: uppercase;
+}
+
+/* A button that is only an icon; needs a title */
+.btn-icon {
+    --bs-btn-color: var(--feb-text-muted);
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: var(--feb-text);
+    --bs-btn-hover-bg: var(--feb-surface-3);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--feb-text);
+    --bs-btn-active-bg: var(--feb-surface-3);
+    --bs-btn-active-border-color: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+}
+
+@media (pointer: coarse) {
+    .btn-icon {
+        width: 2.75rem;
+        height: 2.75rem;
+    }
+}
+
+/* Shown in place of a list that has no entries */
+.empty-state {
+    padding: 3rem 1rem;
+    color: var(--feb-text-muted);
+    text-align: center;
+}
+
+.empty-state-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    margin-bottom: .75rem;
+    border-radius: 50%;
+    background-color: var(--feb-surface-2);
+    color: var(--feb-text-subtle);
+    font-size: 1.25rem;
+}
+
+.empty-state-title {
+    margin: 0;
+    color: var(--feb-text);
+    font-weight: var(--feb-font-weight-strong);
+}
+
+/* ------------------------------------------------------------------ Styleguide (dev only) */
+
+.styleguide-scheme {
+    padding: 1.25rem;
+    border: 1px solid var(--feb-border);
+    border-radius: var(--feb-radius-xl);
+    background-color: var(--feb-canvas);
+    color: var(--feb-text);
+}
+
+.styleguide-heading {
+    margin: 1.5rem 0 .625rem;
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.styleguide-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: .5rem;
+}
+
+.styleguide-swatch {
+    width: 5.5rem;
+    color: var(--feb-text-muted);
+    font-size: .72rem;
+}
+
+.styleguide-swatch > span {
+    display: block;
+    height: 2.5rem;
+    margin-bottom: .25rem;
+    border: 1px solid var(--feb-border);
+    border-radius: var(--feb-radius);
+}

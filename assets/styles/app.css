@@ -1,3 +1,9 @@
+/*
+ * Views and components that are specific to FewohBee. Colours, shapes and type come from the
+ * design tokens (tokens.css, mapped onto Bootstrap in bridge.css); the application frame is in
+ * shell.css. Only colours with a meaning of their own (the brand, reservation states) are
+ * defined here.
+ */
 :root,
 [data-bs-theme="light"] {
     --fewohbee-blue-dark: #00203b;
@@ -8,17 +14,11 @@
     --fewohbee-orange-light: #ffb11a;
     --fewohbee-wordmark-blue: var(--fewohbee-blue);
     --fewohbee-wordmark-orange: var(--fewohbee-orange);
-    --feb-surface: #f5f5f5;
-    --feb-surface-border: #d3d3d3;
-    --feb-border-strong: #666;
-    --feb-border-muted: #ddd;
     --feb-reservation-text: #fff;
     --feb-reservation-confirmed-bg: #2d9434;
     --feb-reservation-option-bg: #f6e95c;
     --feb-reservation-option-text: #666;
     --feb-reservation-option-border: #999;
-    --feb-weekend-bg: #eee;
-    --feb-selection-bg: #f5f5f5;
     --feb-ui-selecting-bg: #feca40;
     --feb-ui-selected-bg: #f39814;
 }
@@ -26,194 +26,27 @@
 [data-bs-theme="dark"] {
     --fewohbee-wordmark-blue: #78bced;
     --fewohbee-wordmark-orange: var(--fewohbee-orange-light);
-    --feb-surface: #1f2226;
-    --feb-surface-border: #3a3f45;
-    --feb-border-strong: #9aa0a6;
-    --feb-border-muted: #444a52;
     --feb-reservation-text: #f8f9fa;
     --feb-reservation-confirmed-bg: #2e7d32;
     --feb-reservation-option-bg: #bfa23a;
     --feb-reservation-option-text: #1b1b1b;
     --feb-reservation-option-border: #9f8732;
-    --feb-weekend-bg: #3a3f44;
-    --feb-selection-bg: #2a2f33;
     --feb-ui-selecting-bg: #b77724;
     --feb-ui-selected-bg: #c06a1b;
-    --bs-primary: #1f4b8f;
-    --bs-primary-rgb: 31, 75, 143;
 }
 
-[data-bs-theme="light"] .navbar.bg-primary {
-    --bs-navbar-color: rgba(255, 255, 255, 0.85);
-    --bs-navbar-hover-color: rgba(255, 255, 255, 1);
-    --bs-navbar-active-color: rgba(255, 255, 255, 1);
-    --bs-navbar-brand-color: rgba(255, 255, 255, 1);
-    --bs-navbar-brand-hover-color: rgba(255, 255, 255, 1);
-    /* Menu button in white like the rest of the bar, without a frame */
-    --bs-navbar-toggler-border-color: transparent;
-    --bs-navbar-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-}
-
-/* No thick focus ring around the menu button after a tap; keyboard focus keeps it */
-.navbar.bg-primary .navbar-toggler:focus:not(:focus-visible) {
-    box-shadow: none;
-}
-
-[data-bs-theme="dark"] .navbar.bg-primary {
-    --bs-navbar-color: rgba(var(--bs-body-color-rgb), 0.85);
-    --bs-navbar-hover-color: rgba(var(--bs-body-color-rgb), 1);
-    --bs-navbar-active-color: rgba(var(--bs-body-color-rgb), 1);
-    --bs-navbar-brand-color: rgba(var(--bs-body-color-rgb), 1);
-    --bs-navbar-brand-hover-color: rgba(var(--bs-body-color-rgb), 1);
-    --bs-navbar-toggler-border-color: rgba(var(--bs-body-color-rgb), 0.2);
-}
-
-/*
- * Main navigation: below xl the links slide in from the side (offcanvas, base.html.twig) on
- * the page's own colours instead of the blue bar; notifications and the user menu stay in
- * the bar (.navbar-quick), so their dropdowns float instead of opening inline. On touch
- * screens main_nav_controller.js lowers the breakpoint to lg, so a tablet held sideways
- * keeps the full bar. The rules below are tied to the expand class in use.
- */
-.main-nav-offcanvas {
-    --bs-offcanvas-width: min(20rem, 85vw);
-}
-
-.navbar-quick {
-    flex-wrap: nowrap;
-    flex-shrink: 0;
-}
-
-@media (max-width: 1199.98px) {
-    .navbar.navbar-expand-xl .main-nav-offcanvas {
-        --bs-navbar-color: var(--bs-body-color);
-        --bs-navbar-hover-color: var(--bs-primary);
-        --bs-navbar-active-color: var(--bs-primary);
-        color: var(--bs-body-color);
-    }
-
-    .navbar.navbar-expand-xl .main-nav-offcanvas .nav-item.active > .nav-link {
-        color: var(--bs-primary);
-        font-weight: 500;
-    }
-
-    .navbar.navbar-expand-xl .main-nav-offcanvas .dropdown-menu {
-        border: 0;
-        box-shadow: none;
-        padding-top: 0;
-        padding-left: 1.75rem;
-    }
-
-    /* Brand, quick bar and menu button share one line; a long page title gives way */
-    .navbar.navbar-expand-xl > .container-fluid {
-        flex-wrap: nowrap;
-    }
-
-    .navbar.navbar-expand-xl .navbar-brand {
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .navbar.navbar-expand-xl .navbar-quick .nav-item {
-        position: relative;
-    }
-
-    .navbar.navbar-expand-xl .navbar-quick .dropdown-menu {
-        position: absolute;
-        right: 0;
-        left: auto;
-    }
-}
-
-@media (max-width: 991.98px) {
-    .navbar.navbar-expand-lg .main-nav-offcanvas {
-        --bs-navbar-color: var(--bs-body-color);
-        --bs-navbar-hover-color: var(--bs-primary);
-        --bs-navbar-active-color: var(--bs-primary);
-        color: var(--bs-body-color);
-    }
-
-    .navbar.navbar-expand-lg .main-nav-offcanvas .nav-item.active > .nav-link {
-        color: var(--bs-primary);
-        font-weight: 500;
-    }
-
-    .navbar.navbar-expand-lg .main-nav-offcanvas .dropdown-menu {
-        border: 0;
-        box-shadow: none;
-        padding-top: 0;
-        padding-left: 1.75rem;
-    }
-
-    /* Brand, quick bar and menu button share one line; a long page title gives way */
-    .navbar.navbar-expand-lg > .container-fluid {
-        flex-wrap: nowrap;
-    }
-
-    .navbar.navbar-expand-lg .navbar-brand {
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .navbar.navbar-expand-lg .navbar-quick .nav-item {
-        position: relative;
-    }
-
-    .navbar.navbar-expand-lg .navbar-quick .dropdown-menu {
-        position: absolute;
-        right: 0;
-        left: auto;
-    }
-}
-
-/* Touch screens between lg and xl (a tablet held sideways): full bar; the links wrap
-   between page title and quick bar if needed, the side menu's icons and divider stay hidden */
-@media (min-width: 992px) and (max-width: 1199.98px) {
-    .navbar.navbar-expand-lg .main-nav-offcanvas {
-        flex: 1 1 auto;
-        min-width: 0;
-    }
-
-    .navbar.navbar-expand-lg .offcanvas-body,
-    .navbar.navbar-expand-lg .offcanvas-body .navbar-nav {
-        flex-wrap: wrap;
-    }
-
-    .navbar.navbar-expand-lg .main-nav-offcanvas .d-xl-none {
-        display: none !important;
-    }
-}
-
-[data-bs-theme="dark"] .btn-secondary {
-    --bs-btn-color: #fff;
-    --bs-btn-bg: var(--bs-secondary-bg);
-    --bs-btn-border-color: var(--bs-secondary-bg);
-    --bs-btn-hover-bg: #2f3338;
-    --bs-btn-hover-border-color: #2f3338;
-    --bs-btn-active-bg: #3a3f45;
-    --bs-btn-active-border-color: #3a3f45;
-}
-
-body {
-    font-size: 0.9rem
+/* Lines and fills of the reservation tables, taken from the theme */
+:root,
+[data-bs-theme="light"],
+[data-bs-theme="dark"] {
+    --feb-grid-line: var(--feb-border);
+    --feb-grid-line-strong: var(--feb-text-muted);
+    --feb-weekend-bg: var(--feb-surface-3);
+    --feb-selection-bg: var(--feb-surface-2);
 }
 
 .hk-row-form {
     display: contents;
-}
-
-.btn {
-    font-size: 0.9rem;
-}
-
-.dropdown-menu {
-    font-size: 0.9rem;
-}
-
-.popover-body, .popover-header {
-    font-size: 0.9rem;
 }
 
 /* Reservation popover: grow with the content within the viewport;
@@ -235,7 +68,7 @@ body {
 }
 
 .login {
-    border-color: var(--feb-surface-border);
+    border-color: var(--feb-border);
     border-width: 1px;
     border-style: solid;
     border-radius: 15px;
@@ -267,7 +100,7 @@ body {
 }
 
 #reservation-table tbody td.day-start {
-    border-left: 1px solid var(--feb-border-muted) !important;
+    border-left: 1px solid var(--feb-grid-line) !important;
 }
 
 .td-half {
@@ -280,8 +113,8 @@ body {
         45deg,
         transparent,
         transparent 4px,
-        var(--feb-border-muted) 4px,
-        var(--feb-border-muted) 5px
+        var(--feb-grid-line) 4px,
+        var(--feb-grid-line) 5px
     );
     padding: 0 !important;
 }
@@ -297,7 +130,7 @@ body {
     position: relative;
     --feb-reservation-radius-left: .375rem;
     --feb-reservation-radius-right: .375rem;
-    border: 1px solid var(--feb-border-strong);
+    border: 1px solid var(--feb-grid-line-strong);
     border-radius: var(--feb-reservation-radius-left) var(--feb-reservation-radius-right) var(--feb-reservation-radius-right) var(--feb-reservation-radius-left);
     clip-path: inset(0 round var(--feb-reservation-radius-left) var(--feb-reservation-radius-right) var(--feb-reservation-radius-right) var(--feb-reservation-radius-left));
     color: var(--feb-reservation-text);
@@ -373,7 +206,7 @@ body {
 }
 
 .border-left-thick {
-    border-left: 2px solid var(--feb-border-muted);
+    border-left: 2px solid var(--feb-grid-line);
 }
 
 .cell-selected {
@@ -513,56 +346,30 @@ body.reservations-table-switching #table-ajax {
     visibility: hidden;
 }
 
-/* Touch, normal view: swiping up hides navbar, then filter row (stepNormalViewChrome) */
+/* Touch, normal view: swiping up hides the frame's bars (shell.css), then the filter row
+   (stepNormalViewChrome) */
 body.reservations-hide-filter #table-filter,
-body.reservations-hide-nav > nav.navbar,
 body.reservations-hide-nav #flash-message-container {
     display: none !important;
 }
 
-body.reservations-week-focus > nav.navbar,
 body.reservations-week-focus #table-filter,
 body.reservations-week-focus #flash-message-container,
-body.reservations-week-fit > nav.navbar,
 body.reservations-week-fit #table-filter,
 body.reservations-week-fit #flash-message-container {
     display: none !important;
 }
 
 /* Touch screens: a slimmer filter row above the reservation table, so the rooms get
-   more of the screen. Materia's fields are 56px tall; desktop keeps them as they are. */
+   more of the screen; desktop keeps the fields as they are. */
 @media not all and (hover: hover) and (pointer: fine) {
-    /* Slimmer navbar (82px with Materia's padding and 24px brand) */
-    body > nav.navbar {
-        padding-top: .25rem;
-        padding-bottom: .25rem;
-    }
-
-    body > nav.navbar .navbar-brand {
-        font-size: 1.125rem;
-        padding-top: 0;
-        padding-bottom: 0;
-    }
-
-    body > nav.navbar .navbar-toggler {
-        padding: .125rem .5rem;
-    }
-
-    /* With less padding the bell's badge (translate-middle on the link's corner) would
-       stick out above the bar; keep it inside */
-    body > nav.navbar [data-notifications-badge] {
-        top: .6rem !important;
-        font-size: .65em;
-    }
-
     .container-fluid.mt-3:has(> #flash-message-container) {
         margin-top: .5rem !important;
     }
 
     #table-filter .form-control,
     #table-filter .form-select {
-        padding-top: .25rem;
-        padding-bottom: .25rem;
+        padding: .25rem .5rem;
         min-height: 0;
         height: auto;
     }
@@ -638,7 +445,7 @@ body.reservations-week-fit #flash-message-container {
 .fab-add {
     position: fixed;
     right: 1rem;
-    bottom: calc(1rem + env(safe-area-inset-bottom));
+    bottom: calc(1rem + max(env(safe-area-inset-bottom), var(--feb-bottomnav-offset, 0px)));
     z-index: 1030;
     width: 3.5rem;
     height: 3.5rem;
@@ -662,7 +469,7 @@ body.reservations-week-fit #flash-message-container {
 .fab-add-dropdown {
     position: fixed;
     right: 1rem;
-    bottom: calc(1rem + env(safe-area-inset-bottom));
+    bottom: calc(1rem + max(env(safe-area-inset-bottom), var(--feb-bottomnav-offset, 0px)));
     z-index: 1030;
 }
 
@@ -747,7 +554,7 @@ body.reservations-week-pointer .reservations-week-controls > .btn {
 
 /* Right border on the last cell of each row */
 #reservation-table tbody tr > :last-child {
-    border-right: 1px solid var(--feb-border-muted) !important;
+    border-right: 1px solid var(--feb-grid-line) !important;
 }
 
 /* Long press starts a selection on touch screens (initCellSelection):
@@ -1423,8 +1230,8 @@ div .reservation-yearly-day {
         45deg,
         transparent,
         transparent 4px,
-        var(--feb-border-muted) 4px,
-        var(--feb-border-muted) 5px
+        var(--feb-grid-line) 4px,
+        var(--feb-grid-line) 5px
     );
 }
 

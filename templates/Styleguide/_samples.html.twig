@@ -1,0 +1,201 @@
+{# One set of samples; included once per colour scheme, so ids carry the scheme #}
+<h3 class="styleguide-heading">Colours</h3>
+<div class="styleguide-swatches">
+    {% for token in ['canvas', 'surface', 'surface-2', 'surface-3', 'border', 'border-strong', 'text', 'text-muted', 'text-subtle'] %}
+        <div class="styleguide-swatch"><span style="background: var(--feb-{{ token }})"></span>{{ token }}</div>
+    {% endfor %}
+</div>
+<div class="styleguide-swatches">
+    {% for token in ['primary', 'accent', 'neutral', 'success', 'info', 'warning', 'danger'] %}
+        <div class="styleguide-swatch"><span style="background: var(--feb-{{ token }})"></span>{{ token }}</div>
+    {% endfor %}
+</div>
+
+<h3 class="styleguide-heading">Type</h3>
+<div class="card card-body">
+    <h1 class="page-title mb-2">Page title</h1>
+    <h2 class="h5">Section heading</h2>
+    <p class="mb-1">Body text with a <a href="#">plain link</a> and <strong>emphasis</strong>.</p>
+    <p class="text-body-secondary mb-1">Secondary text for explanations and hints.</p>
+    <p class="mb-0">
+        <span class="text-primary">primary</span> · <span class="text-success">success</span> ·
+        <span class="text-info">info</span> · <span class="text-warning">warning</span> ·
+        <span class="text-danger">danger</span> · <span class="text-secondary">secondary</span>
+    </p>
+</div>
+
+<h3 class="styleguide-heading">Buttons</h3>
+<div class="card card-body gap-3">
+    <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Primary</button>
+        <button type="button" class="btn btn-secondary">Secondary</button>
+        <button type="button" class="btn btn-outline-secondary">Outline</button>
+        <button type="button" class="btn btn-success">Success</button>
+        <button type="button" class="btn btn-warning">Warning</button>
+        <button type="button" class="btn btn-danger">Danger</button>
+        <button type="button" class="btn btn-link">Link</button>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <button type="button" class="btn btn-outline-primary">Outline primary</button>
+        <button type="button" class="btn btn-outline-danger">Outline danger</button>
+        <button type="button" class="btn btn-primary" disabled>Disabled</button>
+        <button type="button" class="btn btn-secondary btn-sm">Small</button>
+        <button type="button" class="btn btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+        <div class="btn-group">
+            <button type="button" class="btn btn-secondary">Day</button>
+            <button type="button" class="btn btn-secondary active">Week</button>
+            <button type="button" class="btn btn-secondary">Month</button>
+        </div>
+    </div>
+</div>
+
+<h3 class="styleguide-heading">Form</h3>
+<div class="card card-body">
+    <div class="row g-3">
+        <div class="col-sm-6">
+            <label class="form-label" for="sg-name-{{ scheme }}">Name</label>
+            <input type="text" class="form-control" id="sg-name-{{ scheme }}" value="Anna Beispiel">
+        </div>
+        <div class="col-sm-6">
+            <label class="form-label" for="sg-room-{{ scheme }}">Room</label>
+            <select class="form-select" id="sg-room-{{ scheme }}"><option>Double room 1</option><option>Single room 2</option></select>
+        </div>
+        <div class="col-sm-6">
+            <label class="form-label" for="sg-price-{{ scheme }}">Price</label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="sg-price-{{ scheme }}" placeholder="0,00">
+                <span class="input-group-text">€</span>
+            </div>
+            <div class="form-text">Per night, including VAT.</div>
+        </div>
+        <div class="col-sm-6">
+            <label class="form-label" for="sg-mail-{{ scheme }}">E-mail</label>
+            <input type="email" class="form-control is-invalid" id="sg-mail-{{ scheme }}" value="anna@">
+            <div class="invalid-feedback">Please enter a complete address.</div>
+        </div>
+        <div class="col-12 d-flex flex-wrap gap-4">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="sg-check-{{ scheme }}" checked>
+                <label class="form-check-label" for="sg-check-{{ scheme }}">Breakfast</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" id="sg-radio-{{ scheme }}" checked>
+                <label class="form-check-label" for="sg-radio-{{ scheme }}">Option</label>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="sg-switch-{{ scheme }}" checked>
+                <label class="form-check-label" for="sg-switch-{{ scheme }}">Active</label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="styleguide-heading">Record list</h3>
+<div class="card data-card">
+    <div class="data-toolbar">
+        <div class="search-field">
+            <span class="search-field-icon"><i class="fas fa-search"></i></span>
+            <input type="search" class="form-control" placeholder="Search" aria-label="Search">
+        </div>
+        <button type="button" class="btn btn-secondary ms-auto"><i class="fas fa-filter me-1"></i> Filter</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle data-table data-table-stack">
+            <thead>
+            <tr><th class="data-table-id">ID</th><th>Name</th><th>Company</th><th>Status</th><th class="text-end">Bookings</th><th class="data-table-actions"></th></tr>
+            </thead>
+            <tbody>
+            {% for row in [
+                { initials: 'AB', name: 'Beispiel, Anna', company: 'Muster GmbH', badge: 'text-bg-success', status: 'Checked in', bookings: 4 },
+                { initials: 'JD', name: 'Doe, John', company: '', badge: 'text-bg-warning', status: 'Option', bookings: 1 },
+                { initials: 'MM', name: 'Mustermann, Max', company: 'Reisebüro Sonne', badge: 'text-bg-secondary', status: 'Departed', bookings: 12 },
+            ] %}
+                <tr>
+                    <td class="cell-meta data-table-id"><span class="cell-narrow">ID </span>{{ loop.index + 40 }}</td>
+                    <td><a href="#" class="data-table-link"><span class="avatar">{{ row.initials }}</span><span class="data-table-link-text">{{ row.name }}</span></a></td>
+                    <td class="cell-meta">{{- row.company -}}</td>
+                    <td class="cell-meta"><span class="badge {{ row.badge }}">{{ row.status }}</span></td>
+                    <td class="cell-meta text-end">{{ row.bookings }}</td>
+                    <td class="cell-actions data-table-actions text-end">
+                        <button type="button" class="btn btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="data-footer">
+        <span>3 records</span>
+        <ul class="pagination">
+            <li class="page-item disabled"><a class="page-link" href="#">&laquo;</a></li>
+            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">&raquo;</a></li>
+        </ul>
+    </div>
+</div>
+
+<h3 class="styleguide-heading">Badges and messages</h3>
+<div class="card card-body gap-3">
+    <div class="d-flex flex-wrap gap-2">
+        {% for variant in ['primary', 'secondary', 'success', 'info', 'warning', 'danger', 'light', 'dark'] %}
+            <span class="badge text-bg-{{ variant }}">{{ variant }}</span>
+        {% endfor %}
+    </div>
+    <div class="alert alert-info mb-0"><i class="fas fa-circle-info me-2"></i>Check-in is possible from 3 pm.</div>
+    <div class="alert alert-warning mb-0"><i class="fas fa-triangle-exclamation me-2"></i>Two reservations overlap.</div>
+    <div class="alert alert-danger mb-0"><i class="fas fa-circle-exclamation me-2"></i>The invoice could not be sent.</div>
+    <div class="alert alert-success mb-0"><i class="fas fa-circle-check me-2"></i>Saved.</div>
+</div>
+
+<h3 class="styleguide-heading">Tabs, menu, dialog</h3>
+<div class="card">
+    <div class="card-header">Card header</div>
+    <div class="card-body">
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item"><a class="nav-link active" href="#">Details</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">Invoices</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">Correspondence</a></li>
+        </ul>
+        <div class="d-flex flex-wrap gap-2">
+            <div class="dropdown">
+                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Menu</button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item active" href="#">Current entry</a></li>
+                    <li><a class="dropdown-item" href="#">Another entry</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#">Separated entry</a></li>
+                </ul>
+            </div>
+            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#sg-modal-{{ scheme }}">Open dialog</button>
+        </div>
+        <div class="progress mt-3" role="progressbar" aria-label="Sample" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar" style="width: 60%"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="sg-modal-{{ scheme }}" tabindex="-1" aria-labelledby="sg-modal-title-{{ scheme }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sg-modal-title-{{ scheme }}">Dialog title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">A dialog keeps the colour scheme of the region it is declared in.</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="styleguide-heading">Empty state</h3>
+<div class="card">
+    <div class="empty-state">
+        <span class="empty-state-icon"><i class="fas fa-users"></i></span>
+        <p class="empty-state-title">Nothing here yet</p>
+        <p class="mb-0">A short hint on what to do next.</p>
+    </div>
+</div>

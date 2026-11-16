@@ -34,6 +34,12 @@ customer.id.type.name: Ausweistyp
 customer.id.type.national_id: Ausweis
 customer.id.type.passport: Reisepass
 customer.lastname: Nachname
+customer.list.bookings: '{0}Keine Buchungen|{1}1 Buchung|]1,Inf[%count% Buchungen'
+customer.list.bookings.header: Buchungen
+customer.list.count: '{0}Keine Gäste|{1}1 Gast|]1,Inf[%count% Gäste'
+customer.list.empty: 'Keine Gäste gefunden'
+customer.list.empty.hint: 'Passe die Suche an oder lege einen neuen Gast an.'
+customer.list.name: Name
 customer.mobilephone: Mobil
 Mr: Herr
 Ms: Frau
@@ -42,6 +48,7 @@ customer.phone: Festnetz
 customer.remark: Bemerkungen
 customer.salutation: Anrede
 customer.search.addresses: 'Anschriften suchen…'
+customer.search.placeholder: 'Gäste durchsuchen'
 customer.template: Vorlage
 customer.zip: PLZ
 customer.buyerVatId: 'USt-IdNr. (Käufer)'

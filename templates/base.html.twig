@@ -1,17 +1,19 @@
 <!DOCTYPE html>
-<html lang="{{ app.request.locale }}" data-bs-theme="light" data-theme-preference="{{ app.user ? app.user.themePreference : 'auto' }}" data-controller="theme">
+<html lang="{{ app.request.locale }}" data-bs-theme="light" data-theme-preference="{{ app.user ? app.user.themePreference : 'auto' }}" data-controller="theme"
+      {#- The collapsed sidebar is remembered in a cookie (app_shell_controller.js) and rendered here, so nothing jumps on load #}
+      {%- if app.request.cookies.get('feb_nav') == 'rail' %} class="app-nav-rail"{% endif %}>
 <head>
     <meta charset="UTF-8"/>
     <title>{% block title %}FewohBee{% endblock %}</title>
     <meta name="description" content="{% block description %}Welcome!{% endblock %}">
     <meta name="keywords" content="{% block keywords %}{% endblock %}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    {# First, so that Bootstrap and the theme (stylesheets imported by assets/app.js) come before a page's own stylesheets #}
+    {% block importmap %}{{ importmap('app') }}{% endblock %}
     {% block stylesheets %}
-        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.8.css?v=2">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/autocompletejs/autoComplete.custom.css">
     {% endblock %}
     {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.7.1.min.js" defer></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-7.1.0.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min-2.10.2.js" defer></script>
@@ -23,151 +25,9 @@
 <body>
 {% block body %}
     {% block menu %}
-        {% set activeRouteName = getActiveRouteName() %}
-        {% set showReservations = is_granted('ROLE_RESERVATIONS') %}
-        {% set showReservationsRO = is_granted('ROLE_RESERVATIONS_RO') %}
-        <nav class="navbar navbar-expand-xl bg-primary">
-            <div class="container-fluid">
-                {% if showReservations or showReservationsRO %}
-                <a class="navbar-brand" href="{{ path('start') }}">{{ 'nav.reservation.overview'|trans }}</a>
-                {% endif %}
-                {# Below xl (lg on touch screens) the links slide in from the side (offcanvas); notifications and
-                   the user menu stay in the bar, see "Main navigation" in app.css #}
-                <div class="offcanvas offcanvas-end main-nav-offcanvas" tabindex="-1" id="navbarSupportedContent" data-controller="main-nav" aria-labelledby="navbarSupportedContentLabel">
-                    <div class="offcanvas-header">
-                        <h5 class="offcanvas-title" id="navbarSupportedContentLabel">{{ 'nav.menu'|trans }}</h5>
-                        <button type="button" class="btn btn-link text-body p-1 ms-auto" data-bs-dismiss="offcanvas" aria-label="{{ 'button.close'|trans }}">
-                            <i class="fas fa-xmark fa-lg"></i>
-                        </button>
-                    </div>
-                    <div class="offcanvas-body">
-                    {% set showHousekeeping = is_granted('ROLE_OPERATIONS') %}
-                    {% set showOperations = showHousekeeping %}
-                    {% set showCustomers = is_granted('ROLE_CUSTOMERS') %}
-                    {% set showInvoices = is_granted('ROLE_INVOICES') %}
-                    {% set showRegistrationbook = is_granted('ROLE_REGISTRATIONBOOK') %}
-                    {% set showStatistics = is_granted('ROLE_STATISTICS') %}
-                    {% set showCashjournal = is_granted('ROLE_CASHJOURNAL') %}
-                    {% if showOperations or showCustomers or showInvoices or showRegistrationbook or showStatistics or showCashjournal %}
-                    <ul class="navbar-nav me-auto">
-                        {% if showOperations %}
-                        <li class="nav-item dropdown{% if activeRouteName starts with "operations." %} active{% endif %}">
-                            <a class="nav-link dropdown-toggle" href="#" id="operationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-concierge-bell fa-fw me-2 d-xl-none"></i>{{ 'nav.operations'|trans }}
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="operationsDropdown">
-                                <a class="dropdown-item{% if activeRouteName starts with "operations.frontdesk" %} active{% endif %}" href="{{ path('operations.frontdesk') }}">{{ 'nav.operations.frontdesk'|trans }}</a>
-                                <a class="dropdown-item{% if activeRouteName starts with "operations.housekeeping" %} active{% endif %}" href="{{ path('operations.housekeeping') }}">{{ 'nav.housekeeping'|trans }}</a>
-                                <a class="dropdown-item{% if activeRouteName starts with "operations.reports" %} active{% endif %}" href="{{ path('operations.reports') }}">{{ 'nav.operations.reports'|trans }}</a>
-                            </div>
-                        </li>
-                        {% endif %}
-                        {% if showCustomers %}
-                        <li class="nav-item{% if activeRouteName starts with "customers" %} active{% endif %}"><a class="nav-link" href="{{ path('customers.overview') }}"><i class="fas fa-users fa-fw me-2 d-xl-none"></i>{{ 'nav.customers'|trans }}</a></li>
-                        {% endif %}
-                        {% if showInvoices %}
-                        <li class="nav-item{% if activeRouteName starts with "invoices" %} active{% endif %}"><a class="nav-link" href="{{ path('invoices.overview') }}"><i class="fas fa-file-invoice fa-fw me-2 d-xl-none"></i>{{ 'nav.invoices'|trans }}</a></li>
-                        {% endif %}
-                        {% if showRegistrationbook %}
-                        <li class="nav-item{% if activeRouteName starts with "registrationbook" %} active{% endif %}"><a class="nav-link" href="{{ path('registrationbook.overview') }}"><i class="fas fa-book fa-fw me-2 d-xl-none"></i>{{ 'nav.registrationbook'|trans }}</a></li>
-                        {% endif %}
-                        {% if showStatistics %}
-                        <li class="nav-item dropdown{% if activeRouteName starts with "statistics" %} active{% endif %}">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-chart-bar fa-fw me-2 d-xl-none"></i>{{ 'nav.statistics'|trans }}
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item{% if activeRouteName starts with "statistics.utilization" %} active{% endif %}" href="{{ path('statistics.utilization') }}">{{ 'nav.utilization'|trans }}</a>
-                                <a class="dropdown-item{% if activeRouteName starts with "statistics.origin" %} active{% endif %}" href="{{ path('statistics.origin') }}">{{ 'nav.origin'|trans }}</a>
-                                <a class="dropdown-item{% if activeRouteName starts with "statistics.turnover" %} active{% endif %}" href="{{ path('statistics.turnover') }}">{{ 'nav.turnover'|trans }}</a>
-                                <a class="dropdown-item{% if activeRouteName starts with "statistics.tourism" %} active{% endif %}" href="{{ path('statistics.tourism') }}">{{ 'nav.tourism'|trans }}</a>
-                            </div>
-                        </li>
-                        {% endif %}
-                        {% if showCashjournal %}
-                        <li class="nav-item{% if activeRouteName starts with "journal" %} active{% endif %}">
-                            <a class="nav-link" href="{{ path('journal.overview') }}"><i class="fas fa-book-open fa-fw me-2 d-xl-none"></i>{{ 'nav.journal'|trans }}</a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                    <hr class="d-xl-none my-2">
-                    {% endif %}
-                    <ul class="navbar-nav d-flex ms-auto">
-                        {% if is_granted('ROLE_ADMIN') %}
-                            <li class="nav-item dropdown{% if activeRouteName starts with "settings" %} active{% endif %}">
-                                <a class="nav-link dropdown-toggle" href="#"  id="navbarDropdown2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-tools fa-fw me-2 me-xl-0"></i> {{ 'nav.settings'|trans }}
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown2">
-                                    <a class="dropdown-item{% if activeRouteName starts with "settings.general" %} active{% endif %}" href="{{ path('settings.general.index') }}"><i class="fas fa-cog text-secondary"></i> {{ 'app_settings.nav.label'|trans }}</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item{% if activeRouteName starts with "users" %} active{% endif %}" href="{{ path('users.overview') }}"><i class="fas fa-users text-secondary"></i> {{ 'nav.user'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "room.category" %} active{% endif %}" href="{{ path('room_category_index') }}"><i class="fas fa-bed text-secondary"></i> {{ 'nav.category'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "apartments" %} active{% endif %}" href="{{ path('apartments.overview') }}"><i class="fas fa-door-open text-secondary"></i> {{ 'nav.appartment'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "objects" %} active{% endif %}" href="{{ path('objects.overview') }}"><i class="fas fa-home text-secondary"></i> {{ 'nav.object'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "guest_category" %} active{% endif %}" href="{{ path('guest_category_index') }}"><i class="fas fa-user-friends text-secondary"></i> {{ 'nav.guest_category'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "prices" %} active{% endif %}" href="{{ path('prices.overview') }}"><i class="fas fa-money-bill-alt text-secondary"></i> {{ 'nav.prices'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "tourist_tax" %} active{% endif %}" href="{{ path('tourist_tax_index') }}"><i class="fas fa-umbrella-beach text-secondary"></i> {{ 'nav.tourist_tax'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "reservationorigin" %} active{% endif %}" href="{{ path('reservationorigin.overview') }}"><i class="fas fa-sign-in-alt text-secondary"></i> {{ 'nav.reservationorigin'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "status" %} active{% endif %}" href="{{ path('reservation_status_index') }}"><i class="fas fa-info text-secondary ms-1 me-1"></i> {{ 'nav.status'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "settings.calendars" %} active{% endif %}" href="{{ path('settings.calendars.index') }}"><i class="fas fa-calendar-alt text-secondary"></i> {{ 'nav.calendars'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "settings.templates" %} active{% endif %}" href="{{ path('settings.templates.overview') }}"><i class="fas fa-file text-secondary"></i> {{ 'nav.templates'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "settings.online_booking" %} active{% endif %}" href="{{ path('settings.online_booking.index') }}"><i class="fas fa-globe text-secondary"></i> {{ 'online_booking.nav.label'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "settings.guest_checkin" %} active{% endif %}" href="{{ path('settings.guest_checkin.index') }}"><i class="fas fa-id-card text-secondary"></i> {{ 'guest_checkin.nav.label'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "settings.workflows" %} active{% endif %}" href="{{ path('settings.workflows.index') }}"><i class="fas fa-bolt text-secondary"></i> {{ 'workflow.nav.label'|trans }}</a>
-                                    {% if mcp_available %}
-                                    <a class="dropdown-item{% if activeRouteName starts with "settings.mcp" %} active{% endif %}" href="{{ path('settings.mcp.index') }}"><i class="fas fa-robot text-secondary"></i> {{ 'mcp.nav.label'|trans }}</a>
-                                    {% endif %}
-                                </div>
-                            </li>
-                        {% endif %}
-                    </ul>
-                    </div>
-                </div>
-                <ul class="navbar-nav navbar-quick flex-row align-items-center ms-auto ms-xl-0">
-                        {% set notifications = notification_summary() %}
-                        <li class="nav-item dropdown" data-controller="notifications"
-                            data-notifications-url-value="{{ path('notifications.panel') }}">
-                            <a class="nav-link position-relative d-inline-block d-xl-block" href="#" id="navbarNotifications" role="button"
-                               data-bs-toggle="dropdown" aria-expanded="false"
-                               data-action="show.bs.dropdown->notifications#loadPanelAction"
-                               aria-label="{{ 'notification.title'|trans }}">
-                                <i class="fas fa-bell"></i>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill {{ notifications.badgeClassOnPrimary }}{{ notifications.isEmpty ? ' d-none' : '' }}"
-                                      data-notifications-badge>
-                                    <span data-notifications-count>{{ notifications.total }}</span>
-                                    <span class="visually-hidden">{{ 'notification.title'|trans }}</span>
-                                </span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end notification-panel" aria-labelledby="navbarNotifications"
-                                 data-notifications-target="panel">
-                                <div class="px-3 py-4 text-center text-body-secondary">
-                                    <span class="spinner-border spinner-border-sm"></span>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle ms-3 ms-xl-0" href="#" id="navbarDropdown3" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ 'nav.profile'|trans }}">
-                                <i class="fas fa-user-circle d-xl-none"></i>
-                                <span class="d-none d-xl-inline">{{ 'nav.welcome'|trans({ '%user%': app.user.getUsername() }) }}</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown3">
-                                <a class="dropdown-item" href="{{ path('profile') }}"><i class="fas fa-user"></i> {{ 'nav.profile'|trans }}</a>
-                                <a class="dropdown-item d-flex align-items-center gap-2" href="{{ path('release_notes.index') }}">
-                                    <i class="fas fa-gift"></i>
-                                    <span>{{ 'release_notes.nav'|trans }}</span>
-                                    <span class="text-body-secondary small ms-auto">{{ app_version }}</span>
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ path('logout') }}"><i class="fas fa-sign-out-alt"></i> {{ 'nav.logout'|trans }}</a>
-                            </div>
-                        </li>
-                </ul>
-                <button class="navbar-toggler ms-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-label="{{ 'nav.menu'|trans }}">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-            </div>
-        </nav>
+        {# A page names itself with the page_title block; without it the frame uses the label of the current navigation entry #}
+        {% set pageTitle %}{% block page_title %}{% endblock %}{% endset %}
+        {% include 'layout/_app_nav.html.twig' with { pageTitle: pageTitle } %}
     {% endblock %}
     {% block modal %}
         <!-- Modal -->
@@ -190,6 +50,7 @@
           </div>
         </div>
     {% endblock %}
+    <div class="app-main">
     {% block flashMessage %}
         <div class="container mt-3">            
             {% for type, flashMessages in app.flashes %}
@@ -214,6 +75,7 @@
             {% include 'common/first_steps.html.twig' %}
         {% endif %}
     {% endblock %}
+    </div>
 
     <script>
         // Guard against Turbo re-evaluating this script and redeclaring globals

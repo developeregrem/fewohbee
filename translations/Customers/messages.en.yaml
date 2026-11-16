@@ -38,6 +38,12 @@ customer.id.type.name: ID card type
 customer.id.type.national_id: ID card
 customer.id.type.passport: Passport
 customer.lastname: Last Name
+customer.list.bookings: '{0}No bookings|{1}1 booking|]1,Inf[%count% bookings'
+customer.list.bookings.header: Bookings
+customer.list.count: '{0}No guests|{1}1 guest|]1,Inf[%count% guests'
+customer.list.empty: 'No guests found'
+customer.list.empty.hint: 'Adjust your search or add a new guest.'
+customer.list.name: Name
 customer.mobilephone: Mobile Phone
 Mr: Mr
 Ms: Ms
@@ -46,6 +52,7 @@ customer.phone: Phone
 customer.remark: Remark
 customer.salutation: Title
 customer.search.addresses: Search addresses…
+customer.search.placeholder: 'Search guests'
 customer.template: Template
 customer.zip: Zip code
 customer.buyerVatId: VAT ID (Buyer)

@@ -1,0 +1,61 @@
+/*
+ * Theme "FewohBee": calm neutral surfaces, the brand's blue for actions and its orange as accent.
+ * Values only; see tokens.css for what each token is used for.
+ */
+
+:root,
+[data-bs-theme="light"] {
+    --feb-canvas-rgb: 244, 246, 249;
+    --feb-surface-rgb: 255, 255, 255;
+    --feb-surface-2-rgb: 246, 248, 251;
+    --feb-surface-3-rgb: 234, 238, 244;
+
+    --feb-border-rgb: 224, 229, 236;
+    --feb-border-strong-rgb: 198, 206, 218;
+
+    --feb-text-rgb: 22, 32, 50;
+    --feb-text-muted-rgb: 88, 101, 121;
+    --feb-text-subtle-rgb: 131, 143, 160;
+
+    --feb-primary-rgb: 26, 86, 180;
+    --feb-primary-text-rgb: 26, 86, 180;
+    --feb-on-primary-rgb: 255, 255, 255;
+    --feb-accent-rgb: 247, 139, 0;
+    --feb-neutral-rgb: 100, 112, 131;
+    --feb-success-rgb: 26, 127, 75;
+    --feb-info-rgb: 14, 116, 144;
+    --feb-warning-rgb: 245, 166, 35;
+    --feb-on-warning-rgb: 51, 34, 0;
+    --feb-danger-rgb: 200, 50, 44;
+
+    --feb-shadow-rgb: 16, 24, 40;
+    --feb-shadow-strength: 1;
+}
+
+[data-bs-theme="dark"] {
+    --feb-canvas-rgb: 13, 17, 23;
+    --feb-surface-rgb: 22, 27, 34;
+    --feb-surface-2-rgb: 29, 35, 44;
+    --feb-surface-3-rgb: 39, 47, 59;
+
+    --feb-border-rgb: 44, 53, 66;
+    --feb-border-strong-rgb: 64, 75, 92;
+
+    --feb-text-rgb: 230, 234, 240;
+    --feb-text-muted-rgb: 154, 166, 182;
+    --feb-text-subtle-rgb: 113, 125, 142;
+
+    --feb-primary-rgb: 47, 111, 214;
+    --feb-primary-text-rgb: 125, 176, 247;
+    --feb-on-primary-rgb: 255, 255, 255;
+    --feb-accent-rgb: 255, 177, 26;
+    --feb-neutral-rgb: 104, 116, 135;
+    --feb-success-rgb: 31, 131, 80;
+    --feb-info-rgb: 18, 122, 151;
+    --feb-warning-rgb: 224, 152, 34;
+    --feb-on-warning-rgb: 38, 25, 0;
+    --feb-danger-rgb: 203, 62, 56;
+
+    --feb-shadow-rgb: 0, 0, 0;
+    --feb-shadow-strength: 3;
+}

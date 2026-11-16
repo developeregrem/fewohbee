@@ -1,9 +1,8 @@
 import { Controller } from '@hotwired/stimulus';
 
 /*
- * Main navigation (offcanvas in base.html.twig): a side menu below xl, on touch screens
- * only below lg. Closes the menu before Turbo caches the page, so going back
- * does not show a snapshot with the menu still open.
+ * Main navigation (side menu below lg, templates/layout/_app_nav.html.twig). Closes the menu
+ * before Turbo caches the page, so going back does not show a snapshot with the menu still open.
  *
  * Offcanvas.hide() is no use here: Bootstrap releases the body's scroll lock only after
  * the closing animation, and Turbo caches the page before that - after "back" the page
@@ -12,14 +11,6 @@ import { Controller } from '@hotwired/stimulus';
  */
 export default class extends Controller {
     connect() {
-        // Touch screens switch to the side menu only below lg, so a tablet held sideways
-        // keeps the full bar; with a mouse it stays at xl (same test as isDesktopWeekMode()
-        // in the reservations)
-        const navbar = this.element.closest('.navbar');
-        if (navbar && !window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-            navbar.classList.replace('navbar-expand-xl', 'navbar-expand-lg');
-        }
-
         this.boundBeforeCache = () => this.resetForCache();
         document.addEventListener('turbo:before-cache', this.boundBeforeCache);
     }

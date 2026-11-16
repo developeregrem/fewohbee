@@ -1,0 +1,488 @@
+/*
+ * Application frame (templates/layout/_app_nav.html.twig).
+ *
+ * Below lg: a slim bar at the top (logo, page title, notifications, user) and a bar at the
+ * bottom with the main destinations; "More" opens the full list as a side menu.
+ * From lg up: the same element is a sidebar at the left, which can be collapsed to a rail of
+ * icons (class app-nav-rail on <html>, see app_shell_controller.js).
+ */
+
+:root {
+    --feb-sidebar-width: var(--feb-sidebar-width-full);
+    /* Space the bottom bar takes; fixed elements above the content add it to their offset */
+    --feb-bottomnav-offset: 0px;
+}
+
+/* ------------------------------------------------------------------ Top bar (default) */
+
+.app-nav {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    height: var(--feb-topbar-height);
+    padding: 0 .5rem 0 .875rem;
+    background-color: var(--feb-surface);
+    border-bottom: 1px solid var(--feb-border);
+}
+
+.app-nav-head {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: .625rem;
+    min-width: 0;
+}
+
+.app-brand {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: .625rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+}
+
+.app-brand img {
+    width: 1.75rem;
+    height: 1.75rem;
+}
+
+.app-brand-name {
+    display: none;
+}
+
+.app-title {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 1.05rem;
+    font-weight: var(--feb-font-weight-strong);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-nav-rail-toggle {
+    display: none;
+}
+
+.app-nav-quick {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: .125rem;
+}
+
+.app-nav-quick .app-nav-label {
+    display: none;
+}
+
+.app-nav-quick .app-nav-link {
+    width: 2.75rem;
+    height: 2.75rem;
+    justify-content: center;
+    padding: 0;
+    font-size: 1.1rem;
+}
+
+.app-nav-menu {
+    --bs-offcanvas-width: min(20rem, 88vw);
+}
+
+/* ------------------------------------------------------------------ Entries */
+
+.app-nav-list,
+.app-nav-sub {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.app-nav-list {
+    gap: 2px;
+    width: 100%;
+}
+
+.app-nav-link {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    width: 100%;
+    min-height: 2.75rem;
+    padding: .4rem .75rem;
+    border: 0;
+    border-radius: var(--feb-radius);
+    background: transparent;
+    color: var(--feb-text-muted);
+    font-weight: var(--feb-font-weight-medium);
+    text-align: start;
+}
+
+.app-nav-link:hover,
+.app-nav-link.show {
+    background-color: var(--feb-surface-2);
+    color: var(--feb-text);
+}
+
+.app-nav-link:focus-visible,
+.app-nav-sublink:focus-visible,
+.app-bottomnav-item:focus-visible {
+    outline: 0;
+    box-shadow: inset 0 0 0 .15rem var(--feb-focus-ring);
+}
+
+.app-nav-link.active {
+    background-color: var(--feb-primary-subtle);
+    color: var(--feb-primary-text);
+}
+
+.app-nav-link.active-group {
+    color: var(--feb-text);
+}
+
+.app-nav-icon {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 1.25rem;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.app-nav-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-nav-caret {
+    flex: none;
+    font-size: .65rem;
+    transition: transform .15s ease;
+}
+
+.app-nav-link[aria-expanded="true"] .app-nav-caret {
+    transform: rotate(180deg);
+}
+
+/* A counter on an entry: over the icon's corner where only the icon shows (top bar, rail),
+   at the end of the row in the full sidebar */
+.app-nav-link {
+    position: relative;
+}
+
+.app-nav-badge {
+    position: absolute;
+    top: .3rem;
+    left: 50%;
+    font-size: .62rem;
+}
+
+.app-nav-sub {
+    gap: 1px;
+    margin: 2px 0 .375rem;
+    padding-left: 2rem;
+}
+
+.app-nav-sublink {
+    display: block;
+    padding: .6rem .75rem;
+    border-radius: var(--feb-radius-sm);
+    color: var(--feb-text-muted);
+}
+
+.app-nav-sublink:hover {
+    background-color: var(--feb-surface-2);
+    color: var(--feb-text);
+}
+
+.app-nav-sublink.active {
+    background-color: var(--feb-primary-subtle);
+    color: var(--feb-primary-text);
+    font-weight: var(--feb-font-weight-strong);
+}
+
+/* ------------------------------------------------------------------ Bottom bar */
+
+.app-bottomnav {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 1030;
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    height: calc(var(--feb-bottomnav-height) + env(safe-area-inset-bottom));
+    padding: 0 .25rem env(safe-area-inset-bottom);
+    background-color: var(--feb-surface);
+    border-top: 1px solid var(--feb-border);
+}
+
+.app-bottomnav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .2rem;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--feb-text-muted);
+    font-size: .7rem;
+    font-weight: var(--feb-font-weight-medium);
+    line-height: 1.1;
+}
+
+.app-bottomnav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    font-size: 1.1rem;
+}
+
+.app-bottomnav-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-bottomnav-item.active {
+    color: var(--feb-primary-text);
+    font-weight: var(--feb-font-weight-strong);
+}
+
+.app-bottomnav-item.active .app-bottomnav-icon {
+    background-color: var(--feb-primary-subtle);
+}
+
+@media (max-width: 991.98px) {
+    :root {
+        --feb-bottomnav-offset: calc(var(--feb-bottomnav-height) + env(safe-area-inset-bottom));
+    }
+
+    .app-main {
+        padding-bottom: var(--feb-bottomnav-offset);
+    }
+}
+
+/* ------------------------------------------------------------------ Sidebar (lg and up) */
+
+@media (min-width: 992px) {
+    .app-nav {
+        position: fixed;
+        inset: 0 auto 0 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        width: var(--feb-sidebar-width);
+        height: auto;
+        padding: 0;
+        border-right: 1px solid var(--feb-border);
+        border-bottom: 0;
+    }
+
+    .app-nav-head {
+        flex: none;
+        justify-content: space-between;
+        height: 3.75rem;
+        padding: 0 .625rem 0 1.125rem;
+    }
+
+    .app-brand-name {
+        display: inline;
+    }
+
+    .app-title {
+        display: none;
+    }
+
+    .app-nav-rail-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        border: 0;
+        border-radius: var(--feb-radius-sm);
+        background: transparent;
+        color: var(--feb-text-subtle);
+        font-size: .8rem;
+    }
+
+    .app-nav-rail-toggle:hover {
+        background-color: var(--feb-surface-2);
+        color: var(--feb-text);
+    }
+
+    .app-nav-rail-toggle-icon {
+        display: inline-flex;
+        transition: transform .15s ease;
+    }
+
+    .app-nav-menu {
+        flex: 1 1 auto;
+        min-height: 0;
+        padding: .375rem .625rem;
+        overflow-y: auto;
+    }
+
+    /* Bootstrap turns the body of a responsive offcanvas into a flex row here */
+    .app-nav-menu .offcanvas-body {
+        display: block;
+    }
+
+    .app-nav-link {
+        min-height: 2.375rem;
+    }
+
+    .app-nav-sublink {
+        padding-block: .375rem;
+    }
+
+    .app-nav-quick {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 2px;
+        padding: .5rem .625rem .625rem;
+        border-top: 1px solid var(--feb-border);
+    }
+
+    .app-nav-quick .app-nav-label {
+        display: block;
+    }
+
+    .app-nav-quick .app-nav-link {
+        width: 100%;
+        height: auto;
+        justify-content: flex-start;
+        padding: .4rem .75rem;
+        font-size: inherit;
+    }
+
+    .app-nav-badge {
+        position: static;
+        flex: none;
+    }
+
+    .app-bottomnav {
+        display: none;
+    }
+
+    .app-nav ~ .app-main {
+        margin-left: var(--feb-sidebar-width);
+    }
+
+    /* Rail: icons only. A group opens the full sidebar again (app_shell_controller.js). */
+    .app-nav-rail {
+        --feb-sidebar-width: var(--feb-sidebar-width-rail);
+    }
+
+    .app-nav-rail .app-brand-name,
+    .app-nav-rail .app-nav-label,
+    .app-nav-rail .app-nav-caret,
+    .app-nav-rail .app-nav-sub {
+        display: none !important;
+    }
+
+    .app-nav-rail .app-nav-head {
+        flex-direction: column;
+        justify-content: center;
+        gap: .375rem;
+        height: auto;
+        padding: .875rem 0 .25rem;
+    }
+
+    .app-nav-rail .app-nav-rail-toggle-icon {
+        transform: rotate(180deg);
+    }
+
+    .app-nav-rail .app-nav-link,
+    .app-nav-rail .app-nav-quick .app-nav-link {
+        justify-content: center;
+        padding-inline: 0;
+    }
+
+    .app-nav-rail .app-nav-badge {
+        position: absolute;
+    }
+}
+
+/* ------------------------------------------------------------------ Reservation overview */
+
+/* Touch, normal view: swiping up hides the bars (stepNormalViewChrome in
+   reservations_controller.js); the sidebar takes no height and stays */
+@media (max-width: 991.98px) {
+    body.reservations-hide-nav .app-nav,
+    body.reservations-hide-nav .app-bottomnav {
+        display: none !important;
+    }
+
+    body.reservations-hide-nav {
+        --feb-bottomnav-offset: 0px;
+    }
+}
+
+/* Full-screen week view: the whole frame gives way */
+body.reservations-week-focus,
+body.reservations-week-fit {
+    --feb-sidebar-width: 0px;
+    --feb-bottomnav-offset: 0px;
+}
+
+body.reservations-week-focus .app-nav,
+body.reservations-week-focus .app-bottomnav,
+body.reservations-week-fit .app-nav,
+body.reservations-week-fit .app-bottomnav {
+    display: none !important;
+}
+
+/* ------------------------------------------------------------------ Page header */
+
+/* Title and main actions of a page. Below lg the top bar already shows the title. */
+.page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    column-gap: 1rem;
+}
+
+/* The space below belongs to the parts, so a header whose parts are all hidden (title in the
+   top bar, action as the round button) takes no room */
+.page-header > * {
+    margin-bottom: 1rem;
+}
+
+.page-title {
+    margin: 0;
+    font-size: 1.5rem;
+    line-height: 1.2;
+}
+
+.page-subtitle {
+    margin: .125rem 0 0;
+    color: var(--feb-text-muted);
+}
+
+.page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+}
+
+@media (max-width: 991.98px) {
+    .page-header-text {
+        display: none;
+    }
+}

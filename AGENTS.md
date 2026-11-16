@@ -143,6 +143,13 @@ and `data-if` for conditions. **This syntax is not a security boundary:** `Templ
 converts it to Twig before rendering. Do not assume delimiter replacement prevents arbitrary
 Twig execution; review allowed capabilities and input handling when changing rendering.
 
+User-authored template text renders only through `TemplateSandbox` (a dedicated, always-sandboxed
+Twig environment), never through the application's Twig environment. To offer a new filter or
+function in templates, add its name to the allow list in `TemplateSecurityPolicy`, register its
+extension for `TemplateSandbox` in `config/services.yaml` and list it in the wiki
+(`Templates.md`). Never expose anything that loads files or templates, calls arbitrary callables
+or changes data. Data objects are covered by the policy's read-accessor rule; do not widen it.
+
 For new template data, check `TemplateSchemaService`, the matching provider in
 `src/Service/TemplatePreview/`, and autocomplete in `assets/js/template-autocomplete.js`.
 The editor lives in `assets/controllers/template_editor_controller.js`. Keep schema, preview and
@@ -327,14 +334,28 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   Account for Turbo navigation: initialise through `connect()`, not only `DOMContentLoaded`.
 - Reuse existing form macros, tables, filters, cards and modals. Extract repeated Twig markup
   into partials/macros. Use the existing delete popover rather than `confirm()`.
-- Bootstrap/Materia is vendored under `public/resources/` and loaded by `templates/base.html.twig`.
-  Project CSS lives in `assets/styles/app.css`. Production deploys need `asset-map:compile`.
-- Stay close to standard Bootstrap so the theme can be swapped without touching templates. Build
-  layouts from Bootstrap components and utilities (grid, spacing, flex, `list-group`, responsive
-  `d-*`/`order-*`) first. Add CSS to `app.css` only when Bootstrap cannot express the result; keep
-  it small and use theme variables (`var(--bs-*)`) instead of fixed colours.
-- Don't depend on theme quirks: Materia's `secondary` is near white, so use `text-body-secondary`
-  for muted text, not `text-secondary`.
+- Styles are layered in `assets/styles/`, imported in this order by `assets/app.js`: Bootstrap
+  (unmodified, via importmap) → `tokens.css` (the design tokens `--feb-*`) → `themes/<name>.css`
+  (a theme: token values only, for the light and the dark scheme) → `bridge.css` (points
+  Bootstrap's variables and compiled-in colours at the tokens) → `shell.css` (application frame:
+  sidebar, top and bottom bar, page header) → `components.css` (shared building blocks) →
+  `app.css` (individual views). Production deploys need `asset-map:compile`.
+- A theme changes tokens, never markup or selectors. Do not write a colour, radius, shadow or font
+  outside a theme file: use the tokens, or Bootstrap's variables (`var(--bs-*)`), which follow
+  them. A colour needed with transparency is a `--feb-<name>-rgb` triplet in the theme.
+- Stay close to standard Bootstrap. Build layouts from Bootstrap components and utilities (grid,
+  spacing, flex, `list-group`, responsive `d-*`/`order-*`) and the building blocks in
+  `components.css` (`page-header`, `data-card` with `data-table`, `search-field`, `btn-icon`,
+  `avatar`, `empty-state`). Add CSS only when neither can express the result.
+- Every page must work in the light and the dark scheme, on a phone, a tablet and a desktop. The
+  styleguide at `/_styleguide` (debug only) shows tokens and building blocks in both schemes; add
+  a new building block there.
+- A page names itself with the `page_title` block; the frame shows it in the top bar on phones.
+  Navigation entries are described once in `templates/layout/_app_nav.html.twig`.
+- `btn-secondary` is the neutral button, `btn-primary` the one main action of a view. Use
+  `text-body-secondary` for muted text.
+- The guest-facing pages (online booking, online check-in) have their own layouts and stylesheets
+  under `public/resources/` and are not part of this system.
 
 ## 13. Before reporting completion
 

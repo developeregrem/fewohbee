@@ -1,0 +1,92 @@
+/*
+ * Design tokens: the contract between the application's styles and a theme.
+ *
+ * A theme (assets/styles/themes/<name>.css) only sets values; it never styles elements. Colours
+ * that are also needed with transparency are set as an RGB triplet ("26, 86, 180") in a
+ * `--feb-<name>-rgb` token; the ready-to-use colour `--feb-<name>` is derived here. Everything
+ * else in the application reads the derived tokens, either directly or through Bootstrap's own
+ * variables, which bridge.css maps onto them.
+ *
+ * Each theme provides its values for the light and the dark colour scheme
+ * ([data-bs-theme="light"] / [data-bs-theme="dark"]).
+ */
+
+:root {
+    /* Typography */
+    --feb-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif;
+    --feb-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --feb-font-size: .9rem;
+    --feb-font-size-sm: .8rem;
+    --feb-line-height: 1.5;
+    --feb-font-weight-medium: 500;
+    --feb-font-weight-strong: 600;
+
+    /* Shape */
+    --feb-radius-sm: .375rem;
+    --feb-radius: .5rem;
+    --feb-radius-lg: .75rem;
+    --feb-radius-xl: 1rem;
+
+    /* Application frame */
+    --feb-sidebar-width-full: 16rem;
+    --feb-sidebar-width-rail: 4rem;
+    --feb-topbar-height: 3.25rem;
+    --feb-bottomnav-height: 3.75rem;
+}
+
+/* Derived on every element that switches the colour scheme, so a region with its own
+   data-bs-theme resolves the triplets of that scheme instead of inheriting the page's. */
+:root,
+[data-bs-theme="light"],
+[data-bs-theme="dark"] {
+    /* Surfaces: the page behind everything, the sheet content sits on, two fills on top of it */
+    --feb-canvas: rgb(var(--feb-canvas-rgb));
+    --feb-surface: rgb(var(--feb-surface-rgb));
+    --feb-surface-2: rgb(var(--feb-surface-2-rgb));
+    --feb-surface-3: rgb(var(--feb-surface-3-rgb));
+
+    /* Lines */
+    --feb-border: rgb(var(--feb-border-rgb));
+    --feb-border-strong: rgb(var(--feb-border-strong-rgb));
+
+    /* Text */
+    --feb-text: rgb(var(--feb-text-rgb));
+    --feb-text-muted: rgb(var(--feb-text-muted-rgb));
+    --feb-text-subtle: rgb(var(--feb-text-subtle-rgb));
+
+    /* Brand and state colours as fills; --feb-on-* is the text colour on such a fill */
+    --feb-primary: rgb(var(--feb-primary-rgb));
+    --feb-accent: rgb(var(--feb-accent-rgb));
+    --feb-neutral: rgb(var(--feb-neutral-rgb));
+    --feb-success: rgb(var(--feb-success-rgb));
+    --feb-info: rgb(var(--feb-info-rgb));
+    --feb-warning: rgb(var(--feb-warning-rgb));
+    --feb-danger: rgb(var(--feb-danger-rgb));
+    --feb-on-primary: rgb(var(--feb-on-primary-rgb));
+    --feb-on-warning: rgb(var(--feb-on-warning-rgb));
+
+    /* The same colours as text on a surface. Mixing with the text colour darkens them in the
+       light scheme and lightens them in the dark one, so they stay readable in both. */
+    --feb-primary-text: rgb(var(--feb-primary-text-rgb));
+    --feb-success-text: color-mix(in srgb, var(--feb-success) 80%, var(--feb-text));
+    --feb-info-text: color-mix(in srgb, var(--feb-info) 80%, var(--feb-text));
+    --feb-warning-text: color-mix(in srgb, var(--feb-warning) 55%, var(--feb-text));
+    --feb-danger-text: color-mix(in srgb, var(--feb-danger) 80%, var(--feb-text));
+
+    /* Tinted backgrounds and their borders (alerts, selected rows, soft badges) */
+    --feb-primary-subtle: color-mix(in srgb, var(--feb-primary-text) 10%, var(--feb-surface));
+    --feb-primary-subtle-border: color-mix(in srgb, var(--feb-primary-text) 30%, var(--feb-surface));
+
+    /* Keyboard focus */
+    --feb-focus-ring: rgba(var(--feb-primary-text-rgb), .32);
+
+    /* Shadows; a theme sets the colour and how strong they are in each scheme */
+    --feb-shadow-xs: 0 1px 2px rgba(var(--feb-shadow-rgb), calc(.05 * var(--feb-shadow-strength)));
+    --feb-shadow-sm:
+        0 1px 3px rgba(var(--feb-shadow-rgb), calc(.08 * var(--feb-shadow-strength))),
+        0 1px 2px rgba(var(--feb-shadow-rgb), calc(.04 * var(--feb-shadow-strength)));
+    --feb-shadow-md:
+        0 8px 20px -6px rgba(var(--feb-shadow-rgb), calc(.14 * var(--feb-shadow-strength))),
+        0 2px 6px -2px rgba(var(--feb-shadow-rgb), calc(.06 * var(--feb-shadow-strength)));
+    --feb-shadow-lg: 0 24px 48px -12px rgba(var(--feb-shadow-rgb), calc(.24 * var(--feb-shadow-strength)));
+}

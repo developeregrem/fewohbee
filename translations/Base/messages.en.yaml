@@ -107,3 +107,8 @@ nav.user.overview: Users Overview
 nav.utilization: Utilization
 nav.welcome: Welcome, %user%
 nav.profile: Profile
+nav.more: More
+nav.sidebar.toggle: 'Collapse or expand sidebar'
+nav.short.reservations: Bookings
+nav.short.frontdesk: 'Front desk'
+nav.short.invoices: Invoices

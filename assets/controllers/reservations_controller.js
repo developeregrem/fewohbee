@@ -1857,7 +1857,10 @@ export default class extends Controller {
     fitTableToViewport(el, extraBottom = 0) {
         const rect = el.getBoundingClientRect();
         const minHeight = parseInt(el.dataset.minHeight || 0, 10) || 200;
-        const available = window.innerHeight - rect.top - extraBottom;
+        // The frame's bottom bar covers the lower edge on phones and tablets; it has no height
+        // while it is hidden (sidebar layout, full-screen week view)
+        const bottomNav = document.querySelector('.app-bottomnav')?.getBoundingClientRect().height || 0;
+        const available = window.innerHeight - rect.top - extraBottom - bottomNav;
         const height = available > 0 ? Math.max(minHeight, available) : minHeight;
         el.style.maxHeight = height + 'px';
         el.style.minHeight = minHeight + 'px';

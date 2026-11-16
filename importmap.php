@@ -107,4 +107,5 @@ return [
     '@lezer/css' => ['version' => '1.3.9'],
     '@lezer/javascript' => ['version' => '1.5.6'],
     '@codemirror/streamparser' => ['version' => '6.0.0'],
+    'bootstrap/dist/css/bootstrap.min.css' => ['version' => '5.3.8', 'type' => 'css'],
 ];

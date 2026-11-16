@@ -105,3 +105,8 @@ nav.user.overview: 'Benutzer Übersicht'
 nav.utilization: Auslastung
 nav.welcome: 'Willkommen, %user%'
 nav.profile: Profil
+nav.more: Mehr
+nav.sidebar.toggle: 'Seitenleiste ein- oder ausklappen'
+nav.short.reservations: Belegung
+nav.short.frontdesk: Rezeption
+nav.short.invoices: Rechnungen

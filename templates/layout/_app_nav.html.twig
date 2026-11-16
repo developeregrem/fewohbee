@@ -1,0 +1,237 @@
+{#
+    Application frame: one navigation element that is the sidebar from lg up and the top bar
+    below, plus the bottom bar for phones and tablets held upright (see shell.css).
+
+    The entries are described once as data: `prefixes` are the route-name prefixes that mark an
+    entry as current, `tab` is the short label of an entry that also appears in the bottom bar,
+    `children` turns an entry into a group. Expects `pageTitle` (may be empty; the label of the
+    current entry is used then).
+#}
+{% set route = getActiveRouteName() %}
+{% set items = [] %}
+
+{% if is_granted('ROLE_RESERVATIONS') or is_granted('ROLE_RESERVATIONS_RO') %}
+    {% set items = items|merge([{
+        label: 'nav.reservation.overview'|trans, tab: 'nav.short.reservations'|trans, icon: 'fa-calendar-days',
+        href: path('start'), prefixes: ['start', 'reservations'],
+    }]) %}
+{% endif %}
+{% if is_granted('ROLE_OPERATIONS') %}
+    {% set items = items|merge([{
+        id: 'operations', label: 'nav.operations'|trans, icon: 'fa-concierge-bell', prefixes: ['operations.'], open: true,
+        children: [
+            { label: 'nav.operations.frontdesk'|trans, tab: 'nav.short.frontdesk'|trans, icon: 'fa-concierge-bell', href: path('operations.frontdesk'), prefixes: ['operations.frontdesk'] },
+            { label: 'nav.housekeeping'|trans, href: path('operations.housekeeping'), prefixes: ['operations.housekeeping'] },
+            { label: 'nav.operations.reports'|trans, href: path('operations.reports'), prefixes: ['operations.reports'] },
+        ],
+    }]) %}
+{% endif %}
+{% if is_granted('ROLE_CUSTOMERS') %}
+    {% set items = items|merge([{
+        label: 'nav.customers'|trans, tab: 'nav.customers'|trans, icon: 'fa-users',
+        href: path('customers.overview'), prefixes: ['customers'],
+    }]) %}
+{% endif %}
+{% if is_granted('ROLE_INVOICES') %}
+    {% set items = items|merge([{
+        label: 'nav.short.invoices'|trans, tab: 'nav.short.invoices'|trans, icon: 'fa-file-invoice',
+        href: path('invoices.overview'), prefixes: ['invoices'],
+    }]) %}
+{% endif %}
+{% if is_granted('ROLE_REGISTRATIONBOOK') %}
+    {% set items = items|merge([{
+        label: 'nav.registrationbook'|trans, icon: 'fa-book',
+        href: path('registrationbook.overview'), prefixes: ['registrationbook'],
+    }]) %}
+{% endif %}
+{% if is_granted('ROLE_CASHJOURNAL') %}
+    {% set items = items|merge([{
+        label: 'nav.journal'|trans, icon: 'fa-book-open',
+        href: path('journal.overview'), prefixes: ['journal'],
+    }]) %}
+{% endif %}
+{% if is_granted('ROLE_STATISTICS') %}
+    {% set items = items|merge([{
+        id: 'statistics', label: 'nav.statistics'|trans, icon: 'fa-chart-bar', prefixes: ['statistics'],
+        children: [
+            { label: 'nav.utilization'|trans, href: path('statistics.utilization'), prefixes: ['statistics.utilization'] },
+            { label: 'nav.origin'|trans, href: path('statistics.origin'), prefixes: ['statistics.origin'] },
+            { label: 'nav.turnover'|trans, href: path('statistics.turnover'), prefixes: ['statistics.turnover'] },
+            { label: 'nav.tourism'|trans, href: path('statistics.tourism'), prefixes: ['statistics.tourism'] },
+        ],
+    }]) %}
+{% endif %}
+{% if is_granted('ROLE_ADMIN') %}
+    {% set settings = [
+        { label: 'app_settings.nav.label'|trans, href: path('settings.general.index'), prefixes: ['settings.general'] },
+        { label: 'nav.user'|trans, href: path('users.overview'), prefixes: ['users'] },
+        { label: 'nav.category'|trans, href: path('room_category_index'), prefixes: ['room.category', 'room_category'] },
+        { label: 'nav.appartment'|trans, href: path('apartments.overview'), prefixes: ['apartments'] },
+        { label: 'nav.object'|trans, href: path('objects.overview'), prefixes: ['objects'] },
+        { label: 'nav.guest_category'|trans, href: path('guest_category_index'), prefixes: ['guest_category'] },
+        { label: 'nav.prices'|trans, href: path('prices.overview'), prefixes: ['prices'] },
+        { label: 'nav.tourist_tax'|trans, href: path('tourist_tax_index'), prefixes: ['tourist_tax'] },
+        { label: 'nav.reservationorigin'|trans, href: path('reservationorigin.overview'), prefixes: ['reservationorigin'] },
+        { label: 'nav.status'|trans, href: path('reservation_status_index'), prefixes: ['status', 'reservation_status'] },
+        { label: 'nav.calendars'|trans, href: path('settings.calendars.index'), prefixes: ['settings.calendars'] },
+        { label: 'nav.templates'|trans, href: path('settings.templates.overview'), prefixes: ['settings.templates'] },
+        { label: 'online_booking.nav.label'|trans, href: path('settings.online_booking.index'), prefixes: ['settings.online_booking'] },
+        { label: 'guest_checkin.nav.label'|trans, href: path('settings.guest_checkin.index'), prefixes: ['settings.guest_checkin'] },
+        { label: 'workflow.nav.label'|trans, href: path('settings.workflows.index'), prefixes: ['settings.workflows'] },
+    ] %}
+    {% if mcp_available %}
+        {% set settings = settings|merge([
+            { label: 'mcp.nav.label'|trans, href: path('settings.mcp.index'), prefixes: ['settings.mcp'] },
+        ]) %}
+    {% endif %}
+    {% set items = items|merge([{
+        id: 'settings', label: 'nav.settings'|trans, icon: 'fa-gear', prefixes: [], children: settings,
+    }]) %}
+{% endif %}
+
+{# Mark the current entries, collect the bottom bar's tabs and find the title of the page #}
+{% set marked = [] %}
+{% set tabs = [] %}
+{% set currentLabel = '' %}
+{% for item in items %}
+    {% set children = [] %}
+    {% set childActive = false %}
+    {% for child in item.children|default([]) %}
+        {% set active = false %}
+        {% for prefix in child.prefixes %}
+            {% if route starts with prefix %}{% set active = true %}{% endif %}
+        {% endfor %}
+        {% if active %}
+            {% set childActive = true %}
+            {% set currentLabel = child.label %}
+        {% endif %}
+        {% set child = child|merge({ active: active }) %}
+        {% set children = children|merge([child]) %}
+        {% if child.tab is defined %}{% set tabs = tabs|merge([child]) %}{% endif %}
+    {% endfor %}
+    {% set active = childActive %}
+    {% for prefix in item.prefixes %}
+        {% if route starts with prefix %}{% set active = true %}{% endif %}
+    {% endfor %}
+    {% if active and not childActive %}{% set currentLabel = item.label %}{% endif %}
+    {% set item = item|merge({ active: active, children: children }) %}
+    {% set marked = marked|merge([item]) %}
+    {% if item.tab is defined %}{% set tabs = tabs|merge([item]) %}{% endif %}
+{% endfor %}
+{% set title = pageTitle|default('')|trim ?: currentLabel %}
+{% set notifications = notification_summary() %}
+
+<nav class="app-nav" aria-label="{{ 'nav.menu'|trans }}" data-controller="app-shell">
+    <div class="app-nav-head">
+        <a class="app-brand" href="{{ path('dashboard.redirect') }}" aria-label="FewohBee">
+            <img src="{{ app.request.basepath }}/img/logo-fewohbee.png" alt="" width="28" height="28">
+            <span class="app-brand-name"><span class="fewohbee-wordmark-blue">Fewoh</span><span class="fewohbee-wordmark-orange">Bee</span></span>
+        </a>
+        <span class="app-title">{{ title ?: 'FewohBee' }}</span>
+        <button type="button" class="app-nav-rail-toggle" data-action="app-shell#toggleRail"
+                title="{{ 'nav.sidebar.toggle'|trans }}" aria-label="{{ 'nav.sidebar.toggle'|trans }}">
+            <span class="app-nav-rail-toggle-icon"><i class="fas fa-angles-left"></i></span>
+        </button>
+    </div>
+
+    {# A side menu below lg (opened by "More" in the bottom bar), the sidebar's list from lg up #}
+    <div class="offcanvas-lg offcanvas-end app-nav-menu" tabindex="-1" id="appNavMenu"
+         data-controller="main-nav" aria-labelledby="appNavMenuLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="appNavMenuLabel">{{ 'nav.menu'|trans }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#appNavMenu"
+                    aria-label="{{ 'button.close'|trans }}"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="app-nav-list">
+                {% for item in marked %}
+                    {% if item.children is empty %}
+                        <li>
+                            <a class="app-nav-link{{ item.active ? ' active' }}" href="{{ item.href }}"
+                               title="{{ item.label }}"{% if item.active %} aria-current="page"{% endif %}>
+                                <span class="app-nav-icon"><i class="fas {{ item.icon }}"></i></span>
+                                <span class="app-nav-label">{{ item.label }}</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        {% set open = item.active or item.open|default(false) %}
+                        <li>
+                            <button type="button" class="app-nav-link{{ item.active ? ' active-group' }}"
+                                    title="{{ item.label }}"
+                                    data-bs-toggle="collapse" data-bs-target="#appNavGroup-{{ item.id }}"
+                                    data-action="app-shell#expandForGroup"
+                                    aria-expanded="{{ open ? 'true' : 'false' }}" aria-controls="appNavGroup-{{ item.id }}">
+                                <span class="app-nav-icon"><i class="fas {{ item.icon }}"></i></span>
+                                <span class="app-nav-label">{{ item.label }}</span>
+                                <span class="app-nav-caret"><i class="fas fa-chevron-down"></i></span>
+                            </button>
+                            <ul class="app-nav-sub collapse{{ open ? ' show' }}" id="appNavGroup-{{ item.id }}">
+                                {% for child in item.children %}
+                                    <li>
+                                        <a class="app-nav-sublink{{ child.active ? ' active' }}" href="{{ child.href }}"
+                                           {%- if child.active %} aria-current="page"{% endif %}>{{ child.label }}</a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="app-nav-quick">
+        <div class="dropdown" data-controller="notifications"
+             data-notifications-url-value="{{ path('notifications.panel') }}">
+            <a class="app-nav-link" href="#" id="navbarNotifications" role="button"
+               data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+               data-action="show.bs.dropdown->notifications#loadPanelAction"
+               title="{{ 'notification.title'|trans }}" aria-label="{{ 'notification.title'|trans }}">
+                <span class="app-nav-icon"><i class="fas fa-bell"></i></span>
+                <span class="app-nav-label">{{ 'notification.title'|trans }}</span>
+                <span class="app-nav-badge badge rounded-pill {{ notifications.badgeClass }}{{ notifications.isEmpty ? ' d-none' : '' }}"
+                      data-notifications-badge>
+                    <span data-notifications-count>{{ notifications.total }}</span>
+                    <span class="visually-hidden">{{ 'notification.title'|trans }}</span>
+                </span>
+            </a>
+            <div class="dropdown-menu notification-panel" aria-labelledby="navbarNotifications"
+                 data-notifications-target="panel">
+                <div class="px-3 py-4 text-center text-body-secondary">
+                    <span class="spinner-border spinner-border-sm"></span>
+                </div>
+            </div>
+        </div>
+        <div class="dropdown">
+            <a class="app-nav-link" href="#" id="appNavUser" role="button" data-bs-toggle="dropdown"
+               aria-expanded="false" title="{{ app.user.getUsername() }}" aria-label="{{ 'nav.profile'|trans }}">
+                <span class="app-nav-icon"><i class="fas fa-user-circle"></i></span>
+                <span class="app-nav-label">{{ app.user.getUsername() }}</span>
+            </a>
+            <div class="dropdown-menu" aria-labelledby="appNavUser">
+                <a class="dropdown-item" href="{{ path('profile') }}"><i class="fas fa-user fa-fw me-2"></i>{{ 'nav.profile'|trans }}</a>
+                <a class="dropdown-item d-flex align-items-center" href="{{ path('release_notes.index') }}">
+                    <i class="fas fa-gift fa-fw me-2"></i>
+                    <span>{{ 'release_notes.nav'|trans }}</span>
+                    <span class="text-body-secondary small ms-auto ps-3">{{ app_version }}</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="{{ path('logout') }}"><i class="fas fa-sign-out-alt fa-fw me-2"></i>{{ 'nav.logout'|trans }}</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<nav class="app-bottomnav" aria-label="{{ 'nav.menu'|trans }}">
+    {% for tab in tabs|slice(0, 4) %}
+        <a class="app-bottomnav-item{{ tab.active ? ' active' }}" href="{{ tab.href }}"{% if tab.active %} aria-current="page"{% endif %}>
+            <span class="app-bottomnav-icon"><i class="fas {{ tab.icon }}"></i></span>
+            <span class="app-bottomnav-label">{{ tab.tab }}</span>
+        </a>
+    {% endfor %}
+    <button type="button" class="app-bottomnav-item" data-bs-toggle="offcanvas" data-bs-target="#appNavMenu"
+            aria-controls="appNavMenu">
+        <span class="app-bottomnav-icon"><i class="fas fa-bars"></i></span>
+        <span class="app-bottomnav-label">{{ 'nav.more'|trans }}</span>
+    </button>
+</nav>
