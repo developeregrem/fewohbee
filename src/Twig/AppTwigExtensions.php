@@ -334,7 +334,7 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
 
         // These cells are sticky-positioned table headers, which fake their
         // bottom border via an inset box-shadow (see .table-sticky thead th
-        // in app.css) rather than a real border - since this inline style
+        // in styles/views/reservations.css) rather than a real border - since this inline style
         // replaces the whole box-shadow property, re-add that layer here so
         // entry cells don't lose their bottom border underneath the bars.
         return sprintf(

@@ -1,0 +1,66 @@
+/* Styleguide (/_styleguide, debug only). */
+
+.styleguide-scheme {
+    padding: 1.25rem;
+    border: 1px solid var(--feb-border);
+    border-radius: var(--feb-radius-xl);
+    background-color: var(--feb-canvas);
+    color: var(--feb-text);
+}
+
+.styleguide-heading {
+    margin: 1.5rem 0 .625rem;
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.styleguide-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: .5rem;
+}
+
+.styleguide-swatch {
+    width: 5.5rem;
+    color: var(--feb-text-muted);
+    font-size: .72rem;
+}
+
+.styleguide-swatch > span {
+    display: block;
+    height: 2.5rem;
+    margin-bottom: .25rem;
+    border: 1px solid var(--feb-border);
+    border-radius: var(--feb-radius);
+}
+
+.styleguide-ref {
+    margin-left: .5rem;
+    color: var(--feb-text-subtle);
+    font-size: .72rem;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* Show the header's add button in both of its forms, whatever the device */
+.styleguide-page-header .page-header-text {
+    display: block;
+}
+
+.styleguide-page-header .page-actions {
+    display: flex;
+}
+
+.styleguide-page-header .fab-add-inline {
+    display: inline-block;
+}
+
+.styleguide-page-header .fab-add {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}

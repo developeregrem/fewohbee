@@ -1,0 +1,17 @@
+{#
+ # The action that creates a new entry. With a mouse it is a regular button; on touch screens it
+ # becomes the round button at the bottom right (styles/components/touch.css). Every other
+ # attribute (data-action, data-url, data-bs-toggle …) goes onto both.
+ #
+ #   <twig:AddButton :label="'nav.customer.add'|trans" data-action="click->customers#openModalAction"
+ #                   data-url="{{ path('customers.new.customer') }}"/>
+ #}
+{% props label, icon = 'plus', href = null %}
+{% set tag = href ? 'a' : 'button' %}
+<{{ tag }} {% if href %}href="{{ href }}"{% else %}type="button"{% endif %} {{ attributes.defaults({class: 'btn btn-primary fab-add-inline'}) }}>
+    <i class="fas fa-{{ icon }} me-1" aria-hidden="true"></i> {{ label }}
+</{{ tag }}>
+<{{ tag }} {% if href %}href="{{ href }}"{% else %}type="button"{% endif %} {{ attributes.without('class', 'id').defaults({class: 'btn fab-add'}) }}
+        title="{{ label }}" aria-label="{{ label }}">
+    <i class="fas fa-{{ icon }}" aria-hidden="true"></i>
+</{{ tag }}>

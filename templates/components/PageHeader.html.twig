@@ -1,0 +1,19 @@
+{#
+ # Title and main actions of a page. Below lg the top bar already shows the title, so only the
+ # actions remain; the content of the component is the actions, e.g. an AddButton.
+ #
+ #   <twig:PageHeader :title="'nav.customers'|trans">
+ #       <twig:AddButton :label="'nav.customer.add'|trans" data-action="…"/>
+ #   </twig:PageHeader>
+ #}
+{% props title, subtitle = null %}
+<header {{ attributes.defaults({class: 'page-header'}) }}>
+    <div class="page-header-text">
+        <h1 class="page-title">{{ title }}</h1>
+        {% if subtitle %}<p class="page-subtitle">{{ subtitle }}</p>{% endif %}
+    </div>
+    {% set actions %}{% block content %}{% endblock %}{% endset %}
+    {% if actions|trim is not empty %}
+        <div class="page-actions">{{ actions }}</div>
+    {% endif %}
+</header>

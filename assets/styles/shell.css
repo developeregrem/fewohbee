@@ -486,3 +486,14 @@ body.reservations-week-fit .app-bottomnav {
         display: none;
     }
 }
+
+/* ------------------------------------------------------------------ Notifications */
+
+/* Notification bell dropdown: wide enough for two-line entries, capped so a
+   long list scrolls inside the panel instead of running off the viewport. */
+.notification-panel {
+    min-width: 22rem;
+    max-width: calc(100vw - 1rem);
+    max-height: 70vh;
+    overflow-y: auto;
+}

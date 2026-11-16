@@ -1,9 +1,8 @@
 /*
- * Building blocks shared by the pages: a list of records as a card (toolbar, table, footer),
- * small pieces used inside it. Everything is built from the design tokens.
+ * A list of records as a card: toolbar, table, footer. Below md the rows can stack into blocks
+ * (data-table-stack). Also the generic table helpers: sortable headers, zebra striping that
+ * skips hidden rows.
  */
-
-/* ------------------------------------------------------------------ Record list */
 
 /* A sheet holding toolbar, table and footer of one list */
 .data-card {
@@ -169,142 +168,48 @@
     }
 }
 
-/* ------------------------------------------------------------------ Forms */
+/*
+ * Sortable table headers (generic sortable-table Stimulus controller)
+ */
+.sort-header {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    padding: 0;
+    text-align: inherit;
+    white-space: nowrap;
+}
+
+.sort-header:hover,
+.sort-header:focus {
+    color: var(--feb-primary-text);
+}
+
+.sort-header .sort-icon {
+    display: inline-flex;
+    justify-content: center;
+    min-width: .75rem;
+    opacity: .45;
+}
+
+th[aria-sort="ascending"] .sort-icon,
+th[aria-sort="descending"] .sort-icon {
+    opacity: 1;
+}
 
 /*
- * Label-and-field rows written one after the other without a margin of their own: they were
- * kept apart by the tall fields of the former theme. Transitional - rows built with the form
- * theme or with a spacing class bring their own margin and are left alone.
+ * Zebra striping that counts only the visible rows, so the pattern stays
+ * correct while a filter hides rows (Bootstrap's .table-striped counts hidden
+ * rows via nth-of-type and would break). Mirrors .table-striped's mechanism so
+ * hover and contextual colours keep working. The `of :not(.d-none)` selector
+ * needs a modern browser (Chrome/Edge 111+, Firefox 113+, Safari 9+); older
+ * browsers simply show no striping.
  */
-.row:not([class*="mb-"]):has(> .col-form-label) + .row:not([class*="mt-"]):has(> .col-form-label) {
-    margin-top: .625rem;
-}
-
-/* ------------------------------------------------------------------ Small pieces */
-
-/* A search field with the magnifier inside */
-.search-field {
-    position: relative;
-    flex: 1 1 16rem;
-    max-width: 28rem;
-}
-
-.search-field-icon {
-    position: absolute;
-    top: 50%;
-    left: .8rem;
-    color: var(--feb-text-subtle);
-    font-size: .85rem;
-    pointer-events: none;
-    transform: translateY(-50%);
-}
-
-.search-field .form-control {
-    padding-left: 2.25rem;
-}
-
-/* Initials of a person */
-.avatar {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 50%;
-    background-color: var(--feb-primary-subtle);
-    color: var(--feb-primary-text);
-    font-size: .8rem;
-    font-weight: var(--feb-font-weight-strong);
-    text-transform: uppercase;
-}
-
-/* A button that is only an icon; needs a title */
-.btn-icon {
-    --bs-btn-color: var(--feb-text-muted);
-    --bs-btn-border-color: transparent;
-    --bs-btn-hover-color: var(--feb-text);
-    --bs-btn-hover-bg: var(--feb-surface-3);
-    --bs-btn-hover-border-color: transparent;
-    --bs-btn-active-color: var(--feb-text);
-    --bs-btn-active-bg: var(--feb-surface-3);
-    --bs-btn-active-border-color: transparent;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    padding: 0;
-}
-
-@media (pointer: coarse) {
-    .btn-icon {
-        width: 2.75rem;
-        height: 2.75rem;
-    }
-}
-
-/* Shown in place of a list that has no entries */
-.empty-state {
-    padding: 3rem 1rem;
-    color: var(--feb-text-muted);
-    text-align: center;
-}
-
-.empty-state-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 3.5rem;
-    height: 3.5rem;
-    margin-bottom: .75rem;
-    border-radius: 50%;
-    background-color: var(--feb-surface-2);
-    color: var(--feb-text-subtle);
-    font-size: 1.25rem;
-}
-
-.empty-state-title {
-    margin: 0;
-    color: var(--feb-text);
-    font-weight: var(--feb-font-weight-strong);
-}
-
-/* ------------------------------------------------------------------ Styleguide (dev only) */
-
-.styleguide-scheme {
-    padding: 1.25rem;
-    border: 1px solid var(--feb-border);
-    border-radius: var(--feb-radius-xl);
-    background-color: var(--feb-canvas);
-    color: var(--feb-text);
-}
-
-.styleguide-heading {
-    margin: 1.5rem 0 .625rem;
-    color: var(--feb-text-muted);
-    font-size: var(--feb-font-size-sm);
-    letter-spacing: .04em;
-    text-transform: uppercase;
-}
-
-.styleguide-swatches {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .5rem;
-    margin-bottom: .5rem;
-}
-
-.styleguide-swatch {
-    width: 5.5rem;
-    color: var(--feb-text-muted);
-    font-size: .72rem;
-}
-
-.styleguide-swatch > span {
-    display: block;
-    height: 2.5rem;
-    margin-bottom: .25rem;
-    border: 1px solid var(--feb-border);
-    border-radius: var(--feb-radius);
+.table-visible-striped > tbody > tr:nth-child(even of :not(.d-none)) > * {
+    --bs-table-bg-type: var(--bs-table-striped-bg);
 }

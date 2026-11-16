@@ -1,0 +1,7 @@
+{#
+ # Initials of a person in a circle; decorative, the name stands next to it.
+ #
+ #   <twig:Avatar :initials="customer.firstname|first ~ customer.lastname|first"/>
+ #}
+{% props initials %}
+<span {{ attributes.defaults({class: 'avatar'}) }} aria-hidden="true">{{ initials }}</span>

@@ -1,0 +1,72 @@
+/* Controls made for touch screens. */
+
+/* Add button on touch screens, phones and tablets alike: round, at the bottom right above the
+   content, in place of the regular button (fab-add-inline). On the reservation overview it also
+   stays in the full-screen week view. Same touch test as isDesktopWeekMode(). */
+.fab-add {
+    display: none;
+}
+
+@media not all and (hover: hover) and (pointer: fine) {
+    .fab-add {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .fab-add-inline {
+        display: none;
+    }
+
+    /* Page actions that are only the add button (AddButton) keep no room in the page header */
+    .page-actions:not(:has(> :not(.fab-add-inline, .fab-add))) {
+        display: contents;
+    }
+
+    /* Room to scroll the last buttons of a page out from under the round button */
+    .fab-add-clearance {
+        padding-bottom: 5rem;
+    }
+}
+
+.fab-add {
+    position: fixed;
+    right: 1rem;
+    bottom: calc(1rem + max(env(safe-area-inset-bottom), var(--feb-bottomnav-offset, 0px)));
+    z-index: 1030;
+    width: 3.5rem;
+    height: 3.5rem;
+    padding: 0;
+    /* Glass in the manner of iOS 26: nearly transparent, the content behind it
+       blurred, a fine light edge instead of a hard border and a soft shadow. Theme
+       colours only, so it follows light and dark mode and a swapped theme. */
+    border-radius: 50%;
+    border: 1px solid rgba(var(--bs-body-bg-rgb), .6);
+    background-color: rgba(var(--bs-body-bg-rgb), .25);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(12px) saturate(180%);
+    box-shadow: var(--bs-box-shadow), inset 0 1px 1px rgba(var(--bs-body-bg-rgb), .7);
+    color: var(--bs-secondary-color);
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+/* A round add button that opens a menu: the wrapper takes the fixed place so
+   the menu opens upwards right above the button */
+.fab-add-dropdown {
+    position: fixed;
+    right: 1rem;
+    bottom: calc(1rem + max(env(safe-area-inset-bottom), var(--feb-bottomnav-offset, 0px)));
+    z-index: 1030;
+}
+
+.fab-add-dropdown > .fab-add {
+    position: static;
+}
+
+.fab-add:hover,
+.fab-add:active {
+    border-color: rgba(var(--bs-body-bg-rgb), .6);
+    background-color: rgba(var(--bs-body-bg-rgb), .45);
+    color: var(--bs-body-color);
+}

@@ -1,0 +1,21 @@
+{#
+ # A list of records on a card: an optional toolbar (search, filters), the list, an optional
+ # footer (count, paging). A list that is reloaded on its own can render its footer itself
+ # with the data-footer class.
+ #
+ #   <twig:DataCard>
+ #       <twig:block name="toolbar"><twig:SearchField …/></twig:block>
+ #       <table class="table data-table">…</table>
+ #   </twig:DataCard>
+ #}
+<div {{ attributes.defaults({class: 'card data-card'}) }}>
+    {% set toolbar %}{% block toolbar %}{% endblock %}{% endset %}
+    {% if toolbar|trim is not empty %}
+        <div class="data-toolbar">{{ toolbar }}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+    {% set footer %}{% block footer %}{% endblock %}{% endset %}
+    {% if footer|trim is not empty %}
+        <div class="data-footer">{{ footer }}</div>
+    {% endif %}
+</div>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\ReservationStatus;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,6 +29,32 @@ final class StyleguideController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        return $this->render('Styleguide/index.html.twig');
+        return $this->render('Styleguide/index.html.twig', [
+            'statuses' => $this->sampleStatuses(),
+        ]);
+    }
+
+    /**
+     * Statuses as an operator might colour them, including colours close to either background.
+     *
+     * @return list<ReservationStatus>
+     */
+    private function sampleStatuses(): array
+    {
+        $samples = [
+            ['Confirmed', '#2d9434', '#ffffff'],
+            ['Option', '#f6e95c', '#000000'],
+            ['Request', '#ffffff', '#000000'],
+            ['Blocked', '#161b22', '#ffffff'],
+            ['Channel', '#7b1fa2', '#ffffff'],
+        ];
+
+        return array_map(
+            static fn (array $sample): ReservationStatus => (new ReservationStatus())
+                ->setName($sample[0])
+                ->setColor($sample[1])
+                ->setContrastColor($sample[2]),
+            $samples,
+        );
     }
 }

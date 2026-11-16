@@ -152,6 +152,10 @@ a:not([class]):hover {
 
 .badge.bg-warning { --bs-badge-color: var(--feb-on-warning); }
 .badge.bg-light { --bs-badge-color: var(--feb-text); }
+
+/* A light badge would disappear on a light surface */
+.badge.text-bg-light,
+.badge.bg-light { box-shadow: inset 0 0 0 1px var(--feb-color-edge); }
 .badge.bg-dark { --bs-badge-color: var(--feb-surface); }
 
 /* ------------------------------------------------------------------ Buttons */

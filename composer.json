@@ -45,6 +45,7 @@
         "symfony/twig-bundle": "8.1.*",
         "symfony/uid": "8.1.*",
         "symfony/ux-turbo": "^2.24",
+        "symfony/ux-twig-component": "^3.7",
         "symfony/validator": "8.1.*",
         "symfony/web-link": "8.1.*",
         "symfony/yaml": "8.1.*",

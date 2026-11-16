@@ -38,7 +38,7 @@
                         <td>{{ origin.name }}</td>
                         <td>
                             {% if origin.color %}
-                                <span class="badge border" style="background-color: {{ origin.color }}">&nbsp;&nbsp;&nbsp;</span>
+                                <twig:ColorDot :color="origin.color" size="lg"/>
                             {% else %}
                                 &ndash;
                             {% endif %}

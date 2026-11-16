@@ -1,4 +1,5 @@
-{# One set of samples; included once per colour scheme, so ids carry the scheme #}
+{# One set of samples; included once per colour scheme, so ids carry the scheme. Where a sample is
+   a Twig component (templates/components/), its name stands next to the heading. #}
 <h3 class="styleguide-heading">Colours</h3>
 <div class="styleguide-swatches">
     {% for token in ['canvas', 'surface', 'surface-2', 'surface-3', 'border', 'border-strong', 'text', 'text-muted', 'text-subtle'] %}
@@ -24,7 +25,16 @@
     </p>
 </div>
 
-<h3 class="styleguide-heading">Buttons</h3>
+<h3 class="styleguide-heading">Page header <code class="styleguide-ref">PageHeader · AddButton</code></h3>
+<div class="card card-body styleguide-page-header">
+    <twig:PageHeader title="Guests" subtitle="Below lg the top bar shows the title instead.">
+        <twig:AddButton label="Add guest"/>
+    </twig:PageHeader>
+    <p class="text-body-secondary small mb-0">With a mouse the add button sits in the header; on touch screens it is the round
+        button at the bottom right. Both are shown here.</p>
+</div>
+
+<h3 class="styleguide-heading">Buttons <code class="styleguide-ref">IconButton</code></h3>
 <div class="card card-body gap-3">
     <div class="d-flex flex-wrap gap-2">
         <button type="button" class="btn btn-primary"><i class="fas fa-plus me-1"></i> Primary</button>
@@ -40,7 +50,8 @@
         <button type="button" class="btn btn-outline-danger">Outline danger</button>
         <button type="button" class="btn btn-primary" disabled>Disabled</button>
         <button type="button" class="btn btn-secondary btn-sm">Small</button>
-        <button type="button" class="btn btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+        <twig:IconButton icon="pen" label="Edit"/>
+        <twig:IconButton icon="trash-can" label="Delete"/>
         <div class="btn-group">
             <button type="button" class="btn btn-secondary">Day</button>
             <button type="button" class="btn btn-secondary active">Week</button>
@@ -49,31 +60,38 @@
     </div>
 </div>
 
-<h3 class="styleguide-heading">Form</h3>
+<h3 class="styleguide-heading">Form <code class="styleguide-ref">form theme layout</code></h3>
 <div class="card card-body">
-    <div class="row g-3">
-        <div class="col-sm-6">
-            <label class="form-label" for="sg-name-{{ scheme }}">Name</label>
-            <input type="text" class="form-control" id="sg-name-{{ scheme }}" value="Anna Beispiel">
-        </div>
-        <div class="col-sm-6">
-            <label class="form-label" for="sg-room-{{ scheme }}">Room</label>
+    {# The grid the form theme renders, and that forms written by hand use as well #}
+    <div class="mb-3 row">
+        <label class="col-form-label col-sm-4 text-sm-end required" for="sg-name-{{ scheme }}">Name</label>
+        <div class="col-sm"><input type="text" class="form-control" id="sg-name-{{ scheme }}" value="Anna Beispiel" required></div>
+    </div>
+    <div class="mb-3 row">
+        <label class="col-form-label col-sm-4 text-sm-end" for="sg-room-{{ scheme }}">Room</label>
+        <div class="col-sm">
             <select class="form-select" id="sg-room-{{ scheme }}"><option>Double room 1</option><option>Single room 2</option></select>
         </div>
-        <div class="col-sm-6">
-            <label class="form-label" for="sg-price-{{ scheme }}">Price</label>
+    </div>
+    <div class="mb-3 row">
+        <label class="col-form-label col-sm-4 text-sm-end" for="sg-price-{{ scheme }}">Price</label>
+        <div class="col-sm">
             <div class="input-group">
                 <input type="text" class="form-control" id="sg-price-{{ scheme }}" placeholder="0,00">
                 <span class="input-group-text">€</span>
             </div>
             <div class="form-text">Per night, including VAT.</div>
         </div>
-        <div class="col-sm-6">
-            <label class="form-label" for="sg-mail-{{ scheme }}">E-mail</label>
+    </div>
+    <div class="mb-3 row">
+        <label class="col-form-label col-sm-4 text-sm-end" for="sg-mail-{{ scheme }}">E-mail</label>
+        <div class="col-sm">
             <input type="email" class="form-control is-invalid" id="sg-mail-{{ scheme }}" value="anna@">
             <div class="invalid-feedback">Please enter a complete address.</div>
         </div>
-        <div class="col-12 d-flex flex-wrap gap-4">
+    </div>
+    <div class="row">
+        <div class="col-sm offset-sm-4 d-flex flex-wrap gap-4">
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="sg-check-{{ scheme }}" checked>
                 <label class="form-check-label" for="sg-check-{{ scheme }}">Breakfast</label>
@@ -90,15 +108,12 @@
     </div>
 </div>
 
-<h3 class="styleguide-heading">Record list</h3>
-<div class="card data-card">
-    <div class="data-toolbar">
-        <div class="search-field">
-            <span class="search-field-icon"><i class="fas fa-search"></i></span>
-            <input type="search" class="form-control" placeholder="Search" aria-label="Search">
-        </div>
+<h3 class="styleguide-heading">Record list <code class="styleguide-ref">DataCard · SearchField · Avatar · StatusBadge</code></h3>
+<twig:DataCard>
+    <twig:block name="toolbar">
+        <twig:SearchField placeholder="Search" input:id="sg-search-{{ scheme }}"/>
         <button type="button" class="btn btn-secondary ms-auto"><i class="fas fa-filter me-1"></i> Filter</button>
-    </div>
+    </twig:block>
     <div class="table-responsive">
         <table class="table table-hover align-middle data-table data-table-stack">
             <thead>
@@ -106,25 +121,23 @@
             </thead>
             <tbody>
             {% for row in [
-                { initials: 'AB', name: 'Beispiel, Anna', company: 'Muster GmbH', badge: 'text-bg-success', status: 'Checked in', bookings: 4 },
-                { initials: 'JD', name: 'Doe, John', company: '', badge: 'text-bg-warning', status: 'Option', bookings: 1 },
-                { initials: 'MM', name: 'Mustermann, Max', company: 'Reisebüro Sonne', badge: 'text-bg-secondary', status: 'Departed', bookings: 12 },
+                { initials: 'AB', name: 'Beispiel, Anna', company: 'Muster GmbH', status: statuses[0], bookings: 4 },
+                { initials: 'JD', name: 'Doe, John', company: '', status: statuses[1], bookings: 1 },
+                { initials: 'MM', name: 'Mustermann, Max', company: 'Reisebüro Sonne', status: statuses[3], bookings: 12 },
             ] %}
                 <tr>
                     <td class="cell-meta data-table-id"><span class="cell-narrow">ID </span>{{ loop.index + 40 }}</td>
-                    <td><a href="#" class="data-table-link"><span class="avatar">{{ row.initials }}</span><span class="data-table-link-text">{{ row.name }}</span></a></td>
+                    <td><a href="#" class="data-table-link"><twig:Avatar :initials="row.initials"/><span class="data-table-link-text">{{ row.name }}</span></a></td>
                     <td class="cell-meta">{{- row.company -}}</td>
-                    <td class="cell-meta"><span class="badge {{ row.badge }}">{{ row.status }}</span></td>
+                    <td class="cell-meta"><twig:StatusBadge :status="row.status"/></td>
                     <td class="cell-meta text-end">{{ row.bookings }}</td>
-                    <td class="cell-actions data-table-actions text-end">
-                        <button type="button" class="btn btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
-                    </td>
+                    <td class="cell-actions data-table-actions text-end"><twig:IconButton icon="pen" label="Edit"/></td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
-    <div class="data-footer">
+    <twig:block name="footer">
         <span>3 records</span>
         <ul class="pagination">
             <li class="page-item disabled"><a class="page-link" href="#">&laquo;</a></li>
@@ -132,6 +145,27 @@
             <li class="page-item"><a class="page-link" href="#">2</a></li>
             <li class="page-item"><a class="page-link" href="#">&raquo;</a></li>
         </ul>
+    </twig:block>
+</twig:DataCard>
+
+<h3 class="styleguide-heading">Empty state <code class="styleguide-ref">EmptyState</code></h3>
+<div class="card">
+    <twig:EmptyState icon="users" title="Nothing here yet">A short hint on what to do next.</twig:EmptyState>
+</div>
+
+<h3 class="styleguide-heading">Colours chosen by the operator <code class="styleguide-ref">StatusBadge · ColorDot</code></h3>
+<div class="card card-body gap-3">
+    <div class="d-flex flex-wrap gap-2">
+        {% for status in statuses %}<twig:StatusBadge :status="status"/>{% endfor %}
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        {% for status in statuses %}<twig:StatusBadge :status="status" pill/>{% endfor %}
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-3">
+        {% for status in statuses %}
+            <span class="d-inline-flex align-items-center gap-2"><twig:ColorDot :color="status.color"/>{{ status.name }}</span>
+        {% endfor %}
+        <twig:ColorDot :color="statuses[3].color" size="lg"/>
     </div>
 </div>
 
@@ -140,6 +174,11 @@
     <div class="d-flex flex-wrap gap-2">
         {% for variant in ['primary', 'secondary', 'success', 'info', 'warning', 'danger', 'light', 'dark'] %}
             <span class="badge text-bg-{{ variant }}">{{ variant }}</span>
+        {% endfor %}
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        {% for variant in ['primary', 'secondary', 'success', 'info', 'warning', 'danger'] %}
+            <span class="badge bg-{{ variant }}-subtle text-{{ variant }}-emphasis border border-{{ variant }}-subtle">{{ variant }} subtle</span>
         {% endfor %}
     </div>
     <div class="alert alert-info mb-0"><i class="fas fa-circle-info me-2"></i>Check-in is possible from 3 pm.</div>
@@ -188,14 +227,5 @@
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Save</button>
             </div>
         </div>
-    </div>
-</div>
-
-<h3 class="styleguide-heading">Empty state</h3>
-<div class="card">
-    <div class="empty-state">
-        <span class="empty-state-icon"><i class="fas fa-users"></i></span>
-        <p class="empty-state-title">Nothing here yet</p>
-        <p class="mb-0">A short hint on what to do next.</p>
     </div>
 </div>

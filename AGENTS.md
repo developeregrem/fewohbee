@@ -337,22 +337,34 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
 - Styles are layered in `assets/styles/`, imported in this order by `assets/app.js`: Bootstrap
   (unmodified, via importmap) → `tokens.css` (the design tokens `--feb-*`) → `themes/<name>.css`
   (a theme: token values only, for the light and the dark scheme) → `bridge.css` (points
-  Bootstrap's variables and compiled-in colours at the tokens) → `shell.css` (application frame:
-  sidebar, top and bottom bar, page header) → `components.css` (shared building blocks) →
-  `app.css` (individual views). Production deploys need `asset-map:compile`.
+  Bootstrap's variables and compiled-in colours at the tokens) → `base.css` (the wordmark) →
+  `shell.css` (application frame: sidebar, top and bottom bar, page header) →
+  `components/*.css` (shared building blocks) → `views/*.css` (one file per area, e.g.
+  `views/reservations.css`). A new area gets its own file in `views/`, imported in `app.js`.
+  Production deploys need `asset-map:compile`.
 - A theme changes tokens, never markup or selectors. Do not write a colour, radius, shadow or font
   outside a theme file: use the tokens, or Bootstrap's variables (`var(--bs-*)`), which follow
   them. A colour needed with transparency is a `--feb-<name>-rgb` triplet in the theme.
 - Stay close to standard Bootstrap. Build layouts from Bootstrap components and utilities (grid,
   spacing, flex, `list-group`, responsive `d-*`/`order-*`) and the building blocks in
-  `components.css` (`page-header`, `data-card` with `data-table`, `search-field`, `btn-icon`,
-  `avatar`, `empty-state`). Add CSS only when neither can express the result.
+  `components/` (`data-card` with `data-table`, `search-field`, `btn-icon`, `avatar`,
+  `empty-state`). Add CSS only when neither can express the result.
+- Recurring patterns are anonymous Twig components in `templates/components/`
+  (`symfony/ux-twig-component`), each documented in its file: `<twig:PageHeader>`,
+  `<twig:AddButton>`, `<twig:IconButton>`, `<twig:DataCard>`, `<twig:SearchField>`,
+  `<twig:EmptyState>`, `<twig:Avatar>`, `<twig:StatusBadge>`, `<twig:ColorDot>`. Use them instead
+  of writing their markup by hand; extra attributes (`data-action`, `data-url` …) pass through.
+  A new component covers a pattern that recurs on several pages, has no logic beyond
+  presentation and goes into the styleguide.
+- Colours chosen by the operator (reservation status, origin, calendar) are shown with
+  `<twig:StatusBadge>` or `<twig:ColorDot>`, which check the value and keep it visible on any
+  background. Never use such a colour as a text colour on a surface.
 - Every page must work in the light and the dark scheme, on a phone, a tablet and a desktop. The
   styleguide at `/_styleguide` (debug only) shows tokens and building blocks in both schemes; add
   a new building block there.
 - On phones the interface should feel like an app. Wherever entries can be created, touch
-  screens get the round add button (`fab-add`; the same action as `fab-add-inline` in the page
-  header for the desktop, `fab-add-dropdown` when there are several kinds). Where a view pages
+  screens get the round add button: `<twig:AddButton>` in the page header renders it together
+  with the regular button for the desktop (`fab-add-dropdown` when there are several kinds). Where a view pages
   through a sequence (month, year, day, pages of a list), a sideways swipe pages as well: use the
   `swipe-nav` controller and keep the arrows or the select visible. Prefer stacked lists
   (`data-table-stack`) to tables that scroll sideways.
@@ -360,6 +372,10 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   Navigation entries are described once in `templates/layout/_app_nav.html.twig`.
 - `btn-secondary` is the neutral button, `btn-primary` the one main action of a view. Use
   `text-body-secondary` for muted text.
+- Forms are rendered through the form theme `templates/form/fewohbee_bootstrap_5_layout.html.twig`
+  (labels left from `sm`, above the field below). Forms written by hand use the same grid
+  (`col-sm-4 col-form-label text-sm-end` + `col-sm`) and mark required fields with " *" in the
+  label; the form theme adds the star itself.
 - The guest-facing pages (online booking, online check-in) have their own layouts and stylesheets
   under `public/resources/` and are not part of this system.
 

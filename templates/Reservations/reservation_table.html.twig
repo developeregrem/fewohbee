@@ -20,7 +20,7 @@
    own: on a table, min-width/max-width on cells are undefined per spec and
    ignored, and width is only a suggestion, so a table stretched to 100% hands
    the leftover space to every column including this one. See #reservation-table
-   in app.css, which turns these two values into a fixed layout. #}
+   in styles/views/reservations.css, which turns these two values into a fixed layout. #}
 {% set nameColumnChars = ('reservation.appartment.name'|trans)|length %}
 {% for row in grid.rows %}
     {% set nameColumnChars = max(nameColumnChars, row.apartmentLabel|length) %}

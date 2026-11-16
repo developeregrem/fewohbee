@@ -1,0 +1,22 @@
+/*
+ * The FewohBee wordmark. Its colours belong to the product, not to a theme, so a theme does not
+ * change them; on dark backgrounds the wordmark takes lighter tones of the same colours.
+ */
+:root,
+[data-bs-theme="light"] {
+    --fewohbee-wordmark-blue: #012546;
+    --fewohbee-wordmark-orange: #fb9005;
+}
+
+[data-bs-theme="dark"] {
+    --fewohbee-wordmark-blue: #78bced;
+    --fewohbee-wordmark-orange: #ffb11a;
+}
+
+.fewohbee-wordmark-blue {
+    color: var(--fewohbee-wordmark-blue);
+}
+
+.fewohbee-wordmark-orange {
+    color: var(--fewohbee-wordmark-orange);
+}

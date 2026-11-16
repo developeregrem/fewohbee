@@ -1,0 +1,11 @@
+{#
+ # A small dot in a colour the operator chose (calendar, reservation origin); decorative, the name
+ # stands next to it. A fine edge keeps colours close to the background visible in both schemes.
+ #
+ #   <twig:ColorDot :color="calendar.color"/>
+ #   <twig:ColorDot :color="origin.color" size="lg"/>
+ #}
+{% props color, size = null %}
+{% if color matches '/^#[0-9a-f]{3,8}$/i' %}
+    <span {{ attributes.defaults({class: 'color-dot' ~ (size ? ' color-dot-' ~ size : '')}) }} style="--dot-color: {{ color }}" aria-hidden="true"></span>
+{% endif %}

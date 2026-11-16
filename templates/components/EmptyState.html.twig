@@ -1,0 +1,15 @@
+{#
+ # Shown in place of a list that has no entries: an icon, what is missing and, as the content,
+ # a hint what to do.
+ #
+ #   <twig:EmptyState icon="users" :title="'customer.list.empty'|trans">
+ #       {{ 'customer.list.empty.hint'|trans }}
+ #   </twig:EmptyState>
+ #}
+{% props title, icon = 'inbox' %}
+<div {{ attributes.defaults({class: 'empty-state'}) }}>
+    <span class="empty-state-icon" aria-hidden="true"><i class="fas fa-{{ icon }}"></i></span>
+    <p class="empty-state-title">{{ title }}</p>
+    {% set hint %}{% block content %}{% endblock %}{% endset %}
+    {% if hint|trim is not empty %}<p class="mb-0">{{ hint }}</p>{% endif %}
+</div>

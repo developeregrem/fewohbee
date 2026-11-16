@@ -1,0 +1,15 @@
+{#
+ # A reservation status as a badge in the colour the operator chose for it. The text colour is
+ # calculated from that colour when the status is saved; a fine edge keeps a colour close to the
+ # background visible in the light and the dark scheme.
+ #
+ #   <twig:StatusBadge :status="reservation.reservationStatus"/>
+ #   <twig:StatusBadge :status="status" pill/>
+ #}
+{% props status, pill = false %}
+{% set hex = '/^#[0-9a-f]{3,8}$/i' %}
+<span {{ attributes.defaults({class: 'badge status-badge' ~ (pill ? ' rounded-pill' : '')}) }}
+      {%- if status.color matches hex %} style="--status-color: {{ status.color }};
+      {%- if status.contrastColor matches hex %} --status-contrast: {{ status.contrastColor }};{% endif %}"{% endif %}>
+    {{- status|display_name -}}
+</span>

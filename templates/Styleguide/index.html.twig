@@ -8,12 +8,7 @@
    Texts are deliberately not translated. #}
 {% block content %}
     <div class="container-fluid">
-        <header class="page-header">
-            <div class="page-header-text">
-                <h1 class="page-title">Styleguide</h1>
-                <p class="page-subtitle">Design tokens and building blocks, light and dark. Theme: <code>themes/fewohbee.css</code></p>
-            </div>
-        </header>
+        <twig:PageHeader title="Styleguide" subtitle="Design tokens, building blocks and Twig components (templates/components/), light and dark. Theme: themes/fewohbee.css"/>
         <div class="row g-3">
             {% for scheme in ['light', 'dark'] %}
                 <div class="col-12 col-xxl-6">

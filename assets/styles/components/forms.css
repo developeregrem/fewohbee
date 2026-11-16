@@ -1,0 +1,23 @@
+/* Forms: spacing and labels on top of Bootstrap's form styles and the form theme
+   (templates/form/fewohbee_bootstrap_5_layout.html.twig). */
+
+/*
+ * Label-and-field rows written one after the other without a margin of their own: they were
+ * kept apart by the tall fields of the former theme. Transitional - rows built with the form
+ * theme or with a spacing class bring their own margin and are left alone.
+ */
+.row:not([class*="mb-"]):has(> .col-form-label) + .row:not([class*="mt-"]):has(> .col-form-label) {
+    margin-top: .625rem;
+}
+
+.form-switch > .form-check-input {
+    margin-top: .25em;
+    margin-right: .75em;
+}
+
+/* Required fields of the form theme carry the same star as the fields written by hand, whose
+   label text ends in " *". Labels of checkboxes and legends of choice lists are left out. */
+label.col-form-label.required::after,
+label.form-label.required::after {
+    content: " *";
+}

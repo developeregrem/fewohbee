@@ -1,0 +1,23 @@
+/* Reception checklist and housekeeping. */
+
+.hk-row-form {
+    display: contents;
+}
+
+/* Frontdesk check-in state: one width for every state, so the rows line up. The labels of all
+   states share one grid cell; the hidden ones only lend their width. */
+.fd-checkin-state {
+    text-align: start;
+}
+
+.fd-checkin-labels {
+    display: inline-grid;
+}
+
+.fd-checkin-labels > * {
+    grid-area: 1 / 1;
+}
+
+.fd-checkin-labels > [aria-hidden="true"] {
+    visibility: hidden;
+}

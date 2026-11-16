@@ -125,7 +125,7 @@
         </div>
     </form>
     {% if is_granted('ROLE_RESERVATIONS') %}
-    {# Touch screens: new reservation as a floating button, see "Add button on touch screens" in app.css #}
+    {# Touch screens: new reservation as a floating button, see components/touch.css #}
     <button type="button" class="btn fab-add"
             data-action="click->reservations#selectAppartmentAction"
             data-reservations-create-new="true"

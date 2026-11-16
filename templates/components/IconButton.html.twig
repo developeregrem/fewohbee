@@ -1,0 +1,16 @@
+{#
+ # A button that shows only an icon; the label becomes its tooltip and its accessible name.
+ # With href it is a link.
+ #
+ #   <twig:IconButton icon="pen" :label="'button.edit'|trans" data-action="…"/>
+ #}
+{% props icon, label, href = null %}
+{% if href %}
+    <a href="{{ href }}" {{ attributes.defaults({class: 'btn btn-icon'}) }} title="{{ label }}" aria-label="{{ label }}">
+        <i class="fas fa-{{ icon }}" aria-hidden="true"></i>
+    </a>
+{% else %}
+    <button type="button" {{ attributes.defaults({class: 'btn btn-icon'}) }} title="{{ label }}" aria-label="{{ label }}">
+        <i class="fas fa-{{ icon }}" aria-hidden="true"></i>
+    </button>
+{% endif %}

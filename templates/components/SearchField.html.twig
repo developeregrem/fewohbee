@@ -1,0 +1,14 @@
+{#
+ # A search box with the magnifier inside. The attributes go onto the form; those prefixed with
+ # "input:" onto the field.
+ #
+ #   <twig:SearchField :placeholder="'customer.search.placeholder'|trans" :value="search"
+ #                     data-action="submit->customers#searchAction"
+ #                     input:data-action="input->customers#searchInputAction"/>
+ #}
+{% props placeholder, value = '', name = 'search', label = null %}
+<form {{ attributes.defaults({class: 'search-field', role: 'search'}) }}>
+    <span class="search-field-icon" aria-hidden="true"><i class="fas fa-search"></i></span>
+    <input type="search" {{ attributes.nested('input').defaults({class: 'form-control'}) }} name="{{ name }}"
+           placeholder="{{ placeholder }}" aria-label="{{ label ?? placeholder }}" value="{{ value }}"/>
+</form>

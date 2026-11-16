@@ -1,0 +1,135 @@
+/* Small building blocks: search field, avatar, icon button, empty state, disclosure, popovers. */
+
+/* A search field with the magnifier inside */
+.search-field {
+    position: relative;
+    flex: 1 1 16rem;
+    max-width: 28rem;
+}
+
+.search-field-icon {
+    position: absolute;
+    top: 50%;
+    left: .8rem;
+    color: var(--feb-text-subtle);
+    font-size: .85rem;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.search-field .form-control {
+    padding-left: 2.25rem;
+}
+
+/* Initials of a person */
+.avatar {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background-color: var(--feb-primary-subtle);
+    color: var(--feb-primary-text);
+    font-size: .8rem;
+    font-weight: var(--feb-font-weight-strong);
+    text-transform: uppercase;
+}
+
+/* A button that is only an icon; needs a title */
+.btn-icon {
+    --bs-btn-color: var(--feb-text-muted);
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: var(--feb-text);
+    --bs-btn-hover-bg: var(--feb-surface-3);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--feb-text);
+    --bs-btn-active-bg: var(--feb-surface-3);
+    --bs-btn-active-border-color: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+}
+
+@media (pointer: coarse) {
+    .btn-icon {
+        width: 2.75rem;
+        height: 2.75rem;
+    }
+}
+
+/* Shown in place of a list that has no entries */
+.empty-state {
+    padding: 3rem 1rem;
+    color: var(--feb-text-muted);
+    text-align: center;
+}
+
+.empty-state-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    margin-bottom: .75rem;
+    border-radius: 50%;
+    background-color: var(--feb-surface-2);
+    color: var(--feb-text-subtle);
+    font-size: 1.25rem;
+}
+
+.empty-state-title {
+    margin: 0;
+    color: var(--feb-text);
+    font-weight: var(--feb-font-weight-strong);
+}
+
+/* Person cards of the online check-in review: a whole-row summary with its own chevron */
+details > summary:has(> .fhb-details-chevron) {
+    list-style: none;
+    cursor: pointer;
+}
+
+details > summary:has(> .fhb-details-chevron)::-webkit-details-marker {
+    display: none;
+}
+
+details[open] > summary > .fhb-details-chevron {
+    transform: rotate(180deg);
+}
+
+/* Popovers listing one entry per line (e.g. "payment method → template"); Bootstrap's 276px
+   default would break the longer entries. */
+.popover-wide {
+    --bs-popover-max-width: 420px;
+}
+
+/* ------------------------------------------------------------------ Colours chosen by the operator */
+
+/* Reservation status (StatusBadge): fill and text colour come from the status */
+.status-badge {
+    background-color: var(--status-color, var(--feb-neutral));
+    color: var(--status-contrast, #fff);
+    box-shadow: inset 0 0 0 1px var(--feb-color-edge);
+}
+
+/* Calendar or reservation origin (ColorDot) */
+.color-dot {
+    display: inline-block;
+    flex: none;
+    width: .625rem;
+    height: .625rem;
+    border-radius: 50%;
+    background-color: var(--dot-color);
+    box-shadow: 0 0 0 1px var(--feb-color-edge);
+    vertical-align: middle;
+}
+
+.color-dot-lg {
+    width: 1rem;
+    height: 1rem;
+}

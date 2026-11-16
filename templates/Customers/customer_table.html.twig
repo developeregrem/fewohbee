@@ -1,11 +1,9 @@
 {# The guest list of the overview; reloaded on its own by customers_controller.js when searching or paging #}
 {% set total = customers.count %}
 {% if total == 0 %}
-    <div class="empty-state">
-        <span class="empty-state-icon"><i class="fas fa-users"></i></span>
-        <p class="empty-state-title">{{ 'customer.list.empty'|trans }}</p>
-        <p class="mb-0">{{ 'customer.list.empty.hint'|trans }}</p>
-    </div>
+    <twig:EmptyState icon="users" :title="'customer.list.empty'|trans">
+        {{- 'customer.list.empty.hint'|trans -}}
+    </twig:EmptyState>
 {% else %}
     <div class="table-responsive">
         <table class="table table-hover align-middle data-table data-table-stack">
@@ -34,7 +32,7 @@
                                data-title="{{ 'customer.details'|trans }}"
                                data-bs-toggle="modal" data-bs-target="#modalCenter"
                                title="{{ 'button.details'|trans }}">
-                                <span class="avatar" aria-hidden="true">{{ customer.firstname|first }}{{ customer.lastname|first }}</span>
+                                <twig:Avatar :initials="customer.firstname|first ~ customer.lastname|first"/>
                                 <span class="data-table-link-text">
                                     {{- customer.lastname }}{% if customer.firstname is not empty %}, {{ customer.firstname }}{% endif -%}
                                 </span>
@@ -47,18 +45,13 @@
                             <span class="cell-narrow">{{ 'customer.list.bookings'|trans({'%count%': bookings}) }}</span>
                         </td>
                         <td class="cell-actions data-table-actions text-end">
-                            <button type="button" class="btn btn-icon"
-                                    data-action="click->customers#openModalAction"
-                                    data-url="{{ path('customers.edit.customer.show', {'id': customer.id}) }}"
-                                    data-title="{{ 'customer.details'|trans }}"
-                                    data-bs-toggle="modal" data-bs-target="#modalCenter"
-                                    title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}">
-                                <i class="fas fa-pen"></i>
-                            </button>
-                            <a class="btn btn-icon" href="{{ path('customers.gdpr.customer', {'id': customer.id}) }}"
-                               title="{{ 'button.gdpr'|trans }}" aria-label="{{ 'button.gdpr'|trans }}">
-                                <i class="fas fa-balance-scale-left"></i>
-                            </a>
+                            <twig:IconButton icon="pen" :label="'button.edit'|trans"
+                                             data-action="click->customers#openModalAction"
+                                             data-url="{{ path('customers.edit.customer.show', {'id': customer.id}) }}"
+                                             data-title="{{ 'customer.details'|trans }}"
+                                             data-bs-toggle="modal" data-bs-target="#modalCenter"/>
+                            <twig:IconButton icon="balance-scale-left" :label="'button.gdpr'|trans"
+                                             :href="path('customers.gdpr.customer', {'id': customer.id})"/>
                         </td>
                     </tr>
                 {% endif %}

@@ -52,7 +52,7 @@
                 <tbody>
                 {% for calendar in calendars %}
                     <tr>
-                        <td><span class="d-inline-block rounded" style="width: 1.2rem; height: 1.2rem; background-color: {{ calendar.color }};"></span></td>
+                        <td><twig:ColorDot :color="calendar.color" size="lg"/></td>
                         <td>{{ calendar.name }}</td>
                         <td>
                             {% if calendar.requiresConfirmation %}

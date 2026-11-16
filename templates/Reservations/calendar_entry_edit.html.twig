@@ -7,7 +7,7 @@
 
     {% if not isNew %}
         <p class="text-body-secondary small mb-3">
-            <i class="fas fa-circle me-1" style="color: {{ calendarEntry.calendar.color }}; font-size: 0.7em; vertical-align: middle;"></i>
+            <twig:ColorDot :color="calendarEntry.calendar.color" class="me-1"/>
             {{ 'calendar_entry.calendar'|trans }}: <strong>{{ calendarEntry.calendar.name }}</strong>
         </p>
     {% endif %}

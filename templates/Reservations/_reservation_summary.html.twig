@@ -37,7 +37,7 @@
                 <div class="text-body-secondary">{{ 'reservation.import.booker.missing'|trans }}</div>
             {% endif %}
         </div>
-        <span class="badge rounded-pill" style="background-color: {{ status.color }}; color: {{ status.contrastColor }}">{{ status|display_name }}</span>
+        <twig:StatusBadge :status="status" pill/>
     </div>
     <div class="mt-2">{{ reservation.appartment.number }} · {{ reservation.appartment.description }}</div>
     <div class="text-body-secondary">

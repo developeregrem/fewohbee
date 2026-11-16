@@ -77,6 +77,10 @@
     --feb-primary-subtle: color-mix(in srgb, var(--feb-primary-text) 10%, var(--feb-surface));
     --feb-primary-subtle-border: color-mix(in srgb, var(--feb-primary-text) 30%, var(--feb-surface));
 
+    /* A hairline that sets a colour chosen by the operator (status, calendar) apart from any
+       surface, however close that colour is to the background */
+    --feb-color-edge: rgba(var(--feb-text-rgb), .18);
+
     /* Keyboard focus */
     --feb-focus-ring: rgba(var(--feb-primary-text-rgb), .32);
 

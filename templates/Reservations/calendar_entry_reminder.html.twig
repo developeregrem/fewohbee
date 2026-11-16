@@ -12,7 +12,7 @@
                 <li class="list-group-item d-flex align-items-center gap-2">
                     <div class="me-auto text-break">
                         <div>
-                            <i class="fas fa-circle me-1" style="color: {{ reminder.calendar.color }}; font-size: 0.6em; vertical-align: middle;"></i>
+                            <twig:ColorDot :color="reminder.calendar.color" class="me-1"/>
                             {{ reminder.title }}{% if reminderTime %} <span class="fw-semibold">{{ reminderTime }}</span>{% endif %}
                         </div>
                         <div class="small text-body-secondary">

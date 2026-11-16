@@ -59,7 +59,7 @@
                         data-offcanvas-title="{{ 'accounting.journal.entry.add'|trans }}">
                     <i class="fas fa-plus"></i> {{ 'accounting.journal.entry.add'|trans }}
                 </button>
-                {# Touch screens: the same as a floating button, see "Add button on touch screens" in app.css #}
+                {# Touch screens: the same as a floating button, see components/touch.css #}
                 <button type="button" class="btn fab-add"
                         data-action="click->booking-journal#openOffcanvas"
                         data-url="{{ path('journal.entry.new', {'id': batch.id, 'filter': filter, 'page': page}) }}"

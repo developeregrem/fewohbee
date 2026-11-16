@@ -2172,7 +2172,7 @@ export default class extends Controller {
         // annual view (.reservation-popover): with a mouse the popover stays
         // while the pointer moves onto it, so its phone and e-mail links can be
         // clicked; on touch screens a first tap shows it (openReservationAction).
-        // The width follows the longest line, see "Reservation popover" in app.css
+        // The width follows the longest line, see "Reservation popover" in styles/views/reservations.css
         const bars = '.reservation-inner, .reservation-popover';
         document.querySelectorAll(bars).forEach((bar) => Popover.getOrCreateInstance(bar, {
             placement: 'top', html: true, trigger: 'manual', customClass: 'reservation-bar-popover',
