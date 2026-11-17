@@ -1,0 +1,24 @@
+{#
+ # A text field with suggestions loaded while typing (assets/controllers/autocomplete_controller.js).
+ # url holds "__query__" for the typed text and "__<name>__" for each entry of params, a field
+ # found by selector within the closest scope element (default: the form). label and detail are
+ # templates over the keys of a result. Picking a suggestion dispatches "autocomplete:select"
+ # with the item; the page fills in what it needs. Every other attribute goes onto the input.
+ #
+ #   <twig:Autocomplete name="zip" :url="path('customers.citylookup', {countryCode: '__country__', postalCode: '__query__'})"
+ #                      :params="{country: 'select[name^=country-]'}" scope=".accordion-body"
+ #                      :minLength="3" label="{placeName}" detail="{postalCode}"
+ #                      data-action="autocomplete:select->customer-form#fillCityAction"/>
+ #}
+{% props url, label = null, detail = null, params = null, scope = null, minLength = 2, maxResults = 8, empty = null %}
+{% set values = {
+    url: url,
+    label: label,
+    detail: detail,
+    params: params,
+    scope: scope,
+    minLength: minLength,
+    maxResults: maxResults,
+    empty: empty ?? 'autocomplete.empty'|trans,
+}|filter(value => value is not null) %}
+<input type="text" {{ attributes.defaults({class: 'form-control', autocomplete: 'off'}).defaults(stimulus_controller('autocomplete', values)) }}>

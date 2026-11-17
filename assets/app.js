@@ -16,6 +16,7 @@ import './styles/components/controls.css';
 import './styles/components/forms.css';
 import './styles/components/dialogs.css';
 import './styles/components/touch.css';
+import './styles/components/autocomplete.css';
 import './styles/views/reservations.css';
 import './styles/views/frontdesk.css';
 import './styles/views/invoices.css';

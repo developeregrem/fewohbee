@@ -111,6 +111,5 @@ return [
     'bootstrap' => ['version' => '5.3.8'],
     '@popperjs/core' => ['version' => '2.11.8'],
     'chart.js/auto' => ['version' => '4.5.1'],
-    '@tarekraafat/autocomplete.js' => ['version' => '10.2.7'],
     '@kurkle/color' => ['version' => '0.3.4'],
 ];

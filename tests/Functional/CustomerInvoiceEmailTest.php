@@ -12,6 +12,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
@@ -36,6 +37,15 @@ final class CustomerInvoiceEmailTest extends WebTestCase
         $form = $crawler->filter('#customer-form-new')->form();
         $values = $form->getPhpValues();
         $values['lastname-new'] = $lastname;
+        // A new guest has no address until "add address" copies the address template into the form
+        $crawler->filter('#address-forms')->filter('input[name], select[name]')->each(
+            static function (Crawler $field) use (&$values): void {
+                $value = 'select' === $field->nodeName()
+                    ? ($field->filter('option[selected]')->count() > 0 ? $field->filter('option[selected]')->attr('value') : '')
+                    : $field->attr('value');
+                $values[substr((string) $field->attr('name'), 0, -2)] = [(string) $value];
+            },
+        );
         $values['email-new'][0] = 'guest@example.com';
         $values['invoiceemail-new'][0] = 'accounts@example.com';
 

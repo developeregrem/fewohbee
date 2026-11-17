@@ -2,8 +2,6 @@
       data-controller="customer-form"
       data-customer-form-mode-value="edit"
       data-customer-form-submit-url-value="{{ path('customers.edit.customer', {'id': customer.id}) }}"
-      data-customer-form-city-lookup-url-value="{{ path('customers.citylookup', {'countryCode': 'placeholder1', 'postalCode': 'placeholder2'}) }}"
-      data-customer-form-address-lookup-url-value="{{ path('customers.search.address', {'address': 'placeholder'}) }}"
       data-action="submit->customer-form#submitAction">
     <div class="modal-body px-lg-5">
         <div class="container-fluid">

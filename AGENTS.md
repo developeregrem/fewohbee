@@ -352,8 +352,10 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
 - Recurring patterns are anonymous Twig components in `templates/components/`
   (`symfony/ux-twig-component`), each documented in its file: `<twig:PageHeader>`,
   `<twig:AddButton>`, `<twig:IconButton>`, `<twig:DataCard>`, `<twig:SearchField>`,
-  `<twig:EmptyState>`, `<twig:Avatar>`, `<twig:StatusBadge>`, `<twig:ColorDot>`. Use them instead
-  of writing their markup by hand; extra attributes (`data-action`, `data-url` …) pass through.
+  `<twig:EmptyState>`, `<twig:Avatar>`, `<twig:StatusBadge>`, `<twig:ColorDot>`,
+  `<twig:Autocomplete>` (suggestions while typing, from a JSON endpoint; the page reacts to
+  `autocomplete:select`). Use them instead of writing their markup by hand; extra attributes
+  (`data-action`, `data-url` …) pass through.
   A new component covers a pattern that recurs on several pages, has no logic beyond
   presentation and goes into the styleguide.
 - Colours chosen by the operator (reservation status, origin, calendar) are shown with

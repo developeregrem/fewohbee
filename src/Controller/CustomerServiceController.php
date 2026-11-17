@@ -287,7 +287,8 @@ class CustomerServiceController extends AbstractController
     }
 
     /**
-     * Search for a given address (autocomplete).
+     * Search for a given address (autocomplete). Each address carries the name of its guest
+     * ("customer"), so the suggestion says whose address it is.
      *
      * @param string $address
      */
@@ -298,8 +299,9 @@ class CustomerServiceController extends AbstractController
         $customers = $em->getRepository(Customer::class)->findByFilterToArray($address, 1, 5);
         $addresses = [];
         foreach ($customers as $customer) {
+            $name = implode(', ', array_filter([$customer['lastname'] ?? null, $customer['firstname'] ?? null]));
             foreach ($customer['customerAddresses'] as $address) {
-                $addresses[] = $address;
+                $addresses[] = ['customer' => $name] + $address;
             }
         }
 

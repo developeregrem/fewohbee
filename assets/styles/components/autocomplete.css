@@ -1,0 +1,78 @@
+/* Suggestions below a text field (<twig:Autocomplete>, autocomplete_controller.js): a menu in
+   the manner of Bootstrap's dropdowns, one suggestion per row with an optional second line. */
+
+.autocomplete {
+    position: relative;
+}
+
+.autocomplete-menu {
+    position: absolute;
+    z-index: 1060;
+    max-height: min(18rem, 50vh);
+    overflow-y: auto;
+    padding: .25rem;
+    border: 1px solid var(--feb-border);
+    border-radius: var(--feb-radius);
+    background-color: var(--feb-surface);
+    box-shadow: var(--feb-shadow-md);
+}
+
+.autocomplete-option {
+    display: flex;
+    flex-direction: column;
+    gap: .0625rem;
+    padding: .4rem .625rem;
+    border-radius: var(--feb-radius-sm);
+    color: var(--feb-text);
+    cursor: pointer;
+}
+
+.autocomplete-option:hover,
+.autocomplete-option.is-active {
+    background-color: var(--feb-primary-subtle);
+}
+
+.autocomplete-label {
+    overflow: hidden;
+    font-weight: var(--feb-font-weight-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.autocomplete-detail {
+    overflow: hidden;
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The typed part: bold in the brand colour instead of a highlighter */
+.autocomplete-option mark {
+    padding: 0;
+    background: none;
+    color: var(--feb-primary-text);
+    font-weight: var(--feb-font-weight-strong);
+}
+
+.autocomplete-empty {
+    padding: .5rem .625rem;
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+}
+
+/* Inside the field at its right end while suggestions load */
+.autocomplete-spinner {
+    position: absolute;
+    color: var(--feb-text-subtle);
+    pointer-events: none;
+    transform: translate(calc(-100% - .75rem), -50%);
+}
+
+/* Fingers need taller rows */
+@media (pointer: coarse) {
+    .autocomplete-option {
+        min-height: 2.75rem;
+        justify-content: center;
+    }
+}

@@ -1,6 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
 import { Collapse } from 'bootstrap';
-import autoComplete from '@tarekraafat/autocomplete.js';
 import { request as httpRequest } from '../js/http.js';
 
 /* stimulusFetch: 'lazy' */
@@ -9,15 +8,12 @@ export default class extends Controller {
     static targets = [
         'accordion',
         'addressTemplate',
-        'addressSearch',
         'flashOverlay',
         'deleteBox',
         'defaultBox',
     ];
 
     static values = {
-        cityLookupUrl: String,
-        addressLookupUrl: String,
         submitUrl: String,
         successUrl: String,
         mode: { type: String, default: 'edit' },
@@ -25,9 +21,6 @@ export default class extends Controller {
     };
 
     connect() {
-        this.disableTemplateInputs();
-        this.initAddressLookup();
-        this.initCityLookup();
         this.preselectLastname();
     }
 
@@ -131,6 +124,23 @@ export default class extends Controller {
         });
     }
 
+    /* A place picked for a postal code (<twig:Autocomplete> on the zip field) */
+    fillCityAction(event) {
+        const { item } = event.detail;
+        const input = event.target;
+        const city = input.closest('.accordion-body')?.querySelector('input[name*="city-"]');
+        if (city) {
+            city.value = item.placeName || '';
+        }
+        input.value = item.postalCode || input.value;
+    }
+
+    /* An existing address picked in the address search: copied into a new address panel */
+    fillAddressAction(event) {
+        this.fillAddressFields(event.detail.item);
+        event.target.value = '';
+    }
+
     // --- private helpers ---
     handleCreateSuccess(response) {
         const trimmed = (response || '').trim();
@@ -143,149 +153,6 @@ export default class extends Controller {
             return;
         }
         window.location.reload();
-    }
-
-    disableTemplateInputs() {
-        if (!this.hasAddressTemplateTarget) {
-            return;
-        }
-        this.addressTemplateTarget.querySelectorAll('input, select, textarea').forEach((node) => {
-            node.disabled = true;
-        });
-    }
-
-    initAddressLookup() {
-        if (!this.hasAddressSearchTarget || !this.hasAddressLookupUrlValue) {
-            return;
-        }
-        this.addAutocompleteAddressLookup(this.addressSearchTarget);
-    }
-
-    initCityLookup() {
-        if (!this.hasAccordionTarget || !this.hasCityLookupUrlValue) {
-            return;
-        }
-        this.accordionTarget.querySelectorAll('input[name*="zip-"]').forEach((input) => {
-            this.addAutocompleteCityLookup(input);
-        });
-    }
-
-    addAutocompleteCityLookup(input) {
-        if (!input || input.disabled || input.dataset.customersCityLookupAttached === 'true') {
-            return;
-        }
-        const cityUrlTemplate = this.cityLookupUrlValue;
-        if (!cityUrlTemplate) {
-            return;
-        }
-        input.dataset.customersCityLookupAttached = 'true';
-        // eslint-disable-next-line no-new
-        new autoComplete({
-            selector: () => input,
-            threshold: 3,
-            cache: true,
-            data: {
-                src: async (query) => {
-                    try {
-                        const parentBody = input.closest('.accordion-body');
-                        const countryElement = parentBody?.querySelector('select[name*="country-"]');
-                        const country = countryElement?.value || '';
-                        const url = cityUrlTemplate.replace('placeholder1', country).replace('placeholder2', query);
-                        const result = await this.fetchJson(url);
-                        return result;
-                    } catch (error) {
-                        return [];
-                    }
-                },
-                keys: ['search'],
-            },
-            resultsList: {
-                element: (list, data) => {
-                    if (!data.results.length) {
-                        const message = document.createElement('div');
-                        message.setAttribute('class', 'no_result');
-                        message.innerHTML = `<span>Found No Results for "${data.query}"</span>`;
-                        list.prepend(message);
-                    }
-                },
-                noResults: true,
-                maxResults: 50,
-            },
-            resultItem: {
-                highlight: true,
-            },
-            searchEngine(query, record) {
-                return record;
-            },
-            events: {
-                input: {
-                    selection: (event) => {
-                        const selection = event.detail.selection.value;
-                        const parentBody = input.closest('.accordion-body');
-                        const target = parentBody?.querySelector('input[name*="city-"]');
-                        if (target) {
-                            target.value = selection.placeName || '';
-                        }
-                        input.value = selection.postalCode || '';
-                    },
-                },
-            },
-        });
-    }
-
-    addAutocompleteAddressLookup(input) {
-        if (!input || input.dataset.customersAddressLookupAttached === 'true' || !this.hasAddressLookupUrlValue) {
-            return;
-        }
-        const addressUrlTemplate = this.addressLookupUrlValue;
-        input.dataset.customersAddressLookupAttached = 'true';
-        // eslint-disable-next-line no-new
-        new autoComplete({
-            selector: () => input,
-            threshold: 2,
-            cache: true,
-            data: {
-                src: async (query) => {
-                    try {
-                        const url = addressUrlTemplate.replace('placeholder', query);
-                        const result = await this.fetchJson(url);
-                        return result;
-                    } catch (error) {
-                        return [];
-                    }
-                },
-            },
-            resultsList: {
-                maxResults: 5,
-            },
-            resultItem: {
-                highlight: true,
-                element: (item, data) => {
-                    const company = data.value.company || '';
-                    item.innerHTML = '';
-                    const s1 = document.createElement('span');
-                    const s2 = document.createElement('span');
-                    if (company.length) {
-                        s1.innerText = company;
-                        item.appendChild(s1);
-                        item.appendChild(document.createElement('br'));
-                    }
-                    s2.innerText = `${data.value.address}, ${data.value.zip} ${data.value.city}`;
-                    item.appendChild(s2);
-                },
-            },
-            searchEngine(query, record) {
-                return record;
-            },
-            events: {
-                input: {
-                    selection: (event) => {
-                        const selection = event.detail.selection.value;
-                        this.fillAddressFields(selection);
-                    },
-                },
-            },
-        });
     }
 
     fillAddressFields(item) {
@@ -329,11 +196,11 @@ export default class extends Controller {
         if (!this.hasAddressTemplateTarget || !this.hasAccordionTarget) {
             return null;
         }
-        const template = this.addressTemplateTarget.querySelector('.accordion-item');
+        const template = this.addressTemplateTarget.content.querySelector('.accordion-item');
         if (!template) {
             return null;
         }
-        const clone = template.cloneNode(true);
+        const clone = document.importNode(template, true);
         const newId = this.accordionTarget.querySelectorAll('.addressfields').length + 1;
         const collapse = clone.querySelector('.accordion-collapse');
         const heading = clone.querySelector('.accordion-header');
@@ -350,9 +217,6 @@ export default class extends Controller {
             button.setAttribute('data-bs-target', `#address${newId}`);
             button.setAttribute('aria-controls', `address${newId}`);
         }
-        clone.querySelectorAll('input, select, textarea').forEach((node) => {
-            node.disabled = false;
-        });
         const firstPanel = this.accordionTarget.querySelector('#firstPanel');
         if (firstPanel && firstPanel.parentElement) {
             firstPanel.parentElement.insertBefore(clone, firstPanel.nextSibling);
@@ -367,28 +231,7 @@ export default class extends Controller {
         } else if (collapse && showNew) {
             collapse.classList.add('show');
         }
-        if (collapse) {
-            this.addAutocompleteCityLookup(collapse.querySelector('input[name*="zip-"]'));
-        }
         return clone;
-    }
-
-    async fetchJson(url) {
-        return new Promise((resolve) => {
-            httpRequest({
-                url,
-                method: 'GET',
-                loader: false,
-                onSuccess: (data) => {
-                    try {
-                        resolve(JSON.parse(data));
-                    } catch (e) {
-                        resolve([]);
-                    }
-                },
-                onError: () => resolve([]),
-            });
-        });
     }
 
     preselectLastname() {

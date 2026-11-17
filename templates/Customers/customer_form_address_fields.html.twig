@@ -56,7 +56,11 @@
 <div class="row">
     <label for="zip-{{ customer.id }}" class="col-sm-4 col-form-label text-sm-end">{{ 'customer.zip'|trans }}</label>
     <div class="col-sm-8">
-        <input type="text" class="form-control" name="zip-{{ customer.id }}[]" value="" autocomplete="new-zip">
+        <twig:Autocomplete name="zip-{{ customer.id }}[]" value="" autocomplete="new-zip"
+                           :url="path('customers.citylookup', {countryCode: '__country__', postalCode: '__query__'})"
+                           :params="{country: 'select[name^=country-]'}" scope=".accordion-body"
+                           :minLength="3" label="{placeName}" detail="{postalCode}"
+                           data-action="autocomplete:select->customer-form#fillCityAction"/>
     </div>
 </div>
 <div class="row">

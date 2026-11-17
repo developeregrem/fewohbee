@@ -108,6 +108,19 @@
     </div>
 </div>
 
+<h3 class="styleguide-heading">Suggestions while typing <code class="styleguide-ref">Autocomplete</code></h3>
+<div class="card card-body">
+    <div class="row">
+        <label class="col-form-label col-sm-4 text-sm-end" for="sg-autocomplete-{{ scheme }}">Address</label>
+        <div class="col-sm">
+            <twig:Autocomplete id="sg-autocomplete-{{ scheme }}" placeholder="Type a name, e.g. Muster"
+                               :url="path('customers.search.address', {address: '__query__'})"
+                               :maxResults="5" label="{customer}" detail="{company}, {address}, {zip} {city}"/>
+            <div class="form-text">Loads guests' addresses; picking one dispatches autocomplete:select.</div>
+        </div>
+    </div>
+</div>
+
 <h3 class="styleguide-heading">Record list <code class="styleguide-ref">DataCard · SearchField · Avatar · StatusBadge</code></h3>
 <twig:DataCard>
     <twig:block name="toolbar">
