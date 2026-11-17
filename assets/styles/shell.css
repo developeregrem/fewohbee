@@ -487,6 +487,28 @@ body.reservations-week-fit .app-bottomnav {
     }
 }
 
+/* A page's line of filters above its content: the period on the left, tools on the right */
+.page-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+}
+
+.page-toolbar-tools {
+    display: flex;
+    align-items: center;
+    gap: .125rem;
+}
+
+/* Phones: one line, the field gives way (see .date-pager) */
+@media (max-width: 575.98px) {
+    .page-toolbar {
+        flex-wrap: nowrap;
+    }
+}
+
 /* ------------------------------------------------------------------ Notifications */
 
 /* Notification bell dropdown: wide enough for two-line entries, capped so a

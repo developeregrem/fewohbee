@@ -20,6 +20,11 @@ button.hide: Ausblenden
 button.save: Speichern
 copy.sucess: 'Text in die Zwischenablage kopiert!'
 copy.text: Kopieren
+date.label: Datum
+date.next_day: 'Nächster Tag'
+date.next_week: 'Nächste Woche'
+date.previous_day: 'Vorheriger Tag'
+date.previous_week: 'Vorherige Woche'
 first.apartments: 'Anlegen der Zimmer:'
 first.categories: 'Anlegen der Zimmerkategorien:'
 first.origin: 'Anlegen der Reservierungsherkunft:'
@@ -48,6 +53,9 @@ nav.housekeeping: Housekeeping
 nav.operations: Betrieb
 nav.operations.frontdesk: 'Rezeption Checkliste'
 nav.operations.reports: Berichte
+operations.filter.title: Filter
+operations.frontdesk.empty: 'An diesem Tag ist nichts zu tun'
+operations.frontdesk.empty.hint: 'Keine Anreisen, Abreisen oder Gäste im Haus. Wähle einen anderen Tag oder ändere die Filter.'
 operations.reports.title: Betriebsberichte
 operations.reports.date_start: 'Datum Start'
 operations.reports.date_end: 'Datum Ende'

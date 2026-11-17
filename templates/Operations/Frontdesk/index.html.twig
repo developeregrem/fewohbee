@@ -3,8 +3,8 @@
 {% block title %}{{ 'operations.frontdesk.title'|trans }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4"
-     data-controller="reservations housekeeping"
+<div class="container"
+     data-controller="reservations housekeeping swipe-nav"
      data-reservations-translations-value="{{
         {
             'templates.select.reservations': 'templates.select.reservations'|trans,
@@ -18,38 +18,22 @@
             'reservation.conflict.title': 'reservation.conflict.title'|trans
         }|json_encode|e('html_attr')
      }}">
-    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-        <div class="me-auto">
-            <h1 class="h3 mb-0">{{ 'operations.frontdesk.title'|trans }}</h1>
-            <div class="text-muted small">
-                {{ selectedDate|date('d.m.Y') }}
-            </div>
-        </div>
-        <a href="#"
-           class="btn btn-sm btn-outline-secondary shadow-none"
-           data-action="click->housekeeping#submitFilters"
-           title="{{ 'housekeeping.apply'|trans({}, 'Housekeeping') }}">
-            <i class="fas fa-sync-alt" data-housekeeping-target="spinner" aria-hidden="true"></i>
-        </a>
-    </div>
+    <twig:PageHeader :title="'operations.frontdesk.title'|trans"/>
 
     <form method="get" action="{{ path('operations.frontdesk') }}" class="mb-3"
           data-housekeeping-target="form"
           data-action="change->housekeeping#submitFilters">
-        <div class="row g-2 align-items-end">
-            <div class="col col-md-3">
-                <label class="form-label">{{ 'operations.frontdesk.filter.date'|trans }}</label>
-                <input type="date" name="date" value="{{ selectedDate|date('Y-m-d') }}" class="form-control">
-            </div>
-            <div class="col-auto ms-auto">
-                <button class="btn btn-outline-secondary shadow-none"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#frontdeskFilters"
-                        aria-expanded="false"
-                        aria-controls="frontdeskFilters">
-                    <i class="fas fa-sliders-h" aria-hidden="true"></i>
+        {# The day: arrows, swipe (swipe-nav) or the field; the filters fold out below #}
+        <div class="page-toolbar">
+            <twig:DatePager name="date" :value="selectedDate|date('Y-m-d')"/>
+            <div class="page-toolbar-tools">
+                <button type="button" class="btn btn-icon" data-action="click->housekeeping#submitFilters"
+                        title="{{ 'housekeeping.apply'|trans({}, 'Housekeeping') }}" aria-label="{{ 'housekeeping.apply'|trans({}, 'Housekeeping') }}">
+                    <i class="fas fa-sync-alt" data-housekeeping-target="spinner" aria-hidden="true"></i>
                 </button>
+                <twig:IconButton icon="sliders-h" :label="'operations.filter.title'|trans"
+                                 data-bs-toggle="collapse" data-bs-target="#frontdeskFilters"
+                                 aria-expanded="false" aria-controls="frontdeskFilters"/>
             </div>
         </div>
         <div class="collapse" id="frontdeskFilters">

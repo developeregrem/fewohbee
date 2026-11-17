@@ -13,13 +13,15 @@ import { onSwipe, horizontalSwipeDirection } from '../js/swipe.js';
  * - As buttons they step the select target, whose numeric options (years)
  *   may come in any order; its change event loads the period. Arrows without
  *   a neighbouring value are hidden.
+ * - Or they step the date target (an input type=date, see <twig:DatePager>) by
+ *   its data-step-days (default 1); its change event loads the day.
  *
  * A table wider than the screen scrolls sideways first; only a swipe on past
  * its edge pages. Swipes in form fields, dialogs and side panels are left
  * alone.
  */
 export default class extends Controller {
-    static targets = ['select', 'previous', 'next'];
+    static targets = ['select', 'date', 'previous', 'next'];
 
     connect() {
         this.updateButtons();
@@ -43,11 +45,29 @@ export default class extends Controller {
     }
 
     previous() {
-        this.stepSelect(false);
+        this.step(false);
     }
 
     next() {
-        this.stepSelect(true);
+        this.step(true);
+    }
+
+    step(forward) {
+        if (this.hasDateTarget) {
+            this.stepDate(forward);
+        } else {
+            this.stepSelect(forward);
+        }
+    }
+
+    /** Moves the date by its step (days) and lets the page load it. */
+    stepDate(forward) {
+        const input = this.dateTarget;
+        const date = input.valueAsDate ?? new Date(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()));
+        const days = Number(input.dataset.stepDays || 1);
+        date.setUTCDate(date.getUTCDate() + (forward ? days : -days));
+        input.valueAsDate = date;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
     /** Shows the arrow buttons only where the select has a neighbouring value. */

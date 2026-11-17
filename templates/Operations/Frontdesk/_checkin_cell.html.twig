@@ -10,14 +10,16 @@
      data-frontdesk-checkin-url-value="{{ path('operations.frontdesk.checkin', {'id': reservation.id}) }}"
      data-frontdesk-checkin-token-value="{{ csrf_token('frontdesk-checkin-' ~ reservation.id) }}"
      {%- endif %}>
-    <a class="btn btn-outline-secondary" href="{{ path('correspondence.registration.download', {'id': reservation.id}) }}"
+    <a class="btn btn-secondary" href="{{ path('correspondence.registration.download', {'id': reservation.id}) }}"
        target="_blank" rel="noopener" title="{{ 'operations.frontdesk.registration.print'|trans }}">
         <i class="fas fa-print" aria-hidden="true"></i>
+        {#- Shown on the phone cards only (views/frontdesk.css) #}
+        <span class="fd-print-label" aria-hidden="true">{{ 'operations.frontdesk.header.registration'|trans }}</span>
         <span class="visually-hidden">{{ 'operations.frontdesk.registration.print'|trans }}</span>
     </a>
     {% if guestCheckInEnabled %}
         {% set description = ('guest_checkin.frontdesk.' ~ (atDesk ? 'desk' : state))|trans %}
-        <button type="button" class="btn {{ {'open': 'btn-outline-secondary', 'submitted': 'btn-primary', 'applied': 'btn-success'}[state] }} dropdown-toggle fd-checkin-state"
+        <button type="button" class="btn {{ {'open': 'btn-secondary', 'submitted': 'btn-primary', 'applied': 'btn-success'}[state] }} dropdown-toggle fd-checkin-state"
                 data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" title="{{ description }}">
             <i class="fas fa-fw {{ state == 'applied' ? 'fa-circle-check' : 'fa-id-card' }} me-1" aria-hidden="true"></i>
             {#- All labels stacked, only the current one visible: every row gets the width of the longest. #}

@@ -3,12 +3,8 @@
 {% block title %}{{ 'operations.reports.title'|trans }}{% endblock %}
 
 {% block content %}
-    <div class="container mt-4" data-controller="operations-reports">
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-            <div class="me-auto">
-                <h1 class="h3 mb-0">{{ 'operations.reports.title'|trans }}</h1>
-            </div>
-        </div>
+    <div class="container" data-controller="operations-reports">
+        <twig:PageHeader :title="'operations.reports.title'|trans"/>
 
         <form method="get" class="mb-3"
               data-operations-reports-target="form"
@@ -32,13 +28,13 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-auto ms-md-auto d-flex gap-2 flex-nowrap">
-                    <a href="#" class="btn btn-outline-primary shadow-none"
+                <div class="col-auto ms-md-auto d-flex gap-1 flex-nowrap">
+                    <a href="#" class="btn btn-icon"
                        data-action="click->operations-reports#loadPreview"
-                       title="{{ 'operations.reports.preview'|trans }}">
+                       title="{{ 'operations.reports.preview'|trans }}" aria-label="{{ 'operations.reports.preview'|trans }}">
                         <i class="fas fa-sync-alt" data-operations-reports-target="spinner" aria-hidden="true"></i>
                     </a>
-                    <a class="btn btn-outline-primary"
+                    <a class="btn btn-icon"
                        data-operations-reports-target="download"
                        data-base-url="{{ path('operations.reports.export.pdf') }}"
                        href="{{ path('operations.reports.export.pdf', {
@@ -53,8 +49,9 @@
                         <i class="fas fa-file-pdf" aria-hidden="true"></i>
                         <span class="visually-hidden">{{ 'operations.reports.download'|trans }}</span>
                     </a>
-                    <button class="btn btn-outline-secondary shadow-none"
+                    <button class="btn btn-icon"
                             type="button"
+                            title="{{ 'operations.filter.title'|trans }}" aria-label="{{ 'operations.filter.title'|trans }}"
                             data-bs-toggle="collapse"
                             data-bs-target="#reportsFilters"
                             aria-expanded="false"

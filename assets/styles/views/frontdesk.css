@@ -21,3 +21,61 @@
 .fd-checkin-labels > [aria-hidden="true"] {
     visibility: hidden;
 }
+
+/* Checklist table: ten columns side by side next to the sidebar, so the cells keep less room
+   around them and the status keeps the width of its longest name */
+.frontdesk-table > thead > tr > th,
+.frontdesk-table > tbody > tr > td {
+    padding-inline: .625rem;
+}
+
+.frontdesk-table .form-select {
+    min-width: 9rem;
+}
+
+/* Label of the registration form button: only where there is room for it (phone cards) */
+.fd-print-label {
+    display: none;
+}
+
+/* Phone and tablet cards: registration form and check-in share the first line ... */
+.frontdesk-card-checkin > .btn-group {
+    display: flex;
+    width: 100%;
+}
+
+.frontdesk-card-checkin > .btn-group > .btn,
+.frontdesk-card-checkin > .btn-group > .fd-checkin-state {
+    flex: 1 1 0;
+    text-align: center;
+}
+
+/* The group is small for the table; in the card it matches the buttons below */
+.frontdesk-card-checkin > .btn-group-sm > .btn {
+    --bs-btn-font-size: var(--feb-font-size);
+    --bs-btn-padding-y: .4rem;
+    --bs-btn-border-radius: var(--feb-radius);
+}
+
+.frontdesk-card-checkin .fd-print-label {
+    display: inline;
+    margin-left: .375rem;
+}
+
+/* ... invoice, e-mail and note the second, as three equal buttons */
+.frontdesk-card-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .5rem;
+    margin-top: .5rem;
+}
+
+.frontdesk-card-actions > .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .375rem;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}

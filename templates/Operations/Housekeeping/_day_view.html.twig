@@ -52,7 +52,7 @@
                     {{ form_widget(formView.note, { attr: { class: 'form-control form-control-sm' } }) }}
                 </td>
                 <td class="text-end">
-                    <button type="submit" class="btn btn-sm btn-outline-primary" title="{{ 'housekeeping.save'|trans({}, 'Housekeeping') }}">
+                    <button type="submit" class="btn btn-sm btn-secondary" title="{{ 'housekeeping.save'|trans({}, 'Housekeeping') }}">
                         <i class="fas fa-save" aria-hidden="true"></i>
                         <span class="visually-hidden">{{ 'housekeeping.save'|trans({}, 'Housekeeping') }}</span>
                     </button>
@@ -112,9 +112,8 @@
                         <label class="form-label small">{{ noteLabel }}</label>
                         {{ form_widget(formView.note, { attr: { class: 'form-control form-control-sm' } }) }}
                     </div>
-                    <button type="submit" class="btn btn-sm btn-outline-primary" title="{{ 'housekeeping.save'|trans({}, 'Housekeeping') }}">
-                        <i class="fas fa-save" aria-hidden="true"></i>
-                        <span class="visually-hidden">{{ 'housekeeping.save'|trans({}, 'Housekeeping') }}</span>
+                    <button type="submit" class="btn btn-secondary w-100">
+                        <i class="fas fa-save me-1" aria-hidden="true"></i> {{ 'housekeeping.save'|trans({}, 'Housekeeping') }}
                     </button>
                 {{ form_end(formView, { render_rest: false }) }}
             </div>

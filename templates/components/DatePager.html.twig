@@ -1,0 +1,26 @@
+{#
+ # A date with arrows to the previous and the next day (or week, with stepDays="7"). The arrows
+ # and a sideways swipe on touch screens step the date through the swipe-nav controller, which
+ # must sit on an element around it; the field's change event loads the day. Every other
+ # attribute goes onto the date field.
+ #
+ #   <div data-controller="swipe-nav …">
+ #       <twig:DatePager name="date" :value="selectedDate|date('Y-m-d')"/>
+ #}
+{% props name, value, stepDays = 1, label = null, previousLabel = null, nextLabel = null %}
+{% set week = stepDays == 7 %}
+{% set previousLabel = previousLabel ?? (week ? 'date.previous_week' : 'date.previous_day')|trans %}
+{% set nextLabel = nextLabel ?? (week ? 'date.next_week' : 'date.next_day')|trans %}
+<div class="input-group flex-nowrap date-pager">
+    <button type="button" class="btn btn-secondary" data-swipe-nav-target="previous" data-action="swipe-nav#previous"
+            title="{{ previousLabel }}" aria-label="{{ previousLabel }}">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+    </button>
+    <input type="date" {{ attributes.defaults({class: 'form-control'}) }} name="{{ name }}" value="{{ value }}"
+           aria-label="{{ label ?? 'date.label'|trans }}" data-swipe-nav-target="date"
+           {%- if stepDays != 1 %} data-step-days="{{ stepDays }}"{% endif %}>
+    <button type="button" class="btn btn-secondary" data-swipe-nav-target="next" data-action="swipe-nav#next"
+            title="{{ nextLabel }}" aria-label="{{ nextLabel }}">
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+    </button>
+</div>

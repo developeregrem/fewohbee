@@ -1,11 +1,17 @@
-<div class="table-responsive d-none d-md-block">
-    <table class="table table-hover align-middle">
+{% if frontdeskItems is empty %}
+    <twig:EmptyState icon="bell-concierge" :title="'operations.frontdesk.empty'|trans">
+        {{- 'operations.frontdesk.empty.hint'|trans -}}
+    </twig:EmptyState>
+{% else %}
+{# Table from lg; below it cards, two side by side on a tablet #}
+<div class="card data-card d-none d-lg-block">
+<div class="table-responsive">
+    <table class="table table-hover align-middle data-table frontdesk-table">
         <thead>
         <tr>
             <th></th>
             <th>{{ 'operations.frontdesk.room'|trans }}</th>
-            <th>{{ 'operations.frontdesk.guest'|trans }}</th>
-            <th>{{ 'operations.frontdesk.period'|trans }}</th>
+            <th>{{ 'operations.frontdesk.guest'|trans }} · {{ 'operations.frontdesk.period'|trans }}</th>
             <th class="text-center">{{ 'operations.frontdesk.category'|trans }}</th>
             <th class="text-center">{{ 'reservation.status'|trans }}</th>
             <th class="text-center">{{ (guestCheckInEnabled|default(false) ? 'guest_checkin.frontdesk.header' : 'operations.frontdesk.header.registration')|trans }}</th>
@@ -32,7 +38,7 @@
             {% endif %}
             <tr{% if reservation.reservationStatus and reservation.reservationStatus.code == 'canceled_noshow' %} class="table-danger"{% endif %}>
                 <td class="text-center">
-                    <a href="#"
+                    <a href="#" class="btn btn-icon"
                        data-action="click->reservations#openReservationAction"
                        data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
                        data-reservation-id="{{ reservation.id }}"
@@ -42,9 +48,14 @@
                         <span class="visually-hidden">{{ 'reservation.details'|trans }}</span>
                     </a>
                 </td>
-                <td>{{ item.apartment.number }} {{ item.apartment.description }}</td>
-                <td>{{ guestNames|join(', ') ?: '-' }}</td>
-                <td>{{ reservation.startDate|date('d.m.Y') }} - {{ reservation.visibleEndDate|date('d.m.Y') }}</td>
+                <td>
+                    <div class="fw-semibold">{{ item.apartment.number }}</div>
+                    <div class="small text-body-secondary">{{ item.apartment.description }}</div>
+                </td>
+                <td>
+                    <div>{{ guestNames|join(', ') ?: '-' }}</div>
+                    <div class="small text-body-secondary text-nowrap">{{ reservation.startDate|date('d.m.Y') }} – {{ reservation.visibleEndDate|date('d.m.Y') }}</div>
+                </td>
                 <td class="text-center">
                     {% if 'arrival' in item.categories %}
                         <span class="badge text-bg-success">{{ 'operations.frontdesk.arrivals'|trans }}</span>
@@ -93,7 +104,7 @@
                         </a>
                     {% else %}
                         <a href="#" title="{{ 'reservation.button.create.invoice'|trans }}"
-                           class="btn btn-outline-primary btn-sm{% if reservation.booker is null %} disabled{% endif %}"
+                           class="btn btn-icon{% if reservation.booker is null %} disabled{% endif %}"
                            {% if reservation.booker %}
                            data-action="click->reservations#selectReservationForInvoiceAction"
                            data-url="{{ path('invoices.select.reservation') }}"
@@ -109,7 +120,7 @@
                 </td>
                 <td class="text-center">
                     <a href="#" title="{{ 'operations.frontdesk.confirmation.send'|trans }}"
-                       class="btn btn-outline-primary btn-sm"
+                       class="btn btn-icon"
                        data-action="click->reservations#selectTemplateForReservationsAction"
                        data-url="{{ path('operations.frontdesk.template.quick', { reservationId: reservation.id }) }}"
                        data-title="{{ 'operations.frontdesk.confirmation.send'|trans }}"
@@ -120,7 +131,7 @@
                 </td>
                 <td class="text-center">
                     <a href="#" title="{{ 'operations.frontdesk.note.edit'|trans }}"
-                       class="btn btn-outline-primary btn-sm"
+                       class="btn btn-icon"
                        data-action="click->reservations#openModalContentAction"
                        data-url="{{ path('reservations.edit.remark', {'id': reservation.id}) }}"
                        data-title="{{ 'nav.reservation.edit'|trans }}"
@@ -130,16 +141,13 @@
                     </a>
                 </td>
             </tr>
-        {% else %}
-            <tr>
-                <td colspan="10" class="text-muted">-</td>
-            </tr>
         {% endfor %}
         </tbody>
     </table>
 </div>
+</div>
 
-<div class="d-md-none">
+<div class="row row-cols-1 row-cols-md-2 g-3 d-lg-none">
     {% for item in frontdeskItems %}
         {% set reservation = item.reservation %}
         {% set guestNames = [] %}
@@ -155,24 +163,13 @@
                 {% set guestNames = [name] %}
             {% endif %}
         {% endif %}
-        <div class="card mb-3">
+        <div class="col">
+        <div class="card h-100">
             <div class="card-body">
-                <div class="d-flex justify-content-end mb-2">
-                    <a href="#"
-                       class="btn btn-outline-secondary btn-sm"
-                       data-action="click->reservations#openReservationAction"
-                       data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
-                       data-reservation-id="{{ reservation.id }}"
-                       data-bs-toggle="modal" data-bs-target="#modalCenter"
-                       title="{{ 'reservation.details'|trans }}">
-                        <i class="fas fa-info-circle" aria-hidden="true"></i>
-                        <span class="visually-hidden">{{ 'reservation.details'|trans }}</span>
-                    </a>
-                </div>
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
+                <div class="d-flex align-items-start gap-2 mb-2">
+                    <div class="me-auto">
                         <div class="fw-semibold">{{ item.apartment.number }}</div>
-                        <div class="small text-muted">{{ item.apartment.description }}</div>
+                        <div class="small text-body-secondary">{{ item.apartment.description }}</div>
                     </div>
                     <div class="text-end">
                         {% if 'arrival' in item.categories %}
@@ -188,12 +185,18 @@
                             <span class="badge text-bg-primary">{{ 'operations.frontdesk.inhouse'|trans }}</span>
                         {% endif %}
                     </div>
+                    <a href="#" class="btn btn-icon mt-n2 me-n2"
+                       data-action="click->reservations#openReservationAction"
+                       data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
+                       data-reservation-id="{{ reservation.id }}"
+                       data-bs-toggle="modal" data-bs-target="#modalCenter"
+                       title="{{ 'reservation.details'|trans }}" aria-label="{{ 'reservation.details'|trans }}">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                    </a>
                 </div>
-                <div class="small text-muted mb-1">
-                    {{ 'operations.frontdesk.guest'|trans }}: {{ guestNames|join(', ') ?: '-' }}
-                </div>
-                <div class="small text-muted mb-3">
-                    {{ 'operations.frontdesk.period'|trans }}: {{ reservation.startDate|date('d.m.Y') }} - {{ reservation.visibleEndDate|date('d.m.Y') }}
+                <div class="mb-1">{{ guestNames|join(', ') ?: '-' }}</div>
+                <div class="small text-body-secondary mb-3">
+                    {{ reservation.startDate|date('d.m.Y') }} – {{ reservation.visibleEndDate|date('d.m.Y') }}
                 </div>
                 <div class="mb-3">
                     <label class="form-label small">{{ 'reservation.status'|trans }}</label>
@@ -208,8 +211,12 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="d-flex flex-wrap gap-2">
+                {# Two fixed lines, whatever the width of the phone: registration form and check-in,
+                   then invoice, e-mail and note as three equal buttons (views/frontdesk.css) #}
+                <div class="frontdesk-card-checkin">
                     {{ include('Operations/Frontdesk/_checkin_cell.html.twig', {'checkInState': checkInStates[reservation.id] ?? null, 'guestCheckInEnabled': guestCheckInEnabled|default(false)}) }}
+                </div>
+                <div class="frontdesk-card-actions">
                     {% if reservation.invoices|length > 0 %}
                         {% set invoice = reservation.invoices|first %}
                         {% set invoiceBadgeClass = 'text-bg-light' %}
@@ -218,17 +225,19 @@
                         {% elseif item.invoiceStatusLabel == 'invoice.status.paid' %}
                             {% set invoiceBadgeClass = 'text-bg-success' %}
                         {% endif %}
-                        <a href="#"
-                           class="badge {{ invoiceBadgeClass }}"
+                        <a href="#" class="btn btn-secondary"
                            data-action="click->reservations#openModalContentAction"
                            data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
                            data-title="{{ 'reservation.invoice'|trans }} {{ invoice.number }}"
-                           data-bs-toggle="modal" data-bs-target="#modalCenter">
-                            {{ item.invoiceStatusLabel ? (item.invoiceStatusLabel|trans) : ('reservation.invoice'|trans) }}
+                           data-bs-toggle="modal" data-bs-target="#modalCenter"
+                           title="{{ 'reservation.invoice'|trans }} {{ invoice.number }}">
+                            <i class="fas fa-file-invoice" aria-hidden="true"></i>
+                            <span class="badge {{ invoiceBadgeClass }}">{{ item.invoiceStatusLabel ? (item.invoiceStatusLabel|trans) : ('reservation.invoice'|trans) }}</span>
                         </a>
                     {% else %}
                         <a href="#"
-                           class="btn btn-outline-secondary btn-sm{% if reservation.booker is null %} disabled{% endif %}"
+                           class="btn btn-secondary{% if reservation.booker is null %} disabled{% endif %}"
+                           title="{{ 'reservation.button.create.invoice'|trans }}"
                            {% if reservation.booker %}
                            data-action="click->reservations#selectReservationForInvoiceAction"
                            data-url="{{ path('invoices.select.reservation') }}"
@@ -237,32 +246,32 @@
                            {% else %}
                            aria-disabled="true"
                            {% endif %}>
-                            <i class="fas fa-file-invoice-dollar"></i>
-                            <span class="visually-hidden">{{ 'reservation.button.create.invoice'|trans }}</span>
+                            <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i>
+                            {{ 'operations.frontdesk.header.invoice'|trans }}
                         </a>
                     {% endif %}
-                    <a href="#"
-                       class="btn btn-outline-secondary btn-sm"
+                    <a href="#" class="btn btn-secondary"
                        data-action="click->reservations#selectTemplateForReservationsAction"
                        data-url="{{ path('operations.frontdesk.template.quick', { reservationId: reservation.id }) }}"
                        data-title="{{ 'operations.frontdesk.confirmation.send'|trans }}"
-                       data-bs-toggle="modal" data-bs-target="#modalCenter">
-                        <i class="fas fa-envelope"></i>
-                        <span class="visually-hidden">{{ 'operations.frontdesk.confirmation.send'|trans }}</span>
+                       data-bs-toggle="modal" data-bs-target="#modalCenter"
+                       title="{{ 'operations.frontdesk.confirmation.send'|trans }}">
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
+                        {{ 'operations.frontdesk.header.email'|trans }}
                     </a>
-                    <a href="#"
-                       class="btn btn-outline-secondary btn-sm"
+                    <a href="#" class="btn btn-secondary"
                        data-action="click->reservations#openModalContentAction"
                        data-url="{{ path('reservations.edit.remark', {'id': reservation.id}) }}"
                        data-title="{{ 'nav.reservation.edit'|trans }}"
-                       data-bs-toggle="modal" data-bs-target="#modalCenter">
-                        <i class="fas fa-pen"></i>
-                        <span class="visually-hidden">{{ 'operations.frontdesk.note.edit'|trans }}</span>
+                       data-bs-toggle="modal" data-bs-target="#modalCenter"
+                       title="{{ 'operations.frontdesk.note.edit'|trans }}">
+                        <i class="fas fa-pen" aria-hidden="true"></i>
+                        {{ 'operations.frontdesk.header.note'|trans }}
                     </a>
                 </div>
             </div>
         </div>
-    {% else %}
-        <div class="text-center text-muted py-4">-</div>
+        </div>
     {% endfor %}
 </div>
+{% endif %}

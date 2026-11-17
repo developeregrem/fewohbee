@@ -3,64 +3,35 @@
 {% block title %}{{ 'housekeeping.title'|trans({}, 'Housekeeping') }}{% endblock %}
 
 {% block content %}
-    <div class="container mt-4" data-controller="housekeeping">
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-            <div class="me-auto">
-                <h1 class="h3 mb-0">{{ 'housekeeping.title'|trans({}, 'Housekeeping') }}</h1>
-                <div class="text-muted small">
-                    {{ selectedDate|date('d.m.Y') }}
-                </div>
+    <div class="container" data-controller="housekeeping swipe-nav">
+        {% set dayUrl = path('operations.housekeeping', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, view: 'day' }) %}
+        {% set weekUrl = path('operations.housekeeping', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, view: 'week' }) %}
+        <twig:PageHeader :title="'housekeeping.title'|trans({}, 'Housekeeping')">
+            <div class="btn-group view-switch" role="group" aria-label="{{ 'reservation.table.view.label'|trans }}">
+                <a class="btn btn-secondary{{ view == 'day' ? ' active' }}" href="{{ dayUrl }}"
+                   {%- if view == 'day' %} aria-current="page"{% endif %}>{{ 'housekeeping.view.day'|trans({}, 'Housekeeping') }}</a>
+                <a class="btn btn-secondary{{ view == 'week' ? ' active' }}" href="{{ weekUrl }}"
+                   {%- if view == 'week' %} aria-current="page"{% endif %}>{{ 'housekeeping.view.week'|trans({}, 'Housekeeping') }}</a>
             </div>
-            <a href="#"
-               class="btn btn-sm btn-outline-secondary shadow-none"
-               data-action="click->housekeeping#submitFilters"
-               title="{{ 'housekeeping.apply'|trans({}, 'Housekeeping') }}">
-                <i class="fas fa-sync-alt" data-housekeeping-target="spinner" aria-hidden="true"></i>
-            </a>
-            <div class="btn-group" role="group">
-                <a class="btn btn-outline-primary{% if view == 'day' %} active{% endif %}"
-                   href="{{ path('operations.housekeeping', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, view: 'day' }) }}">
-                    {{ 'housekeeping.view.day'|trans({}, 'Housekeeping') }}
-                </a>
-                <a class="btn btn-outline-primary{% if view == 'week' %} active{% endif %}"
-                   href="{{ path('operations.housekeeping', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, view: 'week' }) }}">
-                    {{ 'housekeeping.view.week'|trans({}, 'Housekeeping') }}
-                </a>
-            </div>
-        </div>
+        </twig:PageHeader>
 
         <form method="get" action="{{ path('operations.housekeeping') }}" class="mb-3"
               data-housekeeping-target="form"
               data-action="change->housekeeping#submitFilters submit->housekeeping#spin">
-            <div class="row g-2 align-items-end">
-                <div class="col col-md-3">
-                    <label class="form-label">{{ 'housekeeping.date'|trans({}, 'Housekeeping') }}</label>
-                    <input type="date" name="date" value="{{ selectedDate|date('Y-m-d') }}" class="form-control">
-                </div>
-                <div class="col-auto ms-auto d-flex gap-2 flex-nowrap">
-                    {% if view == 'day' %}
-                        <a class="btn btn-outline-primary"
-                           href="{{ path('operations.housekeeping.export', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, range: 'day', occupancyTypes: selectedOccupancyTypes, statuses: selectedStatusIds }) }}"
-                           title="{{ 'housekeeping.export.day'|trans({}, 'Housekeeping') }}">
-                            <i class="fas fa-file-csv" aria-hidden="true"></i>
-                            <span class="visually-hidden">{{ 'housekeeping.export.day'|trans({}, 'Housekeeping') }}</span>
-                        </a>
-                    {% else %}
-                        <a class="btn btn-outline-primary"
-                           href="{{ path('operations.housekeeping.export', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, range: 'week', occupancyTypes: selectedOccupancyTypes, statuses: selectedStatusIds }) }}"
-                           title="{{ 'housekeeping.export.week'|trans({}, 'Housekeeping') }}">
-                            <i class="fas fa-file-csv" aria-hidden="true"></i>
-                            <span class="visually-hidden">{{ 'housekeeping.export.week'|trans({}, 'Housekeeping') }}</span>
-                        </a>
-                    {% endif %}
-                    <button class="btn btn-outline-secondary shadow-none"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#housekeepingFilters"
-                            aria-expanded="false"
-                            aria-controls="housekeepingFilters">
-                        <i class="fas fa-sliders-h" aria-hidden="true"></i>
+            {# The day or the week: arrows, swipe (swipe-nav) or the field; the filters fold out below #}
+            <div class="page-toolbar">
+                <twig:DatePager name="date" :value="selectedDate|date('Y-m-d')" :stepDays="view == 'week' ? 7 : 1"/>
+                <div class="page-toolbar-tools">
+                    <button type="button" class="btn btn-icon" data-action="click->housekeeping#submitFilters"
+                            title="{{ 'housekeeping.apply'|trans({}, 'Housekeeping') }}" aria-label="{{ 'housekeeping.apply'|trans({}, 'Housekeeping') }}">
+                        <i class="fas fa-sync-alt" data-housekeeping-target="spinner" aria-hidden="true"></i>
                     </button>
+                    {% set exportRange = view == 'day' ? 'day' : 'week' %}
+                    <twig:IconButton icon="file-csv" :label="('housekeeping.export.' ~ exportRange)|trans({}, 'Housekeeping')"
+                                     :href="path('operations.housekeeping.export', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, range: exportRange, occupancyTypes: selectedOccupancyTypes, statuses: selectedStatusIds })"/>
+                    <twig:IconButton icon="sliders-h" :label="'operations.filter.title'|trans"
+                                     data-bs-toggle="collapse" data-bs-target="#housekeepingFilters"
+                                     aria-expanded="false" aria-controls="housekeepingFilters"/>
                 </div>
             </div>
             <div class="collapse" id="housekeepingFilters">

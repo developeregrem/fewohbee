@@ -20,6 +20,11 @@ button.hide: Hide
 button.save: Save
 copy.sucess: Copied text to clipboard!
 copy.text: Copy
+date.label: Date
+date.next_day: 'Next day'
+date.next_week: 'Next week'
+date.previous_day: 'Previous day'
+date.previous_week: 'Previous week'
 first.apartments: 'Creating the rooms:'
 first.categories: 'Creating the room categories:'
 first.origin: 'Creating the reservation origins:'
@@ -50,6 +55,9 @@ nav.housekeeping: Housekeeping
 nav.operations: Operations
 nav.operations.frontdesk: Frontdesk checklist
 nav.operations.reports: Reports
+operations.filter.title: Filter
+operations.frontdesk.empty: 'Nothing to do on this day'
+operations.frontdesk.empty.hint: 'No arrivals, departures or guests in house. Choose another day or change the filters.'
 operations.reports.title: Operations Reports
 operations.reports.date_start: Start date
 operations.reports.date_end: End date

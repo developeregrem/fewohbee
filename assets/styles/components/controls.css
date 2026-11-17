@@ -140,3 +140,26 @@ details[open] > summary > .fhb-details-chevron {
     width: 1rem;
     height: 1rem;
 }
+
+/* ------------------------------------------------------------------ Paging by date */
+
+/* A date with arrows (DatePager); Bootstrap's input group would take the whole line */
+.date-pager {
+    width: auto;
+}
+
+.date-pager .form-control {
+    width: 10rem;
+}
+
+@media (max-width: 575.98px) {
+    .date-pager {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .date-pager .form-control {
+        width: auto;
+        min-width: 0;
+    }
+}
