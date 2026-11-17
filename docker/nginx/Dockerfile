@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.28
+# syntax=docker/dockerfile:1.29
 #
 # nginx image for fewohbee.
 # Pulls compiled AssetMapper output (public/assets/) from the phpfpm-prod stage,
