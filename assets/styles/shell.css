@@ -463,6 +463,22 @@ body.reservations-week-fit .app-bottomnav {
     margin-bottom: 1rem;
 }
 
+/* Link back to the page above, on a line of its own */
+.page-header > .page-back {
+    display: inline-flex;
+    flex-basis: 100%;
+    align-items: center;
+    gap: .375rem;
+    margin-bottom: .5rem;
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+    text-decoration: none;
+}
+
+.page-header > .page-back:hover {
+    color: var(--feb-primary-text);
+}
+
 .page-title {
     margin: 0;
     font-size: 1.5rem;
@@ -485,6 +501,25 @@ body.reservations-week-fit .app-bottomnav {
     .page-header-text {
         display: none;
     }
+
+    /* Without the title the actions keep their place at the right end, settings last; a line
+       of icons only needs little room above and below */
+    .page-actions {
+        margin-left: auto;
+    }
+
+    .page-header > .page-actions {
+        margin-bottom: .5rem;
+    }
+
+    .page-header > .page-header-text:first-child + .page-actions {
+        margin-top: -.5rem;
+    }
+
+    /* The link back shares the line with the actions */
+    .page-header > .page-back {
+        flex-basis: auto;
+    }
 }
 
 /* A page's line of filters above its content: the period on the left, tools on the right */
@@ -499,7 +534,7 @@ body.reservations-week-fit .app-bottomnav {
 .page-toolbar-tools {
     display: flex;
     align-items: center;
-    gap: .125rem;
+    gap: .375rem;
 }
 
 /* Phones: one line, the field gives way (see .date-pager) */

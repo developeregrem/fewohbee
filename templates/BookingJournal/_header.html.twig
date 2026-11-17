@@ -1,0 +1,61 @@
+{# Header of the journal's two views (months, year table): the receipt proposals of the AI
+   assistant, adding - a month, the opening balance or entries from a bank statement - and the
+   settings at the right end. On touch screens adding sits behind the round button. #}
+{% set addItems %}
+    <li>
+        <button type="button" class="dropdown-item"
+                data-action="click->booking-journal#openOffcanvas"
+                data-url="{{ path('journal.batch.new') }}"
+                data-offcanvas-title="{{ 'accounting.journal.batch.add'|trans }}">
+            <i class="fas fa-calendar-plus me-1" aria-hidden="true"></i>{{ 'accounting.journal.batch.add'|trans }}
+        </button>
+    </li>
+    <li>
+        <button type="button" class="dropdown-item"
+                data-action="click->booking-journal#openOpeningBalance"
+                data-url-template="{{ path('journal.opening_balance.new', {'year': '__YEAR__'}) }}"
+                data-offcanvas-title="{{ 'accounting.opening_balance.title'|trans }}">
+            <i class="fas fa-flag-checkered me-1" aria-hidden="true"></i>{{ 'accounting.opening_balance.title'|trans }}
+        </button>
+    </li>
+    <li><hr class="dropdown-divider"></li>
+    <li>
+        <a class="dropdown-item" href="{{ path('bank_import.index') }}">
+            <i class="fas fa-file-import me-1" aria-hidden="true"></i>{{ 'accounting.bank_import.action'|trans }}
+        </a>
+    </li>
+{% endset %}
+<twig:PageHeader :title="'nav.journal'|trans">
+    {% if showReceiptProposals %}
+        {% set receiptLabel = 'accounting.receipt_proposal.title'|trans %}
+        {# The AI assistant hands in receipts: robot → receipt #}
+        <a href="{{ path('journal.receipts.index') }}" class="btn btn-icon receipt-proposals-link" title="{{ receiptLabel }}" aria-label="{{ receiptLabel }}">
+            <i class="fas fa-robot" aria-hidden="true"></i>
+            <i class="fas fa-arrow-right receipt-proposals-arrow" aria-hidden="true"></i>
+            <i class="fas fa-receipt" aria-hidden="true"></i>
+            {% if openReceiptProposals > 0 %}
+                <span class="badge rounded-pill text-bg-primary icon-badge">{{ openReceiptProposals }}</span>
+            {% endif %}
+        </a>
+    {% endif %}
+    <div class="dropdown fab-add-inline">
+        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-plus me-1" aria-hidden="true"></i>{{ 'button.add'|trans }}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            {{ addItems }}
+        </ul>
+    </div>
+    <twig:IconButton icon="cog" :label="'accounting.settings.title'|trans" :href="path('journal.settings.index')"/>
+</twig:PageHeader>
+
+{# Touch screens: the add menu behind a floating button, see components/touch.css #}
+<div class="dropup fab-add-dropdown">
+    <button type="button" class="btn fab-add" data-bs-toggle="dropdown" aria-expanded="false"
+            title="{{ 'button.add'|trans }}" aria-label="{{ 'button.add'|trans }}">
+        <i class="fas fa-plus" aria-hidden="true"></i>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end" data-bs-display="static">
+        {{ addItems }}
+    </ul>
+</div>

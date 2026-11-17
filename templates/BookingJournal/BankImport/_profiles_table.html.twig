@@ -1,15 +1,15 @@
 {% use "common/delete_popover.html.twig" %}
 
 <div class="d-flex justify-content-end mb-2">
-    <a href="{{ path('bank_import.profiles.new') }}" class="btn btn-primary btn-sm">
-        <i class="fas fa-plus"></i> {{ 'accounting.bank_import.profile.add'|trans }}
+    <a href="{{ path('bank_import.profiles.new') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-plus me-1" aria-hidden="true"></i>{{ 'accounting.bank_import.profile.add'|trans }}
     </a>
 </div>
 
-<div class="card">
+<div class="card data-card">
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
+        <table class="table table-hover align-middle data-table">
+            <thead>
                 <tr>
                     <th>{{ 'accounting.bank_import.profile.name'|trans }}</th>
                     <th>{{ 'accounting.bank_import.profile.delimiter'|trans }}</th>
@@ -36,16 +36,13 @@
                     <td>
                         {{ ('accounting.bank_import.profile.direction.' ~ profile.directionMode)|trans }}
                     </td>
-                    <td class="text-end">
-                        <a href="{{ path('bank_import.profiles.edit', {'id': profile.id}) }}"
-                           class="btn btn-link btn-sm" title="{{ 'button.edit'|trans }}">
-                            <i class="fas fa-pen"></i>
-                        </a>
-                        <button type="button" class="btn btn-link btn-sm text-danger"
-                                title="{{ 'button.delete'|trans }}"
+                    <td class="data-table-actions text-end">
+                        <twig:IconButton icon="pen" :label="'button.edit'|trans" :href="path('bank_import.profiles.edit', {'id': profile.id})"/>
+                        <button type="button" class="btn btn-icon text-danger"
+                                title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"
                                 data-popover="delete"
                                 data-bs-content='{{ block('deletePopoverContent') }}'>
-                            <i class="fas fa-trash"></i>
+                            <i class="fas fa-trash-alt" aria-hidden="true"></i>
                         </button>
                     </td>
                 </tr>

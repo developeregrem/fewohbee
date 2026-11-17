@@ -8,27 +8,15 @@
     {% include 'BookingJournal/_flash_messages.html.twig' %}
 {% endblock %}
 
+{% block page_title %}{{ 'accounting.bank_import.settings.title'|trans }}{% endblock %}
+
 {% block content %}
 {% set activeTab = activeTab|default('tab-rules') %}
 <div class="container"
      data-controller="bank-import-profiles bank-import tab-persistence"
      data-bank-import-profiles-form-load-failed-value="{{ 'accounting.bank_import.profile.form_load_failed'|trans|e('html_attr') }}">
-    <div class="row mb-2">
-        <div class="col">
-            <ul class="pagination me-auto">
-                <li class="page-item">
-                    <a class="page-link" href="{{ path('bank_import.index') }}">&larr; {{ 'button.back'|trans }}</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="row justify-content-between align-items-center mb-3">
-        <div class="col">
-            <h4 class="mb-0">{{ 'accounting.bank_import.settings.title'|trans }}</h4>
-            <p class="text-muted small mb-0">{{ 'accounting.bank_import.settings.subtitle'|trans }}</p>
-        </div>
-    </div>
+    <twig:PageHeader :title="'accounting.bank_import.settings.title'|trans" :subtitle="'accounting.bank_import.settings.subtitle'|trans"
+                     :back="path('bank_import.index')" :backLabel="'accounting.bank_import.title'|trans"/>
 
     {% include 'feedback.html.twig' %}
 

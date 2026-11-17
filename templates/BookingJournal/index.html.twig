@@ -1,106 +1,24 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}
-    {{ parent() }} - {{ 'nav.journal'|trans }}
-{% endblock %}
+{% block title %}{{ parent() }} - {{ 'nav.journal'|trans }}{% endblock %}
+
+{% block page_title %}{{ 'nav.journal'|trans }}{% endblock %}
 
 {% block flashMessage %}
     {% include 'BookingJournal/_flash_messages.html.twig' %}
 {% endblock %}
 
 {% block content %}
-{# Shared by the regular add menu and the floating one on touch screens #}
-{% set addItems %}
-    <li>
-        <button type="button" class="dropdown-item"
-                data-action="click->booking-journal#openOffcanvas"
-                data-url="{{ path('journal.batch.new') }}"
-                data-offcanvas-title="{{ 'accounting.journal.batch.add'|trans }}">
-            <i class="fas fa-calendar-plus"></i> {{ 'accounting.journal.batch.add'|trans }}
-        </button>
-    </li>
-    <li>
-        <button type="button" class="dropdown-item"
-                data-action="click->booking-journal#openOpeningBalance"
-                data-url-template="{{ path('journal.opening_balance.new', {'year': '__YEAR__'}) }}"
-                data-offcanvas-title="{{ 'accounting.opening_balance.title'|trans }}">
-            <i class="fas fa-flag-checkered"></i> {{ 'accounting.opening_balance.title'|trans }}
-        </button>
-    </li>
-{% endset %}
 <div class="container fab-add-clearance" data-controller="booking-journal swipe-nav"
      data-booking-journal-batches-url-value="{{ path('journal.batches') }}">
-    <div class="row justify-content-between mb-3">
-        <div class="col">
-            <h4>{{ 'nav.journal'|trans }}</h4>
+    {% include 'BookingJournal/_header.html.twig' %}
+    {% include 'BookingJournal/_year_toolbar.html.twig' with {'view': 'months', 'year': currentYear} %}
+
+    <twig:DataCard>
+        <div data-booking-journal-target="batchTable">
+            {% include 'BookingJournal/batch_table.html.twig' with {'batches': [], 'year': currentYear, 'page': 1, 'pages': 0} %}
         </div>
-        <div class="col-auto d-flex flex-wrap gap-2 align-items-center">
-            <select class="form-select form-select-sm" style="width:6rem"
-                    data-booking-journal-target="yearSelect"
-                    data-swipe-nav-target="select"
-                    data-action="change->booking-journal#yearChange change->swipe-nav#updateButtons">
-                {% for y in years %}
-                    <option value="{{ y.year }}" {% if y.year == currentYear %}selected{% endif %}>{{ y.year }}</option>
-                {% endfor %}
-            </select>
-            <div class="dropdown fab-add-inline">
-                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-plus"></i> {{ 'button.add'|trans }}
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    {{ addItems }}
-                </ul>
-            </div>
-            <button type="button" class="btn btn-outline-secondary btn-sm"
-                    data-action="click->booking-journal#openYearView"
-                    data-url-template="{{ path('journal.year.entries', {'year': '__YEAR__'}) }}"
-                    title="{{ 'accounting.journal.year_view.help'|trans }}">
-                <i class="fas fa-table"></i> {{ 'accounting.journal.year_view.title'|trans }}
-            </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm"
-                    data-action="click->booking-journal#exportYear"
-                    data-url-template="{{ path('journal.export.year.datev', {'year': '__YEAR__'}) }}"
-                    title="{{ 'accounting.journal.export.year.help'|trans }}">
-                <i class="fas fa-file-export"></i> {{ 'accounting.journal.export.year'|trans }}
-            </button>
-            <div class="vr"></div>
-            {% if showReceiptProposals %}
-                <a href="{{ path('journal.receipts.index') }}" class="btn btn-outline-secondary btn-sm position-relative" title="{{ 'accounting.receipt_proposal.title'|trans }}">
-                    <i class="fas fa-receipt"></i>
-                    {% if openReceiptProposals > 0 %}
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-primary">{{ openReceiptProposals }}</span>
-                    {% endif %}
-                </a>
-            {% endif %}
-            <a href="{{ path('bank_import.index') }}" class="btn btn-outline-secondary btn-sm" title="{{ 'accounting.bank_import.title'|trans }}">
-                <i class="fas fa-file-import"></i>
-            </a>
-            <a href="{{ path('journal.settings.index') }}" class="btn btn-outline-secondary btn-sm" title="{{ 'accounting.settings.title'|trans }}">
-                <i class="fas fa-cog"></i>
-            </a>
-        </div>
-    </div>
-
-    <div data-booking-journal-target="batchTable">
-        {% include 'BookingJournal/batch_table.html.twig' with {'batches': [], 'year': currentYear, 'page': 1, 'pages': 0} %}
-    </div>
-
-    {% include 'BookingJournal/_edge_navigation.html.twig' with {
-        'selectMode': true,
-        'previousLabel': 'accounting.journal.batch.previous_year'|trans,
-        'nextLabel': 'accounting.journal.batch.next_year'|trans
-    } %}
-
-    {# Touch screens: the add menu behind a floating button, see components/touch.css #}
-    <div class="dropup fab-add-dropdown">
-        <button type="button" class="btn fab-add" data-bs-toggle="dropdown" aria-expanded="false"
-                title="{{ 'button.add'|trans }}" aria-label="{{ 'button.add'|trans }}">
-            <i class="fas fa-plus"></i>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end" data-bs-display="static">
-            {{ addItems }}
-        </ul>
-    </div>
+    </twig:DataCard>
 
     {# ── Offcanvas for forms ─────────────────────────────── #}
     <div class="offcanvas offcanvas-end" tabindex="-1" id="journalOffcanvas"

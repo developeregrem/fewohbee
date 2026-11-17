@@ -5,6 +5,7 @@ accounting:
 
   bank_import:
     title: Kontoauszug-Import
+    action: Kontoauszug importieren
     subtitle: Bankumsätze einlesen und ins Buchungsjournal überführen.
 
     drafts:
@@ -431,6 +432,6 @@ accounting:
 
     settings:
       title: Bank-Import Einstellungen
-      subtitle: Konfiguriere, wie Rechnungsnummern beim Import aus dem Verwendungszweck erkannt werden.
+      subtitle: Import-Regeln, CSV-Profile und Rechnungserkennung für den Kontoauszug-Import.
       flash:
         saved: Einstellungen erfolgreich gespeichert.

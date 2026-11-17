@@ -39,18 +39,35 @@ class BookingJournalController extends AbstractController
     private const PER_PAGE = 40;
 
     #[Route('', name: 'journal.overview', methods: ['GET'])]
-    public function index(BookingBatchRepository $batchRepo, ReceiptProposalRepository $receiptProposalRepo, McpSettings $mcpSettings): Response
+    public function index(BookingBatchRepository $batchRepo, ReceiptProposalRepository $receiptProposalRepo, McpSettings $mcpSettings, Request $request): Response
     {
         $years = $batchRepo->getAvailableYears();
         $currentYear = count($years) > 0 ? $years[0]['year'] : (int) date('Y');
-        $openReceiptProposals = $receiptProposalRepo->countOpen();
-
+        // Back from a month or the year view lands in that year
+        $requestedYear = $request->query->getInt('year');
+        if (in_array($requestedYear, array_map(static fn (array $y): int => (int) $y['year'], $years), true)) {
+            $currentYear = $requestedYear;
+        }
         return $this->render('BookingJournal/index.html.twig', [
             'years' => $years,
             'currentYear' => $currentYear,
-            'openReceiptProposals' => $openReceiptProposals,
-            'showReceiptProposals' => $mcpSettings->isActive() || $openReceiptProposals > 0 || $receiptProposalRepo->hasAny(),
-        ]);
+        ] + $this->receiptProposalBadge($receiptProposalRepo, $mcpSettings));
+    }
+
+    /**
+     * Whether the header of the journal's views links to the receipt proposals of the AI
+     * assistant, and how many wait.
+     *
+     * @return array{openReceiptProposals: int, showReceiptProposals: bool}
+     */
+    private function receiptProposalBadge(ReceiptProposalRepository $receiptProposalRepo, McpSettings $mcpSettings): array
+    {
+        $open = $receiptProposalRepo->countOpen();
+
+        return [
+            'openReceiptProposals' => $open,
+            'showReceiptProposals' => $mcpSettings->isActive() || $open > 0 || $receiptProposalRepo->hasAny(),
+        ];
     }
 
     #[Route('/batches', name: 'journal.batches', methods: ['GET'])]
@@ -80,12 +97,14 @@ class BookingJournalController extends AbstractController
         int $year,
         BookingEntryRepository $entryRepo,
         BookingBatchRepository $batchRepo,
+        ReceiptProposalRepository $receiptProposalRepo,
+        McpSettings $mcpSettings,
     ): Response {
         return $this->render('BookingJournal/year_entries.html.twig', [
             'year' => $year,
             'years' => $batchRepo->getAvailableYears(),
             'entries' => $entryRepo->findAllByYear($year),
-        ]);
+        ] + $this->receiptProposalBadge($receiptProposalRepo, $mcpSettings));
     }
 
     #[Route('/batch/new', name: 'journal.batch.new', methods: ['GET'])]

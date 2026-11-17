@@ -1,0 +1,62 @@
+{# The year of the journal's two views and what applies to it: arrows and a sideways swipe step
+   the year, the switch changes between the months and the year table (like the views of the
+   reservations), the export takes the year shown.
+   view: 'months' reloads the months in place; 'year' opens the year table of the year picked. #}
+<div class="page-toolbar mb-3">
+    <twig:Pager :previousLabel="'accounting.journal.batch.previous_year'|trans"
+                :nextLabel="'accounting.journal.batch.next_year'|trans">
+        <select class="form-select" aria-label="{{ 'accounting.journal.batch.year'|trans }}"
+                data-booking-journal-target="yearSelect"
+                data-swipe-nav-target="select"
+                {% if view == 'months' %}
+                    data-action="change->booking-journal#yearChange change->swipe-nav#updateButtons"
+                {% else %}
+                    data-action="change->booking-journal#navigateToYear change->swipe-nav#updateButtons"
+                    data-url-template="{{ path('journal.year.entries', {'year': '__YEAR__'}) }}"
+                {% endif %}>
+            {% for y in years %}
+                <option value="{{ y.year }}" {% if y.year == year %}selected{% endif %}>{{ y.year }}</option>
+            {% endfor %}
+        </select>
+    </twig:Pager>
+    <div class="page-toolbar-tools">
+        {% set monthsLabel = 'accounting.journal.view.months'|trans %}
+        {% set yearLabel = 'accounting.journal.year_view.title'|trans %}
+        <div class="btn-group view-switch" role="group" aria-label="{{ 'accounting.journal.view.label'|trans }}">
+            {% if view == 'months' %}
+                <button type="button" class="btn btn-secondary active" aria-pressed="true"
+                        title="{{ monthsLabel }}" aria-label="{{ monthsLabel }}">
+                    <i class="fas fa-list" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-secondary" aria-pressed="false"
+                        data-action="click->booking-journal#openYearView"
+                        data-url-template="{{ path('journal.year.entries', {'year': '__YEAR__'}) }}"
+                        title="{{ 'accounting.journal.year_view.help'|trans }}" aria-label="{{ yearLabel }}">
+                    <i class="fas fa-table" aria-hidden="true"></i></button>
+            {% else %}
+                <a href="{{ path('journal.overview', {'year': year}) }}" class="btn btn-secondary"
+                   title="{{ monthsLabel }}" aria-label="{{ monthsLabel }}">
+                    <i class="fas fa-list" aria-hidden="true"></i></a>
+                <button type="button" class="btn btn-secondary active" aria-pressed="true"
+                        title="{{ yearLabel }}" aria-label="{{ yearLabel }}">
+                    <i class="fas fa-table" aria-hidden="true"></i></button>
+            {% endif %}
+        </div>
+        {# Built like the export of a month, so further formats are one more entry #}
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                    title="{{ 'accounting.journal.export'|trans }}">
+                <i class="fas fa-download" aria-hidden="true"></i><span class="d-none d-md-inline ms-1">{{ 'accounting.journal.export'|trans }}</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <button type="button" class="dropdown-item"
+                            data-action="click->booking-journal#exportYear"
+                            data-url-template="{{ path('journal.export.year.datev', {'year': '__YEAR__'}) }}"
+                            title="{{ 'accounting.journal.export.year.help'|trans }}">
+                        <i class="fas fa-file-csv me-1" aria-hidden="true"></i>{{ 'accounting.journal.export.year'|trans }}
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

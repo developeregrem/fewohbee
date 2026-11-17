@@ -8,24 +8,14 @@
     {% include 'BookingJournal/_flash_messages.html.twig' %}
 {% endblock %}
 
+{% block page_title %}{{ 'accounting.receipt_proposal.title'|trans }}{% endblock %}
+
 {% block content %}
 <div class="container">
-    <div class="row mb-2">
-        <div class="col">
-            <ul class="pagination me-auto">
-                <li class="page-item">
-                    <a class="page-link" href="{{ path('journal.overview') }}">&larr; {{ 'button.back'|trans }}</a>
-                </li>
-            </ul>
-        </div>
-    </div>
+    <twig:PageHeader :title="'accounting.receipt_proposal.title'|trans" :subtitle="'accounting.receipt_proposal.subtitle'|trans"
+                     :back="path('journal.overview')" :backLabel="'nav.journal'|trans"/>
 
-    <div class="mb-3">
-        <h4 class="mb-0">{{ 'accounting.receipt_proposal.title'|trans }}</h4>
-        <p class="text-muted small mb-0">{{ 'accounting.receipt_proposal.subtitle'|trans }}</p>
-    </div>
-
-    <div class="card mb-4">
+    <div class="card data-card mb-4">
         <div class="card-header">
             <h6 class="mb-0">{{ 'accounting.receipt_proposal.open'|trans }}</h6>
         </div>
@@ -33,8 +23,8 @@
             <div class="card-body text-muted small">{{ 'accounting.receipt_proposal.none_open'|trans }}</div>
         {% else %}
         <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
+            <table class="table table-hover mb-0 align-middle data-table">
+                <thead>
                     <tr>
                         <th>{{ 'accounting.journal.entry.date'|trans }}</th>
                         <th>{{ 'accounting.receipt_proposal.supplier'|trans }}</th>
@@ -55,7 +45,7 @@
                         <td>{{ ('accounting.receipt_proposal.payment_' ~ proposal.payment)|trans }}</td>
                         <td class="small text-muted">{{ proposal.createdAt|date('d.m.Y H:i') }}</td>
                         <td class="text-end">
-                            <a href="{{ path('journal.receipts.show', {'id': proposal.id}) }}" class="btn btn-sm btn-primary">
+                            <a href="{{ path('journal.receipts.show', {'id': proposal.id}) }}" class="btn btn-sm btn-secondary">
                                 <i class="fas fa-check-double"></i> {{ 'accounting.receipt_proposal.review'|trans }}
                             </a>
                         </td>
@@ -68,7 +58,7 @@
     </div>
 
     {% if decided is not empty %}
-    <div class="card">
+    <div class="card data-card">
         <div class="card-header">
             <h6 class="mb-0">{{ 'accounting.receipt_proposal.recently_decided'|trans }}</h6>
         </div>

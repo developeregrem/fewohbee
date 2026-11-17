@@ -243,11 +243,11 @@ export default class extends Controller {
             case 'invoice':
                 return this._fieldSortText(row, 'invoiceNumber') || line?.matchedInvoiceNumber || '';
             case 'debit':
-                return this._fieldSortText(row, 'debitAccountId') || this._cellSortText(row, 7);
+                return this._fieldSortText(row, 'debitAccountId') || this._cellSortText(row, 'debit');
             case 'credit':
-                return this._fieldSortText(row, 'creditAccountId') || this._cellSortText(row, 8);
+                return this._fieldSortText(row, 'creditAccountId') || this._cellSortText(row, 'credit');
             case 'tax':
-                return this._fieldSortText(row, 'taxRateId') || this._cellSortText(row, 9);
+                return this._fieldSortText(row, 'taxRateId') || this._cellSortText(row, 'tax');
             case 'remark':
                 return this._fieldSortText(row, 'remark');
             default:
@@ -283,8 +283,9 @@ export default class extends Controller {
         return fieldEl.value ?? fieldEl.textContent ?? '';
     }
 
-    _cellSortText(row, index) {
-        return row.cells[index]?.textContent || '';
+    /** Text of the cell marked data-col="…" (accounts and tax rate taken from an invoice show text, not a select) */
+    _cellSortText(row, column) {
+        return row.querySelector(`td[data-col="${column}"]`)?.textContent || '';
     }
 
     _originalRowIndex(row) {
@@ -484,12 +485,13 @@ export default class extends Controller {
         const first = cell.firstElementChild;
         if (!first) return;
 
-        let cls = 'badge bg-warning text-dark';
+        // The same colours as BookingJournal/BankImport/_status_badge.html.twig and the filter chips
+        let cls = 'badge text-warning-emphasis bg-warning-subtle';
         let icon = 'fa-circle-notch';
         let title = this.statusPendingTitleValue;
-        if (status === 'duplicate') { cls = 'badge bg-info text-dark'; icon = 'fa-clone'; title = this.statusDuplicateTitleValue; }
-        else if (status === 'ignored') { cls = 'badge bg-light text-dark border'; icon = 'fa-eye-slash'; title = this.statusIgnoredTitleValue; }
-        else if (status === 'ready') { cls = 'badge bg-success'; icon = 'fa-check'; title = this.statusReadyTitleValue; }
+        if (status === 'duplicate') { cls = 'badge text-info-emphasis bg-info-subtle'; icon = 'fa-clone'; title = this.statusDuplicateTitleValue; }
+        else if (status === 'ignored') { cls = 'badge text-secondary-emphasis bg-secondary-subtle'; icon = 'fa-eye-slash'; title = this.statusIgnoredTitleValue; }
+        else if (status === 'ready') { cls = 'badge text-success-emphasis bg-success-subtle'; icon = 'fa-check'; title = this.statusReadyTitleValue; }
 
         first.className = cls;
         first.setAttribute('title', title);
@@ -502,8 +504,8 @@ export default class extends Controller {
     _refreshIgnoreButton(row, isIgnored) {
         const btn = row.querySelector('[data-bank-import-preview-target="ignoreButton"]');
         if (!btn) return;
-        btn.classList.toggle('btn-secondary', isIgnored);
-        btn.classList.toggle('btn-outline-secondary', !isIgnored);
+        btn.classList.toggle('active', isIgnored);
+        btn.setAttribute('aria-pressed', String(isIgnored));
         const icon = btn.querySelector('i');
         if (icon) icon.className = 'fas ' + (isIgnored ? 'fa-eye-slash' : 'fa-eye');
     }

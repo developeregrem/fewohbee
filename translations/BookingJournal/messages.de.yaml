@@ -141,11 +141,14 @@ accounting.journal.batch.year: Jahr
 accounting.journal.batch.month: Monat
 accounting.journal.batch.status: Status
 accounting.journal.batch.entries_count: Einträge
+accounting.journal.batch.entries.count: '{0}Keine Buchungen|{1}1 Buchung|]1,Inf[%count% Buchungen'
+accounting.journal.batch.cash: Kasse
 accounting.journal.batch.closed: Abgeschlossen
 accounting.journal.batch.exported: Exportiert
 accounting.journal.batch.open: Offen
 accounting.journal.batch.new: Neuen Monat anlegen
 accounting.journal.batch.empty: Noch keine Monate angelegt.
+accounting.journal.batch.empty.hint: 'Lege über „Hinzufügen“ einen Monat an.'
 accounting.journal.batch.close: Monat abschließen
 accounting.journal.batch.reopen: Monat wieder öffnen
 accounting.journal.batch.previous_month: 'Vorheriger Monat: %month%'
@@ -154,11 +157,15 @@ accounting.journal.batch.previous_page: 'Vorherige Seite: %page% von %pages%'
 accounting.journal.batch.next_page: 'Nächste Seite: %page% von %pages%'
 accounting.journal.batch.previous_year: 'Vorheriges Jahr'
 accounting.journal.batch.next_year: 'Nächstes Jahr'
+accounting.journal.batch.all_months: 'Alle Monate'
 
 # Journal - Filter
 accounting.journal.filter.all: Alle Buchungen
 accounting.journal.filter.cashbook: Kassenbuch-Ansicht
 accounting.journal.filter.bankbook: Bank-Ansicht
+accounting.journal.filter.label: Ansicht
+accounting.journal.view.label: Ansicht
+accounting.journal.view.months: Monate
 
 # Journal - Kassenbuch-Spalten
 accounting.journal.cashbook.incomes: Einnahmen
@@ -217,6 +224,7 @@ accounting.journal.entry.debit: Soll
 accounting.journal.entry.credit: Haben
 accounting.journal.entry.tax_rate: Steuersatz
 accounting.journal.entry.invoice: Rechnungs-Nr.
+accounting.journal.entry.actions: Aktionen
 accounting.journal.entry.requires_document: Beleg wird nachgereicht
 accounting.journal.entry.requires_document_help: Die Buchung wartet auf eine Belegnummer. Solange sie fehlt, lässt sich der Monat nicht abschließen.
 accounting.journal.entry.remark: Bemerkung

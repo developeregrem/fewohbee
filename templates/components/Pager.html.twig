@@ -1,0 +1,39 @@
+{#
+ # A period between paging arrows: a year select, or the name of a month. The arrows are the
+ # targets of the swipe-nav controller around it, so a sideways swipe on touch screens pages as
+ # well.
+ # - links: the arrows lead to previousHref / nextHref; one without a target is disabled.
+ # - Otherwise they step the swipe-nav select in the content, which disables the arrow that has
+ #   no neighbouring value.
+ #
+ #   <twig:Pager :previousLabel="…" :nextLabel="…">
+ #       <select class="form-select" data-swipe-nav-target="select" …>…</select>
+ #   </twig:Pager>
+ #   <twig:Pager links :previousHref="url" :nextHref="url" :previousLabel="…" :nextLabel="…">
+ #       <span class="input-group-text">Mai 2026</span>
+ #   </twig:Pager>
+ #}
+{% props previousLabel = '', nextLabel = '', links = false, previousHref = null, nextHref = null %}
+{% set content %}{% block content %}{% endblock %}{% endset %}
+{% set arrows = {
+    previous: {href: previousHref, label: previousLabel, icon: 'arrow-left'},
+    next: {href: nextHref, label: nextLabel, icon: 'arrow-right'},
+} %}
+<div {{ attributes.defaults({class: 'input-group flex-nowrap period-pager'}) }}>
+    {% for side, arrow in arrows %}
+        {% if side == 'next' %}{{ content }}{% endif %}
+        {% set label %}{% if arrow.label %} title="{{ arrow.label }}" aria-label="{{ arrow.label }}"{% endif %}{% endset %}
+        {% if links and arrow.href %}
+            <a href="{{ arrow.href }}" class="btn btn-secondary period-pager-{{ side }}"
+               data-swipe-nav-target="{{ side }}"{{ label }}>
+                <i class="fa-solid fa-{{ arrow.icon }}" aria-hidden="true"></i></a>
+        {% elseif links %}
+            <button type="button" class="btn btn-secondary period-pager-{{ side }}" disabled{{ label }}>
+                <i class="fa-solid fa-{{ arrow.icon }}" aria-hidden="true"></i></button>
+        {% else %}
+            <button type="button" class="btn btn-secondary period-pager-{{ side }}"
+                    data-swipe-nav-target="{{ side }}" data-action="swipe-nav#{{ side }}"{{ label }}>
+                <i class="fa-solid fa-{{ arrow.icon }}" aria-hidden="true"></i></button>
+        {% endif %}
+    {% endfor %}
+</div>

@@ -4,30 +4,24 @@
     {{ parent() }} - {{ 'accounting.receipt_proposal.title'|trans }}
 {% endblock %}
 
+{% block page_title %}{{ 'accounting.receipt_proposal.title'|trans }}{% endblock %}
+
 {% block content %}
 <div class="container">
-    <div class="row mb-2">
-        <div class="col">
-            <ul class="pagination me-auto">
-                <li class="page-item">
-                    <a class="page-link" href="{{ path('journal.receipts.index') }}">&larr; {{ 'button.back'|trans }}</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <h4>{{ proposal.supplier }}, {{ proposal.receiptDate|date('d.m.Y') }}, {{ proposal.total|number_format(2, ',', '.') }}</h4>
-    <p class="text-muted">
+    {% set decidedTitle = proposal.supplier ~ ', ' ~ proposal.receiptDate|date('d.m.Y') ~ ', ' ~ proposal.total|number_format(2, ',', '.') %}
+    {% set decidedInfo -%}
         {{ proposal.status.labelKey|trans }}
-        {% if proposal.decidedAt %}– {{ proposal.decidedAt|date('d.m.Y H:i') }}{% endif %}
-        {% if proposal.decidedBy %}– {{ proposal.decidedBy.firstname }} {{ proposal.decidedBy.lastname }}{% endif %}
-    </p>
+        {%- if proposal.decidedAt %} – {{ proposal.decidedAt|date('d.m.Y H:i') }}{% endif %}
+        {%- if proposal.decidedBy %} – {{ proposal.decidedBy.firstname }} {{ proposal.decidedBy.lastname }}{% endif %}
+    {%- endset %}
+    <twig:PageHeader :title="decidedTitle" :subtitle="decidedInfo"
+                     :back="path('journal.receipts.index')" :backLabel="'accounting.receipt_proposal.title'|trans"/>
 
     {% if entries is not empty %}
-    <div class="card">
+    <div class="card data-card">
         <div class="table-responsive">
-            <table class="table mb-0 align-middle">
-                <thead class="table-light">
+            <table class="table mb-0 align-middle data-table">
+                <thead>
                     <tr>
                         <th>{{ 'accounting.journal.entry.date'|trans }}</th>
                         <th>{{ 'accounting.journal.entry.debit'|trans }}</th>

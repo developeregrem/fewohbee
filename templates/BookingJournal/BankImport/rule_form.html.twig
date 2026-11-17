@@ -7,24 +7,12 @@
     {% include 'BookingJournal/_flash_messages.html.twig' %}
 {% endblock %}
 
+{% block page_title %}{{ 'accounting.bank_import.rules.edit'|trans }}{% endblock %}
+
 {% block content %}
 <div class="container" data-controller="bank-import">
-    <div class="row mb-2">
-        <div class="col">
-            <ul class="pagination me-auto">
-                <li class="page-item">
-                    <a class="page-link" href="{{ path('bank_import.rules.index') }}">&larr; {{ 'button.back'|trans }}</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="row align-items-center mb-3">
-        <div class="col">
-            <h4 class="mb-0">{{ 'accounting.bank_import.rules.edit'|trans }}</h4>
-            <p class="text-muted small mb-0">{{ 'accounting.bank_import.rules.edit.help'|trans }}</p>
-        </div>
-    </div>
+    <twig:PageHeader :title="'accounting.bank_import.rules.edit'|trans" :subtitle="'accounting.bank_import.rules.edit.help'|trans"
+                     :back="path('bank_import.rules.index')" :backLabel="'accounting.bank_import.settings.title'|trans"/>
 
     {% include 'feedback.html.twig' %}
 

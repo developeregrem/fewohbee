@@ -46,31 +46,14 @@
     </div>
 {% endmacro %}
 
+{% block page_title %}{{ (isNew ? 'accounting.bank_import.profile.add' : 'accounting.bank_import.profile.edit')|trans }}{% endblock %}
+
 {% block content %}
 {% import _self as ui %}
 <div class="container">
-    <div class="row mb-2">
-        <div class="col">
-            <ul class="pagination me-auto">
-                <li class="page-item">
-                    <a class="page-link" href="{{ path('bank_import.profiles.index') }}">&larr; {{ 'button.back'|trans }}</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="row align-items-center mb-3">
-        <div class="col">
-            <h4 class="mb-0">
-                {% if isNew %}
-                    {{ 'accounting.bank_import.profile.add'|trans }}
-                {% else %}
-                    {{ 'accounting.bank_import.profile.edit'|trans }}
-                {% endif %}
-            </h4>
-            <p class="text-muted small mb-0">{{ 'accounting.bank_import.profile.help.intro'|trans }}</p>
-        </div>
-    </div>
+    <twig:PageHeader :title="(isNew ? 'accounting.bank_import.profile.add' : 'accounting.bank_import.profile.edit')|trans"
+                     :subtitle="'accounting.bank_import.profile.help.intro'|trans"
+                     :back="path('bank_import.profiles.index')" :backLabel="'accounting.bank_import.settings.title'|trans"/>
 
     {% include 'feedback.html.twig' %}
 

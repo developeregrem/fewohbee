@@ -358,8 +358,13 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   or a warning; switched with `setSaveState()` from `assets/js/save_state.js` - answer
   failures with an error status so the tick only follows a real save),
   `<twig:Autocomplete>` (suggestions while typing, from a JSON endpoint; the page reacts to
-  `autocomplete:select`), `<twig:DatePager>` (a day or week with arrows and swipe paging). Use them instead of writing their markup by hand; extra attributes
-  (`data-action`, `data-url` …) pass through.
+  `autocomplete:select`), `<twig:DatePager>` (a day or week with arrows and swipe paging), `<twig:Pager>` (a year select
+  or a named period such as a month between paging arrows). `<twig:PageHeader>` takes `back` and
+  `backLabel` on a page below another one. Use them instead of writing their markup by hand; extra attributes
+  (`data-action`, `data-url` …) pass through. The content of a component is rendered in the
+  component's own template: blocks pulled in with `{% use %}` / `block()` and macros imported by
+  the page are not reachable there - write the markup out in such a case (e.g. `card data-card`
+  instead of `<twig:DataCard>` around rows with a delete popover).
   A new component covers a pattern that recurs on several pages, has no logic beyond
   presentation and goes into the styleguide.
 - Colours chosen by the operator (reservation status, origin, calendar) are shown with
@@ -372,8 +377,9 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   screens get the round add button: `<twig:AddButton>` in the page header renders it together
   with the regular button for the desktop (`fab-add-dropdown` when there are several kinds). Where a view pages
   through a sequence (month, year, day, pages of a list), a sideways swipe pages as well: use the
-  `swipe-nav` controller (a year select, a date via `<twig:DatePager>`, or the pages of a list
-  via `'swipe_nav': true` on `paginator.html.twig`) and keep the arrows
+  `swipe-nav` controller (a year select or a month via `<twig:Pager>`, a date via
+  `<twig:DatePager>`, or the pages of a list via `'swipe_nav': true` on `paginator.html.twig`)
+  and keep the arrows
   or the select visible. Filters and the period of a page sit in a `.page-toolbar` below the
   page header. Prefer stacked lists
   (`data-table-stack`) to tables that scroll sideways.

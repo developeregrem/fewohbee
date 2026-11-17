@@ -1,23 +1,137 @@
 /* Booking journal. */
 
-/* Booking journal: paging arrows at the screen edges, like the desktop
-   week view of the reservations (swipe_nav_controller) */
-.journal-edge-nav > .btn {
-    position: fixed;
-    top: 50%;
-    z-index: 1030;
-    transform: translateY(-50%);
-    opacity: .85;
+/* Receipt proposals of the AI assistant in the header: robot → receipt */
+.receipt-proposals-link {
+    width: auto;
+    gap: .3rem;
+    padding-inline: .6rem;
 }
 
-.journal-edge-nav > .btn:hover {
-    opacity: 1;
+.receipt-proposals-arrow {
+    font-size: .6rem;
+    opacity: .7;
 }
 
-.journal-edge-prev {
-    left: .5rem;
+/* Entries of a month: many columns, so a little less room around each cell */
+.journal-entries > thead > tr > th,
+.journal-entries > tbody > tr > td {
+    padding-inline: .625rem;
 }
 
-.journal-edge-next {
-    right: .5rem;
+.journal-entries .journal-amount {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Short accounts such as "1200 - Bank" stay on one line next to a long one */
+.journal-entries .journal-account {
+    min-width: 8rem;
+}
+
+/* Above the entries: the view, and for the bank or cash book its opening and closing balance */
+.journal-view {
+    width: auto;
+}
+
+.journal-balances {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem 1.5rem;
+    margin-left: auto;
+    color: var(--feb-text-muted);
+}
+
+.journal-balances strong {
+    color: var(--feb-text);
+}
+
+/* Phones: an entry is a block - the amount first, then date and document, the accounts and the
+   details beneath (see data-table-stack) */
+@media (max-width: 767.98px) {
+    .journal-entries > tbody > tr > .journal-amount {
+        order: -1;
+        font-weight: var(--feb-font-weight-strong);
+    }
+
+    /* The actions one above the other, so the text keeps the width */
+    .journal-entries > tbody > tr > .cell-actions {
+        display: flex;
+        flex-direction: column;
+        align-self: start;
+    }
+}
+
+/* ------------------------------------------------------------------ Bank import preview */
+
+.bi-table > thead > tr > th,
+.bi-table > tbody > tr > td {
+    padding-inline: .5rem;
+}
+
+.bi-table .form-select,
+.bi-table .form-control {
+    font-size: var(--feb-font-size-sm);
+}
+
+/* Fixed widths for the columns of fields; the bank's text takes the rest and shortens its purpose
+   line instead of widening the table, so the table fits a desktop without scrolling sideways */
+.bi-table {
+    table-layout: fixed;
+    /* Below this the bank's text would be too narrow; the table then scrolls after all */
+    min-width: 68rem;
+}
+
+.bi-table .col-select  { width: 2.25rem; }
+.bi-table .col-status  { width: 4.5rem; }
+.bi-table .col-date    { width: 5.5rem; }
+.bi-table .col-amount  { width: 6.25rem; }
+.bi-table .col-invoice { width: 6.25rem; }
+.bi-table .col-account { width: 8.5rem; }
+.bi-table .col-tax     { width: 7rem; }
+.bi-table .col-actions { width: 7.75rem; }
+
+.bi-booking .bi-counterparty {
+    overflow-wrap: anywhere;
+}
+
+/* Actions for the selected lines; a display utility would override the hidden attribute */
+.bi-bulk-bar:not([hidden]) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1rem;
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+}
+
+.bi-bulk-bar .form-select {
+    max-width: 12rem;
+}
+
+/* A line being saved and just saved (bank_import_preview_controller.js) */
+.bi-table > tbody > tr.is-saving {
+    --bs-table-bg-state: color-mix(in srgb, var(--feb-warning) 10%, transparent);
+}
+
+.bi-table > tbody > tr.is-saved {
+    --bs-table-bg-state: color-mix(in srgb, var(--feb-success) 12%, transparent);
+}
+
+/* Progress and the commit action stay in view at the bottom while scrolling through the lines */
+.bi-commit-bar {
+    position: sticky;
+    bottom: calc(var(--feb-bottomnav-offset, 0px) + .75rem);
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem 1rem;
+    margin: 1rem 0;
+    padding: .625rem .75rem .625rem 1rem;
+    border: 1px solid var(--feb-border);
+    border-radius: var(--feb-radius-lg);
+    background: var(--feb-surface);
+    box-shadow: var(--feb-shadow-md);
+    font-size: var(--feb-font-size-sm);
 }

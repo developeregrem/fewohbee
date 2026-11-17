@@ -1,10 +1,10 @@
 {% import 'BookingJournal/BankImport/_rule_summary.html.twig' as ruleUi %}
 {% use "common/delete_popover.html.twig" %}
 
-<div class="card">
+<div class="card data-card">
     <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0 align-middle">
-            <thead class="table-light small">
+        <table class="table table-hover align-middle data-table">
+            <thead>
                 <tr>
                     <th style="width: 4rem">{{ 'accounting.bank_import.rules.col.priority'|trans }}</th>
                     <th>{{ 'accounting.bank_import.rules.col.name'|trans }}</th>
@@ -19,7 +19,7 @@
                 {% set id = rule.id %}
                 {% set targetUrl = path('bank_import.rules.delete', {'id': rule.id}) %}
                 <tr class="{% if not rule.isEnabled %}text-muted{% endif %}">
-                    <td class="text-center"><span class="badge bg-secondary">{{ rule.priority }}</span></td>
+                    <td class="text-center"><span class="badge text-secondary-emphasis bg-secondary-subtle">{{ rule.priority }}</span></td>
                     <td>
                         <strong>{{ rule.name }}</strong>
                         {% if rule.description %}
@@ -35,24 +35,22 @@
                     </td>
                     <td>{{ ruleUi.conditionsList(rule.conditions) }}</td>
                     <td>{{ ruleUi.actionSummary(rule.action, accountsById, taxRatesById) }}</td>
-                    <td class="text-end">
+                    <td class="data-table-actions text-end">
                         <form method="post" action="{{ path('bank_import.rules.toggle', {'id': rule.id}) }}" class="d-inline">
                             <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ rule.id) }}">
+                            {% set toggleLabel = (rule.isEnabled ? 'accounting.bank_import.rules.action.disable' : 'accounting.bank_import.rules.action.enable')|trans %}
                             <button type="submit"
-                                    class="btn btn-sm {% if rule.isEnabled %}btn-success{% else %}btn-outline-secondary{% endif %}"
-                                    title="{{ (rule.isEnabled ? 'accounting.bank_import.rules.action.disable' : 'accounting.bank_import.rules.action.enable')|trans }}">
-                                <i class="fas {% if rule.isEnabled %}fa-toggle-on{% else %}fa-toggle-off{% endif %}"></i>
+                                    class="btn btn-icon{% if rule.isEnabled %} text-success-emphasis{% endif %}"
+                                    title="{{ toggleLabel }}" aria-label="{{ toggleLabel }}" aria-pressed="{{ rule.isEnabled ? 'true' : 'false' }}">
+                                <i class="fas fa-lg {% if rule.isEnabled %}fa-toggle-on{% else %}fa-toggle-off{% endif %}" aria-hidden="true"></i>
                             </button>
                         </form>
-                        <a href="{{ path('bank_import.rules.edit', {'id': rule.id}) }}"
-                           class="btn btn-sm btn-outline-secondary" title="{{ 'button.edit'|trans }}">
-                            <i class="fas fa-pen"></i>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                title="{{ 'button.delete'|trans }}"
+                        <twig:IconButton icon="pen" :label="'button.edit'|trans" :href="path('bank_import.rules.edit', {'id': rule.id})"/>
+                        <button type="button" class="btn btn-icon text-danger"
+                                title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"
                                 data-popover="delete"
                                 data-bs-content='{{ block('deletePopoverContent') }}'>
-                            <i class="fas fa-trash"></i>
+                            <i class="fas fa-trash-alt" aria-hidden="true"></i>
                         </button>
                     </td>
                 </tr>

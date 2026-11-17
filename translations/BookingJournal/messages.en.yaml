@@ -141,11 +141,14 @@ accounting.journal.batch.year: Year
 accounting.journal.batch.month: Month
 accounting.journal.batch.status: Status
 accounting.journal.batch.entries_count: Entries
+accounting.journal.batch.entries.count: '{0}No entries|{1}1 entry|]1,Inf[%count% entries'
+accounting.journal.batch.cash: Cash
 accounting.journal.batch.closed: Closed
 accounting.journal.batch.exported: Exported
 accounting.journal.batch.open: Open
 accounting.journal.batch.new: Create New Month
 accounting.journal.batch.empty: No months created yet.
+accounting.journal.batch.empty.hint: 'Add a month with “Add”.'
 accounting.journal.batch.close: Close Month
 accounting.journal.batch.reopen: Reopen Month
 accounting.journal.batch.previous_month: 'Previous month: %month%'
@@ -154,11 +157,15 @@ accounting.journal.batch.previous_page: 'Previous page: %page% of %pages%'
 accounting.journal.batch.next_page: 'Next page: %page% of %pages%'
 accounting.journal.batch.previous_year: 'Previous year'
 accounting.journal.batch.next_year: 'Next year'
+accounting.journal.batch.all_months: 'All months'
 
 # Journal - Filter
 accounting.journal.filter.all: All entries
 accounting.journal.filter.cashbook: Cash book view
 accounting.journal.filter.bankbook: Bank view
+accounting.journal.filter.label: View
+accounting.journal.view.label: View
+accounting.journal.view.months: Months
 
 # Journal - Cashbook columns
 accounting.journal.cashbook.incomes: Income
@@ -217,6 +224,7 @@ accounting.journal.entry.debit: Debit
 accounting.journal.entry.credit: Credit
 accounting.journal.entry.tax_rate: Tax Rate
 accounting.journal.entry.invoice: Invoice No.
+accounting.journal.entry.actions: Actions
 accounting.journal.entry.requires_document: Document to follow
 accounting.journal.entry.requires_document_help: The entry is waiting for a document number. The month cannot be closed while it is missing.
 accounting.journal.entry.remark: Remark

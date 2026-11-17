@@ -6,14 +6,14 @@ import { onSwipe, horizontalSwipeDirection } from '../js/swipe.js';
  * a sideways swipe anywhere on the page. Swiping from right to left goes
  * forward, like the right arrow.
  *
- * - previous / next targets are the arrows (templates/BookingJournal/
- *   _edge_navigation.html.twig); a swipe clicks them. As links the page
+ * - previous / next targets are the arrows (<twig:Pager>, <twig:DatePager>);
+ *   a swipe clicks them. As links the page
  *   decides where they lead, e.g. the next page of a list and after its last
  *   page the next month. The pagination of a list offers its arrows as
  *   targets with 'swipe_nav': true (templates/paginator.html.twig).
  * - As buttons they step the select target, whose numeric options (years)
  *   may come in any order; its change event loads the period. Arrows without
- *   a neighbouring value are hidden.
+ *   a neighbouring value are disabled.
  * - Or they step the date target (an input type=date, see <twig:DatePager>) by
  *   its data-step-days (default 1); its change event loads the day.
  *
@@ -35,7 +35,7 @@ export default class extends Controller {
             const arrow = direction === 'forward'
                 ? (this.hasNextTarget ? this.nextTarget : null)
                 : (this.hasPreviousTarget ? this.previousTarget : null);
-            if (arrow && !arrow.hidden) {
+            if (arrow && !arrow.hidden && !arrow.disabled) {
                 arrow.click();
             }
         }, (event) => this.startState(event.target));
@@ -71,16 +71,16 @@ export default class extends Controller {
         input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    /** Shows the arrow buttons only where the select has a neighbouring value. */
+    /** Disables the arrow buttons where the select has no neighbouring value. */
     updateButtons() {
         if (!this.hasSelectTarget) {
             return;
         }
         if (this.hasPreviousTarget && this.previousTarget.tagName === 'BUTTON') {
-            this.previousTarget.hidden = this.neighbourOption(false) === null;
+            this.previousTarget.disabled = this.neighbourOption(false) === null;
         }
         if (this.hasNextTarget && this.nextTarget.tagName === 'BUTTON') {
-            this.nextTarget.hidden = this.neighbourOption(true) === null;
+            this.nextTarget.disabled = this.neighbourOption(true) === null;
         }
     }
 

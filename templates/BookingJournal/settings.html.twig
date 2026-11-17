@@ -9,17 +9,12 @@
     {% include 'BookingJournal/_flash_messages.html.twig' %}
 {% endblock %}
 
+{% block page_title %}{{ 'accounting.settings.title'|trans }}{% endblock %}
+
 {% block content %}
 <div class="container" data-controller="journal-settings tab-persistence">
-    <div class="row">
-        <div class="col">
-            <ul class="pagination me-auto">
-            <li class="page-item">
-                <a class="page-link" href="{{ path('journal.overview') }}">&larr; {{ 'button.back'|trans }}</a>
-            </li>
-        </ul>
-        </div>
-    </div>
+    <twig:PageHeader :title="'accounting.settings.title'|trans"
+                     :back="path('journal.overview')" :backLabel="'nav.journal'|trans"/>
 
     {% include 'feedback.html.twig' %}
 
@@ -115,7 +110,7 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-bordered table-hover mb-0">
+                        <table class="table table-hover align-middle mb-0 data-table">
                             <thead>
                             <tr>
                                 <th>{{ 'accounting.accounts.number'|trans }}</th>
@@ -133,39 +128,31 @@
                                     <td class="d-none d-md-table-cell">{{ ('accounting.accounts.type.' ~ account.type)|trans }}</td>
                                     <td>
                                         {% if account.cashAccount %}
-                                            <span class="badge bg-success">{{ 'accounting.accounts.cash'|trans }}</span>
+                                            <span class="badge text-success-emphasis bg-success-subtle">{{ 'accounting.accounts.cash'|trans }}</span>
                                         {% endif %}
                                         {% if account.bankAccount %}
-                                            <span class="badge bg-info text-dark">{{ 'accounting.accounts.bank'|trans }}</span>
+                                            <span class="badge text-info-emphasis bg-info-subtle">{{ 'accounting.accounts.bank'|trans }}</span>
                                         {% endif %}
                                         {% if account.openingBalanceAccount %}
-                                            <span class="badge bg-secondary">{{ 'accounting.accounts.opening_balance'|trans }}</span>
+                                            <span class="badge text-secondary-emphasis bg-secondary-subtle">{{ 'accounting.accounts.opening_balance'|trans }}</span>
                                         {% endif %}
                                         {% if account.autoAccount %}
-                                            <span class="badge bg-warning text-dark" title="{{ 'accounting.accounts.is_auto.help'|trans }}">{{ 'accounting.accounts.is_auto.badge'|trans }}</span>
+                                            <span class="badge text-warning-emphasis bg-warning-subtle" title="{{ 'accounting.accounts.is_auto.help'|trans }}">{{ 'accounting.accounts.is_auto.badge'|trans }}</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-link p-0 border-0"
-                                                data-action="click->journal-settings#openOffcanvas"
-                                                data-url="{{ path('journal.settings.accounts.edit', {'id': account.id}) }}"
-                                                data-offcanvas-title="{{ 'accounting.accounts.edit'|trans }}"
-                                                title="{{ 'button.edit'|trans }}">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
+                                        <twig:IconButton icon="pen" :label="'button.edit'|trans"                                                data-action="click->journal-settings#openOffcanvas"                                                data-url="{{ path('journal.settings.accounts.edit', {'id': account.id}) }}"                                                data-offcanvas-title="{{ 'accounting.accounts.edit'|trans }}"/>
                                         {% if not account.systemDefault %}
                                             {% set id = account.id %}
                                             {% set targetUrl = path('journal.settings.accounts.delete', {'id': account.id}) %}
-                                            <button type="button" class="btn btn-sm btn-link p-0 border-0"
-                                                    title="{{ 'button.delete'|trans }}"
-                                                    data-popover="delete"
+                                            <button type="button" class="btn btn-icon text-danger"                                                    title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"                                                    data-popover="delete"
                                                     data-title="{{ 'accounting.accounts.delete.ask'|trans }}"
                                                     data-bs-content='{{ block('deletePopoverContent') }}'>
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         {% else %}
-                                            <span class="text-muted ms-2" title="{{ 'accounting.accounts.system_locked'|trans }}">
-                                                <i class="fas fa-lock"></i>
+                                            <span class="icon-slot text-body-tertiary" title="{{ 'accounting.accounts.system_locked'|trans }}">
+                                                <i class="fas fa-lock" aria-hidden="true"></i>
                                             </span>
                                         {% endif %}
                                     </td>
@@ -199,7 +186,7 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-bordered table-hover mb-0">
+                        <table class="table table-hover align-middle mb-0 data-table">
                             <thead>
                             <tr>
                                 <th>{{ 'accounting.taxrates.name_header'|trans }}</th>
@@ -215,7 +202,7 @@
                                 <tr>
                                     <td>
                                         {{ rate.name }}
-                                        {% if rate.default %}<span class="badge bg-primary">{{ 'accounting.taxrates.default'|trans }}</span>{% endif %}
+                                        {% if rate.default %}<span class="badge text-primary-emphasis bg-primary-subtle">{{ 'accounting.taxrates.default'|trans }}</span>{% endif %}
                                     </td>
                                     <td>{{ rate.rate|number_format(2, ',', '.') }}%</td>
                                     <td class="d-none d-md-table-cell">
@@ -246,18 +233,10 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-link p-0 border-0"
-                                                data-action="click->journal-settings#openOffcanvas"
-                                                data-url="{{ path('journal.settings.taxrates.edit', {'id': rate.id}) }}"
-                                                data-offcanvas-title="{{ 'accounting.taxrates.edit'|trans }}"
-                                                title="{{ 'button.edit'|trans }}">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
+                                        <twig:IconButton icon="pen" :label="'button.edit'|trans"                                                data-action="click->journal-settings#openOffcanvas"                                                data-url="{{ path('journal.settings.taxrates.edit', {'id': rate.id}) }}"                                                data-offcanvas-title="{{ 'accounting.taxrates.edit'|trans }}"/>
                                         {% set id = rate.id %}
                                         {% set targetUrl = path('journal.settings.taxrates.delete', {'id': rate.id}) %}
-                                        <button type="button" class="btn btn-sm btn-link p-0 border-0"
-                                                title="{{ 'button.delete'|trans }}"
-                                                data-popover="delete"
+                                        <button type="button" class="btn btn-icon text-danger"                                                title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"                                                data-popover="delete"
                                                 data-title="{{ 'accounting.taxrates.delete.ask'|trans }}"
                                                 data-bs-content='{{ block('deletePopoverContent') }}'>
                                             <i class="fas fa-trash-alt"></i>

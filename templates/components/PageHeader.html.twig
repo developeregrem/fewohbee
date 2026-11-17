@@ -5,9 +5,16 @@
  #   <twig:PageHeader :title="'nav.customers'|trans">
  #       <twig:AddButton :label="'nav.customer.add'|trans" data-action="…"/>
  #   </twig:PageHeader>
+ #
+ # A page below another one links back to it with back (the url) and backLabel (where it leads,
+ # e.g. the name of the overview); the link shows on phones as well.
  #}
-{% props title, subtitle = null %}
+{% props title, subtitle = null, back = null, backLabel = null %}
 <header {{ attributes.defaults({class: 'page-header'}) }}>
+    {% if back %}
+        <a href="{{ back }}" class="page-back">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>{{ backLabel ?? 'button.back'|trans }}</a>
+    {% endif %}
     <div class="page-header-text">
         <h1 class="page-title">{{ title }}</h1>
         {% if subtitle %}<p class="page-subtitle">{{ subtitle }}</p>{% endif %}

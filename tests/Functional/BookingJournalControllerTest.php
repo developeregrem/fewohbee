@@ -251,14 +251,14 @@ final class BookingJournalControllerTest extends WebTestCase
         $em->persist($entry);
         $em->flush();
 
-        $client->request('GET', '/journal/year/2097');
+        $crawler = $client->request('GET', '/journal/year/2097');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Jahresansicht-Testbuchung');
         // Open-batch rows open the edit offcanvas and return to the yearly view.
-        $content = (string) $client->getResponse()->getContent();
-        self::assertStringContainsString('booking-journal#openOffcanvas', $content);
-        self::assertStringContainsString('return=year', $content);
+        $row = $crawler->filter('tbody tr[data-action*="booking-journal#openOffcanvas"]');
+        self::assertGreaterThan(0, $row->count());
+        self::assertStringContainsString('return=year', (string) $row->first()->attr('data-url'));
     }
 
     public function testYearViewDoesNotOfferEditingForClosedMonths(): void
@@ -287,12 +287,12 @@ final class BookingJournalControllerTest extends WebTestCase
         $em->persist($entry);
         $em->flush();
 
-        $client->request('GET', '/journal/year/2096');
+        $crawler = $client->request('GET', '/journal/year/2096');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Geschlossen-Testbuchung');
-        // No edit trigger for the closed month.
-        self::assertStringNotContainsString('booking-journal#openOffcanvas', (string) $client->getResponse()->getContent());
+        // No edit trigger on the rows of the closed month (the header's add menu has its own).
+        self::assertCount(0, $crawler->filter('tbody [data-action*="booking-journal#openOffcanvas"]'));
     }
 
     // ── Duplicating an entry ────────────────────────────────────────
@@ -404,19 +404,19 @@ final class BookingJournalControllerTest extends WebTestCase
         // First page of May: forward stays in May
         $crawler = $client->request('GET', '/journal/batch/'.$mayId);
         self::assertResponseIsSuccessful();
-        $next = (string) $crawler->filter('.journal-edge-next')->attr('href');
+        $next = (string) $crawler->filter('.period-pager-next')->attr('href');
         self::assertStringContainsString('/journal/batch/'.$mayId, $next);
         self::assertStringContainsString('page=2', $next);
 
         // Last page of May: forward goes to June
         $crawler = $client->request('GET', '/journal/batch/'.$mayId.'?page=2');
-        $next = (string) $crawler->filter('.journal-edge-next')->attr('href');
+        $next = (string) $crawler->filter('.period-pager-next')->attr('href');
         self::assertStringContainsString('/journal/batch/'.$juneId, $next);
         self::assertStringNotContainsString('page=', $next);
 
         // June: back lands on the last page of May
         $crawler = $client->request('GET', '/journal/batch/'.$juneId);
-        $previous = (string) $crawler->filter('.journal-edge-prev')->attr('href');
+        $previous = (string) $crawler->filter('.period-pager-previous')->attr('href');
         self::assertStringContainsString('/journal/batch/'.$mayId, $previous);
         self::assertStringContainsString('page=2', $previous);
     }

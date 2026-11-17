@@ -5,6 +5,7 @@ accounting:
 
   bank_import:
     title: Bank statement import
+    action: Import bank statement
     subtitle: Read bank transactions and turn them into journal entries.
 
     drafts:
@@ -429,6 +430,6 @@ accounting:
 
     settings:
       title: Bank import settings
-      subtitle: Configure how invoice numbers are detected from the remittance text during import.
+      subtitle: Import rules, CSV profiles and invoice number detection for the bank statement import.
       flash:
         saved: Settings saved successfully.

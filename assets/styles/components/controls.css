@@ -103,7 +103,8 @@ details[open] > summary > .fhb-details-chevron {
 }
 
 /* A choice between views (btn-group of btn-secondary): the current one in the primary tint */
-.view-switch > .btn {
+.view-switch > .btn,
+.filter-chip {
     --bs-btn-active-bg: var(--feb-primary-subtle);
     --bs-btn-active-color: var(--feb-primary-text);
     --bs-btn-active-border-color: var(--feb-primary-subtle-border);
@@ -143,13 +144,28 @@ details[open] > summary > .fhb-details-chevron {
 
 /* ------------------------------------------------------------------ Paging by date */
 
-/* A date with arrows (DatePager); Bootstrap's input group would take the whole line */
-.date-pager {
+/* A date or a period with arrows (DatePager, Pager); Bootstrap's input group would take the
+   whole line */
+.date-pager,
+.period-pager {
     width: auto;
 }
 
 .date-pager .form-control {
     width: 10rem;
+}
+
+.period-pager > .form-select {
+    width: auto;
+}
+
+/* The name of the period between the arrows reads like a field */
+.period-pager > .input-group-text {
+    justify-content: center;
+    min-width: 9rem;
+    background-color: var(--feb-surface);
+    color: var(--feb-text);
+    font-weight: var(--feb-font-weight-strong);
 }
 
 @media (max-width: 575.98px) {
@@ -158,10 +174,58 @@ details[open] > summary > .fhb-details-chevron {
         min-width: 0;
     }
 
-    .date-pager .form-control {
+    .date-pager .form-control,
+    .period-pager > .form-select {
+        flex: 1 1 auto;
         width: auto;
         min-width: 0;
     }
+
+    /* A year stays whole */
+    .period-pager > .form-select {
+        min-width: 5.5rem;
+    }
+
+    /* The period keeps its width, so its arrows never run over the tools beside it; a select
+       among the tools gives way instead */
+    .period-pager {
+        flex: none;
+    }
+
+    .period-pager > .input-group-text {
+        min-width: 0;
+    }
+
+    .page-toolbar-tools:has(> .form-select) {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .page-toolbar-tools > .form-select {
+        min-width: 0;
+    }
+}
+
+/* An icon that only informs, in the place and width of an icon button (e.g. a lock where others
+   can be deleted) */
+.icon-slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    vertical-align: middle;
+}
+
+/* A count on an icon button, e.g. open receipt proposals */
+.btn-icon {
+    position: relative;
+}
+
+.btn-icon > .icon-badge {
+    position: absolute;
+    top: 0;
+    right: -.125rem;
+    font-size: .62rem;
 }
 
 /* Feedback of a field that saves itself (SaveState): one of saving, saved, failed */
