@@ -7,13 +7,10 @@
         <div class="d-flex align-items-center mb-2">
             <h2 class="small text-uppercase fw-semibold text-body-secondary me-auto mb-0">{{ 'reservation.details.stay'|trans }}</h2>
             {% if canEdit %}
-                <a href="#" class="btn btn-sm btn-outline-primary"
-                   data-action="click->reservations#openModalContentAction"
-                   data-url="{{ path('reservations.edit.remark', {'id': reservation.id}) }}"
-                   data-title="{{ 'nav.reservation.edit'|trans }}"
-                   title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}">
-                    <i class="fas fa-edit"></i>
-                </a>
+                <twig:IconButton icon="pen" :label="'button.edit'|trans"
+                                 data-action="click->reservations#openModalContentAction"
+                                 data-url="{{ path('reservations.edit.remark', {'id': reservation.id}) }}"
+                                 data-title="{{ 'nav.reservation.edit'|trans }}"/>
             {% endif %}
         </div>
         <dl class="row mb-0">

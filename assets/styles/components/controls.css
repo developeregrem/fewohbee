@@ -102,6 +102,13 @@ details[open] > summary > .fhb-details-chevron {
     transform: rotate(180deg);
 }
 
+/* A choice between views (btn-group of btn-secondary): the current one in the primary tint */
+.view-switch > .btn {
+    --bs-btn-active-bg: var(--feb-primary-subtle);
+    --bs-btn-active-color: var(--feb-primary-text);
+    --bs-btn-active-border-color: var(--feb-primary-subtle-border);
+}
+
 /* Popovers listing one entry per line (e.g. "payment method → template"); Bootstrap's 276px
    default would break the longer entries. */
 .popover-wide {

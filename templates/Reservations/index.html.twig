@@ -57,70 +57,74 @@
           data-reservations-table-settings-url="{{ path('reservations.table.settings') }}"
                     data-reservations-explicit-yearly-apartment-requested="{{ hasExplicitYearlyApartmentRequested ? 'true' : 'false' }}"
           data-action="submit->reservations#getNewTableAction">
-        {# Vertically centred: the icons are shorter than the date and day fields #}
-        <div class="row align-items-center">
-            {% if show == 'table' %}
-                {% include 'Reservations/_index_table_form.html.twig' %}
-            {% else %}
-                {% include 'Reservations/_index_yearly_form.html.twig' %}
-            {% endif %}
-            <div class="col-auto reservations-add-column">
-                {% if is_granted('ROLE_RESERVATIONS') %}
-                {% if conflictCount > 0 %}
+        {# Period on the left; on the right what else there is to do with the plan. On phones the
+           two parts take a line each (styles/views/reservations.css). #}
+        <div class="reservations-toolbar">
+            <div class="reservations-toolbar-period">
+                {% if show == 'table' %}
+                    {% include 'Reservations/_index_table_form.html.twig' %}
+                {% else %}
+                    {% include 'Reservations/_index_yearly_form.html.twig' %}
+                {% endif %}
+            </div>
+            <div class="reservations-toolbar-tools">
+                {% if is_granted('ROLE_RESERVATIONS') and conflictCount > 0 %}
                     {% set alertClass = hasConflicts ? 'btn-outline-danger' : 'btn-outline-warning' %}
-                    {% set alertBadge = hasConflicts ? 'bg-danger' : 'bg-warning' %}
+                    {% set alertBadge = hasConflicts ? 'text-bg-danger' : 'text-bg-warning' %}
                     {% set alertIcon = hasConflicts ? 'fa-exclamation-triangle' : 'fa-triangle-exclamation' %}
-                    <a href="#" class="btn {{ alertClass }} mb-2 me-sm-2"
+                    <a href="#" class="btn {{ alertClass }}"
                        data-action="click->reservations#openConflictsAction"
                        data-url="{{ path('reservations.conflicts') }}"
                        data-bs-toggle="modal" data-bs-target="#modalCenter"
+                       title="{{ 'reservation.conflict.button'|trans }}"
                        data-conflict-button>
                         <i class="fas {{ alertIcon }}"></i>
-                        {{ 'reservation.conflict.button'|trans }}
+                        <span class="reservations-conflicts-label">{{ 'reservation.conflict.button'|trans }}</span>
                         <span class="badge {{ alertBadge }} ms-1" data-conflict-count-badge>{{ conflictCount }}</span>
                     </a>
                 {% endif %}
-                {% endif %}
-                {% if is_granted('ROLE_RESERVATIONS') %}
-                {# On touch screens the round button at the bottom right takes its place #}
-                <button type="button" class="btn btn-secondary mb-2 me-sm-2 fab-add-inline"
-                        data-action="click->reservations#selectAppartmentAction"
-                        data-reservations-create-new="true"
-                        data-url="{{ path('reservations.select.appartment') }}"
-                        data-bs-toggle="modal" data-bs-target="#modalCenter">
-                    <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
-                </button>
-                {% endif %}
-            </div>
-            {# Phones upright: centred line of its own below date and day count #}
-            <div class="col-12 col-sm-auto text-center text-sm-end ms-sm-auto mb-2">
-                {% if is_granted('ROLE_RESERVATIONS') %}
-                <a href="#" class="fs-5 text-body-secondary me-2" role="button"
-                   data-action="click->reservations#openBlockFormAction"
-                   data-url="{{ path('reservations.blocks.form') }}"
-                   title="{{ 'roomblock.title'|trans }}">
-                    <i class="fas fa-ban"></i></a>
-                {% endif %}
-                <a href="#" class="fs-5 text-body-secondary" role="button"
-                   data-action="click->reservations#openBlockListAction"
-                   data-url="{{ path('reservations.blocks.list') }}"
-                   title="{{ 'roomblock.list.title'|trans }}">
-                    <i class="fas fa-lock"></i></a>
-                <span class="vr mx-3 align-middle"></span>
-                <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 {% if show == 'table' %}text-primary{% else %}text-body-secondary{% endif %}" title="{{ 'reservation.table.view.table'|trans }}" data-reservations-table-view-link
-                   {% if show != 'table' %}data-action="click->reservations#leaveWeekViewFromYearlyAction"{% endif %}>
-                    <i class="fas fa-list"></i></a>
-                {# Week view: full screen on touch screens, fitted whole weeks with a mouse
-                   (see initWeekView in reservations_controller.js); from the annual
-                   view it opens the table view first #}
-                <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 ms-2 text-body-secondary" role="button" aria-pressed="false"
-                   {% if show == 'table' %}data-reservations-week-toggle{% else %}data-action="click->reservations#openWeekViewFromYearlyAction"{% endif %}
-                   title="{{ 'reservation.table.view.week'|trans }}" aria-label="{{ 'reservation.table.view.week'|trans }}">
-                    <i class="fas fa-calendar-week"></i></a>
-                <a href="{{ path('start.toggle.view', {show: 'yearly'}) }}" class="fs-5 me-4 ms-2 {% if show == 'yearly' %}text-primary{% else %}text-body-secondary{% endif %}" title="{{ 'reservation.table.view.yearly'|trans }}">
-                    <i class="far fa-calendar-alt"></i></a>
 
-                {% include 'Reservations/reservation_table_settings.html.twig' %}
+                {# Table, week and year; the week view is a mode of the table (initWeekView in
+                   reservations_controller.js): full screen on touch screens, fitted whole weeks
+                   with a mouse. From the annual view it opens the table view first. #}
+                <div class="btn-group view-switch" role="group" aria-label="{{ 'reservation.table.view.label'|trans }}">
+                    <a href="{{ path('start.toggle.view', {show: 'table'}) }}"
+                       class="btn btn-secondary{{ show == 'table' ? ' active' }}"
+                       title="{{ 'reservation.table.view.table'|trans }}" aria-label="{{ 'reservation.table.view.table'|trans }}"
+                       data-reservations-table-view-link
+                       {% if show != 'table' %}data-action="click->reservations#leaveWeekViewFromYearlyAction"{% endif %}>
+                        <i class="fas fa-list"></i></a>
+                    <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="btn btn-secondary"
+                       role="button" aria-pressed="false"
+                       {% if show == 'table' %}data-reservations-week-toggle{% else %}data-action="click->reservations#openWeekViewFromYearlyAction"{% endif %}
+                       title="{{ 'reservation.table.view.week'|trans }}" aria-label="{{ 'reservation.table.view.week'|trans }}">
+                        <i class="fas fa-calendar-week"></i></a>
+                    <a href="{{ path('start.toggle.view', {show: 'yearly'}) }}"
+                       class="btn btn-secondary{{ show == 'yearly' ? ' active' }}"
+                       title="{{ 'reservation.table.view.yearly'|trans }}" aria-label="{{ 'reservation.table.view.yearly'|trans }}"
+                       {%- if show == 'yearly' %} aria-current="page"{% endif %}>
+                        <i class="far fa-calendar-alt"></i></a>
+                </div>
+
+                <div class="reservations-toolbar-icons">
+                    {# Room blocks: the list, which also creates new ones (a selection in the plan
+                       can be blocked from the add dialog as well) #}
+                    <twig:IconButton icon="lock" :label="'roomblock.list.title'|trans"
+                                     data-action="click->reservations#openBlockListAction"
+                                     data-url="{{ path('reservations.blocks.list') }}"/>
+                    {% include 'Reservations/reservation_table_settings.html.twig' %}
+                </div>
+
+                {% if is_granted('ROLE_RESERVATIONS') %}
+                    {# On touch screens the round button at the bottom right takes its place #}
+                    <button type="button" class="btn btn-primary fab-add-inline"
+                            data-action="click->reservations#selectAppartmentAction"
+                            data-reservations-create-new="true"
+                            data-url="{{ path('reservations.select.appartment') }}"
+                            data-bs-toggle="modal" data-bs-target="#modalCenter">
+                        <i class="fas fa-plus me-1"></i> {{ 'nav.reservation.add'|trans }}
+                    </button>
+                {% endif %}
             </div>
         </div>
     </form>

@@ -321,6 +321,125 @@ body.reservations-week-fit #flash-message-container {
     display: none !important;
 }
 
+/* Toolbar above the plan: the period on the left, views and tools on the right */
+.reservations-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem 1rem;
+    margin-bottom: .75rem;
+}
+
+.reservations-toolbar-period,
+.reservations-toolbar-tools,
+.reservations-toolbar-icons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+}
+
+.reservations-toolbar-icons {
+    gap: .125rem;
+}
+
+/* Bootstrap's input groups take the whole width; here they sit side by side */
+.reservations-toolbar .input-group {
+    width: auto;
+}
+
+.reservations-date .form-control {
+    width: 10rem;
+}
+
+.reservations-interval .form-control {
+    width: 4.25rem;
+}
+
+.reservations-year {
+    width: 6rem;
+}
+
+.reservations-apartment {
+    width: auto;
+    max-width: 18rem;
+}
+
+/* Phones, upright or sideways: the conflicts button shows its count only, so the toolbar of a
+   phone held sideways fits one line */
+@media (max-width: 575.98px), (max-height: 500px) {
+    .reservations-conflicts-label {
+        display: none;
+    }
+
+    .reservations-date .form-control {
+        width: 9rem;
+    }
+}
+
+/* Narrow phones: the number of days without its unit, so the date stays readable */
+@media (max-width: 379.98px) {
+    .reservations-interval .input-group-text {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+
+    .reservations-interval .form-control {
+        border-radius: var(--bs-border-radius) !important;
+    }
+}
+
+/* Phones: the period takes the first line, the tools the second */
+@media (max-width: 575.98px) {
+    .reservations-toolbar-period,
+    .reservations-toolbar-tools {
+        flex-wrap: nowrap;
+        width: 100%;
+        gap: .375rem;
+    }
+
+    .reservations-toolbar-tools {
+        justify-content: space-between;
+    }
+
+    .reservations-date {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .reservations-date .form-control {
+        width: auto;
+        min-width: 0;
+    }
+
+    .reservations-date > .btn,
+    .view-switch > .btn {
+        padding-inline: .6rem;
+    }
+
+    .reservations-interval .form-control {
+        width: 3.25rem;
+    }
+
+    .reservations-interval .input-group-text {
+        padding-inline: .5rem;
+    }
+
+    .reservations-apartment {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .reservations-toolbar-icons .btn-icon {
+        width: 2.5rem;
+    }
+}
+
 /* Touch screens: a slimmer filter row above the reservation table, so the rooms get
    more of the screen; desktop keeps the fields as they are. */
 @media not all and (hover: hover) and (pointer: fine) {
@@ -333,30 +452,6 @@ body.reservations-week-fit #flash-message-container {
         padding: .25rem .5rem;
         min-height: 0;
         height: auto;
-    }
-
-    #table-filter .mb-2 {
-        margin-bottom: .25rem !important;
-    }
-
-    /* Tighter spacing, so the filter row fits one line on a phone held sideways */
-    #table-filter .js-shift-date {
-        padding-left: .5rem !important;
-        padding-right: .5rem !important;
-    }
-
-    #table-filter .vr {
-        margin-left: .5rem !important;
-        margin-right: .5rem !important;
-    }
-
-    #table-filter .me-4 {
-        margin-right: .75rem !important;
-    }
-
-    /* The column of the inline add button is empty here unless there are conflicts */
-    .reservations-add-column:not(:has(> a)) {
-        display: none;
     }
 
     #table-filter + * + .row.mt-2,

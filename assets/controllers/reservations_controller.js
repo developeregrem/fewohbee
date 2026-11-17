@@ -1612,17 +1612,14 @@ export default class extends Controller {
         this.updateWeekToggle();
     }
 
-    /** Highlights either the week or the table icon in the view switcher. */
+    /** Marks either the week or the table button of the view switch as the current view. */
     updateWeekToggle() {
         const toggle = this.tableFilter?.querySelector('[data-reservations-week-toggle]');
         if (toggle) {
             const on = this.isWeekFitOn();
-            toggle.classList.toggle('text-primary', on);
-            toggle.classList.toggle('text-body-secondary', !on);
+            toggle.classList.toggle('active', on);
             toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
-            const tableLink = this.tableFilter.querySelector('[data-reservations-table-view-link]');
-            tableLink?.classList.toggle('text-primary', !on);
-            tableLink?.classList.toggle('text-body-secondary', on);
+            this.tableFilter.querySelector('[data-reservations-table-view-link]')?.classList.toggle('active', !on);
         }
     }
 

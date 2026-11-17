@@ -144,7 +144,7 @@
             <div class="d-flex align-items-center mb-2{{ loop.first ? '' : ' mt-4' }}">
                 <h2 class="small text-uppercase fw-semibold text-body-secondary me-auto mb-0">{{ 'reservation.guests.room'|trans({'%number%': reservation.appartment.number}) }}</h2>
                 {% if is_granted('ROLE_RESERVATIONS') %}
-                    <a href="#" class="btn btn-sm btn-outline-primary"
+                    <a href="#" class="btn btn-sm btn-secondary"
                        data-action="click->reservations#changeReservationCustomerAction"
                        data-url="{{ path('reservations.edit.reservation.customer', {'id': reservationId}) }}"
                        data-reservation-id="{{ reservationId }}"
@@ -174,15 +174,15 @@
                                 <input name="_csrf_token" value="{{ token }}" type="hidden">
                             </form>
                             {% if is_granted('ROLE_RESERVATIONS') %}
-                                <a href="#" class="btn btn-sm btn-link text-body-secondary"
+                                <a href="#" class="btn btn-icon"
                                    data-action="click->reservations#editReservationCustomerEditAction"
                                    data-customer-id="{{ customer.id }}"
                                    data-form-selector="#actions-customer-{{ customer.id }}"
                                    data-url="{{ path('reservations.edit.customer.edit') }}"
                                    title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}">
-                                    <i class="fas fa-edit"></i></a>
+                                    <i class="fas fa-pen"></i></a>
                                 {# Confirmed in a popover; the answer is the dialog again, with the guests tab #}
-                                <a href="#" class="btn btn-sm btn-link text-danger"
+                                <a href="#" class="btn btn-icon text-danger"
                                    data-popover="delete"
                                    data-bs-placement="left"
                                    data-delete-target="#modal-content-ajax"
@@ -208,7 +208,7 @@
         <div class="d-flex align-items-center mb-2">
             <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0 me-auto">{{ 'reservation.correspondences.reservation'|trans }}</h2>
             {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
-                <a href="#" class="btn btn-sm btn-outline-primary text-nowrap"
+                <a href="#" class="btn btn-sm btn-secondary text-nowrap"
                    data-action="click->reservations#selectReservationForTemplateAction"
                    data-url="{{ path('correspondence.select.reservation') }}"
                    data-reservation-id="{{ reservationId }}"
@@ -232,13 +232,13 @@
                             <div class="small text-body-secondary">{{ correspondence.created|date('d.m.Y H:i') }}</div>
                         </div>
                         {% if 'PDF' in correspondence.template.templateType.name %}
-                            <a href="#" class="btn btn-sm btn-link text-body-secondary"
+                            <a href="#" class="btn btn-icon"
                                data-action="click->reservations#exportPDFCorrespondenceAction"
                                data-url="{{ path('correspondence.export.pdf', {'id': correspondence.id}) }}"
                                data-attachment-id="{{ correspondence.id }}"
                                title="{{ 'button.download'|trans }}" aria-label="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
                         {% elseif 'EMAIL' in correspondence.template.templateType.name %}
-                            <a href="#" class="btn btn-sm btn-link text-body-secondary"
+                            <a href="#" class="btn btn-icon"
                                data-action="click->reservations#showMailCorrespondenceAction"
                                data-url="{{ path('correspondence.show', {'id': correspondence.id}) }}"
                                data-reservation-id="{{ reservationId }}"
@@ -247,7 +247,7 @@
                         {% endif %}
                         {% if is_granted('ROLE_RESERVATIONS') %}
                             {# Confirmed in a popover; the reservations controller reloads this tab afterwards #}
-                            <a href="#" class="btn btn-sm btn-link text-danger"
+                            <a href="#" class="btn btn-icon text-danger"
                                data-correspondence-delete
                                data-popover="delete"
                                data-bs-placement="left"

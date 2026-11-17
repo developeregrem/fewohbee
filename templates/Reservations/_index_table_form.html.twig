@@ -1,19 +1,25 @@
-{# Date and day count share one line on phones too #}
-<div class="col-12 col-sm-auto d-flex align-items-center mb-2 gap-2">
-    <div class="input-group flex-nowrap">
-        <span class="js-shift-date d-flex align-items-center px-3" role="button" tabindex="0" data-direction="backward" title="{{ 'button.back'|trans }}" aria-label="{{ 'button.back'|trans }}">
-            <i class="fa-solid fa-arrow-left"></i>
-        </span>
-        <input type="date" class="form-control" id="start" name="start" value="{{ today|date('Y-m-d') }}" />
-        <span class="js-shift-date d-flex align-items-center px-3" role="button" tabindex="0" data-direction="forward" title="{{ 'button.next'|trans }}" aria-label="{{ 'button.next'|trans }}">
-            <i class="fa-solid fa-arrow-right"></i>
-        </span>
-    </div>
-    <div class="d-flex align-items-center flex-shrink-0 ms-sm-2">
-        <input type="number" class="form-control me-2" style="width: 4.5rem" name="interval" value="{{ interval }}" min="6" max="180" />
-        <span class="form-text mt-0">{{ 'reservation.days'|trans }}</span>
-    </div>
-    {% if is_granted('ROLE_RESERVATIONS') %}
-    <a href="#" class="ms-1 ms-sm-2" data-action="click->reservations#getNewTableAction" title="{{ 'reservation.table.reload'|trans }}" data-url="{{ path('reservations.get.table') }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
-    {% endif %}
+{# Period of the table: first day, paging by the visible days, number of days #}
+<div class="input-group flex-nowrap reservations-date">
+    <button type="button" class="btn btn-secondary js-shift-date" data-direction="backward"
+            title="{{ 'button.back'|trans }}" aria-label="{{ 'button.back'|trans }}">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <input type="date" class="form-control" id="start" name="start" value="{{ today|date('Y-m-d') }}"
+           aria-label="{{ 'reservation.table.start'|trans }}"/>
+    <button type="button" class="btn btn-secondary js-shift-date" data-direction="forward"
+            title="{{ 'button.next'|trans }}" aria-label="{{ 'button.next'|trans }}">
+        <i class="fa-solid fa-arrow-right"></i>
+    </button>
 </div>
+<div class="input-group flex-nowrap reservations-interval">
+    <input type="number" class="form-control" id="interval" name="interval" value="{{ interval }}" min="6" max="180"
+           aria-describedby="interval-unit"/>
+    <span class="input-group-text" id="interval-unit">{{ 'reservation.days'|trans }}</span>
+</div>
+{% if is_granted('ROLE_RESERVATIONS') %}
+    <button type="button" class="btn btn-icon" data-action="click->reservations#getNewTableAction"
+            data-url="{{ path('reservations.get.table') }}"
+            title="{{ 'reservation.table.reload'|trans }}" aria-label="{{ 'reservation.table.reload'|trans }}">
+        <i class="fas fa-sync-alt" data-reservations-table-spinner></i>
+    </button>
+{% endif %}

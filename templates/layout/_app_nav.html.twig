@@ -158,8 +158,7 @@
                         <li>
                             <button type="button" class="app-nav-link{{ item.active ? ' active-group' }}"
                                     title="{{ item.label }}"
-                                    data-bs-toggle="collapse" data-bs-target="#appNavGroup-{{ item.id }}"
-                                    data-action="app-shell#expandForGroup"
+                                    data-action="app-shell#toggleGroup"
                                     aria-expanded="{{ open ? 'true' : 'false' }}" aria-controls="appNavGroup-{{ item.id }}">
                                 <span class="app-nav-icon"><i class="fas {{ item.icon }}"></i></span>
                                 <span class="app-nav-label">{{ item.label }}</span>

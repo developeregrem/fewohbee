@@ -84,6 +84,8 @@ reservation.table.settings.showCanceledOnly: Show only canceled/no-show reservat
 reservation.table.settings.showCalendarEntries: Show calendar entries
 reservation.table.settings.subdivision: Subdivision
 reservation.table.settings.title: Table settings
+reservation.table.start: First day
+reservation.table.view.label: View
 reservation.table.view.table: Table View
 reservation.table.view.week: Week View
 reservation.table.view.yearly: Annual View
@@ -99,6 +101,7 @@ reservation.table.weekday.thursday: Thu
 reservation.table.weekday.friday: Fri
 reservation.table.weekday.saturday: Sat
 reservation.table.weekday.sunday: Sun
+reservation.table.year: Year
 reservation.templates.availableprices: existing invoices
 reservation.conflict.button: Review imports
 reservation.conflict.title: Review imports

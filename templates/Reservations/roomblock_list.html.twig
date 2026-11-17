@@ -1,6 +1,8 @@
 {% use "common/delete_popover.html.twig" %}
 
-<div class="modal-body" data-controller="reservations"{% if blocksChanged|default(false) %} data-blocks-changed="1"{% endif %}>
+{# Body and footer share the controller; dialogs.css takes the wrapper out of the layout #}
+<div data-controller="reservations">
+<div class="modal-body"{% if blocksChanged|default(false) %} data-blocks-changed="1"{% endif %}>
     <div id="flash-message-overlay"></div>
     {% if successMessage|default(null) %}
         <div class="alert alert-success">{{ successMessage|trans }}</div>
@@ -41,7 +43,7 @@
     </form>
 
     {% if blocks|length == 0 %}
-        <div class="text-muted">{{ 'roomblock.list.empty'|trans }}</div>
+        <twig:EmptyState icon="lock" :title="'roomblock.list.empty'|trans"/>
     {% else %}
         {% if is_granted('ROLE_RESERVATIONS') %}
             <div class="d-flex flex-wrap align-items-center gap-2 mb-2" data-block-bulk-bar
@@ -92,13 +94,13 @@
                         {% set id = roomBlock.id %}
                         {% set targetUrl = path('reservations.blocks.delete', {'id': roomBlock.id}|merge(filterQuery)) %}
                         {% set deletePopoverHint = 'roomblock.delete.ask'|trans %}
-                        <button type="button" class="btn btn-sm btn-link text-body-secondary"
+                        <button type="button" class="btn btn-icon"
                                 data-action="click->reservations#openBlockAction"
                                 data-url="{{ path('reservations.blocks.get', {'id': roomBlock.id}|merge(filterQuery)) }}"
                                 title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}">
-                            <i class="fas fa-pencil-alt"></i>
+                            <i class="fas fa-pen"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-link text-danger"
+                        <button type="button" class="btn btn-icon text-danger"
                                 data-popover="delete"
                                 data-bs-content='{{ block('deletePopoverContent') }}'
                                 data-delete-target="#modal-content-ajax"
@@ -110,4 +112,16 @@
             {% endfor %}
         </ul>
     {% endif %}
+</div>
+{# Creating a block is not tied to the filters above, so it lives with the dialog's actions #}
+{% if is_granted('ROLE_RESERVATIONS') %}
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary d-none d-lg-inline-block" data-bs-dismiss="modal">{{ 'button.close'|trans }}</button>
+        <button type="button" class="btn btn-primary"
+                data-action="click->reservations#openBlockFormAction"
+                data-url="{{ path('reservations.blocks.form') }}">
+            <i class="fas fa-plus me-1"></i> {{ 'roomblock.title'|trans }}
+        </button>
+    </div>
+{% endif %}
 </div>

@@ -78,6 +78,8 @@ reservation.table.settings.showCanceledOnly: 'Nur stornierte/No-Show anzeigen'
 reservation.table.settings.showCalendarEntries: 'Kalendereinträge anzeigen'
 reservation.table.settings.subdivision: Bundesland/Staat
 reservation.table.settings.title: Tabelleneigenschaften
+reservation.table.start: Erster Tag
+reservation.table.view.label: Ansicht
 reservation.table.view.table: Tabellenansicht
 reservation.table.view.week: Wochenansicht
 reservation.table.view.yearly: Jahresansicht
@@ -91,6 +93,7 @@ reservation.table.weekday.thursday: Do
 reservation.table.weekday.friday: Fr
 reservation.table.weekday.saturday: Sa
 reservation.table.weekday.sunday: So
+reservation.table.year: Jahr
 reservation.templates.availableprices: 'vorhandene Rechnungen'
 reservation.conflict.button: 'Importe prüfen'
 reservation.conflict.title: 'Importe prüfen'

@@ -1,14 +1,18 @@
-{# Year, refresh and room share one line on phones too #}
-<div class="col-12 col-sm-auto d-flex align-items-center mb-2 gap-2">
-    <input name="year" type="number" class="form-control flex-shrink-0" style="width: 6rem" id="year" min="1900" max="2099" step="1" value="{{ year }}" />
-    {% if is_granted('ROLE_RESERVATIONS') %}
-    <a href="#" class="mx-1" data-action="click->reservations#getNewTableAction" title="{{ 'reservation.table.reload'|trans }}" data-url="{{ path('reservations.get.table') }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
-    {% endif %}
-    <select name="apartment" class="form-select pe-2 ms-sm-2">
-        <option disabled="disabled">{{ 'reservation.appartment.name'|trans }}</option>
-        <option disabled="disabled">----</option>
-        {% for apartment in apartments %}
-            <option value="{{ apartment.id }}"{% if apartment.id == selectedApartmentId %} selected{% endif %}>{{ apartment.number }} ({{ apartment.description }})</option>
-        {% endfor %}
-    </select>
-</div>
+{# Year and room of the annual view #}
+<input name="year" type="number" class="form-control reservations-year" id="year" min="1900" max="2099" step="1" value="{{ year }}"
+       aria-label="{{ 'reservation.table.year'|trans }}"/>
+{% if is_granted('ROLE_RESERVATIONS') %}
+    <button type="button" class="btn btn-icon" data-action="click->reservations#getNewTableAction"
+            data-url="{{ path('reservations.get.table') }}"
+            title="{{ 'reservation.table.reload'|trans }}" aria-label="{{ 'reservation.table.reload'|trans }}">
+        <i class="fas fa-sync-alt" data-reservations-table-spinner></i>
+    </button>
+{% endif %}
+<select name="apartment" class="form-select reservations-apartment" aria-label="{{ 'reservation.appartment.name'|trans }}">
+    <option disabled="disabled">{{ 'reservation.appartment.name'|trans }}</option>
+    <option disabled="disabled">----</option>
+    {% for apartment in apartments %}
+        <option value="{{ apartment.id }}"{% if apartment.id == selectedApartmentId %} selected{% endif %}>{{ apartment.number }} ({{ apartment.description }})</option>
+    {% endfor %}
+</select>
+
