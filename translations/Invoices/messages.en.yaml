@@ -42,6 +42,10 @@ invoice.number.duplicate.error: This invoice number is already in use. Please ch
 invoice.number.range.hint: 'Number range: %range%'
 invoice.number.range.global: Default
 invoice.lastname: Last Name
+invoice.list.count: '{0}No invoices|{1}1 invoice|]1,Inf[%count% invoices'
+invoice.list.empty: 'No invoices found'
+invoice.list.empty.hint: 'Adjust the search or create a new invoice.'
+invoice.list.name: Name
 invoice.miscellaneous: Miscellaneous
 invoice.miscellaneous.position.amount: Number
 invoice.miscellaneous.position.amount.flat_help: 'Flat rate: 1x per booking'
@@ -63,6 +67,7 @@ invoice.price.total: Total
 invoice.remark: Remarks
 invoice.reservation: Reservation
 invoice.reservations.unavailable: At least one selected reservation is no longer available. Restart invoice creation and select the reservations again.
+invoice.search.placeholder: 'Search invoices'
 invoice.select.customer.search.input.placeholder: Customer Last Name
 invoice.select.open.reservation: Select reservation without invoice
 invoice.startdate: From

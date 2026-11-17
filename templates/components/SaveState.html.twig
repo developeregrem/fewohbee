@@ -1,0 +1,17 @@
+{#
+ # Feedback for a field that saves itself: a spinner while saving, a green tick that fades out
+ # once saved, a warning when saving failed. The page switches it with setSaveState() from
+ # assets/js/save_state.js; state sets the starting point (only the styleguide needs it).
+ #
+ #   <select … data-action="change->invoices#invoiceStatusChangeAction">…</select>
+ #   <twig:SaveState data-invoices-target="statusState"/>
+ #}
+{% props state = null %}
+<span {{ attributes.defaults({class: 'save-state', role: 'status'}) }}{% if state %} data-state="{{ state }}"{% endif %}>
+    <span class="save-state-saving">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span class="visually-hidden">{{ 'save.state.saving'|trans }}</span>
+    </span>
+    <span class="save-state-saved"><i class="fas fa-check" aria-hidden="true"></i>{{ 'save.state.saved'|trans }}</span>
+    <span class="save-state-failed"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>{{ 'save.state.failed'|trans }}</span>
+</span>

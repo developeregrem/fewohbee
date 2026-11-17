@@ -14,8 +14,12 @@ import {
     enablePopovers,
     setModalTitle
 } from '../js/utils.js';
+import { setSaveState } from '../js/save_state.js';
 
 /* stimulusFetch: 'lazy' */
+
+/* How long the payment status waits after a pick before it saves itself (ms) */
+const STATUS_SAVE_DELAY = 1500;
 
 const debounce = (fn, delay = 300) => {
     let t;
@@ -38,11 +42,7 @@ export default class extends Controller {
             return;
         }
         this.modalContent.dataset.invoicesBootstrapped = 'true';
-        this.invoiceTable = document.getElementById('invoice-table');
-        this.searchForm = document.getElementById('invoices-search-form');
-        this.searchInput = this.searchForm ? this.searchForm.querySelector('#search') : null;
         this.debouncedSearch = debounce(() => this.doSearch(), 400);
-        this.bindStatusWatcher();
         const templateId = getLocalStorageItem('invoice-template-id');
         if (templateId) {
             updatePDFExportLinks(templateId);
@@ -121,6 +121,7 @@ export default class extends Controller {
         const url = event.currentTarget.dataset.url;
         const edit = event.currentTarget.dataset.edit === 'true';
         if (!url) return;
+        setModalTitle(event.currentTarget.dataset.title || '');
         const target = this.modalContent || document.getElementById('modal-content-ajax');
         
         httpRequest({
@@ -145,7 +146,21 @@ export default class extends Controller {
     }
 
     searchInputAction() {
+        // A new search starts on its first page
+        const page = document.getElementById('page');
+        if (page) {
+            page.value = '1';
+        }
         this.debouncedSearch();
+    }
+
+    paginateAction(event) {
+        event.preventDefault();
+        const page = document.getElementById('page');
+        if (page && event.currentTarget.dataset.page) {
+            page.value = event.currentTarget.dataset.page;
+        }
+        this.doSearch();
     }
 
     submitFormAction(event) {
@@ -391,29 +406,39 @@ export default class extends Controller {
         });
     }
 
+    /**
+     * The payment status saves itself shortly after it was picked. The pause lets arrow keys
+     * step through the list (each step is a change on Windows) without saving every stop on the
+     * way - a status change can start an automation, e.g. a mail once an invoice is paid.
+     */
     invoiceStatusChangeAction(event) {
-        const saveBtn = document.getElementById('save-status');
-        if (saveBtn) {
-            saveBtn.classList.remove('d-none');
-            saveBtn.disabled = false;
-        }
+        const select = event.currentTarget;
+        clearTimeout(this.statusTimer);
+        setSaveState(document.getElementById('invoice-status-state'), null);
+        this.statusTimer = setTimeout(() => this.saveInvoiceStatus(select), STATUS_SAVE_DELAY);
     }
 
-    updateInvoiceStatusAction(event) {
-        event.preventDefault();
-        const url = event.currentTarget.dataset.url;
-        const form = document.getElementById('invoice-form-status');
-        const saveBtn = document.getElementById('save-status');
-        if (!url || !form) return;
+    saveInvoiceStatus(select) {
+        const value = select.value;
+        const indicator = document.getElementById('invoice-status-state');
+        if (value === select.dataset.savedValue) {
+            return;
+        }
+        setSaveState(indicator, 'saving');
         httpRequest({
-            url,
+            url: select.dataset.url,
             method: 'POST',
-            data: httpSerializeForm(form),
+            data: httpSerializeForm(select.form),
+            loader: false,
             onSuccess: () => {
-                if (saveBtn) {
-                    saveBtn.classList.add('d-none');
-                    saveBtn.disabled = false;
-                }
+                select.dataset.savedValue = value;
+                setSaveState(indicator, select.value === value ? 'saved' : null);
+                this.doSearch();
+            },
+            onError: () => {
+                // Back to what is stored, so the select never shows an unsaved status
+                select.value = select.dataset.savedValue;
+                setSaveState(indicator, 'failed');
             },
         });
     }
@@ -566,22 +591,17 @@ export default class extends Controller {
         }
     }
 
-    bindStatusWatcher() {
-        const statusSelect = document.getElementById('invoce-status');
-        if (statusSelect) {
-            statusSelect.addEventListener('change', () => this.invoiceStatusChangeAction(new Event('change')));
-        }
-    }
-
+    /** Reloads the list of the overview, if the page has one (also from within a dialog). */
     doSearch() {
-        if (!this.searchForm) return;
-        const url = this.searchForm.dataset.searchUrl;
-        if (!url) return;
+        const form = document.getElementById('invoices-search-form');
+        const table = document.getElementById('invoice-table');
+        if (!form?.dataset.searchUrl || !table) return;
         httpRequest({
-            url,
+            url: form.dataset.searchUrl,
             method: 'POST',
-            data: `${httpSerializeForm(this.searchForm)}&${httpSerializeForm('#page')}`,
-            target: this.invoiceTable,
+            data: `${httpSerializeForm(form)}&${httpSerializeForm('#page')}`,
+            target: table,
+            loader: false,
         });
     }
 }

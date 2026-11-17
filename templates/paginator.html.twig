@@ -1,5 +1,8 @@
+{# swipe_nav: true makes the arrows the previous/next targets of a surrounding swipe-nav
+   controller, so a sideways swipe pages the list; only where there is a page to go to #}
 {% if pages > 1 %}
     {% set dataAction = pagination_action|default('') %}
+    {% set swipeNav = swipe_nav|default(false) %}
     {% set extraClass = pagination_class|default('') %}
     {% set querySeparator = '?' in url ? '&' : '?' %}
     {# the left and right key should not become 0 or higher than allowed #}
@@ -15,6 +18,7 @@
     <ul id="pagination" class="pagination{% if extraClass %} {{ extraClass }}{% endif %}">
         <li class="page-item{% if page == 1 %} disabled{% endif %}">
             <a class="page-link" data-page="{{ leftpage }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %}
+               {% if swipeNav and page > 1 %}data-swipe-nav-target="previous"{% endif %}
                href="{{ url }}{{ querySeparator }}{{ {'page': leftpage, 'search': search}|url_encode }}" aria-label="Previous">
                 <span aria-hidden="true">&laquo;</span>
             </a>
@@ -73,6 +77,7 @@
 
         <li class="page-item{% if page == pages %} disabled{% endif %}">
             <a class="page-link" data-page="{{ rightpage }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %}
+               {% if swipeNav and page < pages %}data-swipe-nav-target="next"{% endif %}
                href="{{ url }}{{ querySeparator }}{{ {'page': rightpage, 'search': search}|url_encode }}" aria-label="Next">
                 <span aria-hidden="true">&raquo;</span>
             </a>

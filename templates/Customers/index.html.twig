@@ -8,7 +8,7 @@
 
 {% block content %}
     <div class="container fab-add-clearance"
-         data-controller="customers"
+         data-controller="customers swipe-nav"
          data-customers-search-url-value="{{ path('customers.search') }}">
         <twig:PageHeader :title="'nav.customers'|trans">
             <twig:AddButton :label="'nav.customer.add'|trans"

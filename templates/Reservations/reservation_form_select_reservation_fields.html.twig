@@ -2,10 +2,10 @@
    are used by the reservations controller to switch between the two filters #}
 <div class="modal-body">
     <div class="px-lg-5">
-        <div class="btn-group w-100" role="group">
-            <button type="button" id="button-filter-time" class="btn btn-primary"
+        <div class="btn-group view-switch w-100" role="group">
+            <button type="button" id="button-filter-time" class="btn btn-secondary active" aria-pressed="true"
                     data-action="click->reservations#showTimeFilterAction">{{ 'reservation.filter.by_period'|trans }}</button>
-            <button type="button" id="button-filter-customer" class="btn btn-secondary"
+            <button type="button" id="button-filter-customer" class="btn btn-secondary" aria-pressed="false"
                     data-action="click->reservations#showCustomerFilterAction">{{ 'reservation.filter.by_guest'|trans }}</button>
         </div>
         <div id="container-filter-reservations-period" class="mt-3">

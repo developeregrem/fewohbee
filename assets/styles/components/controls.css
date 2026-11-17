@@ -3,7 +3,7 @@
 /* A search field with the magnifier inside */
 .search-field {
     position: relative;
-    flex: 1 1 16rem;
+    flex: 1 1 12rem;
     max-width: 28rem;
 }
 
@@ -161,5 +161,55 @@ details[open] > summary > .fhb-details-chevron {
     .date-pager .form-control {
         width: auto;
         min-width: 0;
+    }
+}
+
+/* Feedback of a field that saves itself (SaveState): one of saving, saved, failed */
+.save-state {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.5rem;
+    font-size: var(--feb-font-size-sm);
+}
+
+.save-state > span {
+    display: none;
+    align-items: center;
+    gap: .375rem;
+}
+
+.save-state[data-state="saving"] > .save-state-saving,
+.save-state[data-state="saved"] > .save-state-saved,
+.save-state[data-state="failed"] > .save-state-failed {
+    display: inline-flex;
+}
+
+.save-state-saving {
+    color: var(--feb-text-muted);
+}
+
+.save-state-saved {
+    color: var(--feb-success-text);
+    animation: save-state-fade 2.5s ease-in forwards;
+}
+
+.save-state-failed {
+    color: var(--feb-danger-text);
+}
+
+/* Keeps the tick (styleguide) */
+.save-state-hold > .save-state-saved {
+    animation: none;
+}
+
+@keyframes save-state-fade {
+    0%, 70% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .save-state-saved {
+        animation-duration: 4s;
+        animation-timing-function: steps(1, end);
     }
 }

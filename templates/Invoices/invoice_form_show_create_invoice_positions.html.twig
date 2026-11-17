@@ -52,7 +52,7 @@
         <section class="mt-4">
             <div class="d-flex align-items-center mb-2">
                 <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0 me-auto">{{ 'invoice.guest'|trans }}</h2>
-                <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
+                <button type="button" class="btn btn-sm btn-secondary text-nowrap"
                         data-action="click->invoices#openModalAction" data-url="{{ path('invoices.show.change.customer') }}">
                     <i class="fas fa-edit me-1"></i> {{ 'button.edit'|trans }}</button>
             </div>
@@ -70,7 +70,7 @@
         <section class="mt-4">
             <div class="d-flex align-items-center mb-2">
                 <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0 me-auto">{{ 'invoice.appartment'|trans }}</h2>
-                <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
+                <button type="button" class="btn btn-sm btn-secondary text-nowrap"
                         data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.apartment.position', {'invoiceId': 'new'}) }}">
                     <i class="fas fa-plus me-1"></i> {{ 'button.add'|trans }}</button>
             </div>
@@ -98,7 +98,7 @@
         <section class="mt-4">
             <div class="d-flex align-items-center mb-2">
                 <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0 me-auto">{{ 'invoice.miscellaneous'|trans }}</h2>
-                <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
+                <button type="button" class="btn btn-sm btn-secondary text-nowrap"
                         data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.miscellaneous.position', {'invoiceId': 'new'}) }}">
                     <i class="fas fa-plus me-1"></i> {{ 'button.add'|trans }}</button>
             </div>

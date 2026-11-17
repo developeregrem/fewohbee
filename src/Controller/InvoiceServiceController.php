@@ -903,17 +903,27 @@ class InvoiceServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
 
-        if ($csrf->validateCSRFToken($request)) {
-            $invoice = $em->getRepository(Invoice::class)->find($id);
-            $previousStatus = (int) $invoice->getStatus();
-            $newStatus = (int) $request->request->get('invoice-status');
-            $invoice->setStatus($newStatus);
-            $em->persist($invoice);
-            $em->flush();
+        // The dialog saves the status as soon as it is picked and confirms only a 2xx answer
+        if (!$csrf->validateCSRFToken($request)) {
+            return new Response('', Response::HTTP_FORBIDDEN);
+        }
+        $invoice = $em->getRepository(Invoice::class)->find($id);
+        if (!$invoice instanceof Invoice) {
+            return new Response('', Response::HTTP_NOT_FOUND);
+        }
+        $newStatus = $request->request->getInt('invoice-status');
+        // 1 open, 2 paid, 3 partially paid, 4 cancelled
+        if (!in_array($newStatus, [1, 2, 3, 4], true)) {
+            return new Response('', Response::HTTP_BAD_REQUEST);
+        }
 
-            if ($previousStatus !== $newStatus) {
-                $eventDispatcher->dispatch(new InvoiceStatusChangedEvent($invoice, $previousStatus));
-            }
+        $previousStatus = (int) $invoice->getStatus();
+        $invoice->setStatus($newStatus);
+        $em->persist($invoice);
+        $em->flush();
+
+        if ($previousStatus !== $newStatus) {
+            $eventDispatcher->dispatch(new InvoiceStatusChangedEvent($invoice, $previousStatus));
         }
 
         return new Response('');

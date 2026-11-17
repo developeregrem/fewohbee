@@ -27,19 +27,19 @@
                         {{ form_errors(form) }}
                     </div>
                 {% endif %}
-                <h5>{{ 'invoice.settings.section.profile'|trans }}</h5>
+                <h2 class="small text-uppercase fw-semibold text-body-secondary mb-2">{{ 'invoice.settings.section.profile'|trans }}</h2>
                 {{ form_row(form.einvoiceProfile) }}
                 <div class="alert alert-info py-2" data-einvoice-settings-target="hintEn16931">{{ 'invoice.settings.profile.hint.en16931'|trans }}</div>
                 <div class="alert alert-info py-2 d-none" data-einvoice-settings-target="hintXrechnung">{{ 'invoice.settings.profile.hint.xrechnung'|trans }}</div>
 
-                <h5 class="mt-4">{{ 'invoice.settings.section.company'|trans }}</h5>
+                <h2 class="small text-uppercase fw-semibold text-body-secondary mb-2 mt-4">{{ 'invoice.settings.section.company'|trans }}</h2>
                 {{ form_row(form.companyName) }}
                 {{ form_row(form.companyAddress) }}
                 {{ form_row(form.companyPostCode) }}
                 {{ form_row(form.companyCity) }}
                 {{ form_row(form.companyCountry) }}
 
-                <h5 class="mt-4">{{ 'invoice.settings.section.contact'|trans }}</h5>
+                <h2 class="small text-uppercase fw-semibold text-body-secondary mb-2 mt-4">{{ 'invoice.settings.section.contact'|trans }}</h2>
                 <p class="form-text text-muted mt-0 mb-2 d-none" data-einvoice-settings-target="contactHint">{{ 'invoice.settings.xrechnung.required.hint'|trans }}</p>
                 {{ form_row(form.contactName) }}
                 {{ form_row(form.contactDepartment) }}
@@ -47,12 +47,12 @@
                 {{ form_row(form.contactMail) }}
                 {{ form_row(form.companyInvoiceMail) }}
 
-                <h5 class="mt-4">{{ 'invoice.settings.section.tax'|trans }}</h5>
+                <h2 class="small text-uppercase fw-semibold text-body-secondary mb-2 mt-4">{{ 'invoice.settings.section.tax'|trans }}</h2>
                 {{ form_row(form.taxNumber) }}
                 {{ form_row(form.vatID) }}
                 {{ form_row(form.registrationNumber) }}
 
-                <h5 class="mt-4">{{ 'invoice.settings.section.payment'|trans }}</h5>
+                <h2 class="small text-uppercase fw-semibold text-body-secondary mb-2 mt-4">{{ 'invoice.settings.section.payment'|trans }}</h2>
                 {{ form_row(form.accountName) }}
                 {{ form_row(form.accountIBAN) }}
                 {{ form_row(form.accountBIC) }}
@@ -61,7 +61,7 @@
                 {{ form_row(form.creditorReference) }}
 
                 <hr>
-                <h5>{{ 'invoice.settings.section.scope'|trans }}</h5>
+                <h2 class="small text-uppercase fw-semibold text-body-secondary mb-2">{{ 'invoice.settings.section.scope'|trans }}</h2>
                 {{ form_row(form.scope) }}
                 <div class="row text-end">
                     <div class="col-md">

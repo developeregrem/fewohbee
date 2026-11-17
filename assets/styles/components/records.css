@@ -18,6 +18,11 @@
     border-bottom: 1px solid var(--feb-border);
 }
 
+/* Tools beside the search sit at the right end */
+.data-toolbar > .search-field + * {
+    margin-left: auto;
+}
+
 .data-footer {
     display: flex;
     flex-wrap: wrap;
@@ -143,10 +148,13 @@
     }
 
     .data-table-stack > tbody > tr > .cell-meta {
-        /* In line with the name next to the avatar */
-        padding-left: 3rem;
         color: var(--feb-text-muted);
         font-size: var(--feb-font-size-sm);
+    }
+
+    /* In line with the name next to the avatar */
+    .data-table-stack > tbody > tr:has(.avatar) > .cell-meta {
+        padding-left: 3rem;
     }
 
     /* First column of the table, last line of the block */

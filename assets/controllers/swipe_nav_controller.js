@@ -9,7 +9,8 @@ import { onSwipe, horizontalSwipeDirection } from '../js/swipe.js';
  * - previous / next targets are the arrows (templates/BookingJournal/
  *   _edge_navigation.html.twig); a swipe clicks them. As links the page
  *   decides where they lead, e.g. the next page of a list and after its last
- *   page the next month.
+ *   page the next month. The pagination of a list offers its arrows as
+ *   targets with 'swipe_nav': true (templates/paginator.html.twig).
  * - As buttons they step the select target, whose numeric options (years)
  *   may come in any order; its change event loads the period. Arrows without
  *   a neighbouring value are hidden.

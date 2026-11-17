@@ -182,6 +182,22 @@
     </div>
 </div>
 
+<h3 class="styleguide-heading">Invoice status <code class="styleguide-ref">InvoiceStatus</code></h3>
+<div class="card card-body">
+    <div class="d-flex flex-wrap gap-2">
+        {% for status in [1, 3, 2, 4] %}<twig:InvoiceStatus :status="status"/>{% endfor %}
+    </div>
+</div>
+
+<h3 class="styleguide-heading">Field that saves itself <code class="styleguide-ref">SaveState</code></h3>
+<div class="card card-body">
+    <div class="d-flex flex-wrap align-items-center gap-4">
+        <twig:SaveState state="saving"/>
+        <twig:SaveState state="saved" class="save-state-hold"/>
+        <twig:SaveState state="failed"/>
+    </div>
+</div>
+
 <h3 class="styleguide-heading">Badges and messages</h3>
 <div class="card card-body gap-3">
     <div class="d-flex flex-wrap gap-2">

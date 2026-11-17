@@ -1,49 +1,39 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}
-    {{ parent() }} -  {{ 'invoice.title'|trans }}
-{% endblock %}
+{% block title %}{{ parent() }} - {{ 'invoice.title'|trans }}{% endblock %}
 
-{% block description %}
-    {{ parent() }} -  {{ 'invoice.description'|trans }}
-{% endblock %}
+{% block description %}{{ parent() }} - {{ 'invoice.description'|trans }}{% endblock %}
+
+{% block page_title %}{{ 'nav.short.invoices'|trans }}{% endblock %}
 
 {% block content %}
-    <div class="container" data-controller="invoices">
-        <div class="row justify-content-between">
-            <div class="col-md-4">
-                <button type="button" class="btn btn-secondary" data-action="click->invoices#openModalAction"
-                        data-url="{{ path('invoices.new.invoice') }}" data-create-new="true"
-                        data-title="{{ 'invoice.select.open.reservation'|trans }}"
-                        data-bs-toggle="modal" data-bs-target="#modalCenter">
-                    <i class="fas fa-plus"></i> {{ 'nav.invoice.add'|trans }}</button>
-            </div>
-            <div class="col-md-3 text-end">
-                <a href="#" class="fs-5 text-secondary" title="{{ 'invoice.settings.text'|trans }}" 
-                data-url="{{ path('invoices.settings.get') }}" data-bs-toggle="modal" data-bs-target="#modalCenter"
-                data-action="click->invoices#openModalAction">
-                    <i class="fas fa-cog"></i>
-                </a>             
-            </div>
-        </div>
-        <form class="form" id="invoices-search-form" data-search-url="{{ path('invoices.search') }}" data-action="submit->invoices#doSearchAction" novalidate>
-            <div class="row">
-                <div class="col-md-5">
-                    <input type="search" class="form-control" id="search" name="search"
-                           placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"
-                           data-action="keyup->invoices#searchInputAction"/>
-                </div>
-                <div class="col-md ps-0">
-                    <button class="btn btn-secondary" type="button" data-action="click->invoices#doSearchAction">
-                        <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
-                    </button>
-                </div>                
-            </div>
-        </form>
-        <div class="row mt-4">
-            <div id="invoice-table" class="col">
+    <div class="container fab-add-clearance" data-controller="invoices swipe-nav">
+        <twig:PageHeader :title="'nav.short.invoices'|trans">
+            <twig:AddButton :label="'nav.invoice.add'|trans"
+                            data-action="click->invoices#openModalAction"
+                            data-url="{{ path('invoices.new.invoice') }}" data-create-new="true"
+                            data-title="{{ 'invoice.select.open.reservation'|trans }}"
+                            data-bs-toggle="modal" data-bs-target="#modalCenter"/>
+        </twig:PageHeader>
+
+        <twig:DataCard>
+            <twig:block name="toolbar">
+                <twig:SearchField :placeholder="'invoice.search.placeholder'|trans" :value="search"
+                                  id="invoices-search-form"
+                                  data-search-url="{{ path('invoices.search') }}"
+                                  data-action="submit->invoices#doSearchAction"
+                                  novalidate
+                                  input:id="search"
+                                  input:data-action="input->invoices#searchInputAction"/>
+                <twig:IconButton icon="cog" :label="'invoice.settings.text'|trans"
+                                 data-action="click->invoices#openModalAction"
+                                 data-url="{{ path('invoices.settings.get') }}"
+                                 data-title="{{ 'invoice.settings.text'|trans }}"
+                                 data-bs-toggle="modal" data-bs-target="#modalCenter"/>
+            </twig:block>
+            <div id="invoice-table">
                 {% include 'Invoices/invoice_table.html.twig' %}
             </div>
-        </div>
+        </twig:DataCard>
     </div>
 {% endblock %}

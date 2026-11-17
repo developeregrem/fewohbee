@@ -353,8 +353,12 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   (`symfony/ux-twig-component`), each documented in its file: `<twig:PageHeader>`,
   `<twig:AddButton>`, `<twig:IconButton>`, `<twig:DataCard>`, `<twig:SearchField>`,
   `<twig:EmptyState>`, `<twig:Avatar>`, `<twig:StatusBadge>`, `<twig:ColorDot>`,
+  `<twig:InvoiceStatus>` (payment status of an invoice, same colour everywhere),
+  `<twig:SaveState>` (feedback of a field that saves itself: spinner, a tick that fades out,
+  or a warning; switched with `setSaveState()` from `assets/js/save_state.js` - answer
+  failures with an error status so the tick only follows a real save),
   `<twig:Autocomplete>` (suggestions while typing, from a JSON endpoint; the page reacts to
-  `autocomplete:select`). Use them instead of writing their markup by hand; extra attributes
+  `autocomplete:select`), `<twig:DatePager>` (a day or week with arrows and swipe paging). Use them instead of writing their markup by hand; extra attributes
   (`data-action`, `data-url` …) pass through.
   A new component covers a pattern that recurs on several pages, has no logic beyond
   presentation and goes into the styleguide.
@@ -368,7 +372,10 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   screens get the round add button: `<twig:AddButton>` in the page header renders it together
   with the regular button for the desktop (`fab-add-dropdown` when there are several kinds). Where a view pages
   through a sequence (month, year, day, pages of a list), a sideways swipe pages as well: use the
-  `swipe-nav` controller and keep the arrows or the select visible. Prefer stacked lists
+  `swipe-nav` controller (a year select, a date via `<twig:DatePager>`, or the pages of a list
+  via `'swipe_nav': true` on `paginator.html.twig`) and keep the arrows
+  or the select visible. Filters and the period of a page sit in a `.page-toolbar` below the
+  page header. Prefer stacked lists
   (`data-table-stack`) to tables that scroll sideways.
 - A page names itself with the `page_title` block; the frame shows it in the top bar on phones.
   Navigation entries are described once in `templates/layout/_app_nav.html.twig`.

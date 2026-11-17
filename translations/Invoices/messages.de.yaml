@@ -42,6 +42,10 @@ invoice.number.duplicate.error: 'Diese Rechnungsnummer ist bereits vergeben. Bit
 invoice.number.range.hint: 'Nummernkreis: %range%'
 invoice.number.range.global: Standard
 invoice.lastname: Nachname
+invoice.list.count: '{0}Keine Rechnungen|{1}1 Rechnung|]1,Inf[%count% Rechnungen'
+invoice.list.empty: 'Keine Rechnungen gefunden'
+invoice.list.empty.hint: 'Passe die Suche an oder erstelle eine neue Rechnung.'
+invoice.list.name: Name
 invoice.miscellaneous: 'Sonstige Positionen'
 invoice.miscellaneous.position.amount: Anzahl
 invoice.miscellaneous.position.amount.flat_help: 'Pauschalpreis: 1x pro Buchung'
@@ -63,6 +67,7 @@ invoice.price.total: Gesamt
 invoice.remark: Bemerkungen
 invoice.reservation: Reservierung
 invoice.reservations.unavailable: 'Mindestens eine ausgewählte Reservierung ist nicht mehr vorhanden. Starte die Rechnungserstellung erneut und wähle die Reservierungen neu aus.'
+invoice.search.placeholder: 'Rechnungen durchsuchen'
 invoice.select.customer.search.input.placeholder: 'Nachname Kunde'
 invoice.select.open.reservation: 'Reservierung ohne Rechnung auswählen'
 invoice.startdate: Von

@@ -851,38 +851,24 @@ export default class extends Controller {
 
     showTimeFilterAction(event) {
         event.preventDefault();
-        const btnTime = document.getElementById('button-filter-time');
-        const btnCustomer = document.getElementById('button-filter-customer');
-        const boxTime = document.getElementById('container-filter-reservations-period');
-        const boxCustomer = document.getElementById('container-filter-reservations-customer');
-        if (btnTime) {
-            btnTime.classList.add('btn-primary');
-            btnTime.classList.remove('btn-secondary');
-        }
-        if (btnCustomer) {
-            btnCustomer.classList.add('btn-secondary');
-            btnCustomer.classList.remove('btn-primary');
-        }
-        if (boxTime) boxTime.classList.remove('d-none');
-        if (boxCustomer) boxCustomer.classList.add('d-none');
+        this.showReservationFilter('period');
     }
 
     showCustomerFilterAction(event) {
         event.preventDefault();
-        const btnTime = document.getElementById('button-filter-time');
-        const btnCustomer = document.getElementById('button-filter-customer');
-        const boxTime = document.getElementById('container-filter-reservations-period');
-        const boxCustomer = document.getElementById('container-filter-reservations-customer');
-        if (btnCustomer) {
-            btnCustomer.classList.add('btn-primary');
-            btnCustomer.classList.remove('btn-secondary');
-        }
-        if (btnTime) {
-            btnTime.classList.add('btn-secondary');
-            btnTime.classList.remove('btn-primary');
-        }
-        if (boxTime) boxTime.classList.add('d-none');
-        if (boxCustomer) boxCustomer.classList.remove('d-none');
+        this.showReservationFilter('customer');
+    }
+
+    /* Finding reservations by period or by guest: the switch marks the one shown */
+    showReservationFilter(filter) {
+        const byPeriod = filter === 'period';
+        [['button-filter-time', byPeriod], ['button-filter-customer', !byPeriod]].forEach(([id, active]) => {
+            const button = document.getElementById(id);
+            button?.classList.toggle('active', active);
+            button?.setAttribute('aria-pressed', String(active));
+        });
+        document.getElementById('container-filter-reservations-period')?.classList.toggle('d-none', !byPeriod);
+        document.getElementById('container-filter-reservations-customer')?.classList.toggle('d-none', byPeriod);
     }
 
     getReservationsInPeriodAction(event) {

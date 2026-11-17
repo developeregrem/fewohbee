@@ -9,3 +9,34 @@ details.einvoice-readiness > summary {
 details.einvoice-readiness > summary::-webkit-details-marker {
     display: none;
 }
+
+/* Invoice list: payment status, payment means and e-invoice check side by side */
+.invoice-state {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem .5rem;
+}
+
+.invoice-table .data-table-link-text {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Positions in the invoice dialog: quiet column heads, the subtotal at the right end */
+.invoice-positions > thead > tr > th {
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+    font-weight: var(--feb-font-weight-strong);
+}
+
+.invoice-subtotal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+}
+
+.invoice-subtotal-sum {
+    margin-left: auto;
+    font-weight: var(--feb-font-weight-strong);
+}

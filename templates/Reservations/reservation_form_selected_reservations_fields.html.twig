@@ -21,10 +21,8 @@
                             · {{ reservationMacros.dates(reservation) }}
                         </div>
                     </div>
-                    <a href="#" class="btn btn-sm btn-link text-danger"
-                       data-action="click->reservations#deleteReservationFromSelectionAction" data-reservation-key="{{ key }}"
-                       title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}">
-                        <i class="fas fa-trash-alt"></i></a>
+                    <twig:IconButton icon="trash-alt" :label="'button.delete'|trans" class="text-danger"
+                                     data-action="click->reservations#deleteReservationFromSelectionAction" data-reservation-key="{{ key }}"/>
                 </li>
             {% endfor %}
         </ul>

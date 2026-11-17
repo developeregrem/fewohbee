@@ -11,9 +11,8 @@
             <div class="col-12 col-sm">
                 <div class="fw-semibold">
                     {{ invoice.salutation }} {{ invoice.firstname }} {{ invoice.lastname }}
-                    <button type="button" class="btn btn-sm btn-link text-body-secondary invoice-edit-field d-none"
-                            data-action="click->invoices#openModalAction" data-url="{{ path('invoices.get.invoice.customer.change', {'id': invoice.id}) }}"
-                            title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}"><i class="fas fa-edit"></i></button>
+                    <twig:IconButton icon="pen" :label="'button.edit'|trans" class="invoice-edit-field d-none"
+                                 data-action="click->invoices#openModalAction" data-url="{{ path('invoices.get.invoice.customer.change', {'id': invoice.id}) }}"/>
                 </div>
                 {% if invoice.company is not empty %}<div>{{ invoice.company }}</div>{% endif %}
                 <div>{{ invoice.address }}</div>
@@ -27,13 +26,12 @@
             </div>
             <div class="col-12 col-sm-auto d-flex align-items-start gap-1">
                 {% include 'Invoices/_invoice_header_dates.html.twig' %}
-                <button type="button" class="btn btn-sm btn-link text-body-secondary invoice-edit-field d-none"
-                        data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.invoice.number.show', {'id': invoice.id}) }}"
-                        title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}"><i class="fas fa-edit"></i></button>
+                <twig:IconButton icon="pen" :label="'button.edit'|trans" class="invoice-edit-field d-none"
+                                 data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.invoice.number.show', {'id': invoice.id}) }}"/>
             </div>
         </div>
 
-        <table class="table table-hover mt-4">
+        <table class="table table-hover invoice-positions mt-4">
             <thead>
             <tr>
                 <th>{{ 'invoice.position.appartment'|trans }}</th>
@@ -65,8 +63,8 @@
                     </td>
                     <td class="text-end">{{ appartment.totalPrice }}</td>
                     <td class="invoice-edit-field d-none text-end text-nowrap">
-                        <button type="button" class="btn btn-sm btn-link text-body-secondary" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.apartment.position', {'invoiceId': invoice.id, 'id': appartment.id}) }}" title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}"><i class="fas fa-edit"></i></button>
-                        <button type="button" class="btn btn-sm btn-link text-danger" data-action="click->invoices#removeApartmentPositionEditAction" data-url="{{ path('invoices.delete.appartment.invoice.position') }}" data-index="{{ appartment.id }}" title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></button>
+                        <twig:IconButton icon="pen" :label="'button.edit'|trans" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.apartment.position', {'invoiceId': invoice.id, 'id': appartment.id}) }}"/>
+                        <twig:IconButton icon="trash-alt" :label="'button.delete'|trans" class="text-danger" data-action="click->invoices#removeApartmentPositionEditAction" data-url="{{ path('invoices.delete.appartment.invoice.position') }}" data-index="{{ appartment.id }}"/>
                     </td>
                 </tr>
                 {# check whether there are different prices used, e.g. one uses uses includes vat and one not #}
@@ -76,15 +74,19 @@
                 {% set lastIncludesVat = appartment.includesVat %}
             {% endfor %}
             <tr>
-                <th><button type="button" class="btn btn-sm btn-outline-primary text-nowrap invoice-edit-field d-none" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.apartment.position', {'invoiceId': invoice.id}) }}">
-                        <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button></th>
-                <th colspan="5" class="text-end">{{ apartmentTotal|number_format(2, ',', '.') }}</th>
+                <td colspan="6">
+                    <div class="invoice-subtotal">
+                        <button type="button" class="btn btn-sm btn-secondary invoice-edit-field d-none" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.apartment.position', {'invoiceId': invoice.id}) }}">
+                            <i class="fas fa-plus me-1" aria-hidden="true"></i>{{ 'invoice.position.add.appartment'|trans }}</button>
+                        <span class="invoice-subtotal-sum">{{ apartmentTotal|number_format(2, ',', '.') }}</span>
+                    </div>
+                </td>
             </tr>
             </tbody>
         </table>
         {% set apartmentModifierPositions = invoice.positions|filter(p => p.positionGroup == 'apartment_modifier') %}
         {% if apartmentModifierPositions|length > 0 %}
-            <table class="table table-hover mt-4">
+            <table class="table table-hover invoice-positions mt-4">
                 <thead>
                 <tr>
                     <th>{{ 'invoice.apartment_modifier.heading'|trans }}</th>
@@ -107,8 +109,8 @@
                         </td>
                         <td class="text-end">{{ position.totalPrice }}</td>
                         <td class="invoice-edit-field d-none text-end text-nowrap">
-                            <button type="button" class="btn btn-sm btn-link text-body-secondary" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.miscellaneous.position', {'invoiceId': invoice.id, 'id': position.id}) }}" title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}"><i class="fas fa-edit"></i></button>
-                            <button type="button" class="btn btn-sm btn-link text-danger" data-action="click->invoices#removeMiscPositionEditAction" data-url="{{ path('invoices.delete.miscellaneous.invoice.position') }}" data-index="{{ position.id }}" title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></button>
+                            <twig:IconButton icon="pen" :label="'button.edit'|trans" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.miscellaneous.position', {'invoiceId': invoice.id, 'id': position.id}) }}"/>
+                            <twig:IconButton icon="trash-alt" :label="'button.delete'|trans" class="text-danger" data-action="click->invoices#removeMiscPositionEditAction" data-url="{{ path('invoices.delete.miscellaneous.invoice.position') }}" data-index="{{ position.id }}"/>
                         </td>
                     </tr>
                     {% set apartmentModifierTotal = apartmentModifierTotal + position.totalPriceRaw %}
@@ -122,7 +124,7 @@
 
         {% set touristTaxPositions = invoice.positions|filter(p => p.positionGroup == 'tourist_tax') %}
         {% if touristTaxPositions|length > 0 %}
-            <table class="table table-hover mt-4">
+            <table class="table table-hover invoice-positions mt-4">
                 <thead>
                 <tr>
                     <th>{{ 'invoice.tourist_tax.heading'|trans }}</th>
@@ -145,8 +147,8 @@
                         </td>
                         <td class="text-end">{{ position.totalPrice }}</td>
                         <td class="invoice-edit-field d-none text-end text-nowrap">
-                            <button type="button" class="btn btn-sm btn-link text-body-secondary" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.miscellaneous.position', {'invoiceId': invoice.id, 'id': position.id}) }}" title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}"><i class="fas fa-edit"></i></button>
-                            <button type="button" class="btn btn-sm btn-link text-danger" data-action="click->invoices#removeMiscPositionEditAction" data-url="{{ path('invoices.delete.miscellaneous.invoice.position') }}" data-index="{{ position.id }}" title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></button>
+                            <twig:IconButton icon="pen" :label="'button.edit'|trans" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.miscellaneous.position', {'invoiceId': invoice.id, 'id': position.id}) }}"/>
+                            <twig:IconButton icon="trash-alt" :label="'button.delete'|trans" class="text-danger" data-action="click->invoices#removeMiscPositionEditAction" data-url="{{ path('invoices.delete.miscellaneous.invoice.position') }}" data-index="{{ position.id }}"/>
                         </td>
                     </tr>
                     {% set touristTaxTotal = touristTaxTotal + position.totalPriceRaw %}
@@ -158,7 +160,7 @@
             </table>
         {% endif %}
 
-        <table class="table table-hover mt-4">
+        <table class="table table-hover invoice-positions mt-4">
             <thead>
             <tr>
                 <th>{{ 'invoice.position.additional'|trans }}</th>
@@ -185,8 +187,8 @@
                     </td>
                     <td class="text-end">{{ position.totalPrice }}</td>
                     <td class="invoice-edit-field d-none text-end text-nowrap">
-                        <button type="button" class="btn btn-sm btn-link text-body-secondary" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.miscellaneous.position', {'invoiceId': invoice.id, 'id': position.id}) }}" title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}"><i class="fas fa-edit"></i></button>
-                        <button type="button" class="btn btn-sm btn-link text-danger" data-action="click->invoices#removeMiscPositionEditAction" data-url="{{ path('invoices.delete.miscellaneous.invoice.position') }}" data-index="{{ position.id }}" title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></button>
+                        <twig:IconButton icon="pen" :label="'button.edit'|trans" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.miscellaneous.position', {'invoiceId': invoice.id, 'id': position.id}) }}"/>
+                        <twig:IconButton icon="trash-alt" :label="'button.delete'|trans" class="text-danger" data-action="click->invoices#removeMiscPositionEditAction" data-url="{{ path('invoices.delete.miscellaneous.invoice.position') }}" data-index="{{ position.id }}"/>
                     </td>
                 </tr>
                 {# check whether there are different prices used, e.g. one uses uses includes vat and one not #}
@@ -197,9 +199,13 @@
                 {% set miscOnlyTotal = miscOnlyTotal + position.totalPriceRaw %}
             {% endfor %}
             <tr>
-                <th><button type="button" class="btn btn-sm btn-outline-primary text-nowrap invoice-edit-field d-none" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.miscellaneous.position', {'invoiceId': invoice.id}) }}">
-                        <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button></th>
-                <th colspan="5" class="text-end">{{ miscOnlyTotal|number_format(2, ',', '.') }}</th>
+                <td colspan="6">
+                    <div class="invoice-subtotal">
+                        <button type="button" class="btn btn-sm btn-secondary invoice-edit-field d-none" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.miscellaneous.position', {'invoiceId': invoice.id}) }}">
+                            <i class="fas fa-plus me-1" aria-hidden="true"></i>{{ 'invoice.position.add.miscellaneous'|trans }}</button>
+                        <span class="invoice-subtotal-sum">{{ miscOnlyTotal|number_format(2, ',', '.') }}</span>
+                    </div>
+                </td>
             </tr>
             </tbody>
         </table>
@@ -232,40 +238,36 @@
         {% if vatWarning %}
         <div class="row mt-3">
             <div class="col text-center">
-            <span class="text-warning me-auto"><i class="fas fa-info-circle"></i> {{ 'invoice.vatwarning'|trans }}</span>
+            <span class="text-warning-emphasis"><i class="fas fa-info-circle me-1" aria-hidden="true"></i>{{ 'invoice.vatwarning'|trans }}</span>
             </div>
         </div>
         {% endif %}
         <div class="row g-3 mt-1">
             <div class="col-12 col-sm">
-                <h5>{{ 'invoice.paymentmeans.label'|trans }}&nbsp;
-                    <small>
-                        <a href="#" data-action="click->invoices#changeInvoiceRemarkAction" data-url="{{ path('invoices.edit.invoice.remark.show', {'id': invoice.id}) }}"
-                           title="{{ 'button.edit'|trans }}" class="small invoice-edit-field d-none text-secondary">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                    </small>
-                </h5>
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0">{{ 'invoice.paymentmeans.label'|trans }}</h2>
+                    <twig:IconButton icon="pen" :label="'button.edit'|trans" class="invoice-edit-field d-none my-n2"
+                                     data-action="click->invoices#changeInvoiceRemarkAction" data-url="{{ path('invoices.edit.invoice.remark.show', {'id': invoice.id}) }}"/>
+                </div>
                 <div>{% if invoice.paymentMeans %}{{ invoice.paymentMeans.name|trans }}{% else %}-{% endif%}</div>
             </div>
             <div class="col-12 col-sm">
-                <h5>{{ 'invoice.remark'|trans }}&nbsp;
-                    <small>
-                        <a href="#" data-action="click->invoices#changeInvoiceRemarkAction" data-url="{{ path('invoices.edit.invoice.remark.show', {'id': invoice.id}) }}"
-                           title="{{ 'button.edit'|trans }}" class="small invoice-edit-field d-none text-secondary">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                    </small>
-                </h5>
-                <div class="text-muted">{%if invoice.remark %}{{ invoice.remark|nl2br }}{% else %}-{% endif%}</div>
+                <div class="d-flex align-items-center gap-1 mb-1">
+                    <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0">{{ 'invoice.remark'|trans }}</h2>
+                    <twig:IconButton icon="pen" :label="'button.edit'|trans" class="invoice-edit-field d-none my-n2"
+                                     data-action="click->invoices#changeInvoiceRemarkAction" data-url="{{ path('invoices.edit.invoice.remark.show', {'id': invoice.id}) }}"/>
+                </div>
+                <div class="text-body-secondary">{% if invoice.remark %}{{ invoice.remark|nl2br }}{% else %}-{% endif%}</div>
             </div>
         </div>
 
 
-        {# Payment status and e-invoice check, saved on their own; the footer holds the actions on the invoice #}
+        {# Payment status, saved as soon as it is picked, and the e-invoice check; the footer holds the actions on the invoice #}
         <form id="invoice-form-status" role="form" class="row g-2 align-items-center mt-3">
             <div class="col-12 col-sm-auto">
                 <select id="invoce-status" name="invoice-status" class="form-select" aria-label="{{ 'invoice.status'|trans }}"
+                        data-url="{{ path('invoices.update.status', {'id': invoice.id}) }}"
+                        data-saved-value="{{ invoice.status }}"
                         data-action="change->invoices#invoiceStatusChangeAction">
                     <option value="1"{% if invoice.status == 1 %} selected{% endif %}>{{ 'invoice.status.unpaid'|trans }}</option>
                     <option value="3"{% if invoice.status == 3 %} selected{% endif %}>{{ 'invoice.status.prepaid'|trans }}</option>
@@ -274,8 +276,7 @@
                 </select>
             </div>
             <div class="col-auto">
-                <button id="save-status" type="button" class="btn btn-primary d-none"
-                        data-action="click->invoices#updateInvoiceStatusAction" data-url="{{ path('invoices.update.status', {'id': invoice.id}) }}">{{ 'button.save'|trans }}</button>
+                <twig:SaveState id="invoice-status-state"/>
             </div>
             <div class="col-12 col-sm text-sm-end">
                 {% include 'Invoices/_einvoice_readiness.html.twig' %}

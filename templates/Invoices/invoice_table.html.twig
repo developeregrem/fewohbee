@@ -1,89 +1,104 @@
-<div class="table-responsive">
-<table class="table table-bordered table-hover">
-    <thead>
-    <tr>
-        <th>{{ 'invoice.number'|trans }}</th>
-        <th>{{ 'invoice.date'|trans }}</th>
-        <th>{{ 'invoice.lastname'|trans }}</th>
-        <th>{{ 'invoice.company'|trans }}</th>
-        <th>{{ 'invoice.status'|trans }}</th>
-        <th>{{ 'invoice.action'|trans }}</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for invoice in invoices %}
-        <tr>
-            <td>{{ invoice.number }}</td>
-            <td>{{ invoice.date|date('d.m.Y') }}</td>
-            <td>{{ invoice.lastname }}</td>
-            <td>{{ invoice.company }}</td>
-            <td>
-                {% if invoice.status == 1 %}
-                    {{ 'invoice.status.unpaid'|trans }}
-                {% elseif invoice.status == 2 %}
-                    {{ 'invoice.status.paid'|trans }}
-                {% elseif invoice.status == 3 %}
-                    {{ 'invoice.status.prepaid'|trans }}
-                {% else %}
-                    {{ 'invoice.status.canceled'|trans }}
-                {% endif %}
-                {% if invoice.paymentMeans %}
-                    {% set paymentMeansIcon = {
-                        'CASH': 'fa-coins',
-                        'CREDIT_TRANSFER': 'fa-building-columns',
-                        'CARD_PAYMENT': 'fa-credit-card',
-                        'SEPA_CREDIT_TRANSFER': 'fa-building-columns',
-                        'SEPA_DIRECT_DEBIT': 'fa-money-check'
-                    }[invoice.paymentMeans.name]|default('fa-circle-question') %}
-                    <span class="ms-1 text-secondary"
-                       title="{{ invoice.paymentMeans.name|trans }}"
-                       aria-label="{{ invoice.paymentMeans.name|trans }}">
-                        <i class="fa-solid {{ paymentMeansIcon }}" aria-hidden="true"></i>
-                    </span>
-                {% endif %}
-            </td>
-            <td>
-                <a href="#" title="{{ 'button.details'|trans }}"
-                   data-action="click->invoices#showInvoiceAction"
-                   data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
-                   data-bs-toggle="modal" data-bs-target="#modalCenter">
-                    <i class="fas fa-info-circle"></i></a>
-                <a href="#" title="{{ 'button.edit'|trans }}"
-                   data-action="click->invoices#showInvoiceAction"
-                   data-edit="true"
-                   data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
-                   data-bs-toggle="modal" data-bs-target="#modalCenter">
-                    <i class="fas fa-edit"></i></a>
+{# The invoice list of the overview; reloaded on its own by invoices_controller.js when searching or paging #}
+{% set total = invoices.count %}
+{% if total == 0 %}
+    <twig:EmptyState icon="file-invoice" :title="'invoice.list.empty'|trans">
+        {{- 'invoice.list.empty.hint'|trans -}}
+    </twig:EmptyState>
+{% else %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle data-table data-table-stack invoice-table">
+            <thead>
+            <tr>
+                <th>{{ 'invoice.number'|trans }}</th>
+                <th>{{ 'invoice.date'|trans }}</th>
+                <th>{{ 'invoice.list.name'|trans }}</th>
+                <th>{{ 'invoice.company'|trans }}</th>
+                <th>{{ 'invoice.status'|trans }}</th>
+                <th class="data-table-actions"><span class="visually-hidden">{{ 'invoice.action'|trans }}</span></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for invoice in invoices %}
+                {% set name = invoice.lastname ~ (invoice.firstname is not empty and invoice.lastname is not empty ? ', ') ~ invoice.firstname %}
                 {% set readiness = einvoiceReadiness[invoice.id] ?? null %}
-                <a class="export-link"
-                   href="{{ path('invoices.export.pdf', {'id': invoice.id, 'template': templateId }) }}"
-                   title="{{ readiness and readiness.ready ? 'button.export.einvoicepdf'|trans : 'button.export.pdf'|trans }}" target="_blank">
-                    <i class="fas fa-file-pdf"></i></a>
-                {# Per invoice, not list-wide: with per-branch issuers the profile can differ. #}
-                {% if readiness and readiness.profileKey == 'xrechnung' %}
-                <a href="{{ path('invoices.export.xrechnung', {'id': invoice.id }) }}"
-                    title="{{ 'button.export.xml'|trans }}">
-                     <i class="fa-solid fa-file-code"></i></a>
-                {% endif %}
-                {% if readiness and readiness.configured %}
-                    {% if readiness.ready %}
-                        <span class="text-success" title="{{ 'invoice.einvoice.status.ready'|trans }}">
-                            <i class="fa-solid fa-circle-check"></i></span>
-                    {% elseif invoice.company is not empty %}
-                        {# a company recipient is likely B2B, where the e-invoice matters → warning #}
-                        <span class="text-warning" title="{{ 'invoice.einvoice.status.missing'|trans }}:&#10;{{ readiness.result.messageKeys|map(key => key|trans)|join("\n") }}">
-                            <i class="fa-solid fa-triangle-exclamation"></i></span>
-                    {% else %}
-                        {# no company → likely B2C, where the e-invoice is not mandatory → neutral info #}
-                        <span class="text-info" title="{{ 'invoice.einvoice.status.missing'|trans }}:&#10;{{ readiness.result.messageKeys|map(key => key|trans)|join("\n") }}">
-                            <i class="fa-solid fa-circle-info"></i></span>
-                    {% endif %}
-                {% endif %}
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+                {% set title = 'invoice.number.short'|trans ~ ' ' ~ invoice.number %}
+                <tr>
+                    <td>
+                        <a href="#" class="data-table-link"
+                           data-action="click->invoices#showInvoiceAction"
+                           data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
+                           data-title="{{ title }}"
+                           data-bs-toggle="modal" data-bs-target="#modalCenter"
+                           title="{{ 'button.details'|trans }}">
+                            <span class="data-table-link-text">
+                                {{- invoice.number -}}
+                                {% if name is not empty %}<span class="cell-narrow fw-normal"> · {{ name }}</span>{% endif %}
+                            </span>
+                        </a>
+                    </td>
+                    <td class="cell-wide text-nowrap">{{ invoice.date|date('d.m.Y') }}</td>
+                    <td class="cell-wide">{{ name }}</td>
+                    <td class="cell-meta">{{- invoice.company -}}</td>
+                    <td class="cell-meta">
+                        <span class="invoice-state">
+                            <span class="cell-narrow">{{ invoice.date|date('d.m.Y') }}</span>
+                            <twig:InvoiceStatus :status="invoice.status"/>
+                            {% if invoice.paymentMeans %}
+                                {% set paymentMeansIcon = {
+                                    'CASH': 'fa-coins',
+                                    'CREDIT_TRANSFER': 'fa-building-columns',
+                                    'CARD_PAYMENT': 'fa-credit-card',
+                                    'SEPA_CREDIT_TRANSFER': 'fa-building-columns',
+                                    'SEPA_DIRECT_DEBIT': 'fa-money-check'
+                                }[invoice.paymentMeans.name]|default('fa-circle-question') %}
+                                <span class="text-body-secondary" role="img"
+                                      title="{{ invoice.paymentMeans.name|trans }}"
+                                      aria-label="{{ invoice.paymentMeans.name|trans }}">
+                                    <i class="fa-solid {{ paymentMeansIcon }}" aria-hidden="true"></i>
+                                </span>
+                            {% endif %}
+                            {# Per invoice, not list-wide: with per-branch issuers the profile can differ. #}
+                            {% if readiness and readiness.configured %}
+                                {% if readiness.ready %}
+                                    {% set einvoice = {class: 'text-success-emphasis', icon: 'circle-check', text: 'invoice.einvoice.status.ready'|trans} %}
+                                {% else %}
+                                    {# a company recipient is likely B2B, where the e-invoice matters → warning;
+                                       otherwise likely B2C, where it is not mandatory → neutral info #}
+                                    {% set einvoice = {
+                                        class: invoice.company is not empty ? 'text-warning-emphasis' : 'text-info-emphasis',
+                                        icon: invoice.company is not empty ? 'triangle-exclamation' : 'circle-info',
+                                        text: 'invoice.einvoice.status.missing'|trans ~ ':' ~ "\n" ~ readiness.result.messageKeys|map(key => key|trans)|join("\n"),
+                                    } %}
+                                {% endif %}
+                                <span class="{{ einvoice.class }}" role="img" title="{{ einvoice.text }}" aria-label="{{ einvoice.text }}">
+                                    <i class="fa-solid fa-{{ einvoice.icon }}" aria-hidden="true"></i>
+                                </span>
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="cell-actions data-table-actions text-end">
+                        <twig:IconButton icon="pen" :label="'button.edit'|trans"
+                                         data-action="click->invoices#showInvoiceAction"
+                                         data-edit="true"
+                                         data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
+                                         data-title="{{ title }}"
+                                         data-bs-toggle="modal" data-bs-target="#modalCenter"/>
+                        <twig:IconButton icon="file-pdf" class="export-link" target="_blank"
+                                         :label="readiness and readiness.ready ? 'button.export.einvoicepdf'|trans : 'button.export.pdf'|trans"
+                                         :href="path('invoices.export.pdf', {'id': invoice.id, 'template': templateId})"/>
+                        {% if readiness and readiness.profileKey == 'xrechnung' %}
+                            <twig:IconButton icon="file-code" :label="'button.export.xml'|trans"
+                                             :href="path('invoices.export.xrechnung', {'id': invoice.id})"/>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+<div class="data-footer">
+    <span>{{ 'invoice.list.count'|trans({'%count%': total}) }}</span>
+    <input id="page" type="hidden" name="page" value="{{ page }}" />
+    {% include 'paginator.html.twig' with { 'url' : path('invoices.overview'), 'pagination_action': 'click->invoices#paginateAction', 'swipe_nav': true } %}
 </div>
-<input id="page" type="hidden" name="page" value="{{ page }}" />
-{% include 'paginator.html.twig' with { 'url' : path('invoices.overview') } %}

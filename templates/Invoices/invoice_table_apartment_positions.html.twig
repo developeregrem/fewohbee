@@ -13,14 +13,8 @@
             </div>
             <div class="text-end text-nowrap">{{ position.price|number_format(2, ',', '.') }}</div>
             {% if mode is defined and mode == 'edit' %}
-                <button type="button" class="btn btn-sm btn-link text-body-secondary"
-                        data-action="click->invoices#openModalAction"
-                        data-url="{{ path('invoices.edit.apartment.position', {'invoiceId': 'new', 'id': key}) }}"
-                        title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}"><i class="fas fa-edit"></i></button>
-                <button type="button" class="btn btn-sm btn-link text-danger"
-                        data-action="click->invoices#removeApartmentPositionAction"
-                        data-url="{{ path('invoices.delete.appartment.invoice.position') }}" data-index="{{ key }}"
-                        title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></button>
+                <twig:IconButton icon="pen" :label="'button.edit'|trans" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.apartment.position', {'invoiceId': 'new', 'id': key}) }}"/>
+                <twig:IconButton icon="trash-alt" :label="'button.delete'|trans" class="text-danger" data-action="click->invoices#removeApartmentPositionAction" data-url="{{ path('invoices.delete.appartment.invoice.position') }}" data-index="{{ key }}"/>
             {% endif %}
         </li>
     {% endfor %}
