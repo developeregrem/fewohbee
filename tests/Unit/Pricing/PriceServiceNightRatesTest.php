@@ -98,6 +98,34 @@ final class PriceServiceNightRatesTest extends TestCase
         self::assertEqualsWithDelta(15.0, $breakdowns[1]->lines[1]->unitPrice, 0.001, 'the second night is not promised');
     }
 
+    public function testAPromisedPerRoomNightKeepsWhatTheChildPaysAsFurtherPerson(): void
+    {
+        $row = $this->price(17, '76.00');
+        $row->setIsPerRoom(true);
+        $row->setNumberOfPersons(1);
+        $row->setExtraPersonSurcharge('22.00');
+        $reservation = $this->reservation();
+        $reservation->setGuestCounts([1 => 1, 2 => 1]);
+        $this->promise($reservation, [
+            '2026-12-20' => new PromisedNight(17, '76.00', false, true, true, [], null, '22.00', 1, [
+                new PromisedLine(2, 1, '8.00', new GuestAdjustment(ModifierType::FLAT_RATE, 8.0)),
+            ]),
+        ]);
+        // Today a child pays 10 € as further person; the booking was made at 8 €.
+        $modifier = new GuestCategoryModifier();
+        $modifier->setCategory($this->category(2, GuestStatisticalGroup::CHILD));
+        $modifier->setType(ModifierType::FLAT_RATE);
+        $modifier->setValue('10');
+
+        $service = $this->service($row, [$modifier]);
+        $breakdowns = $service->getPriceBreakdownForReservation($reservation);
+        $totals = $service->getApartmentTotalsPerNight($reservation, PercentageBase::GROSS);
+
+        self::assertSame(8.0, ($breakdowns[0]->extraPersonLines ?? [])[0]->unitPrice);
+        self::assertSame(10.0, ($breakdowns[1]->extraPersonLines ?? [])[0]->unitPrice, 'the second night is not promised');
+        self::assertSame(['2026-12-20' => 84.0, '2026-12-21' => 86.0], $totals);
+    }
+
     public function testTheCityTaxBaseUsesThePromisedAmount(): void
     {
         $row = $this->price(17, '95.00');

@@ -201,6 +201,71 @@ final class InvoiceServiceApartmentModifierTest extends TestCase
         self::assertSame([], $service->buildApartmentModifierPositions([$r]));
     }
 
+    public function testAChildRateOnTheSurchargeGetsAPositionThatNamesIt(): void
+    {
+        $base = $this->makePrice('76.00');
+        $base->setIsPerRoom(true);
+        $base->setNumberOfPersons(1);
+        $base->setExtraPersonSurcharge('22');
+        $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);
+        $child = $this->makeCategory(2, GuestStatisticalGroup::CHILD);
+        $modifier = $this->makeModifier($child, ModifierType::FLAT_RATE, '8');
+
+        $r = new Reservation();
+        $r->setPersons(4);
+        $nights = [];
+        for ($i = 0; $i < 2; ++$i) {
+            $nights[] = $this->makeRoomNight($base, [new PriceBreakdownLine($adult, 1, 22.0), new PriceBreakdownLine($child, 2, 8.0, $modifier)]);
+        }
+
+        $positions = $this->createService($r, $nights)->buildApartmentModifierPositions([$r]);
+
+        self::assertCount(2, $positions);
+        self::assertSame([2, '22.00'], [$positions[0]->getAmount(), (string) $positions[0]->getPrice()]);
+        self::assertStringStartsWith('invoice.apartment_extra_person.position:', (string) $positions[0]->getDescription());
+        self::assertSame([4, '8.00'], [$positions[1]->getAmount(), (string) $positions[1]->getPrice()]); // 2 nights × 2 children
+        self::assertStringStartsWith('invoice.apartment_extra_person.category_position:invoice.tourist_tax.position.nights:2', (string) $positions[1]->getDescription());
+        self::assertStringContainsString('cat2,invoice.apartment_modifier.label.flat_rate', (string) $positions[1]->getDescription());
+        self::assertSame('apartment_modifier', $positions[1]->getPositionGroup());
+    }
+
+    public function testAFreeChildBeyondTheIncludedPersonsNeedsNoPosition(): void
+    {
+        $base = $this->makePrice('76.00');
+        $base->setIsPerRoom(true);
+        $base->setNumberOfPersons(1);
+        $base->setExtraPersonSurcharge('22');
+        $child = $this->makeCategory(2, GuestStatisticalGroup::CHILD);
+
+        $r = new Reservation();
+        $r->setPersons(2);
+        $night = $this->makeRoomNight($base, [new PriceBreakdownLine($child, 1, 0.0, $this->makeModifier($child, ModifierType::FREE, '0'))]);
+
+        self::assertSame([], $this->createService($r, [$night])->buildApartmentModifierPositions([$r]));
+    }
+
+    public function testAChildRateEqualToTheSurchargeIsBilledWithTheOtherFurtherPersons(): void
+    {
+        $base = $this->makePrice('76.00');
+        $base->setIsPerRoom(true);
+        $base->setNumberOfPersons(1);
+        $base->setExtraPersonSurcharge('22');
+        $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);
+        $child = $this->makeCategory(2, GuestStatisticalGroup::CHILD);
+
+        $r = new Reservation();
+        $r->setPersons(3);
+        $night = $this->makeRoomNight($base, [
+            new PriceBreakdownLine($adult, 1, 22.0),
+            new PriceBreakdownLine($child, 1, 22.0, $this->makeModifier($child, ModifierType::FLAT_RATE, '22')),
+        ]);
+
+        $positions = $this->createService($r, [$night])->buildApartmentModifierPositions([$r]);
+
+        self::assertCount(1, $positions);
+        self::assertSame([2, '22.00'], [$positions[0]->getAmount(), (string) $positions[0]->getPrice()]);
+    }
+
     public function testSurchargeOfAPricePerPersonIsIgnored(): void
     {
         // The form clears it, but a row may still carry one: only a per-room price bills further persons.
@@ -307,6 +372,15 @@ final class InvoiceServiceApartmentModifierTest extends TestCase
         foreach ($lines as $line) {
             $b->addLine($line);
         }
+
+        return $b;
+    }
+
+    /** @param list<PriceBreakdownLine> $extraPersonLines */
+    private function makeRoomNight(Price $base, array $extraPersonLines): PriceBreakdown
+    {
+        $b = new PriceBreakdown(new \DateTime('2026-06-01'), $base);
+        $b->extraPersonLines = $extraPersonLines;
 
         return $b;
     }

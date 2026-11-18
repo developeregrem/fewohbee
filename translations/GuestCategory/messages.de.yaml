@@ -77,7 +77,7 @@ guest_category:
 
 guest_category_modifier:
   title: "Preisanpassungen je Gastkategorie"
-  description: "Lege je Gastkategorie einen Aufschlag, Rabatt, Pauschalpreis oder \"frei\" auf den Übernachtungspreis fest. Der Erwachsenenpreis bleibt der Basistarif. Anpassungen wirken nur bei Übernachtungspreisen, die pro Person berechnet werden — nicht bei Pauschal- oder Zimmerpreisen."
+  description: "Lege je Gastkategorie einen Aufschlag, Rabatt, Pauschalpreis oder \"frei\" auf den Übernachtungspreis fest. Der Erwachsenenpreis bleibt der Basistarif. Anpassungen wirken auf jeden Betrag, der pro Person berechnet wird: auf Übernachtungspreise pro Person und bei Zimmerpreisen auf den Aufschlag je weitere Person. Pauschal- und Zimmerpreise selbst bleiben unverändert."
   threshold_hint: "Ab welcher Belegung diese Anpassungen greifen (Mindestanzahl Vollzahler), legst du je Zimmerkategorie fest — z. B. damit Kinder erst ab 3 Personen vergünstigt werden."
   add: "Preisanpassung hinzufügen"
   empty: "Noch keine Preisanpassungen angelegt — Übernachtungspreise gelten unverändert für alle Kategorien."
@@ -94,7 +94,7 @@ guest_category_modifier:
     category: "Gastkategorie"
     category.help: "Es werden nur Kategorien angezeigt, auf die ein Modifier wirken kann: keine Erwachsenen-Kategorien (Basistarif) und nur Kategorien, die zur Zimmerbelegung zählen. Nicht-belegende Gäste (z. B. Kleinkinder im Babybett) werden vom Apartmentpreis ohnehin nicht erfasst."
     type: "Art der Anpassung"
-    type.help: "Aufschlag addiert einen Betrag zum Erwachsenenpreis. Rabatt zieht einen Prozentsatz ab. Pauschalpreis ersetzt den Erwachsenenpreis komplett. Kostenlos = 0,00."
+    type.help: "Aufschlag addiert einen Betrag zum Erwachsenenpreis. Rabatt zieht einen Prozentsatz ab. Pauschalpreis ersetzt den Erwachsenenpreis komplett. Kostenlos = 0,00. Bei Zimmerpreisen gilt das für den Aufschlag je weitere Person statt für den Erwachsenenpreis."
     value: "Wert"
     value.help: "Betrag in der eingestellten Währung bei Aufschlag/Pauschalpreis, Prozentsatz bei Rabatt. Bei \"Kostenlos\" wird der Wert ignoriert."
     valid_from: "Gültig ab"
