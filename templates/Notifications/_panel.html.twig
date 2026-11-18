@@ -2,9 +2,9 @@
      data-notification-total="{{ summary.total }}"
      data-notification-badge-class="{{ summary.badgeClassOnPrimary }}">
 {% if groups is empty %}
-    <div class="px-3 py-4 text-center text-body-secondary">
-        <i class="fas fa-check-circle d-block fs-4 mb-2"></i>
-        {{ 'notification.empty'|trans }}
+    <div class="d-flex align-items-center justify-content-center gap-2 px-3 py-4 text-body-secondary">
+        <i class="fas fa-check-circle fs-5 text-success-emphasis" aria-hidden="true"></i>
+        <span>{{ 'notification.empty'|trans }}</span>
     </div>
 {% else %}
     <h6 class="dropdown-header">{{ 'notification.title'|trans }}</h6>

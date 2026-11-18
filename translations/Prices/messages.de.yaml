@@ -12,6 +12,8 @@ price.appartment: Zimmerpreis
 price.appartment.hint: 'Nur auszufüllen, wenn Typ: Zimmerpreis gewählt.'
 price.breakfast: Frühstück
 price.category: Zimmerkategorie
+price.list.empty: 'Noch keine Preise'
+price.list.empty.hint: 'Lege über „Preis hinzufügen“ einen Preis für deine Zimmer an.'
 price.category.all: 'Alle Kategorien'
 price.category.misc.hint: 'Optional: Ohne Auswahl gilt der Preis für alle Zimmerkategorien.'
 price.overview.section.appartment: Zimmerpreise
@@ -50,6 +52,9 @@ price.package.error.amount_over_total: 'Die Betrags-Komponenten überschreiten d
 price.daysinweek: 'Gültigkeit Wochentage'
 price.delete.ask: 'Wollen Sie diesen Preis wirklich löschen?'
 price.description: Beschreibung
+price.edit: 'Preis bearbeiten'
+price.enable: 'Einschalten'
+price.disable: 'Ausschalten'
 price.double: 'Doppelzimmer (1 Nacht)'
 price.end: Bis
 price.flash.create.conflict: 'Die Preiskategorie konnte nicht gespeichert werden, da es Konflikte mit den folgenden aktiven Kategorien gibt:'

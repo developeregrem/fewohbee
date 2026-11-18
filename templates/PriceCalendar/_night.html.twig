@@ -81,7 +81,7 @@
             <div class="d-flex flex-wrap gap-1">
                 {% for weekday in 1..7 %}
                     <input type="checkbox" class="btn-check" id="day-price-weekday-{{ weekday }}" name="weekdays[]" value="{{ weekday }}" checked>
-                    <label class="btn btn-sm btn-outline-primary" for="day-price-weekday-{{ weekday }}">{{ ('booking_rules.night_' ~ weekday)|trans }}</label>
+                    <label class="btn btn-sm btn-secondary" for="day-price-weekday-{{ weekday }}">{{ ('booking_rules.night_' ~ weekday)|trans }}</label>
                 {% endfor %}
             </div>
         </details>
@@ -90,7 +90,7 @@
         <div class="d-grid gap-2 mt-3">
             <button type="submit" name="intent" value="save" class="btn btn-primary"><i class="fas fa-save me-1"></i>{{ 'price_calendar.save'|trans }}</button>
             {% if day.dayPrice %}
-                <button type="submit" name="intent" value="reset" class="btn btn-outline-secondary">{{ 'price_calendar.reset_button'|trans }}</button>
+                <button type="submit" name="intent" value="reset" class="btn btn-secondary">{{ 'price_calendar.reset_button'|trans }}</button>
             {% endif %}
         </div>
         <p class="small text-body-secondary mt-3 mb-0">{{ 'price_calendar.help'|trans }}</p>

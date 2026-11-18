@@ -93,7 +93,7 @@ export default class extends Controller {
 
         const cancel = document.createElement('button');
         cancel.type = 'button';
-        cancel.className = 'btn btn-outline-secondary btn-sm';
+        cancel.className = 'btn btn-secondary btn-sm';
         cancel.textContent = this.cancelLabelValue || 'Cancel';
         cancel.addEventListener('click', () => this._hidePopover());
         actions.appendChild(cancel);

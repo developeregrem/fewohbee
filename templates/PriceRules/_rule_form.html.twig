@@ -54,7 +54,7 @@
                 {% for choice in form.raise %}
                     <input type="radio" class="btn-check" id="{{ choice.vars.id }}" name="{{ choice.vars.full_name }}"
                            value="{{ choice.vars.value }}"{{ choice.vars.checked ? ' checked' }}>
-                    <label class="btn btn-outline-primary" for="{{ choice.vars.id }}">{{ choice.vars.label|trans }}</label>
+                    <label class="btn btn-secondary" for="{{ choice.vars.id }}">{{ choice.vars.label|trans }}</label>
                 {% endfor %}
             </div>
             {% do form.raise.setRendered %}
@@ -98,7 +98,7 @@
             {% for day in form.weekdays %}
                 <input type="checkbox" class="btn-check" id="{{ day.vars.id }}" name="{{ day.vars.full_name }}"
                        value="{{ day.vars.value }}"{{ day.vars.checked ? ' checked' }}>
-                <label class="btn btn-sm btn-outline-primary" for="{{ day.vars.id }}">{{ day.vars.label|trans }}</label>
+                <label class="btn btn-sm btn-secondary" for="{{ day.vars.id }}">{{ day.vars.label|trans }}</label>
             {% endfor %}
         </div>
         {% do form.weekdays.setRendered %}

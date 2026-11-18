@@ -36,15 +36,10 @@
                     <td>{{ ruleUi.conditionsList(rule.conditions) }}</td>
                     <td>{{ ruleUi.actionSummary(rule.action, accountsById, taxRatesById) }}</td>
                     <td class="data-table-actions text-end">
-                        <form method="post" action="{{ path('bank_import.rules.toggle', {'id': rule.id}) }}" class="d-inline">
-                            <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ rule.id) }}">
-                            {% set toggleLabel = (rule.isEnabled ? 'accounting.bank_import.rules.action.disable' : 'accounting.bank_import.rules.action.enable')|trans %}
-                            <button type="submit"
-                                    class="btn btn-icon{% if rule.isEnabled %} text-success-emphasis{% endif %}"
-                                    title="{{ toggleLabel }}" aria-label="{{ toggleLabel }}" aria-pressed="{{ rule.isEnabled ? 'true' : 'false' }}">
-                                <i class="fas fa-lg {% if rule.isEnabled %}fa-toggle-on{% else %}fa-toggle-off{% endif %}" aria-hidden="true"></i>
-                            </button>
-                        </form>
+                        <twig:ActiveToggle :action="path('bank_import.rules.toggle', {'id': rule.id})"
+                                           :token="csrf_token('toggle' ~ rule.id)" :active="rule.isEnabled"
+                                           :enableLabel="'accounting.bank_import.rules.action.enable'|trans"
+                                           :disableLabel="'accounting.bank_import.rules.action.disable'|trans"/>
                         <twig:IconButton icon="pen" :label="'button.edit'|trans" :href="path('bank_import.rules.edit', {'id': rule.id})"/>
                         <button type="button" class="btn btn-icon text-danger"
                                 title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"

@@ -26,7 +26,7 @@
             <p class="text-body-secondary small mb-0 mt-1">{{ 'accounting.bank_import.drafts.retention'|trans({'%days%': constant('App\\Entity\\BankImportDraft::RETENTION_DAYS')}) }}</p>
         </div>
         <div class="table-responsive">
-            <table class="table table-hover align-middle data-table data-table-stack">
+            <table class="table table-hover align-middle data-table data-table-stack" data-controller="row-link" data-action="click->row-link#open">
                 <thead>
                     <tr>
                         <th>{{ 'accounting.bank_import.drafts.file'|trans }}</th>
@@ -46,7 +46,7 @@
                     <tr>
                         <td>
                             {# The file name opens the import #}
-                            <a href="{{ path('bank_import.preview', {'sessionImportId': draft.id}) }}" class="data-table-link"
+                            <a href="{{ path('bank_import.preview', {'sessionImportId': draft.id}) }}" class="data-table-link" data-row-link-target="link"
                                title="{{ 'accounting.bank_import.drafts.open'|trans }}">
                                 <i class="fas fa-file-csv text-body-secondary" aria-hidden="true"></i>
                                 <span class="data-table-link-text">{{ state.originalFilename }}</span>

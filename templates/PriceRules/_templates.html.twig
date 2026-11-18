@@ -10,7 +10,7 @@
 <p class="text-body-secondary small">{{ 'price_rules.template.intro'|trans }}</p>
 <div class="d-grid gap-2">
     {% for template, icon in templates %}
-        <button type="button" class="btn btn-outline-secondary text-start d-flex align-items-center gap-3 py-2"
+        <button type="button" class="btn btn-secondary text-start d-flex align-items-center gap-3 py-2"
                 data-action="price-rules#openOffcanvas"
                 data-url="{{ path('prices.rules.new', {'template': template}) }}"
                 data-offcanvas-title="{{ ('price_rules.template.' ~ template)|trans }}">

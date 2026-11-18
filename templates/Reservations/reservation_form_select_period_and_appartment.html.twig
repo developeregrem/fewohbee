@@ -27,14 +27,12 @@
                                 · {{ reservation.reservationStatus|display_name }}
                             </span>
                         </a>
-                        <a href="#" class="btn btn-sm btn-link text-body-secondary"
+                        <a href="#" class="btn btn-icon"
                            data-action="click->reservations#toggleAppartmentOptionsAction" data-appartment-id="{{ key }}"
-                           title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}">
-                            <i class="fas fa-edit"></i></a>
-                        <a href="#" class="btn btn-sm btn-link text-danger"
+                           title="{{ 'button.edit'|trans }}" aria-label="{{ 'button.edit'|trans }}"><i class="fas fa-pen" aria-hidden="true"></i></a>
+                        <a href="#" class="btn btn-icon text-danger"
                            data-action="click->reservations#deleteAppartmentAction" data-appartment-id="{{ key }}"
-                           title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}">
-                            <i class="fas fa-trash-alt"></i></a>
+                           title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt" aria-hidden="true"></i></a>
                     </div>
                     <div id="appartment-{{ key }}" class="d-none mt-3">
                         <form id="appartment-options-{{ key }}">

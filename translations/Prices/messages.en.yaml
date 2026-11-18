@@ -12,6 +12,8 @@ price.appartment: Room
 price.appartment.hint: 'Only to be filled in if type: room price selected.'
 price.breakfast: Breakfast
 price.category: Category
+price.list.empty: 'No prices yet'
+price.list.empty.hint: 'Add a price for your rooms with “Add price”.'
 price.category.all: All categories
 price.category.misc.hint: 'Optional: without a selection the price applies to every room category.'
 price.overview.section.appartment: Room prices
@@ -61,6 +63,9 @@ price.package.error.amount_over_total: The fixed-amount components exceed the to
 price.daysinweek: Validity days of the week
 price.delete.ask: Do you really want to delete this price?
 price.description: Description
+price.edit: 'Edit price'
+price.enable: 'Switch on'
+price.disable: 'Switch off'
 price.double: Double room (1 night)
 price.end: To
 price.flash.create.conflict: >-

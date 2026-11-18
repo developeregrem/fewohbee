@@ -1,12 +1,13 @@
 {% extends 'base.html.twig' %}
 {% import 'PriceCalendar/_macros.html.twig' as cal %}
 
-{% block title %}
-    {{ parent() }} - {{ 'price_calendar.title'|trans }}
-{% endblock %}
+{% block title %}{{ parent() }} - {{ 'price_calendar.title'|trans }}{% endblock %}
+
+{% block page_title %}{{ 'nav.prices'|trans }}{% endblock %}
 
 {% block content %}
-<div class="container" data-controller="price-calendar" data-price-calendar-load-error="{{ 'price_rules.load_error'|trans }}">
+<div class="container" data-controller="price-calendar swipe-nav" data-price-calendar-load-error="{{ 'price_rules.load_error'|trans }}">
+    <twig:PageHeader :title="'nav.prices'|trans"/>
     {% include 'Prices/_tabs.html.twig' with {'active': 'calendar'} %}
 
     <p class="text-body-secondary">{{ 'price_calendar.intro'|trans }}</p>
@@ -50,15 +51,14 @@
         <div class="alert alert-info">{{ 'price_calendar.nothing'|trans }}</div>
     {% else %}
         {% set query = {'subsidiary': subsidiary.id, 'category': category.id, 'persons': persons} %}
-        <div class="d-flex align-items-center justify-content-between mb-2">
-            {% if previousMonth %}
-                <a class="btn btn-sm btn-outline-secondary" href="{{ path('prices.calendar', query|merge({'month': previousMonth|date('Y-m')})) }}" aria-label="{{ 'price_calendar.previous'|trans }}"><i class="fas fa-chevron-left"></i></a>
-            {% else %}
-                {# Keeps the month centered; past months cannot be opened. #}
-                <span class="btn btn-sm btn-outline-secondary invisible" aria-hidden="true"><i class="fas fa-chevron-left"></i></span>
-            {% endif %}
-            <h5 class="mb-0">{{ ('price_calendar.month_' ~ month|date('n'))|trans }} {{ month|date('Y') }}</h5>
-            <a class="btn btn-sm btn-outline-secondary" href="{{ path('prices.calendar', query|merge({'month': nextMonth|date('Y-m')})) }}" aria-label="{{ 'price_calendar.next'|trans }}"><i class="fas fa-chevron-right"></i></a>
+        {# Arrows and a sideways swipe change the month; past months cannot be opened #}
+        <div class="page-toolbar mb-2">
+            <twig:Pager links
+                        :previousHref="previousMonth ? path('prices.calendar', query|merge({'month': previousMonth|date('Y-m')})) : null"
+                        :nextHref="path('prices.calendar', query|merge({'month': nextMonth|date('Y-m')}))"
+                        :previousLabel="'price_calendar.previous'|trans" :nextLabel="'price_calendar.next'|trans">
+                <span class="input-group-text">{{ ('price_calendar.month_' ~ month|date('n'))|trans }} {{ month|date('Y') }}</span>
+            </twig:Pager>
         </div>
         <p class="small text-body-secondary mb-2">
             <i class="fas fa-wand-magic-sparkles text-primary"></i> {{ 'price_calendar.legend.rules'|trans }}
@@ -94,7 +94,7 @@
                 {% for blank in 1..leading %}<div></div>{% endfor %}
             {% endif %}
             {% for day in nights %}
-                <button type="button" class="btn btn-outline-secondary text-start p-2 price-calendar-cell{{ day.past ? ' disabled opacity-50' }}"
+                <button type="button" class="btn btn-secondary text-start p-2 price-calendar-cell{{ day.past ? ' disabled opacity-50' }}"
                         {% if not day.past %}data-action="price-calendar#openNight" data-url="{{ path('prices.calendar.night', query|merge({'night': day.night|date('Y-m-d')})) }}" data-title="{{ cal.nightTitle(day.night) }}"{% endif %}>
                     <span class="d-flex justify-content-between align-items-start">
                         <span class="fw-semibold">{{ day.night|date('j') }}</span>

@@ -84,6 +84,11 @@
     color: var(--feb-primary-text);
 }
 
+/* A row that opens as a whole (row-link controller) */
+.data-table[data-controller~="row-link"] > tbody > tr:has([data-row-link-target~="link"]) {
+    cursor: pointer;
+}
+
 .data-table-actions {
     width: 1%;
     white-space: nowrap;

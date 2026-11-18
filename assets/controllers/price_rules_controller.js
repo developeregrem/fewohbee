@@ -76,33 +76,6 @@ export default class extends Controller {
     }
 
     /** Switches a rule on or off in place, keeping the scroll position of a long list. */
-    async toggleRule(event) {
-        event.preventDefault();
-        const form = event.currentTarget;
-        const response = await fetch(form.action, {
-            method: 'POST',
-            body: new FormData(form),
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        });
-        if (!response.ok) {
-            return;
-        }
-
-        const row = form.closest('li');
-        const nowEnabled = row.classList.contains('opacity-50');
-        row.classList.toggle('opacity-50', !nowEnabled);
-        const badge = row.querySelector('[data-disabled-badge]');
-        if (badge) badge.hidden = nowEnabled;
-
-        const button = form.querySelector('button');
-        button.title = nowEnabled ? button.dataset.disableLabel : button.dataset.enableLabel;
-        button.classList.toggle('btn-success', nowEnabled);
-        button.classList.toggle('btn-outline-secondary', !nowEnabled);
-        const icon = button.querySelector('i');
-        icon?.classList.toggle('fa-toggle-on', nowEnabled);
-        icon?.classList.toggle('fa-toggle-off', !nowEnabled);
-    }
-
     changed() {
         this.refreshFields();
         clearTimeout(this.previewTimer);

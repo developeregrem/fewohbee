@@ -73,11 +73,9 @@
                         <td>{{ proposal.status.labelKey|trans }}</td>
                         <td class="small text-muted">{{ proposal.decidedAt ? proposal.decidedAt|date('d.m.Y H:i') }}</td>
                         <td class="text-end">
-                            <a href="{{ path('journal.receipts.show', {'id': proposal.id}) }}" class="btn btn-sm btn-link"
+                            <a href="{{ path('journal.receipts.show', {'id': proposal.id}) }}" class="btn btn-icon"
                                title="{{ 'accounting.receipt_proposal.details'|trans }}"
-                               aria-label="{{ 'accounting.receipt_proposal.details'|trans }}">
-                                <i class="fas fa-info-circle" aria-hidden="true"></i>
-                            </a>
+                               aria-label="{{ 'accounting.receipt_proposal.details'|trans }}"><i class="fas fa-info-circle" aria-hidden="true"></i></a>
                         </td>
                     </tr>
                 {% endfor %}

@@ -19,3 +19,23 @@
 .price-calendar-cell {
     min-height: 6.5rem;
 }
+
+/* Base prices: an inactive price stays readable but steps back */
+.price-table > tbody > tr.price-inactive > td,
+.price-table > tbody > tr.price-inactive .data-table-link-text {
+    color: var(--feb-text-muted);
+}
+
+.price-table .price-amount {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Room price or other price, as an icon before the name */
+.price-table .data-table-link {
+    gap: .5rem;
+}
+
+.price-table .price-type {
+    flex: none;
+    color: var(--feb-text-subtle);
+}

@@ -88,7 +88,7 @@
                 {# Not every guest checks in online; the desk check-in closes the gap. #}
                 <form method="post" action="{{ path('reservations.guest_checkin.desk', {'id': reservation.id}) }}" data-action="submit->guest-checkin#post">
                     <input type="hidden" name="_token" value="{{ csrf_token('guest-checkin-' ~ reservation.id) }}">
-                    <button type="submit" class="btn btn-sm btn-outline-success" title="{{ 'guest_checkin.tab.desk_hint'|trans }}"><i class="fas fa-check me-1"></i>{{ 'guest_checkin.tab.desk_mark'|trans }}</button>
+                    <button type="submit" class="btn btn-sm btn-secondary" title="{{ 'guest_checkin.tab.desk_hint'|trans }}"><i class="fas fa-check me-1"></i>{{ 'guest_checkin.tab.desk_mark'|trans }}</button>
                 </form>
             </div>
             {% if invitation and invitation.template and invitation.recipients is empty %}

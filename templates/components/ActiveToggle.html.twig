@@ -1,0 +1,22 @@
+{#
+ # Switches a record on or off from a list: a form posting to the record's toggle route, shown as
+ # a switch icon among the row's actions (green while on). With fetch the active-toggle controller
+ # switches without reloading, so a long list keeps its scroll position; it marks the row (the
+ # closest tr or li) with inactiveClass while off and shows its [data-inactive-badge].
+ #
+ #   <twig:ActiveToggle :action="path('prices.toggle.price', {id: price.id})"
+ #                      :token="csrf_token('price-toggle-' ~ price.id)" :active="price.active"
+ #                      :enableLabel="'…'|trans" :disableLabel="'…'|trans"
+ #                      fetch inactiveClass="price-inactive"/>
+ #}
+{% props action, token, active, enableLabel, disableLabel, fetch = false, inactiveClass = '' %}
+{% set label = active ? disableLabel : enableLabel %}
+<form method="post" action="{{ action }}" {{ attributes.defaults({class: 'd-inline'}) }}
+      {%- if fetch %} data-controller="active-toggle" data-action="submit->active-toggle#toggle" data-active-toggle-inactive-class-value="{{ inactiveClass }}"{% endif %}>
+    <input type="hidden" name="_token" value="{{ token }}">
+    <button type="submit" class="btn btn-icon active-toggle{{ active ? ' is-on' }}"
+            aria-pressed="{{ active ? 'true' : 'false' }}" title="{{ label }}" aria-label="{{ label }}"
+            data-enable-label="{{ enableLabel }}" data-disable-label="{{ disableLabel }}">
+        <i class="fas fa-lg {{ active ? 'fa-toggle-on' : 'fa-toggle-off' }}" aria-hidden="true"></i>
+    </button>
+</form>

@@ -6,7 +6,7 @@
     </twig:EmptyState>
 {% else %}
     <div class="table-responsive">
-        <table class="table table-hover align-middle data-table data-table-stack invoice-table">
+        <table class="table table-hover align-middle data-table data-table-stack invoice-table" data-controller="row-link" data-action="click->row-link#open">
             <thead>
             <tr>
                 <th>{{ 'invoice.number'|trans }}</th>
@@ -24,7 +24,7 @@
                 {% set title = 'invoice.number.short'|trans ~ ' ' ~ invoice.number %}
                 <tr>
                     <td>
-                        <a href="#" class="data-table-link"
+                        <a href="#" class="data-table-link" data-row-link-target="link"
                            data-action="click->invoices#showInvoiceAction"
                            data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
                            data-title="{{ title }}"

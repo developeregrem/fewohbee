@@ -102,9 +102,11 @@ details[open] > summary > .fhb-details-chevron {
     transform: rotate(180deg);
 }
 
-/* A choice between views (btn-group of btn-secondary): the current one in the primary tint */
+/* A choice between views (btn-group of btn-secondary), filter chips and choice buttons
+   (btn-check labels): the current one in the primary tint */
 .view-switch > .btn,
-.filter-chip {
+.filter-chip,
+.btn-check + .btn-secondary {
     --bs-btn-active-bg: var(--feb-primary-subtle);
     --bs-btn-active-color: var(--feb-primary-text);
     --bs-btn-active-border-color: var(--feb-primary-subtle-border);
@@ -214,6 +216,13 @@ details[open] > summary > .fhb-details-chevron {
     justify-content: center;
     width: 2.25rem;
     vertical-align: middle;
+}
+
+/* Switch of a record among a row's actions (ActiveToggle): green while on */
+.active-toggle.is-on {
+    --bs-btn-color: var(--feb-success-text);
+    --bs-btn-hover-color: var(--feb-success-text);
+    --bs-btn-active-color: var(--feb-success-text);
 }
 
 /* A count on an icon button, e.g. open receipt proposals */

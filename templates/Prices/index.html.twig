@@ -1,44 +1,36 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}
-    {{ parent() }} -  {{ 'object.title'|trans }}
-{% endblock %}
+{% block title %}{{ parent() }} - {{ 'nav.prices'|trans }}{% endblock %}
 
-{% block description %}
-    {{ parent() }} -  {{ 'object.title'|trans }}
-{% endblock %}
+{% block description %}{{ parent() }} - {{ 'nav.prices'|trans }}{% endblock %}
+
+{% block page_title %}{{ 'nav.prices'|trans }}{% endblock %}
 
 {% block content %}
-<div class="container" data-controller="settings prices">
+<div class="container fab-add-clearance" data-controller="settings prices">
+    <twig:PageHeader :title="'nav.prices'|trans">
+        <twig:AddButton :label="'nav.price.add'|trans"
+                        data-action="click->settings#openModalAction"
+                        data-url="{{ path('prices.new.price') }}"
+                        data-title="{{ 'nav.price.add'|trans }}"
+                        data-bs-toggle="modal" data-bs-target="#modalCenter"/>
+    </twig:PageHeader>
     {% include 'Prices/_tabs.html.twig' with {'active': 'prices'} %}
-    <div class="row">
-        <div class="col">
-            <button type="button" class="btn btn-secondary"
-                    data-action="click->settings#openModalAction"
-                    data-url="{{ path('prices.new.price') }}"
-                    data-title="{{ 'nav.price.add'|trans }}"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modalCenter">
-                <i class="fas fa-plus"></i> {{ 'nav.price.add'|trans }}</button>
-        </div>
-    </div>
-        
 
-        
-    <div class="row mt-3">
-        <div class="col">
-        {% for group in priceGroups %}
-            <div class="card mb-3">
-                <div class="card-header">
-                  {{ 'price.category'|trans }}:
-                  <strong>{% if group.roomCategories is empty %}{{ 'price.category.all'|trans }}{% else %}{{ group.roomCategories|map(category => category.name)|join(', ') }}{% endif %}</strong>
-                </div>
-                <div class="card-body">
-                    {% include 'Prices/price_table.html.twig' with {'apartmentPrices': group.apartmentPrices, 'miscPrices': group.miscPrices} %}
-                </div>
+    {% for group in priceGroups %}
+        <div class="card data-card mb-3">
+            <div class="data-toolbar">
+                <h2 class="h6 mb-0 price-group-title">
+                    <span class="fw-normal text-body-secondary">{{ 'price.category'|trans }}:</span>
+                    <span class="price-group-categories">{% if group.roomCategories is empty %}{{ 'price.category.all'|trans }}{% else %}{{ group.roomCategories|map(category => category.name)|join(', ') }}{% endif %}</span>
+                </h2>
             </div>
-        {% endfor %}
+            {% include 'Prices/price_table.html.twig' with {'apartmentPrices': group.apartmentPrices, 'miscPrices': group.miscPrices} %}
         </div>
-    </div>
+    {% else %}
+        <div class="card">
+            <twig:EmptyState icon="tags" :title="'price.list.empty'|trans">{{ 'price.list.empty.hint'|trans }}</twig:EmptyState>
+        </div>
+    {% endfor %}
 </div>
 {% endblock %}

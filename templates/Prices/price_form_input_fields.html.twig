@@ -2,7 +2,7 @@
 {% import _self as units %}
 {% set dayUnit = price.isForEventSpaces %}
 {% set examplePlaceholders = {'%persons%': '__PERSONS__', '%base%': '__BASE__ ' ~ currency_symbol, '%surcharge%': '__SURCHARGE__ ' ~ currency_symbol, '%total%': '__TOTAL__ ' ~ currency_symbol} %}
-<fieldset id="entry-form-fieldset-{{ price.id }}" {% if price.id != "new" %} disabled {% endif %}>
+<fieldset id="entry-form-fieldset-{{ price.id }}">
     <div class="accordion" id="accordion" data-controller="price-components price-occupancy" data-price-components-price-id-value="{{ price.id }}"
          data-price-occupancy-example-value="{{ 'price.extra_person_surcharge.example'|trans(examplePlaceholders) }}"
          data-price-occupancy-example-day-value="{{ 'price.extra_person_surcharge.example.day'|trans(examplePlaceholders) }}">
@@ -29,12 +29,13 @@
                         <label for="price-{{ price.id }}" class="col-sm-4 col-form-label text-sm-end">{{ 'price.price'|trans }} *</label>
 
                         <div class="col-sm-4">
-                            <input type="text" class="form-control" name="price-{{ price.id }}"
+                            <input type="text" class="form-control" name="price-{{ price.id }}" id="price-{{ price.id }}"
                                    value="{{ price.price|number_format(2, ',', '.') }}" required
                                    data-price-occupancy-target="price" data-action="input->price-occupancy#update">
                         </div>
-                        <div class="col">
-                            <div class="form-check form-switch mt-4">
+                        {# Beside the price field, at its height #}
+                        <div class="col d-flex align-items-center">
+                            <div class="form-check form-switch my-2">
                                 <input type="checkbox" name="includesVat-{{ price.id }}" id="includesVat-{{ price.id }}" class="form-check-input"{% if price.includesVat == 1 %} checked {% endif %} value="1">
                                 <label class="form-check-label" for="includesVat-{{ price.id }}">{{ 'price.includesvat'|trans }}</label>
                             </div>
@@ -500,13 +501,13 @@
                                             </select>
                                         </td>
                                         <td class="text-center"><input type="radio" class="form-check-input" name="component-remainder-{{ price.id }}" value="{{ rowKey }}"{% if component.isRemainder %} checked{% endif %} data-action="change->price-components#toggleRemainderAction"></td>
-                                        <td><button type="button" class="btn btn-sm btn-link text-danger" data-action="click->price-components#removeRowAction"><i class="fas fa-times"></i></button></td>
+                                        <td><button type="button" class="btn btn-icon text-danger" data-action="click->price-components#removeRowAction" title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-times" aria-hidden="true"></i></button></td>
                                     </tr>
                                 {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                        <button type="button" class="btn btn-sm btn-secondary"
                                 data-action="click->price-components#addRowAction"
                                 data-price-id="{{ price.id }}">
                             <i class="fas fa-plus"></i> {{ 'price.package.add_row'|trans }}
@@ -545,7 +546,7 @@
                 </select>
             </td>
             <td class="text-center"><input type="radio" class="form-check-input" name="component-remainder-{{ price.id }}" value="__KEY__" data-action="change->price-components#toggleRemainderAction"></td>
-            <td><button type="button" class="btn btn-sm btn-link text-danger" data-action="click->price-components#removeRowAction"><i class="fas fa-times"></i></button></td>
+            <td><button type="button" class="btn btn-icon text-danger" data-action="click->price-components#removeRowAction" title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-times" aria-hidden="true"></i></button></td>
         </tr>
     </template>
     <input name="_csrf_token" value="{{ token }}" type="hidden">

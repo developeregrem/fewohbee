@@ -306,7 +306,7 @@ final class PriceSettingsControllerTest extends WebTestCase
         // Categories are listed in creation order.
         $em = $this->em();
         $names = array_map(static fn (int $id): string => (string) $em->find(RoomCategory::class, $id)?->getName(), [$single, $double]);
-        self::assertStringContainsString(implode(', ', $names), $cards->filter('.card-header')->text());
+        self::assertStringContainsString(implode(', ', $names), $cards->filter('.price-group-categories')->text());
 
         $sections = $cards->filter('tbody');
         self::assertCount(2, $sections);
@@ -321,7 +321,7 @@ final class PriceSettingsControllerTest extends WebTestCase
         $crawler = $client->request('GET', '/settings/prices/');
 
         self::assertResponseIsSuccessful();
-        $headers = $crawler->filter('.card-header')->each(static fn ($header): string => trim($header->filter('strong')->text()));
+        $headers = $crawler->filter('.price-group-categories')->each(static fn ($header): string => trim($header->text()));
         $expected = array_map(
             static fn (RoomCategory $category): string => (string) $category->getName(),
             $this->em()->getRepository(RoomCategory::class)->findBy([], ['id' => 'ASC']),
@@ -342,7 +342,7 @@ final class PriceSettingsControllerTest extends WebTestCase
         $crawler = $client->request('GET', '/settings/prices/');
 
         self::assertResponseIsSuccessful();
-        $names = $crawler->filter('.card tbody tr td:first-child')->each(static fn ($cell): string => trim($cell->text()));
+        $names = $crawler->filter('.card tbody .data-table-link-text')->each(static fn ($cell): string => trim($cell->text()));
         $ours = array_values(array_filter($names, static fn (string $name): bool => str_starts_with($name, self::PREFIX)));
         self::assertSame([self::PREFIX.'overview-a', self::PREFIX.'overview-b'], $ours);
     }
@@ -417,6 +417,56 @@ final class PriceSettingsControllerTest extends WebTestCase
         self::assertSame([self::PREFIX.'small', self::PREFIX.'large'], $this->apartmentPriceDescriptions($single, self::PERSONS - 1));
     }
 
+    /** The switch in the list: off and on again without reloading the page. */
+    public function testAPriceSwitchesOffAndOnFromTheList(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+        $this->postPrice($client, 'toggle', 1, [$single]);
+        $price = $this->findPrice('toggle');
+        self::assertNotNull($price);
+        $id = (int) $price->getId();
+
+        $this->postToggle($client, $id, $this->toggleToken($client, $id));
+        self::assertResponseStatusCodeSame(204);
+        self::assertFalse($this->findPrice('toggle')?->getActive());
+
+        $this->postToggle($client, $id, $this->toggleToken($client, $id));
+        self::assertResponseStatusCodeSame(204);
+        self::assertTrue($this->findPrice('toggle')?->getActive());
+    }
+
+    public function testWithoutAValidTokenThePriceStaysAsItIs(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+        $this->postPrice($client, 'toggle-token', 1, [$single]);
+        $id = (int) $this->findPrice('toggle-token')?->getId();
+
+        $this->postToggle($client, $id, 'not-the-token');
+
+        self::assertResponseStatusCodeSame(403);
+        self::assertTrue($this->findPrice('toggle-token')?->getActive());
+    }
+
+    /** Like saving the form: a price is only switched on while no other active one conflicts. */
+    public function testAConflictingPriceIsNotSwitchedOn(): void
+    {
+        $client = $this->authenticatedClient();
+        [$single] = $this->categoryIds();
+        $this->postPrice($client, 'toggle-active', 2, [$single]);
+        $this->postPrice($client, 'toggle-twin', 2, [$single], 'new', ['active-new' => null]);
+        $twin = $this->findPrice('toggle-twin');
+        self::assertNotNull($twin);
+        self::assertFalse($twin->getActive());
+        $id = (int) $twin->getId();
+
+        $this->postToggle($client, $id, $this->toggleToken($client, $id));
+
+        self::assertResponseStatusCodeSame(409);
+        self::assertFalse($this->findPrice('toggle-twin')?->getActive());
+    }
+
     protected function tearDown(): void
     {
         if (null !== self::$kernel) {
@@ -464,6 +514,20 @@ final class PriceSettingsControllerTest extends WebTestCase
             'number-of-persons-'.$id => (string) self::PERSONS,
             'min-stay-'.$id => (string) self::MIN_STAY,
         ], $overrides));
+    }
+
+    /** The token of the switch in the list, as the overview renders it. */
+    private function toggleToken(KernelBrowser $client, int $id): string
+    {
+        $crawler = $client->request('GET', '/settings/prices/');
+
+        return (string) $crawler->filter(sprintf('form[action="/settings/prices/%d/toggle"] input[name="_token"]', $id))->attr('value');
+    }
+
+    private function postToggle(KernelBrowser $client, int $id, string $token): void
+    {
+        $this->em()->clear();
+        $client->request('POST', sprintf('/settings/prices/%d/toggle', $id), ['_token' => $token], [], ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']);
     }
 
     /**

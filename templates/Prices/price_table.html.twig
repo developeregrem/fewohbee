@@ -1,107 +1,98 @@
+{# The prices of one group of room categories, room prices and then other prices. The
+   description opens the price for editing; on phones a price is a block: description, then persons, period,
+   weekdays and amount beneath. #}
 {% use "common/delete_popover.html.twig" %}
 
 <div class="table-responsive">
-<table class="table table-bordered table-hover">
+<table class="table table-hover align-middle data-table data-table-stack price-table" data-controller="row-link" data-action="click->row-link#open">
 <thead>
 <tr>
     <th>{{ 'price.description'|trans }}</th>
     <th class="text-center">{{ 'price.persons'|trans }}</th>
     <th>{{ 'price.season'|trans }}</th>
     <th>{{ 'price.daysinweek'|trans }}</th>
-    <th>{{ 'price.price'|trans }}</th>
-    <th>{{ 'price.vat'|trans }}</th>
-    <th>{{ 'price.active'|trans }}</th>
-    <th>{{ 'base.action'|trans }}</th>
+    <th class="text-end">{{ 'price.price'|trans }}</th>
+    <th class="text-end">{{ 'price.vat'|trans }}</th>
+    <th class="data-table-actions"><span class="visually-hidden">{{ 'base.action'|trans }}</span></th>
 </tr>
 </thead>
+{# Room prices first, then other prices; an icon before the name tells them apart #}
 {% set sections = [
-    {'prices': apartmentPrices, 'label': 'price.overview.section.appartment', 'icon': 'fa-bed'},
-    {'prices': miscPrices, 'label': 'price.overview.section.miscellaneous', 'icon': 'fa-tags'},
+    {'prices': apartmentPrices, 'type': 'price.appartment', 'icon': 'fa-bed'},
+    {'prices': miscPrices, 'type': 'price.miscellaneous', 'icon': 'fa-tag'},
 ] %}
 {% for section in sections|filter(section => section.prices is not empty) %}
 <tbody>
-    <tr class="table-light">
-        <th colspan="8"><i class="fas {{ section.icon }} text-secondary me-1"></i> {{ section.label|trans }}</th>
-    </tr>
     {% for price in section.prices %}
-    <tr{% if price.active == false %} class="text-secondary"{% endif %}>
+    {% set vat = price.vat|number_format(is_decimal_place_0(price.vat) ? 0 : 2, ',', '.') %}
+    <tr{% if price.active == false %} class="price-inactive"{% endif %}>
         <td>
-            {{ price.description }}
+            <a href="#" class="data-table-link" data-row-link-target="link"
+               data-action="click->settings#openModalAction"
+               data-url="{{ path('prices.get.price', {'id': price.id}) }}"
+               data-title="{{ 'price.edit'|trans }}"
+               data-bs-toggle="modal" data-bs-target="#modalCenter"
+               title="{{ 'button.edit'|trans }}">
+                <span class="price-type" title="{{ section.type|trans }}"><i class="fas {{ section.icon }}" aria-hidden="true"></i><span class="visually-hidden">{{ section.type|trans }}: </span></span>
+                <span class="data-table-link-text">{{ price.description }}</span>
+            </a>
             {% if price.isPackage %}
                 {% set packageComponentCount = price.components|length %}
-                <span class="badge bg-light text-dark border ms-2 align-middle"
+                <span class="badge text-secondary-emphasis bg-secondary-subtle ms-1 align-middle"
                       data-bs-toggle="tooltip"
                       title="{{ 'price.package.overview.tooltip'|trans({'%count%': packageComponentCount}) }}">
-                    <i class="fas fa-layer-group"></i> {{ 'price.package.overview.badge'|trans({'%count%': packageComponentCount}) }}
+                    <i class="fas fa-layer-group" aria-hidden="true"></i> {{ 'price.package.overview.badge'|trans({'%count%': packageComponentCount}) }}
                 </span>
             {% endif %}
+            <span class="cell-narrow badge text-secondary-emphasis bg-secondary-subtle ms-1" data-inactive-badge {{ price.active ? 'hidden' }}>{{ 'price.inactive'|trans }}</span>
         </td>
-        <td class="text-center">
-            {% if price.numberOfPersons is not null %}
+        <td class="cell-meta text-center">
+            <span class="cell-narrow">{{ 'price.persons'|trans }}: </span>
+            {%- if price.numberOfPersons is not null -%}
                 {{ price.hasExtraPersonSurcharge ? 'price.numberofpersons.up_to_count'|trans({'%count%': price.numberOfPersons}) : price.numberOfPersons }}
                 {% if price.hasExtraPersonSurcharge %}
                     <div class="small text-body-secondary text-nowrap">{{ 'price.extra_person_surcharge.short'|trans({'%amount%': price.extraPersonSurcharge|number_format(2, ',', '.') ~ ' ' ~ currency_symbol}) }}</div>
                 {% endif %}
-            {% else %}
+            {%- else -%}
                 -
-            {% endif %}
+            {%- endif -%}
         </td>
-        <td>
-            {% if price.allPeriods %}
-                {{ 'price.abbreviation.alldays'|trans }}                            
-            {% else %}
+        <td class="cell-meta">
+            <span class="cell-narrow">{{ 'price.season'|trans }}: </span>
+            {%- if price.allPeriods -%}
+                {{ 'price.abbreviation.alldays'|trans }}
+            {%- else -%}
                 {% for pricePeriod in price.pricePeriods %}
-                    {{ pricePeriod.start|date('d.m.Y') }} - {{ pricePeriod.end|date('d.m.Y') }}{% if pricePeriod.description %} <span class="text-body-secondary small">{{ pricePeriod.description }}</span>{% endif %}<br />
+                    <span class="d-block d-md-inline-block text-nowrap">{{ pricePeriod.start|date('d.m.Y') }} - {{ pricePeriod.end|date('d.m.Y') }}{% if pricePeriod.description %} <span class="text-body-secondary small">{{ pricePeriod.description }}</span>{% endif %}</span>
                 {% endfor %}
-            {% endif %}
+            {%- endif -%}
         </td>
-        <td>
-            {% if price.alldays %}
-                {{ 'price.abbreviation.alldays'|trans }}                            
-            {% else %}
-                {% if price.monday == true %}{{ 'price.abbreviation.monday'|trans }}{% endif %}
-                {% if price.tuesday == true %}{{ 'price.abbreviation.tuesday'|trans }}{% endif %}
-                {% if price.wednesday == true %}{{ 'price.abbreviation.wednesday'|trans }}{% endif %}
-                {% if price.thursday == true %}{{ 'price.abbreviation.thursday'|trans }}{% endif %}
-                {% if price.friday == true %}{{ 'price.abbreviation.friday'|trans }}{% endif %}
-                {% if price.saturday == true %}{{ 'price.abbreviation.saturday'|trans }}{% endif %}
-                {% if price.sunday == true %}{{ 'price.abbreviation.sunday'|trans }}{% endif %}
-            {% endif %}
+        <td class="cell-meta">
+            <span class="cell-narrow">{{ 'price.daysinweek'|trans }}: </span>
+            {%- if price.alldays -%}
+                {{ 'price.abbreviation.alldays'|trans }}
+            {%- else -%}
+                {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}{% if attribute(price, day) %}{{ ('price.abbreviation.' ~ day)|trans }} {% endif %}{% endfor %}
+            {%- endif -%}
         </td>
-        <td class="text-end">{{ price.price|number_format(2, ',', '.') }}</td>
-        <td class="text-end">
-            {% if is_decimal_place_0(price.vat) %}
-                {{ price.vat|number_format(0, ',', '.') }}
-            {% else %}
-                {{ price.vat|number_format(2, ',', '.') }}
-            {% endif %}
+        <td class="cell-meta text-end text-nowrap price-amount">
+            {{- price.price|number_format(2, ',', '.') }}<span class="cell-narrow"> {{ currency_symbol }} · {{ 'price.vat'|trans }} {{ vat }} %</span>
         </td>
-        <td class="text-center">
-            {% if price.active == true %}
-                <i class="fas fa-check text-success" title="{{ 'price.active'|trans }}" aria-label="{{ 'price.active'|trans }}"></i>
-            {% else %}
-                <i class="fas fa-times text-secondary" title="{{ 'price.inactive'|trans }}" aria-label="{{ 'price.inactive'|trans }}"></i>
-            {% endif %}
-        </td>
-        <td>
-            <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                <i class="fas fa-info-circle"
-                   data-action="click->settings#openModalAction"
-                   data-url="{{ path('prices.get.price', {'id': price.id}) }}"
-                   data-title="{{ 'button.details'|trans }}"></i></a>
-            <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                <i class="fas fa-edit"
-                   data-action="click->settings#openModalAction"
-                   data-url="{{ path('prices.get.price', {'id': price.id}) }}"
-                   data-title="{{ 'button.edit'|trans }}"
-                   data-enable-edit="true"></i></a>
+        <td class="cell-wide text-end">{{ vat }}</td>
+        <td class="cell-actions data-table-actions text-end">
+            <twig:ActiveToggle :action="path('prices.toggle.price', {'id': price.id})"
+                               :token="csrf_token('price-toggle-' ~ price.id)" :active="price.active"
+                               :enableLabel="'price.enable'|trans" :disableLabel="'price.disable'|trans"
+                               fetch inactiveClass="price-inactive"/>
             {% set id = price.id %}
             {% set targetUrl = path('prices.delete.price', {'id': price.id}) %}
-            <a href="#" title="{{ 'button.delete'|trans }}">
-                <i class="fas fa-trash-alt"
+            <button type="button" class="btn btn-icon text-danger"
+                    title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"
                     data-popover="delete"
                     data-title="{{ 'registrationbook.delete.ask'|trans }}"
-                    data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
+                    data-bs-content='{{ block('deletePopoverContent') }}'>
+                <i class="fas fa-trash-alt" aria-hidden="true"></i>
+            </button>
         </td>
     </tr>
     {% endfor %}

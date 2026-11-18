@@ -41,7 +41,7 @@
                         <div class="fw-semibold">{{ reservation.appartment.number }} · {{ reservation.appartment.description }}</div>
                         <div class="small text-body-secondary">{{ 'appartment.bedsmax'|trans }}: {{ reservation.appartment.bedsmax }}</div>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-primary"
+                    <button type="button" class="btn btn-sm btn-secondary"
                             data-action="click->reservations#toggleReservationEditAppartmentsAction"
                             data-appartment-id="{{ reservation.appartment.id }}">
                         <i class="fas fa-exchange-alt me-1"></i> {{ 'reservation.edit.change_room'|trans }}

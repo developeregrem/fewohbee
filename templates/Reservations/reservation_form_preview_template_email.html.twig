@@ -24,7 +24,7 @@
     </fieldset>
     <div class="d-flex align-items-center mt-4 mb-2">
         <h2 class="small text-uppercase fw-semibold text-body-secondary mb-0 me-auto">{{ 'templates.attachment'|trans }}</h2>
-        <a href="#" class="btn btn-sm btn-outline-primary text-nowrap"
+        <a href="#" class="btn btn-sm btn-secondary text-nowrap"
            data-action="click->reservations#selectTemplateForReservationsAction"
            data-url="{{ path('reservations.select.template') }}"
            data-template-id="{{ template.id }}"
@@ -37,15 +37,15 @@
                 <li class="list-group-item d-flex align-items-center gap-2" id="aid-{{ attachment.id }}">
                     <i class="fas {{ attachment.template.templateType.icon }} fa-fw text-body-secondary" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></i>
                     <span class="me-auto text-break">{{ attachment.name }}</span>
-                    <a href="#" class="btn btn-sm btn-link text-body-secondary"
+                    <a href="#" class="btn btn-icon"
                        data-action="click->reservations#exportPDFCorrespondenceAction"
                        data-url="{{ path('correspondence.export.pdf', {'id': attachment.id}) }}"
-                       title="{{ 'button.download'|trans }}" aria-label="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
-                    <a href="#" class="btn btn-sm btn-link text-danger"
+                       title="{{ 'button.download'|trans }}" aria-label="{{ 'button.download'|trans }}"><i class="fas fa-download" aria-hidden="true"></i></a>
+                    <a href="#" class="btn btn-icon text-danger"
                        data-action="click->reservations#deleteAttachmentAction"
                        data-url="{{ path('correspondence.attachment.remove') }}"
                        data-attachment-id="{{ attachment.id }}"
-                       title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>
+                       title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt" aria-hidden="true"></i></a>
                 </li>
             {% endfor %}
         </ul>

@@ -354,6 +354,7 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   `<twig:AddButton>`, `<twig:IconButton>`, `<twig:DataCard>`, `<twig:SearchField>`,
   `<twig:EmptyState>`, `<twig:Avatar>`, `<twig:StatusBadge>`, `<twig:ColorDot>`,
   `<twig:InvoiceStatus>` (payment status of an invoice, same colour everywhere),
+  `<twig:ActiveToggle>` (switch a record on or off from a list, optionally without reloading),
   `<twig:SaveState>` (feedback of a field that saves itself: spinner, a tick that fades out,
   or a warning; switched with `setSaveState()` from `assets/js/save_state.js` - answer
   failures with an error status so the tick only follows a real save),
@@ -367,6 +368,12 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   instead of `<twig:DataCard>` around rows with a delete popover).
   A new component covers a pattern that recurs on several pages, has no logic beyond
   presentation and goes into the styleguide.
+- Buttons look alike for alike actions: actions in a row of a list are icons without a frame
+  (`btn-icon` / `<twig:IconButton>`: `pen` edit, `copy` duplicate, `trash-alt` delete with
+  `text-danger`, on/off with `<twig:ActiveToggle>`); labelled secondary actions and cancel are
+  `btn-secondary`; the one main action is `btn-primary`; a labelled delete or discard in a dialog
+  footer or page header is `btn-outline-danger`. Choice buttons (`btn-check` labels) are
+  `btn-secondary`, the chosen one shows in the primary tint like `.view-switch`.
 - Colours chosen by the operator (reservation status, origin, calendar) are shown with
   `<twig:StatusBadge>` or `<twig:ColorDot>`, which check the value and keep it visible on any
   background. Never use such a colour as a text colour on a surface.
@@ -382,7 +389,10 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   and keep the arrows
   or the select visible. Filters and the period of a page sit in a `.page-toolbar` below the
   page header. Prefer stacked lists
-  (`data-table-stack`) to tables that scroll sideways.
+  (`data-table-stack`) to tables that scroll sideways. Where the name of a row opens it (no own
+  open or edit button), the whole row opens: `data-controller="row-link"
+  data-action="click->row-link#open"` on the table and `data-row-link-target="link"` on the name
+  link; not for tables with fields to fill in.
 - A page names itself with the `page_title` block; the frame shows it in the top bar on phones.
   Navigation entries are described once in `templates/layout/_app_nav.html.twig`.
 - `btn-secondary` is the neutral button, `btn-primary` the one main action of a view. Use

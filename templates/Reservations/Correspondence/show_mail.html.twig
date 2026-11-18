@@ -16,10 +16,10 @@
                     <li class="list-group-item d-flex align-items-center gap-2" id="aid-{{ attachment.id }}">
                         <i class="fas {{ attachment.template.templateType.icon }} fa-fw text-body-secondary" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></i>
                         <span class="me-auto text-break">{{ attachment.name }}</span>
-                        <a href="#" class="btn btn-sm btn-link text-body-secondary"
+                        <a href="#" class="btn btn-icon"
                            data-action="click->reservations#exportPDFCorrespondenceAction"
                            data-url="{{ path('correspondence.export.pdf', {'id': attachment.id}) }}"
-                           title="{{ 'button.download'|trans }}" aria-label="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
+                           title="{{ 'button.download'|trans }}" aria-label="{{ 'button.download'|trans }}"><i class="fas fa-download" aria-hidden="true"></i></a>
                     </li>
                 {% endfor %}
             </ul>

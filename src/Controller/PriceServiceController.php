@@ -233,8 +233,46 @@ class PriceServiceController extends AbstractController
     /**
      * @return Response
      */
+    /**
+     * Switches a price on or off from the list. Like saving the form, open reservations are
+     * promised their prices first, and a price is only switched on while no other active price
+     * conflicts with it. Answers a list's fetch with 204, or 409 with a flash message to show.
+     */
+    #[Route('/{id}/toggle', name: 'prices.toggle.price', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function togglePriceAction(PriceService $ps, PricePromiseService $pricePromises, ManagerRegistry $doctrine, Request $request, int $id): Response
+    {
+        $price = $doctrine->getRepository(Price::class)->find($id);
+        if (!$price instanceof Price) {
+            throw $this->createNotFoundException();
+        }
+        if (!$this->isCsrfTokenValid('price-toggle-'.$id, $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $activate = !$price->getActive();
+        if ($activate) {
+            $conflicts = $ps->findConflictingPrices($price);
+            $conflicts->removeElement($price);
+            if (count($conflicts) > 0) {
+                $this->addFlash('warning', 'price.flash.create.conflict');
+
+                return $request->isXmlHttpRequest()
+                    ? new Response(status: Response::HTTP_CONFLICT)
+                    : $this->redirectToRoute('prices.overview');
+            }
+        }
+
+        $pricePromises->promiseOpenReservations();
+        $price->setActive($activate);
+        $doctrine->getManager()->flush();
+
+        return $request->isXmlHttpRequest()
+            ? new Response(status: Response::HTTP_NO_CONTENT)
+            : $this->redirectToRoute('prices.overview');
+    }
+
     #[Route('/{id}/delete', name: 'prices.delete.price', methods: ['DELETE'])]
-    public function deletePriceAction(CSRFProtectionService $csrf, PriceService $ps, PricePromiseService $pricePromises, ManagerRegistry $doctrine, TranslatorInterface $translator, Request $request, Price $entry)
+    public function deletePriceAction(CSRFProtectionService $csrf, PriceService $ps, PricePromiseService $pricePromises, ManagerRegistry $doctrine, TranslatorInterface $translator, Request $request, Price $entry): Response
     {
         if ($this->isCsrfTokenValid('delete'.$entry->getId(), $request->request->get('_token'))) {
             $pricePromises->promiseOpenReservations();

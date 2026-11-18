@@ -74,7 +74,7 @@
                    own (stateless form protection), which a second one would
                    collide with. #}
                 <button type="button"
-                        class="btn btn-outline-secondary me-2"
+                        class="btn btn-secondary me-2"
                         data-action="click->reservations#unconfirmCalendarEntryAction"
                         data-url="{{ path('reservations.calendar_reminder.unconfirm', {'id': calendarEntry.id}) }}"
                         data-token="{{ csrf_token('unconfirmcalendarentry' ~ calendarEntry.id) }}">

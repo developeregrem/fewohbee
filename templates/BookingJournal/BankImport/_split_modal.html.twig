@@ -34,13 +34,13 @@
 
                 <div data-bank-import-preview-target="splitRows"></div>
 
-                <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
+                <button type="button" class="btn btn-sm btn-secondary mt-2"
                         data-action="click->bank-import-preview#splitAddRow">
                     <i class="fas fa-plus"></i> {{ 'accounting.bank_import.split.add_row'|trans }}
                 </button>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     {{ 'button.cancel'|trans }}
                 </button>
                 <button type="button" class="btn btn-primary" data-action="click->bank-import-preview#splitSubmit">
@@ -97,11 +97,9 @@
             </select>
         </div>
         <div class="col-md-1 text-end">
-            <button type="button" class="btn btn-sm btn-link text-danger"
+            <button type="button" class="btn btn-icon text-danger"
                     title="{{ 'button.delete'|trans }}"
-                    data-action="click->bank-import-preview#splitRemoveRow">
-                <i class="fas fa-trash"></i>
-            </button>
+                    data-action="click->bank-import-preview#splitRemoveRow" aria-label="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
         </div>
     </div>
     <div class="row g-2 mt-1">

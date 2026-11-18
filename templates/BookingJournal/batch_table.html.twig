@@ -2,7 +2,7 @@
    the year or the page changes. On phones a month is a block: name, cash balance, status. #}
 {% if batches|length > 0 %}
     <div class="table-responsive">
-        <table class="table table-hover align-middle data-table data-table-stack">
+        <table class="table table-hover align-middle data-table data-table-stack" data-controller="row-link" data-action="click->row-link#open">
             <thead>
             <tr>
                 <th>{{ 'accounting.journal.batch.month'|trans }}</th>
@@ -17,7 +17,7 @@
                 {% set count = batch.entries|length %}
                 <tr>
                     <td>
-                        <a href="{{ path('journal.batch.entries', {'id': batch.id}) }}" class="data-table-link">
+                        <a href="{{ path('journal.batch.entries', {'id': batch.id}) }}" class="data-table-link" data-row-link-target="link">
                             <span class="data-table-link-text">{{ getLocalizedMonth(batch.month, 'MMMM', app.request.locale) }} {{ batch.year }}</span>
                         </a>
                     </td>

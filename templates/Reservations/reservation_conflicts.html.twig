@@ -19,7 +19,7 @@
                         <div><span class="fw-semibold">{{ reservation.appartment.number }}</span> · {{ sourceName }}</div>
                         <div class="small text-body-secondary">{{ reservationMacros.dates(reservation) }}</div>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                    <button type="button" class="btn btn-sm btn-secondary"
                             data-popover="delete"
                             data-bs-content='{{ block('deletePopoverContent') }}'
                             data-delete-target="#modal-content-ajax"
@@ -55,7 +55,7 @@
                             · {{ 'reservation.review.todo'|trans }}
                         </div>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-primary"
+                    <button type="button" class="btn btn-sm btn-secondary"
                             data-action="click->reservations#openReservationAction"
                             data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
                             data-reservation-id="{{ reservation.id }}"

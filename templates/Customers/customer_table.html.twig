@@ -6,7 +6,7 @@
     </twig:EmptyState>
 {% else %}
     <div class="table-responsive">
-        <table class="table table-hover align-middle data-table data-table-stack">
+        <table class="table table-hover align-middle data-table data-table-stack" data-controller="row-link" data-action="click->row-link#open">
             <thead>
             <tr>
                 <th class="data-table-id">ID</th>
@@ -26,7 +26,7 @@
                     <tr>
                         <td class="cell-meta data-table-id"><span class="cell-narrow">ID </span>{{ customer.id }}</td>
                         <td>
-                            <a href="#" class="data-table-link"
+                            <a href="#" class="data-table-link" data-row-link-target="link"
                                data-action="click->customers#openModalAction"
                                data-url="{{ path('customers.get.customer', {'id': customer.id }) }}"
                                data-title="{{ 'customer.details'|trans }}"
