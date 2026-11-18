@@ -45,7 +45,9 @@
                     {% set acc = accountsById[state.bankAccountId] ?? null %}
                     <tr>
                         <td>
-                            <a href="{{ path('bank_import.preview', {'sessionImportId': draft.id}) }}" class="data-table-link">
+                            {# The file name opens the import #}
+                            <a href="{{ path('bank_import.preview', {'sessionImportId': draft.id}) }}" class="data-table-link"
+                               title="{{ 'accounting.bank_import.drafts.open'|trans }}">
                                 <i class="fas fa-file-csv text-body-secondary" aria-hidden="true"></i>
                                 <span class="data-table-link-text">{{ state.originalFilename }}</span>
                             </a>
@@ -64,9 +66,6 @@
                         <td class="cell-wide text-end">{{ state.lines|length }}</td>
                         <td class="cell-meta text-body-secondary">{{ draft.createdAt|date('d.m.Y H:i') }}</td>
                         <td class="cell-actions data-table-actions text-end">
-                            <a href="{{ path('bank_import.preview', {'sessionImportId': draft.id}) }}" class="btn btn-sm btn-secondary">
-                                {{ 'accounting.bank_import.drafts.open'|trans }}
-                            </a>
                             <button type="button" class="btn btn-icon text-danger"
                                     title="{{ 'accounting.bank_import.drafts.discard'|trans }}"
                                     aria-label="{{ 'accounting.bank_import.drafts.discard'|trans }}"
