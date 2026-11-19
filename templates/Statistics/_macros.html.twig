@@ -1,0 +1,94 @@
+{# Periods of the statistics, alike on every page; every change redraws through the given action of
+   the statistics controller.
+   - month: one month with its year; the arrows step it, past December into the next year.
+   - monthRange / yearRange: "from … to …" below a chart; the arrows outside move the whole range by
+     one month (year), so with from = to they page month by month. #}
+
+{% macro month(monthTarget, yearTarget, action, minYear, maxYear) %}
+    {% set currentMonth = 'now'|date('n') %}
+    {% set currentYear = 'now'|date('Y') %}
+    <div class="input-group flex-nowrap stat-period">
+        <button type="button" class="btn btn-secondary"
+                title="{{ 'statistics.period.previous_month'|trans }}" aria-label="{{ 'statistics.period.previous_month'|trans }}"
+                data-action="click->statistics#stepMonthAction" data-statistics-direction-param="-1"
+                data-statistics-month-target-param="{{ monthTarget }}" data-statistics-year-target-param="{{ yearTarget }}"
+                data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+        <select id="{{ monthTarget }}" name="{{ monthTarget }}" class="form-select stat-period-month"
+                aria-label="{{ 'statistics.period.month'|trans }}"
+                data-statistics-target="{{ monthTarget }}" data-action="change->statistics#{{ action }}">
+            {% for i in 1..12 %}
+                <option value="{{ i }}"{{ i == currentMonth ? ' selected' }}>{{ getLocalizedMonth(i, 'MMMM', app.request.locale) }}</option>
+            {% endfor %}
+        </select>
+        <select id="{{ yearTarget }}" name="{{ yearTarget }}" class="form-select stat-period-year"
+                aria-label="{{ 'statistics.period.year'|trans }}"
+                data-statistics-target="{{ yearTarget }}" data-action="change->statistics#{{ action }}">
+            {% for i in minYear..maxYear %}
+                <option value="{{ i }}"{{ i == currentYear ? ' selected' }}>{{ i }}</option>
+            {% endfor %}
+        </select>
+        <button type="button" class="btn btn-secondary"
+                title="{{ 'statistics.period.next_month'|trans }}" aria-label="{{ 'statistics.period.next_month'|trans }}"
+                data-action="click->statistics#stepMonthAction" data-statistics-direction-param="1"
+                data-statistics-month-target-param="{{ monthTarget }}" data-statistics-year-target-param="{{ yearTarget }}"
+                data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}">
+            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+    </div>
+{% endmacro %}
+
+{% macro monthRange(startMonth, startYear, endMonth, endYear, action, minYear, maxYear) %}
+    {% import _self as stat %}
+    {{ stat._range('month', [startMonth, startYear], [endMonth, endYear], action, minYear, maxYear) }}
+{% endmacro %}
+
+{% macro yearRange(startYear, endYear, action, minYear, maxYear) %}
+    {% import _self as stat %}
+    {{ stat._range('year', [null, startYear], [null, endYear], action, minYear, maxYear) }}
+{% endmacro %}
+
+{% macro _range(unit, start, end, action, minYear, maxYear) %}
+    {% set currentMonth = 'now'|date('n') %}
+    {% set currentYear = 'now'|date('Y') %}
+    {% set shift -%}
+        data-action="click->statistics#shiftRangeAction" data-statistics-unit-param="{{ unit }}"
+        {%- if start[0] %} data-statistics-start-month-param="{{ start[0] }}" data-statistics-end-month-param="{{ end[0] }}"{% endif %}
+        data-statistics-start-year-param="{{ start[1] }}" data-statistics-end-year-param="{{ end[1] }}"
+        data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"
+    {%- endset %}
+    {% set earlier = ('statistics.period.earlier_' ~ unit)|trans %}
+    {% set later = ('statistics.period.later_' ~ unit)|trans %}
+    <div class="stat-range">
+        <button type="button" class="btn btn-secondary" title="{{ earlier }}" aria-label="{{ earlier }}"
+                data-statistics-direction-param="-1" {{ shift }}>
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+        <div class="stat-range-ends">
+            {% for edge in [{label: 'statistics.period.from', targets: start}, {label: 'statistics.period.to', targets: end}] %}
+                <div class="stat-range-end">
+                    <span>{{ edge.label|trans }}</span>
+                    <div class="input-group flex-nowrap">
+                        {% if edge.targets[0] %}
+                            <select id="{{ edge.targets[0] }}" name="{{ edge.targets[0] }}" class="form-select stat-period-month"
+                                    aria-label="{{ edge.label|trans }}: {{ 'statistics.period.month'|trans }}"
+                                    data-statistics-target="{{ edge.targets[0] }}" data-action="change->statistics#{{ action }}">
+                                {% for i in 1..12 %}
+                                    <option value="{{ i }}"{{ i == currentMonth ? ' selected' }}>{{ getLocalizedMonth(i, 'MMM', app.request.locale) }}</option>
+                                {% endfor %}
+                            </select>
+                        {% endif %}
+                        <select id="{{ edge.targets[1] }}" name="{{ edge.targets[1] }}" class="form-select stat-period-year"
+                                aria-label="{{ edge.label|trans }}: {{ 'statistics.period.year'|trans }}"
+                                data-statistics-target="{{ edge.targets[1] }}" data-action="change->statistics#{{ action }}">
+                            {% for i in minYear..maxYear %}
+                                <option value="{{ i }}"{{ i == currentYear ? ' selected' }}>{{ i }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <button type="button" class="btn btn-secondary" title="{{ later }}" aria-label="{{ later }}"
+                data-statistics-direction-param="1" {{ shift }}>
+            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+    </div>
+{% endmacro %}

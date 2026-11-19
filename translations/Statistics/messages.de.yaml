@@ -1,4 +1,18 @@
 statistics:
+  period:
+    earlier_month: 'Zeitraum einen Monat früher'
+    later_month: 'Zeitraum einen Monat später'
+    earlier_year: 'Zeitraum ein Jahr früher'
+    later_year: 'Zeitraum ein Jahr später'
+    from: 'von'
+    to: 'bis'
+    previous_month: 'Vorheriger Monat'
+    next_month: 'Nächster Monat'
+    previous_year: 'Vorheriges Jahr'
+    next_year: 'Nächstes Jahr'
+    month: 'Monat'
+    year: 'Jahr'
+  refresh: 'Aktualisieren'
   origin:
     description: Herkunft
     monthly: 'monatliche Herkunftsübersicht'

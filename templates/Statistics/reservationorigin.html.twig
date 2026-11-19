@@ -1,153 +1,63 @@
 {% extends 'base.html.twig' %}
+{% import 'Statistics/_macros.html.twig' as stat %}
 
-{% block title %}
-    {{ parent() }} -  {{ 'statistics.origin.title'|trans }}
-{% endblock %}
+{% block title %}{{ parent() }} - {{ 'statistics.origin.title'|trans }}{% endblock %}
 
-{% block description %}
-    {{ parent() }} -  {{ 'statistics.origin.title'|trans }}
-{% endblock %}
+{% block description %}{{ parent() }} - {{ 'statistics.origin.title'|trans }}{% endblock %}
 
-{# create list of localized month #}
-{% set monthList = [] %}
-{% for i in 1..12 %}
-    {% set monthList = monthList|merge([getLocalizedMonth(i, 'MMMM', app.request.locale)]) %}
-{% endfor %}
+{% block page_title %}{{ 'nav.origin'|trans }}{% endblock %}
 
 {% block content %}
     <div class="container"
          data-controller="statistics"
          data-statistics-monthly-origin-url-value="{{ path('statistics.origin.monthtly') }}"
          data-statistics-yearly-origin-url-value="{{ path('statistics.origin.yearly') }}">
-        <div class="row justify-content-end">
-            <div class="col-md-3">
-                <form id="table-filter" role="form">                   
-                    <select id="objects" name="object" class="form-select"
-                            data-statistics-target="objects"
-                            data-action="change->statistics#drawMonthlyOriginAction change->statistics#drawYearlyOriginAction">
-                        <option value="all">{{ 'reservation.objects.all'|trans }}</option>
-                        {% for object in objects %}
-                            <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
-                        {% endfor %}
-                    </select>
-                </form>
-            </div>
-        </div>
-        <div class="row justify-content-center mt-4">
+        <twig:PageHeader :title="'nav.origin'|trans"/>
+        <form id="table-filter" role="form" class="page-toolbar mb-3">
+            <select id="objects" name="object" class="form-select stat-subsidiary"
+                    data-statistics-target="objects"
+                    data-action="change->statistics#drawMonthlyOriginAction change->statistics#drawYearlyOriginAction">
+                <option value="all">{{ 'reservation.objects.all'|trans }}</option>
+                {% for object in objects %}
+                    <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        <div class="row g-3 justify-content-center">
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        {{ 'statistics.origin.monthly'|trans }}
-                         <i id="refreshMonthly" class="fas fa-sync-alt float-end" aria-hidden="true" 
-                            style="cursor: pointer;" data-action="click->statistics#drawMonthlyOriginAction"></i>
+                    <div class="card-header stat-card-header">
+                        <h2 class="h6 mb-0">{{ 'statistics.origin.monthly'|trans }}</h2>
+                        <twig:IconButton icon="sync-alt" :label="'statistics.refresh'|trans" id="refreshMonthly" class="my-n2 me-n2"
+                                         data-action="click->statistics#drawMonthlyOriginAction"/>
                     </div>
                     <div class="card-body">
-                        <div style="position: relative; height:45vh;">
+                        <div class="stat-chart">
                             <canvas id="monthlyChart" data-statistics-target="monthlyChart"></canvas>
                         </div>
                     </div>
-                    <div class="card-footer pt-0">
+                    <div class="card-footer">
                         <form role="form">
-                            <div class="row g-2 align-items-center justify-content-md-center flex-wrap">
-                                <div class="col-auto">
-                                    <div class="input-group">
-                                        <button type="button" class="btn btn-link px-1" data-action="click->statistics#stepMonthAction" data-statistics-direction-param="-1" data-statistics-month-target-param="monthlyStart" data-statistics-year-target-param="monthlyStartYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-left fa-xs"></i></button>
-                                        <select id="monthlyStart" name="monthlyStart" class="form-select" style="width: 6em;"
-                                                data-statistics-target="monthlyStart"
-                                                data-action="change->statistics#drawMonthlyOriginAction">
-                                            {% set currentMonth = 'now'|date('n') %}
-                                            {% for month in monthList %}
-                                                <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{%endif%}>{{ month }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <button type="button" class="btn btn-link px-1" data-action="click->statistics#stepMonthAction" data-statistics-direction-param="1" data-statistics-month-target-param="monthlyStart" data-statistics-year-target-param="monthlyStartYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-right fa-xs"></i></button>
-                                        <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="-1" data-statistics-year-target-param="monthlyStartYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-left fa-xs"></i></button>
-                                        <select id="monthlyStartYear" name="monthlyStartYear" class="form-select" style="width: 4em"
-                                                data-statistics-target="monthlyStartYear"
-                                                data-action="change->statistics#drawMonthlyOriginAction">
-                                            {% set currentYear = 'now'|date('Y') %}
-                                            {% for i in minYear..maxYear %}
-                                                <option value="{{ i }}"{%if i == currentYear %} selected="selected"{%endif%}>{{ i }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="1" data-statistics-year-target-param="monthlyStartYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-right fa-xs"></i></button>
-                                    </div>
-                                </div>
-                                <div class="col-auto col-form-label">-</div>
-                                <div class="col-auto">
-                                    <div class="input-group">
-                                        <button type="button" class="btn btn-link px-1" data-action="click->statistics#stepMonthAction" data-statistics-direction-param="-1" data-statistics-month-target-param="monthlyEnd" data-statistics-year-target-param="monthlyEndYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-left fa-xs"></i></button>
-                                        <select id="monthlyEnd" name="monthlyEnd" class="form-select" style="width: 6em"
-                                                data-statistics-target="monthlyEnd"
-                                                data-action="change->statistics#drawMonthlyOriginAction">
-                                            {% set currentMonth = 'now'|date('n') %}
-                                            {% for month in monthList %}
-                                                <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{%endif%}>{{ month }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <button type="button" class="btn btn-link px-1" data-action="click->statistics#stepMonthAction" data-statistics-direction-param="1" data-statistics-month-target-param="monthlyEnd" data-statistics-year-target-param="monthlyEndYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-right fa-xs"></i></button>
-                                        <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="-1" data-statistics-year-target-param="monthlyEndYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-left fa-xs"></i></button>
-                                        <select id="monthlyEndYear" name="monthlyEndYear" class="form-select" style="width: 4em"
-                                                data-statistics-target="monthlyEndYear"
-                                                data-action="change->statistics#drawMonthlyOriginAction">
-                                            {% set currentYear = 'now'|date('Y') %}
-                                            {% for i in minYear..maxYear %}
-                                                <option value="{{ i }}"{%if i == currentYear %} selected="selected"{%endif%}>{{ i }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="1" data-statistics-year-target-param="monthlyEndYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-right fa-xs"></i></button>
-                                    </div>
-                                </div>
-                            </div>
+                            {{ stat.monthRange('monthlyStart', 'monthlyStartYear', 'monthlyEnd', 'monthlyEndYear', 'drawMonthlyOriginAction', minYear, maxYear) }}
                         </form>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        {{ 'statistics.origin.yearly'|trans }}
-                         <i id="refreshYearly" class="fas fa-sync-alt float-end" aria-hidden="true" 
-                            style="cursor: pointer;" data-action="click->statistics#drawYearlyOriginAction"></i>
+                    <div class="card-header stat-card-header">
+                        <h2 class="h6 mb-0">{{ 'statistics.origin.yearly'|trans }}</h2>
+                        <twig:IconButton icon="sync-alt" :label="'statistics.refresh'|trans" id="refreshYearly" class="my-n2 me-n2"
+                                         data-action="click->statistics#drawYearlyOriginAction"/>
                     </div>
                     <div class="card-body">
-                        <div style="position: relative; height:45vh;">
+                        <div class="stat-chart">
                             <canvas id="yearlyChart" data-statistics-target="yearlyChart"></canvas>
                         </div>
                     </div>
-                    <div class="card-footer pt-0">
+                    <div class="card-footer">
                         <form role="form">
-                            <div class="row g-2 align-items-center justify-content-md-center flex-wrap">
-                                <div class="col-auto">
-                                    <div class="input-group">
-                                        <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="-1" data-statistics-year-target-param="yearlyStartYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-left fa-xs"></i></button>
-                                        <select id="yearlyStartYear" name="yearlyStartYear" class="form-select" style="width: 4em"
-                                                data-statistics-target="yearlyStartYear"
-                                                data-action="change->statistics#drawYearlyOriginAction">
-                                            {% set currentYear = 'now'|date('Y') %}
-                                            {% for i in minYear..maxYear %}
-                                                <option value="{{ i }}"{%if i == currentYear %} selected="selected"{%endif%}>{{ i }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="1" data-statistics-year-target-param="yearlyStartYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-right fa-xs"></i></button>
-                                    </div>
-                                </div>
-                                <div class="col-auto col-form-label">-</div>
-                                <div class="col-auto">
-                                    <div class="input-group">
-                                        <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="-1" data-statistics-year-target-param="yearlyEndYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-left fa-xs"></i></button>
-                                        <select id="yearlyEndYear" name="yearlyEndYear" class="form-select" style="width: 4em"
-                                                data-statistics-target="yearlyEndYear"
-                                                data-action="change->statistics#drawYearlyOriginAction">
-                                            {% set currentYear = 'now'|date('Y') %}
-                                            {% for i in minYear..maxYear %}
-                                                <option value="{{ i }}"{%if i == currentYear %} selected="selected"{%endif%}>{{ i }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="1" data-statistics-year-target-param="yearlyEndYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-right fa-xs"></i></button>
-                                    </div>
-                                </div>
-                            </div>
+                            {{ stat.yearRange('yearlyStartYear', 'yearlyEndYear', 'drawYearlyOriginAction', minYear, maxYear) }}
                         </form>
                     </div>
                 </div>

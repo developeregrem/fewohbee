@@ -60,6 +60,14 @@
         width: 2.75rem;
         height: 2.75rem;
     }
+
+    /* Beside fields and buttons (38px) an icon button keeps its touch size but reaches into the
+       space above and below, so a toolbar is as high with icons as without */
+    .data-toolbar > .btn-icon,
+    .page-toolbar-tools > .btn-icon,
+    .page-actions > .btn-icon {
+        margin-block: calc((1.5rem + .75rem + 2 * var(--bs-border-width) - 2.75rem) / 2);
+    }
 }
 
 /* Shown in place of a list that has no entries */

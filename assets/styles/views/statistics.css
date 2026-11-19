@@ -1,0 +1,119 @@
+/* Statistics. */
+
+/* Card of a chart: title on the left, refresh on the right */
+.stat-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+}
+
+/* A chart takes its height from this box (maintainAspectRatio: false), so it keeps room on narrow
+   screens too */
+.stat-chart {
+    position: relative;
+    height: clamp(17rem, 42vh, 26rem);
+}
+
+.card-footer:has(.stat-range) {
+    background: transparent;
+}
+
+.stat-subsidiary {
+    width: auto;
+    min-width: 12rem;
+}
+
+/* One month with its year between arrows (tourism) */
+.stat-period {
+    width: auto;
+}
+
+.stat-period > .stat-period-month {
+    width: 9rem;
+}
+
+.stat-period > .stat-period-year {
+    width: 6rem;
+}
+
+/* "← from … to … →" below a chart: the arrows move the whole range; on a desktop in one line, so
+   the cards side by side stay alike in height */
+.stat-range {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+}
+
+.stat-range > .btn {
+    flex: none;
+}
+
+.stat-range-ends {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem 1rem;
+}
+
+.stat-range-end {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.stat-range-end > span {
+    color: var(--feb-text-muted);
+}
+
+.stat-range-end .stat-period-month,
+.stat-range-end .stat-period-year {
+    width: 5.25rem;
+    /* Less room around the value and the chevron, so "Sept." and a year show in full */
+    padding-left: .5rem;
+    padding-right: 1.75rem;
+    background-position: right .5rem center;
+}
+
+/* Phones: from and to below each other between the arrows, as wide as the card */
+@media (max-width: 575.98px) {
+    .stat-range-ends {
+        flex: 1 1 auto;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .stat-range-end > span {
+        min-width: 1.75rem;
+    }
+
+    .stat-range-end > .input-group {
+        flex: 1 1 auto;
+    }
+
+    .stat-range-end .stat-period-month {
+        flex: 1 1 auto;
+        width: auto;
+        min-width: 0;
+    }
+
+    .stat-period {
+        width: 100%;
+    }
+
+    .stat-period > .stat-period-month {
+        flex: 1 1 auto;
+        width: auto;
+        min-width: 0;
+    }
+
+    .stat-period > .stat-period-year {
+        width: 5.75rem;
+    }
+
+    .stat-subsidiary {
+        flex: 1 1 100%;
+    }
+}

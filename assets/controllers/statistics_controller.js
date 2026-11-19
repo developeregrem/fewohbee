@@ -160,9 +160,11 @@ export default class extends Controller {
                 },
                 options: {
                     responsive: true,
+                    // The height comes from the chart's box (.stat-chart), also on narrow screens
+                    maintainAspectRatio: false,
                     plugins: {
                         // Several series are only told apart by their legend entry.
-                        legend: { display: datasets.length > 1 },
+                        legend: { display: datasets.length > 1, position: 'bottom' },
                         // A forecast bar explains itself: how many reservations, how much of it invoiced.
                         tooltip: { callbacks: { afterLabel: (item) => item.dataset.details?.[item.dataIndex] ?? [] } },
                     },
@@ -409,11 +411,12 @@ export default class extends Controller {
     }
 
     toggleRefreshSpinner(type, active) {
+        // The refresh button of the chart's card; its icon turns while the chart loads
         const id = type === 'yearly' ? 'refreshYearly' : 'refreshMonthly';
-        const icon = document.getElementById(id);
-        if (!icon) return;
-        icon.classList.toggle('fa-spin', active);
-        icon.classList.toggle('disabled', active);
+        const button = document.getElementById(id);
+        if (!button) return;
+        button.querySelector('i')?.classList.toggle('fa-spin', active);
+        button.disabled = active;
     }
 
 
@@ -880,6 +883,40 @@ export default class extends Controller {
         monthSel.value = month;
         yearSel.value  = year;
         monthSel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    /**
+     * Moves a from/to range by one month or year at both ends, so with from = to it pages month by
+     * month. Stays put where either end would leave the years on offer; redraws once.
+     */
+    shiftRangeAction(event) {
+        const { unit, startMonth, endMonth, startYear, endYear } = event.params;
+        const direction = parseInt(event.params.direction, 10);
+        const minYear = parseInt(event.params.minYear, 10);
+        const maxYear = parseInt(event.params.maxYear, 10);
+
+        const ends = [[startMonth, startYear], [endMonth, endYear]].map(([monthName, yearName]) => ({
+            month: monthName ? this[`${monthName}Target`] : null,
+            year: this[`${yearName}Target`],
+        }));
+        const moved = ends.map(({ month, year }) => {
+            let m = month ? parseInt(month.value, 10) : 1;
+            let y = parseInt(year.value, 10);
+            if (unit === 'month') {
+                m += direction;
+                if (m < 1) { m = 12; y--; } else if (m > 12) { m = 1; y++; }
+            } else {
+                y += direction;
+            }
+            return { m, y };
+        });
+        if (moved.some(({ y }) => y < minYear || y > maxYear)) return;
+
+        ends.forEach(({ month, year }, i) => {
+            if (month) month.value = moved[i].m;
+            year.value = moved[i].y;
+        });
+        (ends[0].month ?? ends[0].year).dispatchEvent(new Event('change', { bubbles: true }));
     }
 
     stepYearAction(event) {

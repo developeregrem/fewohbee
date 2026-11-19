@@ -22,6 +22,7 @@ import './styles/views/frontdesk.css';
 import './styles/views/invoices.css';
 import './styles/views/booking-journal.css';
 import './styles/views/prices.css';
+import './styles/views/statistics.css';
 import './styles/views/booking-rules.css';
 import './styles/views/template-editor.css';
 import './styles/views/settings.css';

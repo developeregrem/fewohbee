@@ -1,18 +1,11 @@
 {% extends 'base.html.twig' %}
+{% import 'Statistics/_macros.html.twig' as stat %}
 
-{% block title %}
-    {{ parent() }} -  {{ 'statistics.tourism.title'|trans }}
-{% endblock %}
+{% block title %}{{ parent() }} - {{ 'statistics.tourism.title'|trans }}{% endblock %}
 
-{% block description %}
-    {{ parent() }} -  {{ 'statistics.tourism.title'|trans }}
-{% endblock %}
+{% block description %}{{ parent() }} - {{ 'statistics.tourism.title'|trans }}{% endblock %}
 
-{# create list of localized month #}
-{% set monthList = [] %}
-{% for i in 1..12 %}
-    {% set monthList = monthList|merge([getLocalizedMonth(i, 'MMMM', app.request.locale)]) %}
-{% endfor %}
+{% block page_title %}{{ 'nav.tourism'|trans }}{% endblock %}
 
 {% block content %}
     <div class="container mb-1"
@@ -37,12 +30,16 @@
          data-statistics-total-label-value="{{ 'statistics.tourism.total'|trans }}"
          data-statistics-last-calculated-label-value="{{ 'statistics.tourism.last_calculated'|trans }}">
         <input type="hidden" id="statistics_csrf_token" name="_csrf_token" value="{{ csrf_token('statistics.snapshot.warning.ignore') }}">
-        <div class="row align-items-end justify-content-between">
-            <div class="col-md-8">
-                <form id="table-filter" role="form">
-                    <div class="row g-2">
-                        <div class="col-md-5">
-                            <select id="objects" name="object" class="form-select"
+        <twig:PageHeader :title="'nav.tourism'|trans">
+            <button type="button" class="btn btn-secondary"
+                    data-action="click->statistics#drawSnapshotForceAction">
+                <i class="fas fa-sync-alt me-1" aria-hidden="true"></i>{{ 'statistics.tourism.regenerate'|trans }}
+            </button>
+        </twig:PageHeader>
+        {# The property and the month; when the figures were last calculated on the right #}
+        <form id="table-filter" role="form" class="page-toolbar flex-wrap mb-3">
+            <div class="d-flex flex-wrap gap-2">
+                <select id="objects" name="object" class="form-select stat-subsidiary"
                                     data-statistics-target="objects"
                                     data-action="change->statistics#drawSnapshotAction">
                                 <option value="all">{{ 'reservation.objects.all'|trans }}</option>
@@ -50,43 +47,10 @@
                                     <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
                                 {% endfor %}
                             </select>
-                        </div>
-                        <div class="col-auto">
-                            <div class="input-group">
-                                <button type="button" class="btn btn-link px-1" data-action="click->statistics#stepMonthAction" data-statistics-direction-param="-1" data-statistics-month-target-param="snapshotMonth" data-statistics-year-target-param="snapshotYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-left fa-xs"></i></button>
-                                <select id="snapshotMonth" name="snapshotMonth" class="form-select" style="width: 6em"
-                                        data-statistics-target="snapshotMonth"
-                                        data-action="change->statistics#drawSnapshotAction">
-                                    {% set currentMonth = 'now'|date('n') %}
-                                    {% for month in monthList %}
-                                        <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{%endif%}>{{ month }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button type="button" class="btn btn-link px-1" data-action="click->statistics#stepMonthAction" data-statistics-direction-param="1" data-statistics-month-target-param="snapshotMonth" data-statistics-year-target-param="snapshotYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-right fa-xs"></i></button>
-                                <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="-1" data-statistics-year-target-param="snapshotYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-left fa-xs"></i></button>
-                                <select id="snapshotYear" name="snapshotYear" class="form-select" style="width: 4em"
-                                        data-statistics-target="snapshotYear"
-                                        data-action="change->statistics#drawSnapshotAction">
-                                    {% set currentYear = 'now'|date('Y') %}
-                                    {% for i in minYear..maxYear %}
-                                        <option value="{{ i }}"{%if i == currentYear %} selected="selected"{%endif%}>{{ i }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="1" data-statistics-year-target-param="snapshotYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-right fa-xs"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+                {{ stat.month('snapshotMonth', 'snapshotYear', 'drawSnapshotAction', minYear, maxYear) }}
             </div>
-            <div class="col-md-4 text-end mt-3 mt-md-0">
-                <button class="btn btn-outline-primary"
-                        data-action="click->statistics#drawSnapshotForceAction">
-                    <i class="fas fa-sync-alt"></i>
-                    {{ 'statistics.tourism.regenerate'|trans }}
-                </button>
-                <div class="text-muted small mt-1" data-statistics-target="snapshotUpdatedAt"></div>
-            </div>
-        </div>
+            <div class="small text-body-secondary" data-statistics-target="snapshotUpdatedAt"></div>
+        </form>
         <div class="row mt-3">
             <div class="col">
                 <label class="form-label mb-1">{{ 'status.title'|trans }}</label>
@@ -116,8 +80,8 @@
         <div class="row mt-4">
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        {{ 'statistics.tourism.summary'|trans }}
+                    <div class="card-header stat-card-header">
+                        <h2 class="h6 mb-0">{{ 'statistics.tourism.summary'|trans }}</h2>
                     </div>
                     <div class="card-body">
                         <table class="table table-sm mb-0">
@@ -151,8 +115,8 @@
                     </div>
                 </div>
                 <div class="card mt-3">
-                    <div class="card-header bg-primary text-white" data-statistics-target="byCountryTableHeader">
-                        {{ 'statistics.tourism.by_country_table'|trans }}
+                    <div class="card-header stat-card-header">
+                        <h2 class="h6 mb-0" data-statistics-target="byCountryTableHeader">{{ 'statistics.tourism.by_country_table'|trans }}</h2>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -175,8 +139,8 @@
             </div>
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header bg-primary text-white" data-statistics-target="arrivalsChartHeader">
-                        {{ 'statistics.tourism.arrivals_by_country'|trans }}
+                    <div class="card-header stat-card-header">
+                        <h2 class="h6 mb-0" data-statistics-target="arrivalsChartHeader">{{ 'statistics.tourism.arrivals_by_country'|trans }}</h2>
                     </div>
                     <div class="card-body">
                         <div style="position: relative; height:30vh;">
@@ -185,8 +149,8 @@
                     </div>
                 </div>
                 <div class="card mt-3">
-                    <div class="card-header bg-primary text-white" data-statistics-target="overnightsChartHeader">
-                        {{ 'statistics.tourism.overnights_by_country'|trans }}
+                    <div class="card-header stat-card-header">
+                        <h2 class="h6 mb-0" data-statistics-target="overnightsChartHeader">{{ 'statistics.tourism.overnights_by_country'|trans }}</h2>
                     </div>
                     <div class="card-body">
                         <div style="position: relative; height:30vh;">
@@ -200,8 +164,8 @@
         <div class="row mt-4">
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        {{ 'statistics.tourism.overnights_by_guest_category'|trans }}
+                    <div class="card-header stat-card-header">
+                        <h2 class="h6 mb-0">{{ 'statistics.tourism.overnights_by_guest_category'|trans }}</h2>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -223,8 +187,8 @@
             </div>
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        {{ 'statistics.tourism.overnights_by_guest_category'|trans }}
+                    <div class="card-header stat-card-header">
+                        <h2 class="h6 mb-0">{{ 'statistics.tourism.overnights_by_guest_category'|trans }}</h2>
                     </div>
                     <div class="card-body">
                         <div style="position: relative; height:30vh;">
@@ -238,8 +202,8 @@
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        {{ 'statistics.tourism.by_country_and_category_table'|trans }}
+                    <div class="card-header stat-card-header">
+                        <h2 class="h6 mb-0">{{ 'statistics.tourism.by_country_and_category_table'|trans }}</h2>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -259,8 +223,8 @@
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        {{ 'statistics.tourism.warnings'|trans }}
+                    <div class="card-header stat-card-header">
+                        <h2 class="h6 mb-0">{{ 'statistics.tourism.warnings'|trans }}</h2>
                     </div>
                     <div class="card-body">
                         <ul class="list-unstyled mb-0"

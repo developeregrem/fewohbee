@@ -1,4 +1,18 @@
 statistics:
+  period:
+    earlier_month: 'Range one month earlier'
+    later_month: 'Range one month later'
+    earlier_year: 'Range one year earlier'
+    later_year: 'Range one year later'
+    from: 'from'
+    to: 'to'
+    previous_month: 'Previous month'
+    next_month: 'Next month'
+    previous_year: 'Previous year'
+    next_year: 'Next year'
+    month: 'Month'
+    year: 'Year'
+  refresh: 'Refresh'
   origin:
     description: Origin
     monthly: Monthly Overview of Origin
