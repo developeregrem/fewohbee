@@ -25,6 +25,7 @@ date.next_day: 'Nächster Tag'
 date.next_week: 'Nächste Woche'
 date.previous_day: 'Vorheriger Tag'
 date.previous_week: 'Vorherige Woche'
+pagination.position: 'Seite %page% von %pages%'
 save.state.failed: 'Nicht gespeichert'
 save.state.saved: Gespeichert
 save.state.saving: 'Speichert …'

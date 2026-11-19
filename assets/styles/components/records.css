@@ -23,11 +23,12 @@
     margin-left: auto;
 }
 
+/* Count and pages of a list, the pages always in the middle: below md the count above them (a
+   phone has no room for the count beside pages in the middle), from md the count at the left */
 .data-footer {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
     gap: .5rem 1rem;
     padding: .75rem 1rem;
     border-top: 1px solid var(--feb-border);
@@ -35,10 +36,26 @@
     font-size: var(--feb-font-size-sm);
 }
 
+/* A footer without a count keeps an empty placeholder */
+.data-footer > :empty {
+    display: none;
+}
+
 .data-footer .pagination {
     flex-wrap: wrap;
     row-gap: .25rem;
     margin: 0;
+}
+
+@media (min-width: 768px) {
+    .data-footer {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+    }
+
+    .data-footer > .pagination {
+        grid-column: 2;
+    }
 }
 
 .data-table {

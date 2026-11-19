@@ -1,5 +1,7 @@
 {# swipe_nav: true makes the arrows the previous/next targets of a surrounding swipe-nav
-   controller, so a sideways swipe pages the list; only where there is a page to go to #}
+   controller, so a sideways swipe pages the list; only where there is a page to go to.
+   On phones only the arrows and the position ("3 / 15") show, so the row never wraps
+   (pagination-compact in controls.css). #}
 {% if pages > 1 %}
     {% set dataAction = pagination_action|default('') %}
     {% set swipeNav = swipe_nav|default(false) %}
@@ -15,13 +17,19 @@
     {# the number of pages that are displayed around the active page #}
     {% set nearbyPagesLimit = 2 %}
 
-    <ul id="pagination" class="pagination{% if extraClass %} {{ extraClass }}{% endif %}">
+    <ul id="pagination" class="pagination pagination-compact{% if extraClass %} {{ extraClass }}{% endif %}">
         <li class="page-item{% if page == 1 %} disabled{% endif %}">
             <a class="page-link" data-page="{{ leftpage }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %}
                {% if swipeNav and page > 1 %}data-swipe-nav-target="previous"{% endif %}
                href="{{ url }}{{ querySeparator }}{{ {'page': leftpage, 'search': search}|url_encode }}" aria-label="Previous">
                 <span aria-hidden="true">&laquo;</span>
             </a>
+        </li>
+        <li class="page-item page-item-position">
+            <span class="page-link">
+                <span aria-hidden="true">{{ page }} / {{ pages }}</span>
+                <span class="visually-hidden">{{ 'pagination.position'|trans({'%page%': page, '%pages%': pages}) }}</span>
+            </span>
         </li>
         {# before #}
         {% if page > 1 %}

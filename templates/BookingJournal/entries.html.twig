@@ -212,12 +212,11 @@
             </table>
         </div>
         {% endif %}
-        {% if pages > 1 %}
-            <div class="data-footer">
-                <span></span>
-                {% include 'paginator.html.twig' with { 'url': path('journal.batch.entries', {'id': batch.id, 'filter': filter}), 'search': search } %}
-            </div>
-        {% endif %}
+        {# The count of the whole month (within the chosen book and search), as in the other lists #}
+        <div class="data-footer">
+            <span>{{ 'accounting.journal.batch.entries.count'|trans({'%count%': entries|length}) }}</span>
+            {% include 'paginator.html.twig' with { 'url': path('journal.batch.entries', {'id': batch.id, 'filter': filter}), 'search': search } %}
+        </div>
     </div>
 
     {# ── Offcanvas ─────────────────────────────────────── #}

@@ -216,6 +216,47 @@ details[open] > summary > .fhb-details-chevron {
     }
 }
 
+/* ------------------------------------------------------------------ Paging a list */
+
+/* The pages of a list (paginator.html.twig): below md, where lists stack, only the arrows with
+   the position between them ("3 / 15"), so the row never wraps beside the count; the arrows as
+   large as a fingertip. A swipe still pages through the arrows. */
+.pagination-compact > .page-item-position {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .pagination.pagination-compact {
+        flex-wrap: nowrap;
+    }
+
+    .pagination-compact > .page-item {
+        display: none;
+    }
+
+    .pagination-compact > .page-item:first-child,
+    .pagination-compact > .page-item:last-child,
+    .pagination-compact > .page-item-position {
+        display: block;
+    }
+
+    .pagination-compact > .page-item > .page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+    }
+
+    /* Information, not a button */
+    .pagination-compact > .page-item-position > .page-link {
+        min-width: 4.5rem;
+        pointer-events: none;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
 /* An icon that only informs, in the place and width of an icon button (e.g. a lock where others
    can be deleted) */
 .icon-slot {
