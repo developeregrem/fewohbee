@@ -9,6 +9,8 @@
     {{ parent() }} -  {{ 'templates.description'|trans }}
 {% endblock %}
 
+{% block page_title %}{{ 'nav.templates'|trans }}{% endblock %}
+
 {% block content %}
 <div class="container" data-controller="settings templates">
     <div class="row">

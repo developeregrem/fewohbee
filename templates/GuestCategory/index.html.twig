@@ -9,6 +9,8 @@
     {{ parent() }} - {{ 'guest_category.description'|trans }}
 {% endblock %}
 
+{% block page_title %}{{ 'nav.guest_category'|trans }}{% endblock %}
+
 {% block content %}
 <div class="container" data-controller="settings">
     <div class="row">

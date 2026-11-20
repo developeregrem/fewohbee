@@ -9,6 +9,8 @@
     {{ parent() }} - {{ 'online_booking.settings.page_title'|trans }}
 {% endblock %}
 
+{% block page_title %}{{ 'online_booking.nav.label'|trans }}{% endblock %}
+
 {% block content %}
 {% set standAloneUrl = absolute_url(path('public.booking')) %}
 {% set embedUrl = absolute_url(path('public.booking', {'embed': 1})) %}

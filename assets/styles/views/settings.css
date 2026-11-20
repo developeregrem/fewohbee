@@ -1,4 +1,60 @@
-/* Settings pages (rooms and their calendar sync). */
+/* Settings pages: the overview of all settings, rooms and their calendar sync. */
+
+/* Overview: the groups flow in columns as wide as a phone, so groups of different length
+   leave no gaps (one column on phones, two or three on wider screens) */
+.settings-groups {
+    column-width: 22rem;
+    column-gap: 1.5rem;
+}
+
+.settings-group {
+    break-inside: avoid;
+    margin-bottom: 1.5rem;
+}
+
+.settings-entry {
+    display: flex;
+    align-items: center;
+    gap: .875rem;
+    padding-block: .75rem;
+}
+
+/* The icon in a tinted square, like the initials of a person (avatar) */
+.settings-entry-icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--feb-radius);
+    background-color: var(--feb-primary-subtle);
+    color: var(--feb-primary-text);
+}
+
+.settings-entry-text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Bootstrap mutes the text of an action item; the name reads like a link title instead */
+.settings-entry-label {
+    color: var(--feb-text);
+    font-weight: var(--feb-font-weight-medium);
+}
+
+.settings-entry-description {
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+}
+
+.settings-entry-chevron {
+    flex: none;
+    color: var(--feb-text-subtle);
+    font-size: .75rem;
+}
 
 /* Match the established price-period badge while keeping its close action easy to hit. */
 .calendar-import-filter-term {

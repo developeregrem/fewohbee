@@ -8,6 +8,8 @@
     {{ parent() }} - {{ 'guest_checkin.settings.page_title'|trans }}
 {% endblock %}
 
+{% block page_title %}{{ 'guest_checkin.nav.label'|trans }}{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">

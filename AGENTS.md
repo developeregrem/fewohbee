@@ -394,7 +394,9 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   data-action="click->row-link#open"` on the table and `data-row-link-target="link"` on the name
   link; not for tables with fields to fill in.
 - A page names itself with the `page_title` block; the frame shows it in the top bar on phones.
-  Navigation entries are described once in `templates/layout/_app_nav.html.twig`.
+  Navigation entries are described once in `templates/layout/_app_nav.html.twig`. Settings pages
+  are not in the navigation: a new one is added to the settings overview
+  (`templates/Settings/index.html.twig`); everything below `/settings` marks the settings entry.
 - `btn-secondary` is the neutral button, `btn-primary` the one main action of a view. Use
   `text-body-secondary` for muted text.
 - Forms are rendered through the form theme `templates/form/fewohbee_bootstrap_5_layout.html.twig`

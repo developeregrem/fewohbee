@@ -10,6 +10,8 @@
     {{ parent() }} - {{ 'mcp.settings.page_title'|trans }}
 {% endblock %}
 
+{% block page_title %}{{ 'mcp.nav.label'|trans }}{% endblock %}
+
 {% block content %}
 <div class="container" data-controller="settings">
     <div class="row justify-content-center">

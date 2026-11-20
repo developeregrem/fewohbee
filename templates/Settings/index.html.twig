@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ parent() }} - {{ 'nav.settings'|trans }}{% endblock %}
+
+{% block page_title %}{{ 'nav.settings'|trans }}{% endblock %}
+
+{% block content %}
+    {# Every settings page, in groups. A new settings page is added here: the navigation only
+       links to this overview and marks everything below /settings as part of it. #}
+    {% set groups = [
+        { title: 'settings.overview.group.property', entries: [
+            { label: 'nav.object'|trans, description: 'settings.overview.objects'|trans, icon: 'fa-building', href: path('objects.overview') },
+            { label: 'nav.appartment'|trans, description: 'settings.overview.apartments'|trans, icon: 'fa-door-closed', href: path('apartments.overview') },
+            { label: 'nav.category'|trans, description: 'settings.overview.categories'|trans, icon: 'fa-layer-group', href: path('room_category_index') },
+        ] },
+        { title: 'settings.overview.group.prices', entries: [
+            { label: 'nav.prices'|trans, description: 'settings.overview.prices'|trans, icon: 'fa-tags', href: path('prices.overview') },
+            { label: 'nav.guest_category'|trans, description: 'settings.overview.guest_categories'|trans, icon: 'fa-user-tag', href: path('guest_category_index') },
+            { label: 'nav.tourist_tax'|trans, description: 'settings.overview.tourist_tax'|trans, icon: 'fa-landmark', href: path('tourist_tax_index') },
+        ]|merge(is_granted('ROLE_CASHJOURNAL') ? [
+            { label: 'settings.overview.accounting.label'|trans, description: 'settings.overview.accounting'|trans, icon: 'fa-calculator', href: path('journal.settings.index') },
+        ] : []) },
+        { title: 'settings.overview.group.reservations', entries: [
+            { label: 'nav.status'|trans, description: 'settings.overview.status'|trans, icon: 'fa-flag', href: path('reservation_status_index') },
+            { label: 'nav.reservationorigin'|trans, description: 'settings.overview.origins'|trans, icon: 'fa-signs-post', href: path('reservationorigin.overview') },
+            { label: 'nav.calendars'|trans, description: 'settings.overview.calendars'|trans, icon: 'fa-arrows-rotate', href: path('settings.calendars.index') },
+        ] },
+        { title: 'settings.overview.group.online', entries: [
+            { label: 'online_booking.nav.label'|trans, description: 'settings.overview.online_booking'|trans, icon: 'fa-globe', href: path('settings.online_booking.index') },
+            { label: 'guest_checkin.nav.label'|trans, description: 'settings.overview.guest_checkin'|trans, icon: 'fa-id-card', href: path('settings.guest_checkin.index') },
+        ] },
+        { title: 'settings.overview.group.automation', entries: [
+            { label: 'nav.templates'|trans, description: 'settings.overview.templates'|trans, icon: 'fa-file-lines', href: path('settings.templates.overview') },
+            { label: 'workflow.nav.label'|trans, description: 'settings.overview.workflows'|trans, icon: 'fa-bolt', href: path('settings.workflows.index') },
+        ]|merge(mcp_available ? [
+            { label: 'mcp.nav.label'|trans, description: 'settings.overview.mcp'|trans, icon: 'fa-robot', href: path('settings.mcp.index') },
+        ] : []) },
+        { title: 'settings.overview.group.system', entries: [
+            { label: 'app_settings.nav.label'|trans, description: 'settings.overview.general'|trans, icon: 'fa-sliders', href: path('settings.general.index') },
+            { label: 'nav.user'|trans, description: 'settings.overview.users'|trans, icon: 'fa-user-gear', href: path('users.overview') },
+        ] },
+    ] %}
+
+    <div class="container">
+        <twig:PageHeader :title="'nav.settings'|trans"/>
+
+        <div class="settings-groups">
+            {% for group in groups %}
+                <section class="settings-group" aria-labelledby="settings-group-{{ loop.index }}">
+                    <h2 class="small text-uppercase fw-semibold text-body-secondary mb-2" id="settings-group-{{ loop.index }}">
+                        {{- group.title|trans -}}
+                    </h2>
+                    <div class="card">
+                        <div class="list-group list-group-flush">
+                            {% for entry in group.entries %}
+                                <a class="list-group-item list-group-item-action settings-entry" href="{{ entry.href }}">
+                                    <span class="settings-entry-icon"><i class="fas {{ entry.icon }}" aria-hidden="true"></i></span>
+                                    <span class="settings-entry-text">
+                                        <span class="settings-entry-label">{{ entry.label }}</span>
+                                        <span class="settings-entry-description">{{ entry.description }}</span>
+                                    </span>
+                                    <i class="fas fa-chevron-right settings-entry-chevron" aria-hidden="true"></i>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </section>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

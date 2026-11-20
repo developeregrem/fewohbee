@@ -9,6 +9,8 @@
     {{ parent() }} -  {{ 'reservationorigin.description'|trans }}
 {% endblock %}
 
+{% block page_title %}{{ 'nav.reservationorigin'|trans }}{% endblock %}
+
 {% block content %}
 <div class="container" data-controller="settings">
     <div class="row">

@@ -5,6 +5,8 @@
     {{ parent() }} - {{ 'calendar.index.title'|trans }}
 {% endblock %}
 
+{% block page_title %}{{ 'nav.calendars'|trans }}{% endblock %}
+
 {% block content %}
 <div class="container" data-controller="settings">
     <div class="row">

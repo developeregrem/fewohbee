@@ -3,11 +3,12 @@
     below, plus the bottom bar for phones and tablets held upright (see shell.css).
 
     The entries are described once as data: `prefixes` are the route-name prefixes that mark an
-    entry as current, `tab` is the short label of an entry that also appears in the bottom bar,
-    `children` turns an entry into a group. Expects `pageTitle` (may be empty; the label of the
-    current entry is used then).
+    entry as current, `paths` URL paths that do the same for everything below them, `tab` is the
+    short label of an entry that also appears in the bottom bar, `children` turns an entry into a
+    group. Expects `pageTitle` (may be empty; the label of the current entry is used then).
 #}
 {% set route = getActiveRouteName() %}
+{% set requestPath = app.request.pathInfo %}
 {% set items = [] %}
 
 {% if is_granted('ROLE_RESERVATIONS') or is_granted('ROLE_RESERVATIONS_RO') %}
@@ -62,30 +63,10 @@
     }]) %}
 {% endif %}
 {% if is_granted('ROLE_ADMIN') %}
-    {% set settings = [
-        { label: 'app_settings.nav.label'|trans, href: path('settings.general.index'), prefixes: ['settings.general'] },
-        { label: 'nav.user'|trans, href: path('users.overview'), prefixes: ['users'] },
-        { label: 'nav.category'|trans, href: path('room_category_index'), prefixes: ['room.category', 'room_category'] },
-        { label: 'nav.appartment'|trans, href: path('apartments.overview'), prefixes: ['apartments'] },
-        { label: 'nav.object'|trans, href: path('objects.overview'), prefixes: ['objects'] },
-        { label: 'nav.guest_category'|trans, href: path('guest_category_index'), prefixes: ['guest_category'] },
-        { label: 'nav.prices'|trans, href: path('prices.overview'), prefixes: ['prices'] },
-        { label: 'nav.tourist_tax'|trans, href: path('tourist_tax_index'), prefixes: ['tourist_tax'] },
-        { label: 'nav.reservationorigin'|trans, href: path('reservationorigin.overview'), prefixes: ['reservationorigin'] },
-        { label: 'nav.status'|trans, href: path('reservation_status_index'), prefixes: ['status', 'reservation_status'] },
-        { label: 'nav.calendars'|trans, href: path('settings.calendars.index'), prefixes: ['settings.calendars'] },
-        { label: 'nav.templates'|trans, href: path('settings.templates.overview'), prefixes: ['settings.templates'] },
-        { label: 'online_booking.nav.label'|trans, href: path('settings.online_booking.index'), prefixes: ['settings.online_booking'] },
-        { label: 'guest_checkin.nav.label'|trans, href: path('settings.guest_checkin.index'), prefixes: ['settings.guest_checkin'] },
-        { label: 'workflow.nav.label'|trans, href: path('settings.workflows.index'), prefixes: ['settings.workflows'] },
-    ] %}
-    {% if mcp_available %}
-        {% set settings = settings|merge([
-            { label: 'mcp.nav.label'|trans, href: path('settings.mcp.index'), prefixes: ['settings.mcp'] },
-        ]) %}
-    {% endif %}
+    {# The settings pages are listed on the overview (Settings/index.html.twig); each names
+       itself in the top bar with its page_title block #}
     {% set items = items|merge([{
-        id: 'settings', label: 'nav.settings'|trans, icon: 'fa-gear', prefixes: [], children: settings,
+        label: 'nav.settings'|trans, icon: 'fa-gear', href: path('settings.overview'), prefixes: [], paths: ['/settings'],
     }]) %}
 {% endif %}
 
@@ -112,6 +93,9 @@
     {% set active = childActive %}
     {% for prefix in item.prefixes %}
         {% if route starts with prefix %}{% set active = true %}{% endif %}
+    {% endfor %}
+    {% for basePath in item.paths|default([]) %}
+        {% if requestPath == basePath or requestPath starts with basePath ~ '/' %}{% set active = true %}{% endif %}
     {% endfor %}
     {% if active and not childActive %}{% set currentLabel = item.label %}{% endif %}
     {% set item = item|merge({ active: active, children: children }) %}

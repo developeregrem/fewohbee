@@ -4,6 +4,8 @@
     {{ parent() }} - {{ isNew ? 'workflow.new'|trans : 'workflow.edit'|trans }}
 {% endblock %}
 
+{% block page_title %}{{ 'workflow.nav.label'|trans }}{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
