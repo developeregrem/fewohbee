@@ -20,14 +20,18 @@ import { onSwipe, horizontalSwipeDirection } from '../js/swipe.js';
  * A table wider than the screen scrolls sideways first; only a swipe on past
  * its edge pages. Swipes in form fields, dialogs and side panels are left
  * alone.
+ *
+ * With data-swipe-nav-local-value="true" only a swipe on the element itself
+ * pages - for a paged part of a longer page, e.g. a log below a form.
  */
 export default class extends Controller {
     static targets = ['select', 'date', 'previous', 'next'];
+    static values = { local: Boolean };
 
     connect() {
         this.updateButtons();
         this.abort = new AbortController();
-        onSwipe(document, this.abort.signal, (dx, dy, target, edges) => {
+        onSwipe(this.localValue ? this.element : document, this.abort.signal, (dx, dy, target, edges) => {
             const direction = horizontalSwipeDirection(dx, dy);
             if (!direction || !edges || !(direction === 'forward' ? edges.right : edges.left)) {
                 return;

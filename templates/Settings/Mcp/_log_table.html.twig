@@ -1,5 +1,5 @@
 <div class="table-responsive">
-    <table class="table table-sm table-hover mb-0">
+    <table class="table table-hover align-middle data-table data-table-stack">
         <thead>
             <tr>
                 <th>{{ 'mcp.settings.log.date'|trans }}</th>
@@ -13,21 +13,22 @@
             {% for log in logs %}
                 <tr>
                     <td class="text-nowrap">{{ log.createdAt|date('Y-m-d H:i:s') }}</td>
-                    <td>{{ log.username }} <span class="font-monospace text-body-secondary small">{{ log.tokenPrefix }}</span></td>
-                    <td class="font-monospace small">{{ log.toolName }}</td>
-                    <td>
-                        <span class="badge {{ log.outcome.value == 'ok' ? 'text-bg-success' : (log.outcome.value == 'error' ? 'text-bg-danger' : 'text-bg-warning') }}">
+                    <td class="cell-meta">{{ log.username }} <span class="font-monospace text-body-secondary small">{{ log.tokenPrefix }}</span></td>
+                    <td class="cell-meta font-monospace small">{{ log.toolName }}</td>
+                    <td class="cell-meta">
+                        {% set tone = log.outcome.value == 'ok' ? 'success' : (log.outcome.value == 'error' ? 'danger' : 'warning') %}
+                        <span class="badge text-{{ tone }}-emphasis bg-{{ tone }}-subtle">
                             {{ ('mcp.settings.log.outcomes.' ~ log.outcome.value)|trans }}
                         </span>
                     </td>
-                    <td class="small">
-                        {% if log.details.reservationId is defined %}
+                    <td class="cell-meta small">
+                        {%- if log.details.reservationId is defined %}
                             {{ 'mcp.settings.log.reservation'|trans({'%id%': log.details.reservationId}) }}
                             {% if log.details.arrival is defined %}{{ log.details.arrival }} – {{ log.details.departure }}{% endif %}
                         {% elseif log.details.priceId is defined %}
                             {{ 'mcp.settings.log.price'|trans({'%id%': log.details.priceId}) }}
                             {% if log.details.firstNight is defined %}{{ log.details.firstNight }} – {{ log.details.lastNight }}{% endif %}
-                        {% endif %}
+                        {%- endif -%}
                     </td>
                 </tr>
             {% else %}
@@ -37,13 +38,14 @@
     </table>
 </div>
 {% if pages > 1 %}
-<div class="mt-3">
+<div class="data-footer">
+    <span></span>
     {% include 'paginator.html.twig' with {
         url: path('settings.mcp.logs'),
         page: page,
         pages: pages,
         search: '',
-        pagination_class: 'pagination-sm mb-0'
+        swipe_nav: true,
     } %}
 </div>
 {% endif %}

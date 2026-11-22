@@ -8,92 +8,68 @@
 {% block page_title %}{{ 'nav.calendars'|trans }}{% endblock %}
 
 {% block content %}
-<div class="container" data-controller="settings">
-    <div class="row">
-        <div class="col">
-            <h2 class="fs-4 mb-1">
-                <i class="fas fa-calendar-alt text-primary me-1"></i>
-                {{ 'calendar.index.title'|trans }}
-            </h2>
-            <p class="text-body-secondary mb-3">{{ 'calendar.index.description'|trans }}</p>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col">
-            <button type="button" class="btn btn-secondary"
-                    data-action="click->settings#openModalAction"
-                    data-url="{{ path('settings.calendars.new') }}"
-                    data-title="{{ 'calendar.form.title_new'|trans }}"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modalCenter">
-                <i class="fas fa-plus"></i> {{ 'calendar.index.add'|trans }}</button>
-        </div>
-    </div>
+<div class="container fab-add-clearance" data-controller="settings">
+    <twig:PageHeader :title="'calendar.index.title'|trans" :back="path('settings.overview')" :backLabel="'nav.settings'|trans">
+        <twig:AddButton :label="'calendar.index.add'|trans"
+                        data-action="click->settings#openModalAction"
+                        data-url="{{ path('settings.calendars.new') }}"
+                        data-title="{{ 'calendar.form.title_new'|trans }}"
+                        data-bs-toggle="modal" data-bs-target="#modalCenter"/>
+    </twig:PageHeader>
+    <p class="text-body-secondary small mb-3">{{ 'calendar.index.description'|trans }}</p>
 
-    {% if calendars|length == 0 %}
-        <div class="row mt-3">
-            <div class="col">
-                <div class="alert alert-info">{{ 'calendar.index.empty'|trans }}</div>
-            </div>
-        </div>
-    {% else %}
-    <div class="row mt-3">
-        <div class="col">
-            <div class="table-responsive">
-            <table class="table table-bordered table-hover">
+    {# Card markup written out: the delete popover's block is not reachable inside a component #}
+    <div class="card data-card">
+        {% if calendars is empty %}
+            <twig:EmptyState icon="calendar-days" :title="'calendar.index.empty'|trans"/>
+        {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle data-table data-table-stack" data-controller="row-link" data-action="click->row-link#open">
                 <thead>
                 <tr>
-                    <th>{{ 'calendar.index.table.color'|trans }}</th>
                     <th>{{ 'calendar.index.table.name'|trans }}</th>
-                    <th>{{ 'calendar.index.table.confirmation'|trans }}</th>
                     <th>{{ 'calendar.index.table.source'|trans }}</th>
                     <th class="text-end">{{ 'calendar.index.table.entries'|trans }}</th>
-                    <th>{{ 'base.action'|trans }}</th>
+                    <th class="data-table-actions"><span class="visually-hidden">{{ 'base.action'|trans }}</span></th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for calendar in calendars %}
                     <tr>
-                        <td><twig:ColorDot :color="calendar.color" size="lg"/></td>
-                        <td>{{ calendar.name }}</td>
                         <td>
+                            <a href="#" class="data-table-link" data-row-link-target="link"
+                               data-action="click->settings#openModalAction"
+                               data-url="{{ path('settings.calendars.edit', {'id': calendar.id}) }}"
+                               data-title="{{ 'calendar.form.title_edit'|trans }}"
+                               data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                <twig:ColorDot :color="calendar.color"/>
+                                <span class="data-table-link-text">{{ calendar.name }}</span>
+                            </a>
                             {% if calendar.requiresConfirmation %}
-                                <i class="fas fa-check text-success" title="{{ 'calendar.form.requires_confirmation'|trans }}"></i>
-                            {% else %}
-                                <span class="text-muted">&ndash;</span>
+                                <span class="badge text-secondary-emphasis bg-secondary-subtle ms-1 align-middle">{{ 'calendar.form.requires_confirmation'|trans }}</span>
                             {% endif %}
                         </td>
-                        <td class="small text-body-secondary">
-                            {% if calendar.icsUrl %}
-                                {{ 'calendar.index.source_url'|trans }}
-                            {% else %}
-                                {{ 'calendar.index.source_manual'|trans }}
-                            {% endif %}
+                        <td class="cell-meta">{{ (calendar.icsUrl ? 'calendar.index.source_url' : 'calendar.index.source_manual')|trans }}</td>
+                        <td class="cell-meta text-md-end">
+                            <span class="cell-narrow">{{ 'calendar.index.table.entries'|trans }}: </span>{{ entryCounts[calendar.id] ?? 0 }}
                         </td>
-                        <td class="text-end">{{ entryCounts[calendar.id] ?? 0 }}</td>
-                        <td>
-                            <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i class="fas fa-edit"
-                                   data-action="click->settings#openModalAction"
-                                   data-url="{{ path('settings.calendars.edit', {'id': calendar.id}) }}"
-                                   data-title="{{ 'calendar.form.title_edit'|trans }}"></i></a>
+                        <td class="cell-actions data-table-actions text-end">
                             {% set id = calendar.id %}
                             {% set targetUrl = path('settings.calendars.delete', {'id': calendar.id}) %}
-                            {% set deletePopoverHint = 'calendar.form.delete_confirm'|trans %}
-                            <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i class="fas fa-trash-alt"
-                                   data-popover="delete"
-                                   data-title="{{ 'registrationbook.delete.ask'|trans }}"
-                                   data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
+                            <button type="button" class="btn btn-icon text-danger"
+                                    title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"
+                                    data-popover="delete"
+                                    data-title="{{ 'calendar.form.delete_confirm'|trans }}"
+                                    data-bs-content='{{ block('deletePopoverContent') }}'>
+                                <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                            </button>
                         </td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
-            </div>
         </div>
+        {% endif %}
     </div>
-    {% endif %}
-
 </div>
 {% endblock %}
