@@ -7,17 +7,20 @@ namespace App\Service\Reservation;
 use App\Dto\Reservation\ReservationConfirmation;
 use App\Entity\Reservation;
 use App\Entity\Template;
+use App\Event\ReservationConfirmationSentEvent;
 use App\Repository\ReservationRepository;
 use App\Service\AppSettingsService;
 use App\Workflow\Action\SendTemplateEmailAction;
 use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * The booking confirmation of a reservation, with the mail template and attachments chosen in
  * the general settings: either prepared for the mail editor, where the user reviews and sends it
- * like any other conversation, or sent right away when the settings say so.
+ * like any other conversation, or sent right away when the settings say so. Either way, once it
+ * went out, ReservationConfirmationSentEvent lets automations follow up.
  */
 final class ReservationConfirmationService
 {
@@ -27,6 +30,7 @@ final class ReservationConfirmationService
         private readonly WorkflowAttachmentResolver $attachmentResolver,
         private readonly EntityManagerInterface $em,
         private readonly SendTemplateEmailAction $sendTemplateEmail,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -57,6 +61,7 @@ final class ReservationConfirmationService
     {
         $settings = $this->appSettings->getSettings();
         $template = $settings->getConfirmationTemplate() ?? throw new \LogicException('No confirmation template is set.');
+        $reservations = $this->bookingGroup($reservation);
 
         $this->sendTemplateEmail->execute([
             'templateId' => $template->getId(),
@@ -64,7 +69,28 @@ final class ReservationConfirmationService
             'bookerEmail' => $email,
             'attachments' => $this->attachmentItems($settings->getConfirmationAttachments()),
             'attachmentPolicy' => WorkflowAttachmentResolver::POLICY_REQUIRE_ALL,
-        ], $reservation, ['allReservations' => $this->bookingGroup($reservation)]);
+        ], $reservation, ['allReservations' => $reservations]);
+
+        $this->eventDispatcher->dispatch(new ReservationConfirmationSentEvent($reservations));
+    }
+
+    /**
+     * Call after a mail from the mail editor went out: when it used the confirmation template
+     * (or one of its language variants), automations learn that the booking was confirmed. It
+     * counts whether the editor was opened from the button or by choosing the template, since
+     * the mail is the same.
+     *
+     * @param Reservation[] $reservations the rooms the mail was recorded for, the one it was written for first
+     */
+    public function recordSentFromEditor(Template $sentTemplate, array $reservations): void
+    {
+        $confirmation = $this->emailTemplate();
+        $sent = $sentTemplate->getBaseTemplate() ?? $sentTemplate;
+        if (null === $confirmation || $sent->getId() !== $confirmation->getId() || [] === $reservations) {
+            return;
+        }
+
+        $this->eventDispatcher->dispatch(new ReservationConfirmationSentEvent(array_values($reservations)));
     }
 
     /**

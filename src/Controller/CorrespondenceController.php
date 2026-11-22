@@ -24,6 +24,7 @@ use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\EInvoice\EInvoiceReadinessService;
 use App\Service\InvoiceService;
 use App\Service\MailService;
+use App\Service\Reservation\ReservationConfirmationService;
 use App\Service\Reservation\ReservationMailRecipientResolver;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
@@ -117,7 +118,7 @@ class CorrespondenceController extends AbstractController
      */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/email/send', name: 'correspondence.email.send', methods: ['POST'])]
-    public function sendEmailAction(EntityManagerInterface $em, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, MailService $mailer, Request $request)
+    public function sendEmailAction(EntityManagerInterface $em, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, MailService $mailer, ReservationConfirmationService $confirmations, Request $request)
     {
         $error = false;
         if ($csrf->validateCSRFToken($request)) {
@@ -168,6 +169,7 @@ class CorrespondenceController extends AbstractController
                     $em->persist($mail);
                     $em->flush();
                 }
+                $confirmations->recordSentFromEditor($template, $reservations);
 
                 $this->addFlash('success', 'templates.sendemail.success');
                 $requestStack->getSession()->remove(self::EMAIL_DRAFT_SESSION_KEY);

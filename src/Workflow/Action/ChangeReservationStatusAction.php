@@ -70,7 +70,7 @@ class ChangeReservationStatusAction implements WorkflowActionInterface
         }
 
         if ($entity instanceof Reservation) {
-            return $this->changeStatus([$entity], $status);
+            return $this->changeStatus($this->bookingOf($entity, $context), $status);
         }
 
         if ($entity instanceof Invoice) {
@@ -84,6 +84,26 @@ class ChangeReservationStatusAction implements WorkflowActionInterface
         }
 
         throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_unsupported_entity'));
+    }
+
+    /**
+     * A booking of several rooms reaches the workflow as its first room, with every room in
+     * `allReservations` (online booking, new reservation, confirmation sent). The status belongs
+     * to the booking, so all of them change; other triggers just pass the one reservation.
+     *
+     * @param array<string, mixed> $context
+     *
+     * @return Reservation[]
+     */
+    private function bookingOf(Reservation $reservation, array $context): array
+    {
+        $all = $context['allReservations'] ?? null;
+        if (!is_array($all) || [] === $all) {
+            return [$reservation];
+        }
+        $rooms = array_values(array_filter($all, static fn (mixed $room): bool => $room instanceof Reservation));
+
+        return in_array($reservation, $rooms, true) ? $rooms : [$reservation];
     }
 
     /**

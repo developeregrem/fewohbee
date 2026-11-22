@@ -12,11 +12,13 @@ use App\Event\GuestCheckInSubmittedEvent;
 use App\Event\InvoiceCreatedEvent;
 use App\Event\InvoiceStatusChangedEvent;
 use App\Event\OnlineBookingCreatedEvent;
+use App\Event\ReservationConfirmationSentEvent;
 use App\Event\ReservationCreatedEvent;
 use App\Event\ReservationStatusChangedEvent;
 use App\Workflow\Trigger\AssistantReservationCreatedTrigger;
 use App\Workflow\Trigger\GuestCheckInConfirmedTrigger;
 use App\Workflow\Trigger\GuestCheckInSubmittedTrigger;
+use App\Workflow\Trigger\ReservationConfirmationSentTrigger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -41,7 +43,15 @@ class WorkflowEventSubscriber implements EventSubscriberInterface
             InvoiceStatusChangedEvent::class => 'onInvoiceStatusChanged',
             GuestCheckInSubmittedEvent::class => 'onGuestCheckInSubmitted',
             GuestCheckInConfirmedEvent::class => 'onGuestCheckInConfirmed',
+            ReservationConfirmationSentEvent::class => 'onReservationConfirmationSent',
         ];
+    }
+
+    public function onReservationConfirmationSent(ReservationConfirmationSentEvent $event): void
+    {
+        $this->engine->processEvent(ReservationConfirmationSentTrigger::TYPE, $event->reservations[0], [
+            'allReservations' => $event->reservations,
+        ]);
     }
 
     public function onOnlineBookingCreated(OnlineBookingCreatedEvent $event): void
