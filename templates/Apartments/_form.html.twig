@@ -1,4 +1,4 @@
-<fieldset id="entry-form-fieldset-{{ apartment.id }}" {% if apartment.id != null %} disabled {% endif %}>
+<fieldset id="entry-form-fieldset-{{ apartment.id }}">
     {% import 'common/content_translations.html.twig' as contentTranslations %}
     {{ form_errors(form) }}
     {% if form.roomCategory.vars.choices is empty %}

@@ -73,6 +73,24 @@ class TouristTaxController extends AbstractController
         ]);
     }
 
+    /**
+     * Switches a tourist tax on or off from the list (ActiveToggle). Answers the list's fetch
+     * with 204, a plain form post with the list.
+     */
+    #[Route('/{id}/toggle', name: 'tourist_tax_toggle', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function toggle(ManagerRegistry $doctrine, Request $request, TouristTax $tax): Response
+    {
+        if (!$this->isCsrfTokenValid('tourist-tax-toggle-'.$tax->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $tax->setActive(!$tax->isActive());
+        $doctrine->getManager()->flush();
+
+        return $request->isXmlHttpRequest()
+            ? new Response(status: Response::HTTP_NO_CONTENT)
+            : $this->redirectToRoute('tourist_tax_index');
+    }
+
     #[Route('/{id}/delete', name: 'tourist_tax_delete', methods: ['DELETE'])]
     public function delete(ManagerRegistry $doctrine, Request $request, TouristTax $tax): Response
     {

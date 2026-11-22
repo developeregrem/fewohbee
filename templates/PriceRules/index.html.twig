@@ -8,7 +8,7 @@
 
 {% block content %}
 <div class="container fab-add-clearance" data-controller="price-rules" data-price-rules-load-error="{{ 'price_rules.load_error'|trans }}">
-    <twig:PageHeader :title="'nav.prices'|trans">
+    <twig:PageHeader :title="'nav.prices'|trans" :back="path('settings.overview')" :backLabel="'nav.settings'|trans">
         <twig:AddButton :label="'price_rules.add'|trans"
                         data-action="price-rules#openOffcanvas"
                         data-url="{{ path('prices.rules.new') }}"

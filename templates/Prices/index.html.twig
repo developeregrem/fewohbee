@@ -8,7 +8,7 @@
 
 {% block content %}
 <div class="container fab-add-clearance" data-controller="settings prices">
-    <twig:PageHeader :title="'nav.prices'|trans">
+    <twig:PageHeader :title="'nav.prices'|trans" :back="path('settings.overview')" :backLabel="'nav.settings'|trans">
         <twig:AddButton :label="'nav.price.add'|trans"
                         data-action="click->settings#openModalAction"
                         data-url="{{ path('prices.new.price') }}"

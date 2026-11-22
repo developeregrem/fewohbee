@@ -12,58 +12,57 @@
 {% block page_title %}{{ 'nav.reservationorigin'|trans }}{% endblock %}
 
 {% block content %}
-<div class="container" data-controller="settings">
-    <div class="row">
-        <div class="col">
-            <button type="button" class="btn btn-secondary"
-                    data-action="click->settings#openModalAction"
-                    data-url="{{ path('reservationorigin.new.origin') }}"
-                    data-title="{{ 'reservationorigin.add'|trans }}"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modalCenter">
-                <i class="fas fa-plus"></i> {{ 'reservationorigin.add'|trans }}</button>
-        </div>
-    </div>
-    <div class="row mt-3">
-        <div class="col">
-            <table class="table table-bordered table-hover">
+<div class="container fab-add-clearance" data-controller="settings">
+    <twig:PageHeader :title="'nav.reservationorigin'|trans" :back="path('settings.overview')" :backLabel="'nav.settings'|trans">
+        <twig:AddButton :label="'reservationorigin.add'|trans"
+                        data-action="click->settings#openModalAction"
+                        data-url="{{ path('reservationorigin.new.origin') }}"
+                        data-title="{{ 'reservationorigin.add'|trans }}"
+                        data-bs-toggle="modal" data-bs-target="#modalCenter"/>
+    </twig:PageHeader>
+
+    {# Card markup written out: the delete popover's block is not reachable inside a component #}
+    <div class="card data-card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle data-table data-table-stack" data-controller="row-link" data-action="click->row-link#open">
                 <thead>
                 <tr>
                     <th>{{ 'reservationorigin.name'|trans }}</th>
-                    <th>{{ 'reservationorigin.color'|trans }}</th>
-                    <th>{{ 'base.action'|trans }}</th>
+                    <th>{{ 'reservationorigin.guest_surcharge_enabled'|trans }}</th>
+                    <th class="data-table-actions"><span class="visually-hidden">{{ 'base.action'|trans }}</span></th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for origin in origins %}
+                    {% set fees = [] %}
+                    {% for fee in [
+                        {label: 'reservationorigin.commission_percent', value: origin.commissionPercent},
+                        {label: 'reservationorigin.payment_fee_percent', value: origin.paymentFeePercent},
+                    ]|filter(fee => fee.value is not null and fee.value > 0) %}
+                        {% set fees = fees|merge([fee.label|trans ~ ' ' ~ fee.value|number_format(is_decimal_place_0(fee.value) ? 0 : 2, ',', '.') ~ ' %']) %}
+                    {% endfor %}
                     <tr>
-                        <td>{{ origin.name }}</td>
                         <td>
-                            {% if origin.color %}
-                                <twig:ColorDot :color="origin.color" size="lg"/>
-                            {% else %}
-                                &ndash;
-                            {% endif %}
+                            <a href="#" class="data-table-link" data-row-link-target="link"
+                               data-action="click->settings#openModalAction"
+                               data-url="{{ path('reservationorigin.get.origin', {'id': origin.id}) }}"
+                               data-title="{{ 'reservationorigin.edit'|trans }}"
+                               data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                {% if origin.color %}<twig:ColorDot :color="origin.color"/>{% endif %}
+                                <span class="data-table-link-text">{{ origin.name }}</span>
+                            </a>
                         </td>
-                        <td>
-                            <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i class="fas fa-info-circle"
-                                   data-action="click->settings#openModalAction"
-                                   data-url="{{ path('reservationorigin.get.origin', {'id': origin.id}) }}"
-                                   data-title="{{ 'button.details'|trans }}"></i></a>
-                            <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i class="fas fa-edit"
-                                   data-action="click->settings#openModalAction"
-                                   data-url="{{ path('reservationorigin.get.origin', {'id': origin.id}) }}"
-                                   data-title="{{ 'button.edit'|trans }}"
-                                   data-enable-edit="true"></i></a>
+                        <td class="cell-meta">{{ fees|join(' · ') }}</td>
+                        <td class="cell-actions data-table-actions text-end">
                             {% set id = origin.id %}
                             {% set targetUrl = path('reservationorigin.delete.origin', {'id': origin.id}) %}
-                            <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i class="fas fa-trash-alt"
-                                   data-popover="delete"
-                                   data-title="{{ 'registrationbook.delete.ask'|trans }}"
-                                   data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
+                            <button type="button" class="btn btn-icon text-danger"
+                                    title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"
+                                    data-popover="delete"
+                                    data-title="{{ 'reservationorigin.delete.ask'|trans }}"
+                                    data-bs-content='{{ block('deletePopoverContent') }}'>
+                                <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                            </button>
                         </td>
                     </tr>
                 {% endfor %}

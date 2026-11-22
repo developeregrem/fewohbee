@@ -7,7 +7,7 @@
  #   <twig:ActiveToggle :action="path('prices.toggle.price', {id: price.id})"
  #                      :token="csrf_token('price-toggle-' ~ price.id)" :active="price.active"
  #                      :enableLabel="'…'|trans" :disableLabel="'…'|trans"
- #                      fetch inactiveClass="price-inactive"/>
+ #                      fetch inactiveClass="is-inactive"/>
  #}
 {% props action, token, active, enableLabel, disableLabel, fetch = false, inactiveClass = '' %}
 {% set label = active ? disableLabel : enableLabel %}

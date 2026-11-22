@@ -17,7 +17,6 @@ export default class extends Controller {
         event.preventDefault();
         const url = event.currentTarget.dataset.url;
         const title = event.currentTarget.dataset.title || '';
-        const enableEdit = event.currentTarget.dataset.enableEdit === 'true';
         const modalSize = event.currentTarget.dataset.modalSize || 'default';
 
         if (!url) return;
@@ -28,9 +27,6 @@ export default class extends Controller {
             method: 'GET',
             target: this.modalContent,
             onComplete: () => {
-                if (enableEdit) {
-                    this.enableEditFromModal();
-                }
                 enableTooltips(this.modalContent);
                 enablePopovers(this.modalContent);
                 // enablePopovers deliberately skips data-popover="delete", and
@@ -48,32 +44,6 @@ export default class extends Controller {
             modalDialog.classList.add('modal-lg');
         } else {
             modalDialog.classList.remove('modal-lg');
-        }
-    }
-
-    enableEditFromModal() {
-        const editLink = this.modalContent.querySelector('[data-action*="settings#enableEditAction"]');
-        if (editLink) {
-            this.enableEditAction({ preventDefault() {}, currentTarget: editLink });
-        }
-    }
-
-    enableEditAction(event) {
-        event.preventDefault();
-        const fieldsetSelector = event.currentTarget.dataset.fieldsetSelector;
-        const saveSelector = event.currentTarget.dataset.saveSelector;
-        const editAreaSelector = event.currentTarget.dataset.editAreaSelector;
-        if (editAreaSelector) {
-            const area = document.querySelector(editAreaSelector);
-            if (area) area.classList.add('d-none');
-        }
-        if (saveSelector) {
-            const saveBtn = document.querySelector(saveSelector);
-            if (saveBtn) saveBtn.classList.remove('d-none');
-        }
-        if (fieldsetSelector) {
-            const fieldset = document.querySelector(fieldsetSelector);
-            if (fieldset) fieldset.removeAttribute('disabled');
         }
     }
 

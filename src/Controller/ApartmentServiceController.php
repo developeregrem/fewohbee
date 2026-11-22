@@ -114,6 +114,25 @@ class ApartmentServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * Switches a room on or off from the list (ActiveToggle): an inactive room is hidden from
+     * reservations, online booking and the calendar sync. Answers the list's fetch with 204, a
+     * plain form post with the list.
+     */
+    #[Route('/{id}/toggle', name: 'apartments.toggle.apartment', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function toggle(ManagerRegistry $doctrine, Request $request, Appartment $apartment): Response
+    {
+        if (!$this->isCsrfTokenValid('apartment-toggle-'.$apartment->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $apartment->setActive(!$apartment->isActive());
+        $doctrine->getManager()->flush();
+
+        return $request->isXmlHttpRequest()
+            ? new Response(status: Response::HTTP_NO_CONTENT)
+            : $this->redirectToRoute('apartments.overview');
+    }
+
     #[Route('/{id}/delete', name: 'appartments.delete.appartment', methods: ['DELETE'])]
     public function delete(ManagerRegistry $doctrine, Request $request, AppartmentService $as, Appartment $apartment): Response
     {

@@ -106,6 +106,12 @@
     color: inherit;
 }
 
+/* A record switched off (ActiveToggle, inactiveClass="is-inactive") stays readable but steps back */
+.data-table > tbody > tr.is-inactive > td,
+.data-table > tbody > tr.is-inactive .data-table-link-text {
+    color: var(--feb-text-muted);
+}
+
 .data-table-link-text {
     min-width: 0;
     font-weight: var(--feb-font-weight-strong);
@@ -194,10 +200,9 @@
         padding-left: 3rem;
     }
 
-    /* First column of the table, last line of the block */
+    /* The record's number is for larger screens only; a phone shows what tells records apart */
     .data-table-stack > tbody > tr > .data-table-id {
-        order: 1;
-        color: var(--feb-text-subtle);
+        display: none;
     }
 
     .data-table-stack > tbody > tr > .cell-actions {

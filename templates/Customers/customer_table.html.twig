@@ -24,7 +24,7 @@
                     {% set cities = customer.customerAddresses|map(address => address.city)|filter(value => value is not empty) %}
                     {% set bookings = customer.bookedReservations|length %}
                     <tr>
-                        <td class="cell-meta data-table-id"><span class="cell-narrow">ID </span>{{ customer.id }}</td>
+                        <td class="cell-meta data-table-id">{{ customer.id }}</td>
                         <td>
                             <a href="#" class="data-table-link" data-row-link-target="link"
                                data-action="click->customers#openModalAction"

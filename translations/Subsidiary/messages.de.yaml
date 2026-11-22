@@ -14,6 +14,7 @@ object.check_out.until: 'Check-out bis'
 object.check_out.value: 'Check-out bis %until% Uhr'
 object.delete.ask: 'Diese Niederlassung wirklich löschen?'
 object.description: Beschreibung
+object.edit: 'Niederlassung bearbeiten'
 object.flash.check_in_window.invalid: 'Das Check-in-Fenster ist ungültig. Bitte eine Startzeit angeben und eine Endzeit, die nicht mit ihr übereinstimmt — oder das zweite Feld leer lassen.'
 object.flash.create.success: 'Niederlassung wurde erfolgreich angelegt.'
 object.flash.delete.error.still.in.use: 'Niederlassung kann nicht gelöscht werden, da ihr noch Zimmer zugeordnet sind.'

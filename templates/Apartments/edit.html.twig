@@ -7,21 +7,7 @@
     <div class="modal-body px-lg-5">
         <div id="flash-message-overlay">
         </div>
-        <div class="row" id="edit-button-area">
-            <div class="col">
-                <h4 class="pb-2">
-                    <small>
-                    <a href="#"
-                       data-action="click->settings#enableEditAction"
-                       data-fieldset-selector="#entry-form-fieldset-{{ apartment.id }}"
-                       data-save-selector="#entry-submit-{{ apartment.id }}"
-                       data-edit-area-selector="#edit-button-area"
-                       title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
-                            <i class="fas fa-edit"></i></a>
-                    </small>
-                </h4>
-            </div>
-        </div>
+        {# Opens ready to edit: only admins reach it, a read-only step adds nothing #}
         <div class="row mt-3">
             <div class="col">                             
                 {{ include('Apartments/_form.html.twig') }}
@@ -31,6 +17,6 @@
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ apartment.id }}"
-               class="btn btn-primary d-none"/>
+               class="btn btn-primary"/>
     </div>
 {{ form_end(form) }}

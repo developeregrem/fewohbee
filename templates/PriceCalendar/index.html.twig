@@ -7,7 +7,7 @@
 
 {% block content %}
 <div class="container" data-controller="price-calendar swipe-nav" data-price-calendar-load-error="{{ 'price_rules.load_error'|trans }}">
-    <twig:PageHeader :title="'nav.prices'|trans"/>
+    <twig:PageHeader :title="'nav.prices'|trans" :back="path('settings.overview')" :backLabel="'nav.settings'|trans"/>
     {% include 'Prices/_tabs.html.twig' with {'active': 'calendar'} %}
 
     <p class="text-body-secondary">{{ 'price_calendar.intro'|trans }}</p>

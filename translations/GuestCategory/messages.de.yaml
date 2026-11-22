@@ -2,6 +2,7 @@ guest_category:
   title: "Gastkategorien"
   description: "Verwaltung der Gastkategorien (z. B. Erwachsene, Kinder, nichtpflichtige Personen)"
   add: "Gastkategorie hinzufügen"
+  edit: "Gastkategorie bearbeiten"
   delete:
     ask: "Diese Gastkategorie wirklich löschen?"
   system:
@@ -80,6 +81,7 @@ guest_category_modifier:
   description: "Lege je Gastkategorie einen Aufschlag, Rabatt, Pauschalpreis oder \"frei\" auf den Übernachtungspreis fest. Der Erwachsenenpreis bleibt der Basistarif. Anpassungen wirken nur bei Übernachtungspreisen, die pro Person berechnet werden — nicht bei Pauschal- oder Zimmerpreisen."
   threshold_hint: "Ab welcher Belegung diese Anpassungen greifen (Mindestanzahl Vollzahler), legst du je Zimmerkategorie fest — z. B. damit Kinder erst ab 3 Personen vergünstigt werden."
   add: "Preisanpassung hinzufügen"
+  edit: "Preisanpassung bearbeiten"
   empty: "Noch keine Preisanpassungen angelegt — Übernachtungspreise gelten unverändert für alle Kategorien."
   delete:
     ask: "Diese Preisanpassung wirklich löschen?"

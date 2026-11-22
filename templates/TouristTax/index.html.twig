@@ -7,88 +7,90 @@
 {% block page_title %}{{ 'nav.tourist_tax'|trans }}{% endblock %}
 
 {% block content %}
-<div class="container" data-controller="settings">
-    <div class="row">
-        <div class="col">
-            <p class="text-muted">{{ 'tourist_tax.description'|trans }}</p>
-            <button type="button" class="btn btn-secondary"
-                    data-action="click->settings#openModalAction"
-                    data-url="{{ path('tourist_tax_new') }}"
-                    data-title="{{ 'tourist_tax.add'|trans }}"
-                    data-bs-toggle="modal"
-                    data-modal-size="lg"
-                    data-bs-target="#modalCenter">
-                <i class="fas fa-plus"></i> {{ 'tourist_tax.add'|trans }}</button>
-        </div>
-    </div>
-    <div class="row mt-3">
-        <div class="col">
-            <div class="table-responsive">
-            <table class="table table-bordered table-hover">
+<div class="container fab-add-clearance" data-controller="settings">
+    <twig:PageHeader :title="'nav.tourist_tax'|trans" :back="path('settings.overview')" :backLabel="'nav.settings'|trans">
+        <twig:AddButton :label="'tourist_tax.add'|trans"
+                        data-action="click->settings#openModalAction"
+                        data-url="{{ path('tourist_tax_new') }}"
+                        data-title="{{ 'tourist_tax.add'|trans }}"
+                        data-modal-size="lg"
+                        data-bs-toggle="modal" data-bs-target="#modalCenter"/>
+    </twig:PageHeader>
+    {# Below the header rather than its subtitle: a long text would push the add button onto a
+       line of its own, and below lg the header shows no text #}
+    <p class="text-body-secondary small mb-3">{{ 'tourist_tax.description'|trans }}</p>
+
+    {# Card markup written out: the delete popover's block is not reachable inside a component #}
+    <div class="card data-card">
+        {% if tourist_taxes is empty %}
+            <twig:EmptyState icon="landmark" :title="'tourist_tax.empty'|trans"/>
+        {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle data-table data-table-stack" data-controller="row-link" data-action="click->row-link#open">
                 <thead>
                 <tr>
                     <th>{{ 'tourist_tax.col.name'|trans }}</th>
                     <th>{{ 'tourist_tax.col.subsidiaries'|trans }}</th>
                     <th>{{ 'tourist_tax.col.validity'|trans }}</th>
-                    <th>{{ 'tourist_tax.col.applies_only_to_adult'|trans }}</th>
                     <th>{{ 'tourist_tax.col.rates'|trans }}</th>
-                    <th>{{ 'tourist_tax.col.active'|trans }}</th>
-                    <th>{{ 'tourist_tax.col.action'|trans }}</th>
+                    <th class="data-table-actions"><span class="visually-hidden">{{ 'tourist_tax.col.action'|trans }}</span></th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for tax in tourist_taxes %}
-                    <tr>
-                        <td>{{ tax.name }}</td>
+                    <tr{% if not tax.active %} class="is-inactive"{% endif %}>
                         <td>
-                            {% if tax.subsidiaries.isEmpty %}
-                                <span class="text-muted">{{ 'tourist_tax.subsidiaries.global'|trans }}</span>
-                            {% else %}
-                                {% for s in tax.subsidiaries %}{{ s.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                            <a href="#" class="data-table-link" data-row-link-target="link"
+                               data-action="click->settings#openModalAction"
+                               data-url="{{ path('tourist_tax_edit', {'id': tax.id}) }}"
+                               data-title="{{ 'tourist_tax.edit'|trans }}"
+                               data-modal-size="lg"
+                               data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                <span class="data-table-link-text">{{ tax.name }}</span>
+                            </a>
+                            {% if tax.appliesOnlyToAdult %}
+                                <span class="badge text-secondary-emphasis bg-secondary-subtle ms-1 align-middle">{{ 'tourist_tax.col.applies_only_to_adult'|trans }}</span>
                             {% endif %}
+                            <span class="cell-narrow badge text-secondary-emphasis bg-secondary-subtle ms-1" data-inactive-badge {{ tax.active ? 'hidden' }}>{{ 'base.inactive'|trans }}</span>
                         </td>
-                        <td>
-                            {{ tax.validFrom is null ? '–' : tax.validFrom|date('d.m.Y') }}
-                            –
-                            {{ tax.validTo is null ? '∞' : tax.validTo|date('d.m.Y') }}
+                        <td class="cell-meta">
+                            {%- if tax.subsidiaries.isEmpty -%}
+                                {{ 'tourist_tax.subsidiaries.global'|trans }}
+                            {%- else -%}
+                                {{ tax.subsidiaries|map(subsidiary => subsidiary.name)|join(', ') }}
+                            {%- endif -%}
                         </td>
-                        <td>
-                            {% if tax.appliesOnlyToAdult %}<i class="fas fa-check text-success"></i>{% else %}<i class="fas fa-times text-muted"></i>{% endif %}
+                        <td class="cell-meta text-nowrap">
+                            {{- tax.validFrom is null ? '–' : tax.validFrom|date('d.m.Y') }} – {{ tax.validTo is null ? '∞' : tax.validTo|date('d.m.Y') -}}
                         </td>
-                        <td>
-                            {% for r in tax.rates %}
-                                {{ r.guestCategory.name }}: {{ r.pricePerNight }}&nbsp;{{ currency_symbol }}{% if not loop.last %}<br>{% endif %}
-                            {% else %}
-                                <span class="text-muted">{{ 'tourist_tax.rates.empty'|trans }}</span>
-                            {% endfor %}
+                        <td class="cell-meta">
+                            {%- for rate in tax.rates -%}
+                                <span class="d-block">{{ rate.guestCategory.name }}: {{ rate.pricePerNight|number_format(2, ',', '.') }}&nbsp;{{ currency_symbol }}</span>
+                            {%- else -%}
+                                {{ 'tourist_tax.rates.empty'|trans }}
+                            {%- endfor -%}
                         </td>
-                        <td>
-                            {% if tax.active %}<i class="fas fa-check text-success"></i>{% else %}<i class="fas fa-times text-muted"></i>{% endif %}
-                        </td>
-                        <td>
-                            <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i class="fas fa-edit"
-                                   data-action="click->settings#openModalAction"
-                                   data-url="{{ path('tourist_tax_edit', {'id': tax.id}) }}"
-                                   data-title="{{ 'button.edit'|trans }}"
-                                   data-modal-size="lg"
-                                   data-enable-edit="true"></i></a>
+                        <td class="cell-actions data-table-actions text-end">
+                            <twig:ActiveToggle :action="path('tourist_tax_toggle', {'id': tax.id})"
+                                               :token="csrf_token('tourist-tax-toggle-' ~ tax.id)" :active="tax.active"
+                                               :enableLabel="'button.enable'|trans" :disableLabel="'button.disable'|trans"
+                                               fetch inactiveClass="is-inactive"/>
                             {% set id = tax.id %}
                             {% set targetUrl = path('tourist_tax_delete', {'id': tax.id}) %}
-                            <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i class="fas fa-trash-alt"
-                                   data-popover="delete"
-                                   data-title="{{ 'tourist_tax.delete.ask'|trans }}"
-                                   data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
+                            <button type="button" class="btn btn-icon text-danger"
+                                    title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"
+                                    data-popover="delete"
+                                    data-title="{{ 'tourist_tax.delete.ask'|trans }}"
+                                    data-bs-content='{{ block('deletePopoverContent') }}'>
+                                <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                            </button>
                         </td>
                     </tr>
-                {% else %}
-                    <tr><td colspan="7" class="text-muted">{{ 'tourist_tax.empty'|trans }}</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
-            </div>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

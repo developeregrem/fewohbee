@@ -94,6 +94,35 @@ class UserServiceController extends AbstractController
         ]);
     }
 
+    /**
+     * Switches a user on or off from the list (ActiveToggle). Not one's own account: switched off
+     * it could not log in again to switch itself back on. Answers the list's fetch with 204, or
+     * 409 with a flash message to show; a plain form post with the list.
+     */
+    #[Route('/{id}/toggle', name: 'users.toggle.user', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function toggle(ManagerRegistry $doctrine, Request $request, User $user): Response
+    {
+        // Refused before the token is checked: it changes nothing, and the list offers no switch
+        // (so no token) for one's own account
+        $current = $this->getUser();
+        if ($current instanceof User && $current->getId() === $user->getId()) {
+            $this->addFlash('warning', 'user.flash.toggle.self');
+
+            return $request->isXmlHttpRequest()
+                ? new Response(status: Response::HTTP_CONFLICT)
+                : $this->redirectToRoute('users.overview');
+        }
+        if (!$this->isCsrfTokenValid('user-toggle-'.$user->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $user->setActive(!$user->getActive());
+        $doctrine->getManager()->flush();
+
+        return $request->isXmlHttpRequest()
+            ? new Response(status: Response::HTTP_NO_CONTENT)
+            : $this->redirectToRoute('users.overview');
+    }
+
     /** @param int|string $id Route ID, including numeric strings */
     #[Route('/{id}/delete', name: 'users.delete.user', methods: ['DELETE'])]
     public function deleteUserAction(Request $request, $id, UserService $us, User $user): Response

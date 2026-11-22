@@ -6,27 +6,13 @@
 } }) }}
     <div class="modal-body px-lg-5">
         <div id="flash-message-overlay"></div>
-        <div class="row" id="edit-button-area">
-            <div class="col">
-                <h4 class="pb-2">
-                    <small>
-                    <a href="#"
-                       data-action="click->settings#enableEditAction"
-                       data-fieldset-selector="#tt-form-fieldset-{{ tax.id }}"
-                       data-save-selector="#tt-submit-{{ tax.id }}"
-                       data-edit-area-selector="#edit-button-area"
-                       title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
-                            <i class="fas fa-edit"></i></a>
-                    </small>
-                </h4>
-            </div>
-        </div>
+        {# Opens ready to edit: only admins reach it, a read-only step adds nothing #}
         <div class="row">
             <div class="col">{{ include('TouristTax/_form.html.twig') }}</div>
         </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
-        <input type="submit" value="{{ 'button.save'|trans }}" id="tt-submit-{{ tax.id }}" class="btn btn-primary d-none"/>
+        <input type="submit" value="{{ 'button.save'|trans }}" id="tt-submit-{{ tax.id }}" class="btn btn-primary"/>
     </div>
 {{ form_end(form) }}
