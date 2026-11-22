@@ -8,6 +8,9 @@
     {{ parent() }} -  Reservierungsverwaltung
 {% endblock %}
 
+{# The overview hides the bars in steps of its own (reservations_controller.js) #}
+{% block hide_nav %}{% endblock %}
+
 {% block flashMessage %}
     <div class="container-fluid mt-3">
         <div class="row" id="flash-message-container">

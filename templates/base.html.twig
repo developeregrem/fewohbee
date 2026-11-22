@@ -19,6 +19,11 @@
     {% block javascripts %}
     {% endblock %}
     <link rel="icon" type="image/png" href="{{ app.request.basepath }}/img/favicon.png" />
+    {# Installable as an app (public/manifest.webmanifest): started from the home screen it runs
+       without the browser's address bar. The colour of the browser's bar (theme-color) follows
+       the top bar, set by theme_controller.js. #}
+    <link rel="manifest" href="{{ app.request.basepath }}/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="{{ app.request.basepath }}/img/apple-touch-icon.png">
 </head>
 <body>
 {% block body %}
@@ -48,7 +53,9 @@
           </div>
         </div>
     {% endblock %}
-    <div class="app-main">
+    {# On phones scrolling down slides the bars away (hide_nav_controller.js); a page that hides
+       them on its own empties the block #}
+    <div class="app-main"{% block hide_nav %} data-controller="hide-nav"{% endblock %}>
     {% block flashMessage %}
         <div class="container mt-3">            
             {% for type, flashMessages in app.flashes %}

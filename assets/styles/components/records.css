@@ -4,9 +4,12 @@
  * skips hidden rows.
  */
 
-/* A sheet holding toolbar, table and footer of one list */
+/* A sheet holding toolbar, table and footer of one list. Clipped to its round corners with clip,
+   not hidden: hidden would make the card a scroll container and keep the footer from staying at
+   the bottom of the window (below); browsers without clip keep hidden. */
 .data-card {
     overflow: hidden;
+    overflow: clip;
 }
 
 .data-toolbar {
@@ -55,6 +58,18 @@
 
     .data-footer > .pagination {
         grid-column: 2;
+    }
+}
+
+/* From lg, where no swipe pages the list, the footer of a long list stays at the bottom of the
+   window while the rows scroll; at the end of the list it sits in its place again. Not below:
+   there it would take the room the bars give when they scroll away, and a swipe pages anyway. */
+@media (min-width: 992px) {
+    .data-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+        background-color: var(--feb-surface);
     }
 }
 

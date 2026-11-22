@@ -417,6 +417,49 @@
     }
 }
 
+/* ------------------------------------------------------------------ Bars that scroll away */
+
+/* Touch screens below lg: scrolling down slides the top and the bottom bar away, at the top of
+   the page they come back (hide_nav_controller.js). The top bar moves by its sticky offset, not
+   by a transform: a transform would make it the frame of the slide-in menu inside it. The room
+   kept for the bottom bar goes with it (--feb-bottomnav-offset), so the round add button and
+   bars held above it (bank import) move down as well. */
+@media (max-width: 991.98px) {
+    .app-nav {
+        transition: top .2s ease;
+    }
+
+    .app-bottomnav {
+        transition: transform .2s ease;
+    }
+
+    .fab-add,
+    .fab-add-dropdown {
+        transition: bottom .2s ease;
+    }
+
+    html.app-bars-hidden {
+        --feb-bottomnav-offset: 0px;
+    }
+
+    html.app-bars-hidden .app-nav {
+        top: calc(-1 * var(--feb-topbar-height));
+    }
+
+    html.app-bars-hidden .app-bottomnav {
+        transform: translateY(100%);
+    }
+}
+
+@media (max-width: 991.98px) and (prefers-reduced-motion: reduce) {
+    .app-nav,
+    .app-bottomnav,
+    .fab-add,
+    .fab-add-dropdown {
+        transition: none;
+    }
+}
+
 /* ------------------------------------------------------------------ Reservation overview */
 
 /* Touch, normal view: swiping up hides the bars (stepNormalViewChrome in
