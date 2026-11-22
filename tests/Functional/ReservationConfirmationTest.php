@@ -111,6 +111,31 @@ final class ReservationConfirmationTest extends WebTestCase
         self::assertSame([], $this->filesFor($reservation, $pdfTemplate));
     }
 
+    /** A booking imported from a portal calendar has no booker, so there is nobody to confirm to. */
+    public function testWithoutABookerTheButtonIsDisabledAndOpeningItSaysWhy(): void
+    {
+        $client = $this->authenticatedClient();
+        [, $pdfTemplate] = $this->configure();
+        $reservation = $this->createReservation(null, '+970 days', null);
+
+        $crawler = $client->request('GET', sprintf('/reservation/get/%d', $reservation->getId()));
+        $button = $crawler->filter('[data-action="reservations#openConfirmationAction"]');
+        self::assertCount(1, $button);
+        self::assertNotNull($button->attr('disabled'));
+
+        foreach ([false, true] as $sendsImmediately) {
+            $this->settings()->setConfirmationSendImmediately($sendsImmediately);
+            $this->em()->flush();
+            $crawler = $this->open($client, $button);
+
+            self::assertResponseIsSuccessful();
+            self::assertSelectorTextContains('.alert-warning', 'kein Bucher');
+            self::assertCount(0, $crawler->filter('#template-form'));
+        }
+        self::assertSame([], $this->mailsFor($reservation));
+        self::assertSame([], $this->filesFor($reservation, $pdfTemplate));
+    }
+
     public function testWithSeveralAddressesThePickedOneIsTheRecipient(): void
     {
         $client = $this->authenticatedClient();
@@ -307,7 +332,7 @@ final class ReservationConfirmationTest extends WebTestCase
         return $booker;
     }
 
-    private function createReservation(Customer $booker, string $arrival, ?Uuid $group): Reservation
+    private function createReservation(?Customer $booker, string $arrival, ?Uuid $group): Reservation
     {
         $start = new \DateTime($arrival);
         $reservation = new Reservation();
