@@ -65,7 +65,9 @@ class GuestCheckInExtrasService
             if (!$price->getIsFlatPrice()) {
                 $total *= $validDays * ($price->getIsPerRoom() ? 1 : max(1, $reservation->getPersons()));
             }
-            if ($total <= 0) {
+            // A negative price is a discount the guest claims (the host checks it when taking the
+            // data over); only free services are left out, they would not change the price.
+            if (0.0 === $total) {
                 continue;
             }
 

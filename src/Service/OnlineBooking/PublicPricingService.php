@@ -106,6 +106,10 @@ class PublicPricingService
      * every offered category it serves (categoryIds is empty for global extras).
      * Each sample is one representative room per available type and category.
      *
+     * An extra with a negative price is a discount the guest can claim (e.g. for pilgrims) and is
+     * offered like any other extra; only free extras (exactly 0) are left out, as they would add
+     * a line without changing the price.
+     *
      * @param array<int, array{categoryId: ?int, categoryName: ?string, sampleRoom: Appartment}> $samples
      *
      * @return array<int, array{id: int, description: string, categoryIds: list<int>, categoryName: ?string, calculationType: string, unitPrice: float, unitPriceFormatted: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int, isMandatory: bool, autoQuantity: bool}>
@@ -152,7 +156,7 @@ class PublicPricingService
 
                 $unitPrice = (float) $price->getPrice();
                 [$calculationType, $perUnit] = $this->unitPricing($price, $unitPrice, $validDays, $isGlobal ? $totalPersons : 1);
-                if ($perUnit <= 0.0) {
+                if (0.0 === $perUnit) {
                     continue;
                 }
 
@@ -268,7 +272,7 @@ class PublicPricingService
                 $quantity = $isOn ? 1 : 0;
             }
 
-            if ($quantity < 1 || $perUnit <= 0.0) {
+            if ($quantity < 1 || 0.0 === $perUnit) {
                 continue;
             }
 
