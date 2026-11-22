@@ -15,7 +15,7 @@ invoice.appartment.position.startdate: Von
 invoice.appartment.position.vat: Steuer
 invoice.brutto: Brutto
 invoice.company: Firma
-invoice.containing.vat: 'enthaltene Mehrwersteuer'
+invoice.containing.vat: 'enthaltene Mehrwertsteuer'
 invoice.customer.recommendation: Vorauswahl
 invoice.customer.section.contact: Kontakt
 invoice.customer.section.address: Adresse
