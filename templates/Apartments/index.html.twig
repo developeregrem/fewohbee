@@ -12,86 +12,94 @@
 {% block page_title %}{{ 'nav.appartment'|trans }}{% endblock %}
 
 {% block content %}
-    <div class="container" data-controller="settings">
-        <div class="row">
-            <div class="col">
-                <button type="button" class="btn btn-secondary"
-                        data-action="click->settings#openModalAction"
-                        data-url="{{ path('apartments.new.apartment') }}"
-                        data-title="{{ 'nav.appartment.add'|trans }}"
-                        data-bs-toggle="modal" data-bs-target="#modalCenter">
-                    <i class="fas fa-plus"></i> {{ 'nav.appartment.add'|trans }}</button>
-            </div>
-        </div>
-        <div class="row mt-3">
-            <div class="col">    
+    {# The rooms come ordered by property: one card per property, like the price groups #}
+    {% set groups = [] %}
+    {% for apartment in apartments %}
+        {% set subsidiary = apartment.object ?? null %}
+        {% if groups is empty or (groups|last).subsidiaryId != (subsidiary.id ?? null) %}
+            {% set groups = groups|merge([{subsidiary: subsidiary, subsidiaryId: subsidiary.id ?? null, apartments: [apartment]}]) %}
+        {% else %}
+            {% set last = groups|last %}
+            {% set groups = groups|slice(0, -1)|merge([last|merge({apartments: last.apartments|merge([apartment])})]) %}
+        {% endif %}
+    {% endfor %}
+    <div class="container fab-add-clearance" data-controller="settings">
+        <twig:PageHeader :title="'nav.appartment'|trans" :back="path('settings.overview')" :backLabel="'nav.settings'|trans">
+            <twig:AddButton :label="'nav.appartment.add'|trans"
+                            data-action="click->settings#openModalAction"
+                            data-url="{{ path('apartments.new.apartment') }}"
+                            data-title="{{ 'nav.appartment.add'|trans }}"
+                            data-bs-toggle="modal" data-bs-target="#modalCenter"/>
+        </twig:PageHeader>
+
+        {% for group in groups %}
+            {# Card markup written out: the delete popover's block is not reachable inside a component #}
+            <div class="card data-card mb-3">
+                {% if group.subsidiary %}
+                    <div class="data-toolbar">
+                        <h2 class="h6 mb-0">{{ group.subsidiary.name }}</h2>
+                    </div>
+                {% endif %}
                 <div class="table-responsive">
-                <table class="table table-bordered table-hover">
-                    <thead>
-                    <tr>
-                        <th>{{ 'appartment.number'|trans }}</th>
-                        <th>{{ 'appartment.description'|trans }}</th>
-                        <th>{{ 'appartment.bedsmax'|trans }}</th>
-                        <th>{{ 'appartment.active'|trans }}</th>
-                        <th>{{ 'appartment.action'|trans }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% set columnCount = 5 %}
-                    {% set previousSubsidiaryId = null %}
-                    {% for apartment in apartments %}
-                        {% set currentSubsidiaryId = apartment.object is defined and apartment.object ? apartment.object.id : null %}
-                        {% if previousSubsidiaryId != currentSubsidiaryId %}
-                            <tr>
-                                <td colspan="{{ columnCount }}" class="fw-semibold text-center">
-                                    {{ apartment.object.name ?? '' }}
+                    <table class="table table-hover align-middle data-table data-table-stack" data-controller="row-link" data-action="click->row-link#open">
+                        <thead>
+                        <tr>
+                            <th>{{ 'appartment.number'|trans }}</th>
+                            <th>{{ 'appartment.description'|trans }}</th>
+                            <th class="text-end">{{ 'appartment.bedsmax'|trans }}</th>
+                            <th class="data-table-actions"><span class="visually-hidden">{{ 'appartment.action'|trans }}</span></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for apartment in group.apartments %}
+                            <tr{% if not apartment.active %} class="is-inactive"{% endif %}>
+                                <td>
+                                    <a href="#" class="data-table-link" data-row-link-target="link"
+                                       data-action="click->settings#openModalAction"
+                                       data-url="{{ path('apartments.edit.apartment', {'id': apartment.id}) }}"
+                                       data-title="{{ 'appartment.edit'|trans }}"
+                                       data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                        <span class="data-table-link-text">{{ apartment.number }}</span>
+                                    </a>
+                                    {% if apartment.multipleOccupancy %}
+                                        <i class="fa-solid fa-users text-body-secondary ms-1" title="{{ 'apartment.multiple.occupancy.text'|trans }}" aria-label="{{ 'apartment.multiple.occupancy.text'|trans }}"></i>
+                                    {% endif %}
+                                    {% if apartment.isEventSpace %}
+                                        <i class="fa-solid fa-people-roof text-body-secondary ms-1" title="{{ 'category.kind.event_space'|trans }}" aria-label="{{ 'category.kind.event_space'|trans }}"></i>
+                                    {% endif %}
+                                    <span class="cell-narrow badge text-secondary-emphasis bg-secondary-subtle ms-1" data-inactive-badge {{ apartment.active ? 'hidden' }}>{{ 'base.inactive'|trans }}</span>
+                                </td>
+                                <td class="cell-meta">{{ apartment.description }}</td>
+                                <td class="cell-meta text-md-end">
+                                    <span class="cell-narrow">{{ 'appartment.bedsmax'|trans }}: </span>{{ apartment.bedsmax }}
+                                </td>
+                                <td class="cell-actions data-table-actions text-end">
+                                    <twig:ActiveToggle :action="path('apartments.toggle.apartment', {'id': apartment.id})"
+                                                       :token="csrf_token('apartment-toggle-' ~ apartment.id)" :active="apartment.active"
+                                                       :enableLabel="'button.enable'|trans" :disableLabel="'button.disable'|trans"
+                                                       fetch inactiveClass="is-inactive"/>
+                                    <twig:IconButton icon="arrows-rotate" :label="'calendar.sync.title'|trans"
+                                                     data-action="click->settings#openModalAction"
+                                                     data-url="{{ path('apartments.sync.edit', {'id': apartment.calendarSync.id}) }}"
+                                                     data-title="{{ 'calendar.sync.title'|trans }}"
+                                                     data-modal-size="lg"
+                                                     data-bs-toggle="modal" data-bs-target="#modalCenter"/>
+                                    {% set id = apartment.id %}
+                                    {% set targetUrl = path('appartments.delete.appartment', {'id': apartment.id}) %}
+                                    <button type="button" class="btn btn-icon text-danger"
+                                            title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"
+                                            data-popover="delete"
+                                            data-title="{{ 'appartment.delete.ask'|trans }}"
+                                            data-bs-content='{{ block('deletePopoverContent') }}'>
+                                        <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                                    </button>
                                 </td>
                             </tr>
-                            {% set previousSubsidiaryId = currentSubsidiaryId %}
-                        {% endif %}
-                        <tr{% if not apartment.active %} class="table-secondary text-muted"{% endif %}>
-                            <td>{{ apartment.number }}</td>
-                            <td>{{ apartment.description }}{% if apartment.multipleOccupancy %} <i class="fa-solid fa-users" title="{{ 'apartment.multiple.occupancy.text'|trans }}"></i>{% endif %}{% if apartment.isEventSpace %} <i class="fa-solid fa-people-roof text-secondary" title="{{ 'category.kind.event_space'|trans }}" aria-label="{{ 'category.kind.event_space'|trans }}"></i>{% endif %}</td>
-                            <td>{{ apartment.bedsmax }}</td>
-                            <td class="text-center">
-                                {% if apartment.active %}
-                                    <i class="fas fa-check text-success" title="{{ 'appartment.active.yes'|trans }}" aria-label="{{ 'appartment.active.yes'|trans }}"></i>
-                                {% else %}
-                                    <i class="fas fa-times text-secondary" title="{{ 'appartment.active.no'|trans }}" aria-label="{{ 'appartment.active.no'|trans }}"></i>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                    <i class="fas fa-info-circle"
-                                       data-action="click->settings#openModalAction"
-                                       data-url="{{ path('apartments.edit.apartment', {'id': apartment.id}) }}"
-                                       data-title="{{ 'button.details'|trans }}"></i></a>
-                                <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                    <i class="fas fa-edit"
-                                       data-action="click->settings#openModalAction"
-                                       data-url="{{ path('apartments.edit.apartment', {'id': apartment.id}) }}"
-                                       data-title="{{ 'button.edit'|trans }}"
-                                       data-enable-edit="true"></i></a>
-                                <a href="#" title="{{ 'calendar.sync.title'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                    <i class="fas fa-calendar-check"
-                                       data-action="click->settings#openModalAction"
-                                       data-url="{{ path('apartments.sync.edit', {'id': apartment.calendarSync.id }) }}"
-                                       data-title="{{ 'calendar.sync.title'|trans }}"
-                                       data-modal-size="lg"></i></a>
-                                {% set id = apartment.id %}
-                                {% set targetUrl = path('appartments.delete.appartment', {'id': apartment.id}) %}
-                                <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i class="fas fa-trash-alt"
-                                        data-popover="delete"
-                                        data-title="{{ 'registrationbook.delete.ask'|trans }}"
-                                        data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                        {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
+        {% endfor %}
     </div>
 {% endblock %}

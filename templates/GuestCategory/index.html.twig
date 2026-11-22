@@ -12,164 +12,184 @@
 {% block page_title %}{{ 'nav.guest_category'|trans }}{% endblock %}
 
 {% block content %}
-<div class="container" data-controller="settings">
-    <div class="row">
-        <div class="col">
-            <button type="button" class="btn btn-secondary"
-                    data-action="click->settings#openModalAction"
-                    data-url="{{ path('guest_category_new') }}"
-                    data-title="{{ 'guest_category.add'|trans }}"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modalCenter">
-                <i class="fas fa-plus"></i> {{ 'guest_category.add'|trans }}</button>
+{# Two kinds of entries can be added: a menu in the header, behind the round button on touch screens #}
+{% set addItems %}
+    <li>
+        <button type="button" class="dropdown-item"
+                data-action="click->settings#openModalAction"
+                data-url="{{ path('guest_category_new') }}"
+                data-title="{{ 'guest_category.add'|trans }}"
+                data-bs-toggle="modal" data-bs-target="#modalCenter">
+            <i class="fas fa-user-tag me-1" aria-hidden="true"></i>{{ 'guest_category.add'|trans }}
+        </button>
+    </li>
+    <li>
+        <button type="button" class="dropdown-item"
+                data-action="click->settings#openModalAction"
+                data-url="{{ path('guest_category_modifier_new') }}"
+                data-title="{{ 'guest_category_modifier.add'|trans }}"
+                data-bs-toggle="modal" data-bs-target="#modalCenter">
+            <i class="fas fa-percent me-1" aria-hidden="true"></i>{{ 'guest_category_modifier.add'|trans }}
+        </button>
+    </li>
+{% endset %}
+<div class="container fab-add-clearance" data-controller="settings">
+    <twig:PageHeader :title="'nav.guest_category'|trans" :back="path('settings.overview')" :backLabel="'nav.settings'|trans">
+        <div class="dropdown fab-add-inline">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-plus me-1" aria-hidden="true"></i>{{ 'button.add'|trans }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                {{ addItems }}
+            </ul>
         </div>
+    </twig:PageHeader>
+    <div class="dropup fab-add-dropdown">
+        <button type="button" class="btn fab-add" data-bs-toggle="dropdown" aria-expanded="false"
+                title="{{ 'button.add'|trans }}" aria-label="{{ 'button.add'|trans }}">
+            <i class="fas fa-plus" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" data-bs-display="static">
+            {{ addItems }}
+        </ul>
     </div>
-    <div class="row mt-3">
-        <div class="col">
-            <div class="table-responsive">
-            <table class="table table-bordered table-hover">
+
+    {# Card markup written out: the delete popover's block is not reachable inside a component #}
+    <div class="card data-card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle data-table data-table-stack" data-controller="row-link" data-action="click->row-link#open">
                 <thead>
                 <tr>
                     <th>{{ 'guest_category.col.name'|trans }}</th>
                     <th>{{ 'guest_category.col.acronym'|trans }}</th>
                     <th>{{ 'guest_category.col.statistical_group'|trans }}</th>
                     <th>{{ 'guest_category.col.age'|trans }}</th>
-                    <th>{{ 'guest_category.col.active'|trans }}</th>
-                    <th>{{ 'guest_category.col.action'|trans }}</th>
+                    <th class="data-table-actions"><span class="visually-hidden">{{ 'guest_category.col.action'|trans }}</span></th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for category in guest_categories %}
-                    <tr>
+                    <tr{% if not category.active %} class="is-inactive"{% endif %}>
                         <td>
-                            {{ category.name }}
+                            <a href="#" class="data-table-link" data-row-link-target="link"
+                               data-action="click->settings#openModalAction"
+                               data-url="{{ path('guest_category_edit', {'id': category.id}) }}"
+                               data-title="{{ 'guest_category.edit'|trans }}"
+                               data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                <span class="data-table-link-text">{{ category.name }}</span>
+                            </a>
                             {% if not category.isCountedInOccupancy %}
-                                <span class="badge bg-light text-secondary border ms-2"
+                                <span class="badge text-secondary-emphasis bg-secondary-subtle ms-1 align-middle"
                                       data-bs-toggle="tooltip"
-                                      title="{{ 'guest_category.not_in_room_price.help'|trans }}">
-                                    {{ 'guest_category.not_in_room_price'|trans }}
+                                      title="{{ 'guest_category.not_in_room_price.help'|trans }}">{{ 'guest_category.not_in_room_price'|trans }}</span>
+                            {% endif %}
+                            <span class="cell-narrow badge text-secondary-emphasis bg-secondary-subtle ms-1" data-inactive-badge {{ category.active ? 'hidden' }}>{{ 'base.inactive'|trans }}</span>
+                        </td>
+                        <td class="cell-meta">{{ category.acronym }}</td>
+                        <td class="cell-meta">{{ ('guest_category.statistical_group.' ~ category.statisticalGroup.value)|trans }}</td>
+                        <td class="cell-meta text-nowrap">
+                            {%- if category.minAge is not null or category.maxAge is not null -%}
+                                <span class="cell-narrow">{{ 'guest_category.col.age'|trans }}: </span>
+                                {{- category.minAge ?? '–' }} – {{ category.maxAge ?? '∞' -}}
+                            {%- endif -%}
+                        </td>
+                        <td class="cell-actions data-table-actions text-end">
+                            <twig:ActiveToggle :action="path('guest_category_toggle', {'id': category.id})"
+                                               :token="csrf_token('guest-category-toggle-' ~ category.id)" :active="category.active"
+                                               :enableLabel="'button.enable'|trans" :disableLabel="'button.disable'|trans"
+                                               fetch inactiveClass="is-inactive"/>
+                            {% if category.systemCode == 'default_adult' %}
+                                <span class="icon-slot text-body-tertiary" title="{{ 'status.system.locked'|trans }}">
+                                    <i class="fas fa-lock" aria-hidden="true"></i>
+                                    <span class="visually-hidden">{{ 'status.system.locked'|trans }}</span>
                                 </span>
-                            {% endif %}
-                        </td>
-                        <td>{{ category.acronym }}</td>
-                        <td>{{ ('guest_category.statistical_group.' ~ category.statisticalGroup.value)|trans }}</td>
-                        <td>
-                            {{ category.minAge is null ? '–' : category.minAge }}
-                            –
-                            {{ category.maxAge is null ? '∞' : category.maxAge }}
-                        </td>
-                        <td>
-                            {% if category.active %}
-                                <i class="fas fa-check text-success"></i>
                             {% else %}
-                                <i class="fas fa-times text-muted"></i>
-                            {% endif %}
-                        </td>
-                        <td>
-                            
-                            <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i class="fas fa-info-circle"
-                                   data-action="click->settings#openModalAction"
-                                   data-url="{{ path('guest_category_edit', {'id': category.id}) }}"
-                                   data-title="{{ 'button.details'|trans }}"></i></a>
-                            <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i class="fas fa-edit"
-                                   data-action="click->settings#openModalAction"
-                                   data-url="{{ path('guest_category_edit', {'id': category.id}) }}"
-                                   data-title="{{ 'button.edit'|trans }}"
-                                   data-enable-edit="true"></i></a>
-                            {% if category.systemCode != 'default_adult'%}
                                 {% set id = category.id %}
                                 {% set targetUrl = path('guest_category_delete', {'id': category.id}) %}
-                                <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i class="fas fa-trash-alt"
-                                       data-popover="delete"
-                                       data-title="{{ 'guest_category.delete.ask'|trans }}"
-                                       data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
-                            {% else %}
-                                <span class="text-muted ms-1" title="{{ 'status.system.locked'|trans }}">
-                                    <i class="fas fa-lock"></i>
-                                </span>
+                                <button type="button" class="btn btn-icon text-danger"
+                                        title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"
+                                        data-popover="delete"
+                                        data-title="{{ 'guest_category.delete.ask'|trans }}"
+                                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                                    <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                                </button>
                             {% endif %}
                         </td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
-            </div>
         </div>
     </div>
 
-    <div class="row mt-5">
-        <div class="col">
-            <h3>{{ 'guest_category_modifier.title'|trans }}</h3>
-            <p class="text-muted">{{ 'guest_category_modifier.description'|trans }}</p>
-            <p class="text-body-secondary small"><i class="fas fa-circle-info me-1"></i>{{ 'guest_category_modifier.threshold_hint'|trans }}</p>
-            <button type="button" class="btn btn-secondary"
-                    data-action="click->settings#openModalAction"
-                    data-url="{{ path('guest_category_modifier_new') }}"
-                    data-title="{{ 'guest_category_modifier.add'|trans }}"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modalCenter">
-                <i class="fas fa-plus"></i> {{ 'guest_category_modifier.add'|trans }}</button>
-        </div>
-    </div>
-    <div class="row mt-3">
-        <div class="col">
+    <section class="mt-4" aria-labelledby="guest-category-modifiers">
+        <h2 class="h5 mb-1" id="guest-category-modifiers">{{ 'guest_category_modifier.title'|trans }}</h2>
+        <p class="text-body-secondary small mb-3">{{ 'guest_category_modifier.description'|trans }} {{ 'guest_category_modifier.threshold_hint'|trans }}</p>
+        <div class="card data-card">
+            {% if modifiers is empty %}
+                <twig:EmptyState icon="percent" :title="'guest_category_modifier.empty'|trans"/>
+            {% else %}
             <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead>
-                <tr>
-                    <th>{{ 'guest_category_modifier.col.category'|trans }}</th>
-                    <th>{{ 'guest_category_modifier.col.type'|trans }}</th>
-                    <th>{{ 'guest_category_modifier.col.value'|trans }}</th>
-                    <th>{{ 'guest_category_modifier.col.validity'|trans }}</th>
-                    <th>{{ 'guest_category_modifier.col.active'|trans }}</th>
-                    <th>{{ 'guest_category_modifier.col.action'|trans }}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for modifier in modifiers %}
+                <table class="table table-hover align-middle data-table data-table-stack" data-controller="row-link" data-action="click->row-link#open">
+                    <thead>
                     <tr>
-                        <td>{{ modifier.category.name }}</td>
-                        <td>{{ ('guest_category_modifier.type.' ~ modifier.type.value)|trans }}</td>
-                        <td>{{ modifier.value }}</td>
-                        <td>
-                            {{ modifier.validFrom is null ? '–' : modifier.validFrom|date('Y-m-d') }}
-                            –
-                            {{ modifier.validTo is null ? '∞' : modifier.validTo|date('Y-m-d') }}
-                        </td>
-                        <td>
-                            {% if modifier.active %}
-                                <i class="fas fa-check text-success"></i>
-                            {% else %}
-                                <i class="fas fa-times text-muted"></i>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i class="fas fa-edit"
+                        <th>{{ 'guest_category_modifier.col.category'|trans }}</th>
+                        <th>{{ 'guest_category_modifier.col.type'|trans }}</th>
+                        <th class="text-end">{{ 'guest_category_modifier.col.value'|trans }}</th>
+                        <th>{{ 'guest_category_modifier.col.validity'|trans }}</th>
+                        <th class="data-table-actions"><span class="visually-hidden">{{ 'guest_category_modifier.col.action'|trans }}</span></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for modifier in modifiers %}
+                        {% set type = modifier.type.value %}
+                        <tr{% if not modifier.active %} class="is-inactive"{% endif %}>
+                            <td>
+                                <a href="#" class="data-table-link" data-row-link-target="link"
                                    data-action="click->settings#openModalAction"
                                    data-url="{{ path('guest_category_modifier_edit', {'id': modifier.id}) }}"
-                                   data-title="{{ 'button.edit'|trans }}"
-                                   data-enable-edit="true"></i></a>
-                            {% set id = modifier.id %}
-                            {% set formId = 'mod-' ~ modifier.id %}
-                            {% set targetUrl = path('guest_category_modifier_delete', {'id': modifier.id}) %}
-                            <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i class="fas fa-trash-alt"
-                                   data-popover="delete"
-                                   data-title="{{ 'guest_category_modifier.delete.ask'|trans }}"
-                                   data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
-                        </td>
-                    </tr>
-                {% else %}
-                    <tr><td colspan="6" class="text-muted">{{ 'guest_category_modifier.empty'|trans }}</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
+                                   data-title="{{ 'guest_category_modifier.edit'|trans }}"
+                                   data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                    <span class="data-table-link-text">{{ modifier.category.name }}</span>
+                                </a>
+                                <span class="cell-narrow badge text-secondary-emphasis bg-secondary-subtle ms-1" data-inactive-badge {{ modifier.active ? 'hidden' }}>{{ 'base.inactive'|trans }}</span>
+                            </td>
+                            <td class="cell-meta">{{ ('guest_category_modifier.type.' ~ type)|trans }}</td>
+                            <td class="cell-meta text-md-end text-nowrap">
+                                {%- if type == 'discount_percent' -%}
+                                    {{ modifier.value|number_format(is_decimal_place_0(modifier.value) ? 0 : 2, ',', '.') }} %
+                                {%- elseif type != 'free' -%}
+                                    {{ modifier.value|number_format(2, ',', '.') }}&nbsp;{{ currency_symbol }}
+                                {%- endif -%}
+                            </td>
+                            <td class="cell-meta text-nowrap">
+                                {%- if modifier.validFrom is not null or modifier.validTo is not null -%}
+                                    {{ modifier.validFrom is null ? '–' : modifier.validFrom|date('d.m.Y') }} – {{ modifier.validTo is null ? '∞' : modifier.validTo|date('d.m.Y') }}
+                                {%- endif -%}
+                            </td>
+                            <td class="cell-actions data-table-actions text-end">
+                                <twig:ActiveToggle :action="path('guest_category_modifier_toggle', {'id': modifier.id})"
+                                                   :token="csrf_token('guest-category-modifier-toggle-' ~ modifier.id)" :active="modifier.active"
+                                                   :enableLabel="'button.enable'|trans" :disableLabel="'button.disable'|trans"
+                                                   fetch inactiveClass="is-inactive"/>
+                                {% set id = modifier.id %}
+                                {% set formId = 'mod-' ~ modifier.id %}
+                                {% set targetUrl = path('guest_category_modifier_delete', {'id': modifier.id}) %}
+                                <button type="button" class="btn btn-icon text-danger"
+                                        title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"
+                                        data-popover="delete"
+                                        data-title="{{ 'guest_category_modifier.delete.ask'|trans }}"
+                                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                                    <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
             </div>
+            {% endif %}
         </div>
-    </div>
+    </section>
 </div>
 {% endblock %}

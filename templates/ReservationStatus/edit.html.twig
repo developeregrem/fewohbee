@@ -7,21 +7,7 @@
     <div class="modal-body px-lg-5">
         <div id="flash-message-overlay">
         </div>
-        <div class="row" id="edit-button-area">
-            <div class="col">
-                <h4 class="pb-2">
-                    <small>
-                    <a href="#"
-                       data-action="click->settings#enableEditAction"
-                       data-fieldset-selector="#entry-form-fieldset-{{ status.id }}"
-                       data-save-selector="#entry-submit-{{ status.id }}"
-                       data-edit-area-selector="#edit-button-area"
-                       title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
-                            <i class="fas fa-edit"></i></a>
-                    </small>
-                </h4>
-            </div>
-        </div>
+        {# Opens ready to edit; a system status stays locked (the server refuses changes) #}
         <div class="row">
             <div class="col">                             
                 {{ include('ReservationStatus/_form.html.twig') }}
@@ -30,7 +16,9 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
-        <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ status.id }}" 
-               class="btn btn-primary d-none"/>
+        {% if not status.system %}
+            <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ status.id }}"
+                   class="btn btn-primary"/>
+        {% endif %}
     </div>
 {{ form_end(form) }}

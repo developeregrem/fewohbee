@@ -136,6 +136,37 @@ class GuestCategoryController extends AbstractController
         ]);
     }
 
+    /**
+     * Switches a guest category on or off from the list (ActiveToggle), with the price promise
+     * of the edit form. Answers the list's fetch with 204, a plain form post with the list.
+     */
+    #[Route('/{id}/toggle', name: 'guest_category_toggle', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function toggle(ManagerRegistry $doctrine, PricePromiseService $pricePromises, Request $request, GuestCategory $category): Response
+    {
+        if (!$this->isCsrfTokenValid('guest-category-toggle-'.$category->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $this->promiseOpenBookings($request, $pricePromises);
+        $category->setActive(!$category->isActive());
+        $doctrine->getManager()->flush();
+
+        return $this->toggleResponse($request);
+    }
+
+    /** Switches a modifier on or off from the list, like toggle() */
+    #[Route('/modifiers/{id}/toggle', name: 'guest_category_modifier_toggle', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function toggleModifier(ManagerRegistry $doctrine, PricePromiseService $pricePromises, Request $request, GuestCategoryModifier $modifier): Response
+    {
+        if (!$this->isCsrfTokenValid('guest-category-modifier-toggle-'.$modifier->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $this->promiseOpenBookings($request, $pricePromises);
+        $modifier->setActive(!$modifier->isActive());
+        $doctrine->getManager()->flush();
+
+        return $this->toggleResponse($request);
+    }
+
     #[Route('/modifiers/{id}/delete', name: 'guest_category_modifier_delete', methods: ['DELETE'])]
     public function deleteModifier(ManagerRegistry $doctrine, PricePromiseService $pricePromises, Request $request, GuestCategoryModifier $modifier): Response
     {
@@ -160,5 +191,12 @@ class GuestCategoryController extends AbstractController
         if (!$request->isMethod('GET')) {
             $pricePromises->promiseOpenReservations();
         }
+    }
+
+    private function toggleResponse(Request $request): Response
+    {
+        return $request->isXmlHttpRequest()
+            ? new Response(status: Response::HTTP_NO_CONTENT)
+            : $this->redirectToRoute('guest_category_index');
     }
 }

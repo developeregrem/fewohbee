@@ -2,6 +2,7 @@ tourist_tax:
   title: "Beherbergungsabgaben"
   description: "Versionierbare Definitionen für Kurtaxe, Stadtsteuer und ähnliche Abgaben pro Niederlassung. Pauschal je Person und Nacht oder prozentual vom Übernachtungspreis."
   add: "Beherbergungsabgabe hinzufügen"
+  edit: "Beherbergungsabgabe bearbeiten"
   empty: "Noch keine Beherbergungsabgaben definiert."
   delete:
     ask: "Diese Definition wirklich löschen?"

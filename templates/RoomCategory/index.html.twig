@@ -12,46 +12,61 @@
 {% block page_title %}{{ 'nav.category'|trans }}{% endblock %}
 
 {% block content %}
-<div class="container" data-controller="settings">
-    <div class="row">
-        <div class="col">
-            <button type="button" class="btn btn-secondary"
-                    data-action="click->settings#openModalAction"
-                    data-url="{{ path('room_category_new') }}"
-                    data-title="{{ 'nav.category.add'|trans }}"
-                    data-modal-size="lg"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modalCenter">
-                <i class="fas fa-plus"></i> {{ 'nav.category.add'|trans }}</button>
-        </div>
-    </div>
-    <div class="row mt-3">
-        <div class="col">
-            <table class="table table-bordered table-hover">
+<div class="container fab-add-clearance" data-controller="settings">
+    <twig:PageHeader :title="'nav.category'|trans" :back="path('settings.overview')" :backLabel="'nav.settings'|trans">
+        <twig:AddButton :label="'nav.category.add'|trans"
+                        data-action="click->settings#openModalAction"
+                        data-url="{{ path('room_category_new') }}"
+                        data-title="{{ 'nav.category.add'|trans }}"
+                        data-modal-size="lg"
+                        data-bs-toggle="modal" data-bs-target="#modalCenter"/>
+    </twig:PageHeader>
+
+    {# Card markup written out: the delete popover's block is not reachable inside a component #}
+    <div class="card data-card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle data-table data-table-stack" data-controller="row-link" data-action="click->row-link#open">
                 <thead>
                 <tr>
                     <th>{{ 'category.name'|trans }}</th>
-                    <th>{{ 'category.action'|trans }}</th>
+                    <th>{{ 'category.acronym'|trans }}</th>
+                    <th class="text-end">{{ 'nav.appartment'|trans }}</th>
+                    <th class="data-table-actions"><span class="visually-hidden">{{ 'category.action'|trans }}</span></th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for category in room_categories %}
+                    {% set rooms = category.apartments|length %}
                     <tr>
-                        <td>{{ category.name }}{% if category.acronym|length > 0 %} ({{ category.acronym }}){% endif %}{% if category.isEventSpace %} <span class="badge text-bg-light border ms-1"><i class="fa-solid fa-people-roof"></i> {{ 'category.kind.event_space'|trans }}</span>{% endif %}</td>
                         <td>
-                            <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i class="fas fa-edit"
-                                   data-action="click->settings#openModalAction"
-                                   data-url="{{ path('room_category_edit', {'id': category.id}) }}"
-                                   data-title="{{ 'button.edit'|trans }}"
-                                   data-modal-size="lg"></i></a>
+                            <a href="#" class="data-table-link" data-row-link-target="link"
+                               data-action="click->settings#openModalAction"
+                               data-url="{{ path('room_category_edit', {'id': category.id}) }}"
+                               data-title="{{ 'category.edit'|trans }}"
+                               data-modal-size="lg"
+                               data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                <span class="data-table-link-text">{{ category.name }}</span>
+                            </a>
+                            {% if category.isEventSpace %}
+                                <span class="badge text-secondary-emphasis bg-secondary-subtle ms-1 align-middle">
+                                    <i class="fa-solid fa-people-roof" aria-hidden="true"></i> {{ 'category.kind.event_space'|trans }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="cell-meta">{{ category.acronym }}</td>
+                        <td class="cell-meta text-end">
+                            <span class="cell-wide">{{ rooms }}</span>
+                            <span class="cell-narrow">{{ 'category.rooms'|trans({'%count%': rooms}) }}</span>
+                        </td>
+                        <td class="cell-actions data-table-actions text-end">
                             {% set id = category.id %}
                             {% set targetUrl = path('room_category_delete', {'id': category.id}) %}
-                            <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i class="fas fa-trash-alt"
-                                   data-popover="delete"
-                                   data-title="{{ 'registrationbook.delete.ask'|trans }}"
-                                   data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
+                            <button type="button" class="btn btn-icon text-danger"
+                                    title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"
+                                    data-popover="delete"
+                                    data-title="{{ 'category.delete.ask'|trans }}"
+                                    data-bs-content='{{ block('deletePopoverContent') }}'>
+                                <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                            </button>
                         </td>
                     </tr>
                 {% endfor %}

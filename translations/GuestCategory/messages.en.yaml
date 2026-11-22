@@ -2,6 +2,7 @@ guest_category:
   title: "Guest categories"
   description: "Manage guest categories (e.g. adults, children, non-liable guests)"
   add: "Add guest category"
+  edit: "Edit guest category"
   delete:
     ask: "Are you sure you want to delete this guest category?"
   system:
@@ -80,6 +81,7 @@ guest_category_modifier:
   description: "Define a surcharge, discount, flat rate or \"free\" per guest category on top of the nightly rate. The adult rate stays the base price. Modifiers only apply to nightly rates calculated per person — not to flat-rate or per-room prices."
   threshold_hint: "From which occupancy these modifiers take effect (minimum full-fare guests) is configured per room category — e.g. so that children are only discounted from 3 guests onwards."
   add: "Add modifier"
+  edit: "Edit modifier"
   empty: "No modifiers configured yet — nightly rates apply unchanged for every category."
   delete:
     ask: "Really delete this modifier?"

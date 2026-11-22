@@ -25,7 +25,7 @@
 <tbody>
     {% for price in section.prices %}
     {% set vat = price.vat|number_format(is_decimal_place_0(price.vat) ? 0 : 2, ',', '.') %}
-    <tr{% if price.active == false %} class="price-inactive"{% endif %}>
+    <tr{% if price.active == false %} class="is-inactive"{% endif %}>
         <td>
             <a href="#" class="data-table-link" data-row-link-target="link"
                data-action="click->settings#openModalAction"
@@ -83,7 +83,7 @@
             <twig:ActiveToggle :action="path('prices.toggle.price', {'id': price.id})"
                                :token="csrf_token('price-toggle-' ~ price.id)" :active="price.active"
                                :enableLabel="'price.enable'|trans" :disableLabel="'price.disable'|trans"
-                               fetch inactiveClass="price-inactive"/>
+                               fetch inactiveClass="is-inactive"/>
             {% set id = price.id %}
             {% set targetUrl = path('prices.delete.price', {'id': price.id}) %}
             <button type="button" class="btn btn-icon text-danger"

@@ -6,6 +6,7 @@ status:
   delete:
     ask: Are you sure you want to delete this reservation status?
   description: Reservation status management
+  edit: 'Edit reservation status'
   flash:
     create:
       success: Status was successfully created.

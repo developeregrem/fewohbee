@@ -16,6 +16,7 @@ appartment:
   delete:
     ask: 'Dieses Zimmer wirklich löschen?'
   description: Beschreibung
+  edit: 'Zimmer bearbeiten'
   flash:
     create:
       success: 'Zimmer wurde erfolgreich angelegt.'

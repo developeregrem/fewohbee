@@ -393,6 +393,10 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   open or edit button), the whole row opens: `data-controller="row-link"
   data-action="click->row-link#open"` on the table and `data-row-link-target="link"` on the name
   link; not for tables with fields to fill in.
+  Below lg on touch screens the top and the bottom bar slide away while scrolling down and come
+  back at the top of the page (`hide-nav` on the main area); a page that hides them itself (the
+  reservation overview) empties the `hide_nav` block. Anything held above the bottom bar uses
+  `--feb-bottomnav-offset`, which drops to 0 while the bars are away.
 - A page names itself with the `page_title` block; the frame shows it in the top bar on phones.
   Navigation entries are described once in `templates/layout/_app_nav.html.twig`. Settings pages
   are not in the navigation: a new one is added to the settings overview

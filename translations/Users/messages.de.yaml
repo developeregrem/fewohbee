@@ -1,11 +1,13 @@
 user.action: Aktion
 user.active: Aktiv
 user.delete.ask: 'Diesen Nutzer wirklich löschen?'
+user.edit: 'Benutzer bearbeiten'
 user.email: eMail
 user.firstname: Vorname
 user.flash.create.success: 'Nutzer wurde erfolgreich hinzugefügt.'
 user.flash.delete.success: 'Nutzer wurde erfolgreich gelöscht.'
 user.flash.edit.success: 'Nutzer wurde erfolgreich bearbeitet.'
+user.flash.toggle.self: 'Deinen eigenen Zugang kannst du nicht ausschalten.'
 user.flash.username.na: 'Der gewählte Anmeldename ist bereits vergeben!'
 user.lastaction: 'Letzte Aktion'
 user.lastname: Nachname

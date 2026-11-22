@@ -6,6 +6,7 @@ status:
   delete:
     ask: 'Diesen Reservierungsstatus wirklich löschen?'
   description: 'Statusverwaltung einer Reservierung'
+  edit: 'Reservierungsstatus bearbeiten'
   flash:
     create:
       success: 'Reservierungsstatus wurde erfolgreich angelegt.'

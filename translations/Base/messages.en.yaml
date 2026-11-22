@@ -1,5 +1,6 @@
 autocomplete.empty: No matches
 base.action: Action
+base.inactive: 'Not active'
 button.accept: Accept
 button.add: Add
 button.back: Back
@@ -12,6 +13,8 @@ button.delete: Delete
 button.details: Details
 button.download: Download
 button.edit: Edit
+button.enable: 'Switch on'
+button.disable: 'Switch off'
 button.export.pdf: Export as PDF
 button.export.einvoicepdf: Export as PDF with embedded e-invoice
 button.export.xml: Export as XRechnung XML (for authority portals)

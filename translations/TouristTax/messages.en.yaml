@@ -2,6 +2,7 @@ tourist_tax:
   title: "Tourist tax"
   description: "Versionable tourist tax definitions per property with per-guest-category rates."
   add: "Add tourist tax"
+  edit: "Edit tourist tax"
   empty: "No tourist tax definitions yet."
   delete:
     ask: "Really delete this tourist tax definition?"

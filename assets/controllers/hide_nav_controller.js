@@ -79,9 +79,12 @@ export default class extends Controller {
         }
     }
 
-    /** An open dialog, side menu or a menu of the top bar keeps the bars as they are */
+    /**
+     * An open dialog or side menu - Bootstrap marks either aria-modal while it is open, also the
+     * frame's menu, an offcanvas-lg - or a menu of the top bar keeps the bars as they are
+     */
     isBusy() {
-        return document.querySelector('.modal.show, .offcanvas.show, .offcanvas.showing, .app-nav .dropdown-menu.show');
+        return document.querySelector('[aria-modal="true"], .modal.show, .app-nav .dropdown-menu.show');
     }
 
     setHidden(hidden) {

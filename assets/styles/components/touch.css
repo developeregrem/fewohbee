@@ -27,6 +27,12 @@
     .fab-add-clearance {
         padding-bottom: 5rem;
     }
+
+    /* A list that ends with its footer (count and pages, centred) leaves the corner below the
+       round button empty, so the page keeps only its usual margin at the end */
+    .fab-add-clearance:has(.data-footer) {
+        padding-bottom: 1rem;
+    }
 }
 
 .fab-add {

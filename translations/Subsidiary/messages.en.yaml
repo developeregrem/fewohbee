@@ -14,6 +14,7 @@ object.check_out.until: Check-out by
 object.check_out.value: 'Check-out by %until%'
 object.delete.ask: Are you sure you want to delete this branch?
 object.description: Description
+object.edit: 'Edit branch'
 object.flash.check_in_window.invalid: 'The check-in window is invalid. Please give a start time and an end time that differs from it, or leave the second field empty.'
 object.flash.create.success: Branch was created successfully.
 object.flash.delete.error.still.in.use: Branch cannot be deleted because it still has rooms assigned to it.

@@ -5,6 +5,7 @@ reservationorigin.color.enable: 'Farbindikator anzeigen'
 reservationorigin.color.help: 'Die Farbe wird in der Reservierungsübersicht als Indikator an der Reservierung angezeigt.'
 reservationorigin.delete.ask: 'Reservierungsherkunft wirklich löschen?'
 reservationorigin.description: Reservierungsherkunft
+reservationorigin.edit: 'Herkunft bearbeiten'
 reservationorigin.flash.create.check_prices: 'Bitte prüfen Sie anschließend die Preiskategorien, damit diese auch für die neue Herkunft gelten.'
 reservationorigin.flash.create.success: 'Reservierungsherkunft erfolgreich angelegt.'
 reservationorigin.flash.delete.inuse.reservations: 'Reservierungsherkunft kann nicht gelöscht werden, da sie in vorhandenen Reservierungen genutzt wird.'

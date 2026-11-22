@@ -139,7 +139,7 @@
                 { initials: 'MM', name: 'Mustermann, Max', company: 'Reisebüro Sonne', status: statuses[3], bookings: 12 },
             ] %}
                 <tr>
-                    <td class="cell-meta data-table-id"><span class="cell-narrow">ID </span>{{ loop.index + 40 }}</td>
+                    <td class="cell-meta data-table-id">{{ loop.index + 40 }}</td>
                     <td><a href="#" class="data-table-link"><twig:Avatar :initials="row.initials"/><span class="data-table-link-text">{{ row.name }}</span></a></td>
                     <td class="cell-meta">{{- row.company -}}</td>
                     <td class="cell-meta"><twig:StatusBadge :status="row.status"/></td>

@@ -1,5 +1,6 @@
 autocomplete.empty: Keine Treffer
 base.action: Aktion
+base.inactive: 'Nicht aktiv'
 button.accept: Übernehmen
 button.add: Hinzufügen
 button.back: Zurück
@@ -12,6 +13,8 @@ button.delete: Löschen
 button.details: 'Details Anzeigen'
 button.download: Herunterladen
 button.edit: Bearbeiten
+button.enable: Einschalten
+button.disable: Ausschalten
 button.export.pdf: 'als PDF exportieren'
 button.export.einvoicepdf: 'als PDF mit eingebetteter E-Rechnung exportieren'
 button.export.xml: 'als XRechnung-XML exportieren (für Behördenportale)'
