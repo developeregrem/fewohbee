@@ -228,6 +228,8 @@ accounting.journal.entry.actions: Aktionen
 accounting.journal.entry.requires_document: Beleg wird nachgereicht
 accounting.journal.entry.requires_document_help: Die Buchung wartet auf eine Belegnummer. Solange sie fehlt, lässt sich der Monat nicht abschließen.
 accounting.journal.entry.remark: Bemerkung
+accounting.journal.entry.accounts: Konten
+accounting.journal.entry.details: Details
 accounting.journal.entry.empty: Keine Buchungen vorhanden.
 accounting.journal.entry.delete_ask: Diese Buchung wirklich löschen?
 

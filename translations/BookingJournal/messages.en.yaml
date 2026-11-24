@@ -228,6 +228,8 @@ accounting.journal.entry.actions: Actions
 accounting.journal.entry.requires_document: Document to follow
 accounting.journal.entry.requires_document_help: The entry is waiting for a document number. The month cannot be closed while it is missing.
 accounting.journal.entry.remark: Remark
+accounting.journal.entry.accounts: Accounts
+accounting.journal.entry.details: Details
 accounting.journal.entry.empty: No entries yet.
 accounting.journal.entry.delete_ask: Delete this entry?
 

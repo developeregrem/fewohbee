@@ -22,9 +22,10 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Short accounts such as "1200 - Bank" stay on one line next to a long one */
+/* Debit and credit with their side keep room for a name such as "1400 - Forderungen aus
+   Lieferungen" on two lines at most, even beside long details */
 .journal-entries .journal-account {
-    min-width: 8rem;
+    min-width: 13rem;
 }
 
 /* Above the entries: the view, and for the bank or cash book its opening and closing balance */
@@ -44,12 +45,60 @@
     color: var(--feb-text);
 }
 
+/* The document number beneath the date; on phones on the date's line: "15.05.2026 · Beleg-Nr. 0001" */
+.journal-entries .journal-doc {
+    display: block;
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+}
+
+/* Debit and credit in one cell, each line led by its side; a long account wraps beneath its own
+   name, not beneath the side */
+.journal-entries .journal-account > div {
+    display: flex;
+    gap: .25rem;
+}
+
+.journal-entries .journal-account-side {
+    flex: none;
+    width: 3.25rem;
+    padding-top: .1rem;
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+}
+
+/* Invoice and tax rate above the remark */
+.journal-entries .journal-facts {
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+}
+
 /* Phones: an entry is a block - the amount first, then date and document, the accounts and the
    details beneath (see data-table-stack) */
 @media (max-width: 767.98px) {
     .journal-entries > tbody > tr > .journal-amount {
         order: -1;
         font-weight: var(--feb-font-weight-strong);
+    }
+
+    .journal-entries .journal-doc {
+        display: inline;
+        font-size: inherit;
+    }
+
+    .journal-entries .journal-doc::before {
+        content: " · ";
+    }
+
+    /* Accounts as plain lines, "Soll 1400 - Kasse", without the column of sides the table aligns */
+    .journal-entries .journal-account > div {
+        display: block;
+    }
+
+    .journal-entries .journal-account-side {
+        display: inline;
+        padding-top: 0;
+        font-size: inherit;
     }
 
     /* The actions one above the other, so the text keeps the width */

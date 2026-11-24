@@ -124,23 +124,22 @@
         <div class="table-responsive">
             {# The whole row opens the entry (row-link), like the other lists; in a closed month there is
                nothing to edit and no row opens #}
+            {# Five columns rather than nine, so the table fits from a tablet held upright: the document
+               number beneath the date, debit and credit in one cell, invoice, tax rate and remark as
+               details. Phones stack the rows like every list (data-table-stack). #}
             <table class="table table-hover data-table data-table-stack journal-entries" data-controller="row-link" data-action="click->row-link#open">
                 <thead>
                 <tr>
                     <th>{{ 'accounting.journal.entry.date'|trans }}</th>
-                    <th>{{ 'accounting.journal.entry.doc_number'|trans }}</th>
                     {% if book %}
                         <th class="text-end">{{ ('accounting.journal.' ~ book ~ '.incomes')|trans }}</th>
                         <th class="text-end">{{ ('accounting.journal.' ~ book ~ '.expenses')|trans }}</th>
                         <th class="journal-account">{{ ('accounting.journal.' ~ book ~ '.counter_account')|trans }}</th>
                     {% else %}
                         <th class="text-end">{{ 'accounting.journal.entry.amount'|trans }}</th>
-                        <th class="journal-account">{{ 'accounting.journal.entry.debit'|trans }}</th>
-                        <th class="journal-account">{{ 'accounting.journal.entry.credit'|trans }}</th>
+                        <th class="journal-account">{{ 'accounting.journal.entry.accounts'|trans }}</th>
                     {% endif %}
-                    {% if showTax %}<th>{{ 'accounting.journal.entry.tax_rate'|trans }}</th>{% endif %}
-                    <th>{{ 'accounting.journal.entry.invoice'|trans }}</th>
-                    <th>{{ 'accounting.journal.entry.remark'|trans }}</th>
+                    <th>{{ 'accounting.journal.entry.details'|trans }}</th>
                     <th class="data-table-actions"><span class="visually-hidden">{{ 'accounting.journal.entry.actions'|trans }}</span></th>
                 </tr>
                 </thead>
@@ -157,9 +156,8 @@
                                    data-offcanvas-title="{{ 'accounting.journal.entry.edit'|trans }}"
                                    title="{{ 'button.edit'|trans }}">{{ entry.date|date('d.m.Y') }}</a>
                             {%- endif -%}
-                            <span class="cell-narrow"> · {{ 'accounting.journal.entry.doc_number'|trans }} {{ '%04d'|format(entry.documentNumber) }}</span>
+                            <span class="journal-doc">{{ 'accounting.journal.entry.doc_number'|trans }} {{ '%04d'|format(entry.documentNumber) }}</span>
                         </td>
-                        <td class="cell-wide">{{ '%04d'|format(entry.documentNumber) }}</td>
                         {% if book %}
                             {% set bookAccount = book == 'bankbook' ? 'bankAccount' : 'cashAccount' %}
                             {% set isIncome = entry.debitAccount and attribute(entry.debitAccount, bookAccount) %}
@@ -178,23 +176,28 @@
                             </td>
                         {% else %}
                             <td class="text-end text-nowrap journal-amount">{{ entry.amount|number_format(2, ',', '.') }}</td>
-                            <td class="cell-meta journal-account"><span class="cell-narrow">{{ 'accounting.journal.entry.debit'|trans }} </span>{{ entry.debitAccount ? entry.debitAccount.label : (entry.counterAccountLegacy ?? '-') }}</td>
-                            <td class="cell-meta journal-account"><span class="cell-narrow">{{ 'accounting.journal.entry.credit'|trans }} </span>{{ entry.creditAccount ? entry.creditAccount.label : '-' }}</td>
+                            <td class="cell-meta journal-account">
+                                <div><span class="journal-account-side">{{ 'accounting.journal.entry.debit'|trans }}</span> {{ entry.debitAccount ? entry.debitAccount.label : (entry.counterAccountLegacy ?? '-') }}</div>
+                                <div><span class="journal-account-side">{{ 'accounting.journal.entry.credit'|trans }}</span> {{ entry.creditAccount ? entry.creditAccount.label : '-' }}</div>
+                            </td>
                         {% endif %}
-                        {% if showTax %}<td class="cell-wide text-nowrap">{{ entry.taxRate ? entry.taxRate.name : '-' }}</td>{% endif %}
-                        {# Without tax rate and invoice there is nothing to show on a phone but the dash of the table #}
-                        {% set noDetails = not (showTax and entry.taxRate) and not entry.missingDocumentNumber and not entry.invoiceNumber %}
-                        <td class="cell-meta{% if noDetails %} cell-wide{% endif %}">
-                            {%- if showTax and entry.taxRate %}<span class="cell-narrow">{{ entry.taxRate.name }} · </span>{% endif -%}
+                        {# Invoice and tax rate on one line, the remark beneath; nothing to show leaves the
+                           cell empty, so a phone leaves it out. Numbers stay whole, the label may wrap. #}
+                        {% set showInvoice = entry.invoiceNumber and not entry.missingDocumentNumber %}
+                        {% set showRate = showTax and entry.taxRate %}
+                        <td class="cell-meta journal-details">
                             {%- if entry.missingDocumentNumber -%}
                                 <span class="badge text-warning-emphasis bg-warning-subtle" title="{{ 'accounting.journal.entry.missing_document_hint'|trans }}">{{ 'accounting.journal.entry.missing_document'|trans }}</span>
-                            {%- elseif entry.invoiceNumber -%}
-                                <span class="cell-narrow">{{ 'accounting.journal.entry.invoice'|trans }} </span>{{ entry.invoiceNumber }}
-                            {%- else -%}
-                                <span class="cell-wide">-</span>
                             {%- endif -%}
+                            {%- if showInvoice or showRate -%}
+                                <div class="journal-facts">
+                                    {%- if showInvoice %}{{ 'accounting.journal.entry.invoice'|trans }} <span class="text-nowrap">{{ entry.invoiceNumber }}</span>{% endif -%}
+                                    {%- if showInvoice and showRate %} · {% endif -%}
+                                    {%- if showRate %}<span class="text-nowrap">{{ entry.taxRate.name }}</span>{% endif -%}
+                                </div>
+                            {%- endif -%}
+                            {%- if entry.remark is not empty %}<div>{{ entry.remark }}</div>{% endif -%}
                         </td>
-                        <td class="cell-meta">{{- entry.remark ?? '' -}}</td>
                         <td class="cell-actions data-table-actions text-end">
                             {% if not batch.closed %}
                                 <twig:IconButton icon="copy" :label="'accounting.journal.entry.duplicate'|trans"
