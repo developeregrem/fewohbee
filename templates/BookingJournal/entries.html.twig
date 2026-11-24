@@ -122,7 +122,9 @@
             <twig:EmptyState icon="book-open" :title="'accounting.journal.entry.empty'|trans"/>
         {% else %}
         <div class="table-responsive">
-            <table class="table table-hover data-table data-table-stack journal-entries">
+            {# The whole row opens the entry (row-link), like the other lists; in a closed month there is
+               nothing to edit and no row opens #}
+            <table class="table table-hover data-table data-table-stack journal-entries" data-controller="row-link" data-action="click->row-link#open">
                 <thead>
                 <tr>
                     <th>{{ 'accounting.journal.entry.date'|trans }}</th>
@@ -146,7 +148,15 @@
                 {% for entry in entries %}
                     <tr>
                         <td class="cell-meta text-nowrap">
-                            {{- entry.date|date('d.m.Y') -}}
+                            {%- if batch.closed -%}
+                                {{ entry.date|date('d.m.Y') }}
+                            {%- else -%}
+                                <a href="#" class="data-table-link" data-row-link-target="link"
+                                   data-action="click->booking-journal#openOffcanvas"
+                                   data-url="{{ path('journal.entry.edit', {'id': entry.id, 'filter': filter, 'page': page}) }}"
+                                   data-offcanvas-title="{{ 'accounting.journal.entry.edit'|trans }}"
+                                   title="{{ 'button.edit'|trans }}">{{ entry.date|date('d.m.Y') }}</a>
+                            {%- endif -%}
                             <span class="cell-narrow"> · {{ 'accounting.journal.entry.doc_number'|trans }} {{ '%04d'|format(entry.documentNumber) }}</span>
                         </td>
                         <td class="cell-wide">{{ '%04d'|format(entry.documentNumber) }}</td>
@@ -187,10 +197,6 @@
                         <td class="cell-meta">{{- entry.remark ?? '' -}}</td>
                         <td class="cell-actions data-table-actions text-end">
                             {% if not batch.closed %}
-                                <twig:IconButton icon="pen" :label="'button.edit'|trans"
-                                                 data-action="click->booking-journal#openOffcanvas"
-                                                 data-url="{{ path('journal.entry.edit', {'id': entry.id, 'filter': filter, 'page': page}) }}"
-                                                 data-offcanvas-title="{{ 'accounting.journal.entry.edit'|trans }}"/>
                                 <twig:IconButton icon="copy" :label="'accounting.journal.entry.duplicate'|trans"
                                                  data-action="click->booking-journal#openOffcanvas"
                                                  data-url="{{ path('journal.entry.duplicate', {'id': entry.id, 'filter': filter, 'page': page}) }}"

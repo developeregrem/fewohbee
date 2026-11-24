@@ -417,6 +417,16 @@
     }
 }
 
+/* Below lg the side menu and its backdrop (Bootstrap puts it beside the menu) sit inside the top
+   bar, whose level (sticky, 1020) would keep them below the bottom bar and the round add button
+   (1030): those stayed bright and could be tapped. While the menu is open the top bar rises above
+   them. */
+@media (max-width: 991.98px) {
+    .app-nav:has(> .app-nav-menu.show, > .app-nav-menu.showing) {
+        z-index: 1045;
+    }
+}
+
 /* ------------------------------------------------------------------ Bars that scroll away */
 
 /* Touch screens below lg: scrolling down slides the top and the bottom bar away, at the top of

@@ -824,9 +824,9 @@ final class McpServerTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/settings/mcp');
         self::assertResponseIsSuccessful();
-        self::assertCount(25, $crawler->filter('[data-controller="log-pagination"] tbody tr'));
+        self::assertCount(25, $crawler->filter('[data-controller~="log-pagination"] tbody tr'));
         self::assertCount(25, $markedRows($crawler));
-        self::assertSame('1', $crawler->filter('[data-controller="log-pagination"] .pagination .active')->text());
+        self::assertSame('1', $crawler->filter('[data-controller~="log-pagination"] .pagination .active')->text());
 
         $crawler = $this->client->request('GET', '/settings/mcp/logs?page=2');
         self::assertResponseIsSuccessful();
