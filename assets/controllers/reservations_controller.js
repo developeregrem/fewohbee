@@ -93,6 +93,9 @@ export default class extends Controller {
         this.boundResumeTablePopovers = () => this.setTablePopoversEnabled(true);
         this.modalElement?.addEventListener('show.bs.modal', this.boundPauseTablePopovers);
         this.modalElement?.addEventListener('hidden.bs.modal', this.boundResumeTablePopovers);
+        // A payment status saved in an invoice dialog opened from the plan (invoices controller)
+        this.boundInvoiceStatusChanged = () => this.getNewTable();
+        document.addEventListener('invoice:status-changed', this.boundInvoiceStatusChanged);
         this.boundResize = this.handleResize.bind(this);
         window.addEventListener('load', this.boundResize);
         window.addEventListener('resize', this.boundResize);
@@ -118,6 +121,9 @@ export default class extends Controller {
         if (this.boundPauseTablePopovers) {
             this.modalElement?.removeEventListener('show.bs.modal', this.boundPauseTablePopovers);
             this.modalElement?.removeEventListener('hidden.bs.modal', this.boundResumeTablePopovers);
+        }
+        if (this.boundInvoiceStatusChanged) {
+            document.removeEventListener('invoice:status-changed', this.boundInvoiceStatusChanged);
         }
 
         if (this.simpleEditor) {

@@ -434,6 +434,9 @@ export default class extends Controller {
                 select.dataset.savedValue = value;
                 setSaveState(indicator, select.value === value ? 'saved' : null);
                 this.doSearch();
+                // The occupancy plan behind the dialog shows the payment status in its popovers,
+                // and a workflow may have changed the reservation status (bar colour) as well.
+                document.dispatchEvent(new CustomEvent('invoice:status-changed'));
             },
             onError: () => {
                 // Back to what is stored, so the select never shows an unsaved status
