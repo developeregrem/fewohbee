@@ -13,7 +13,7 @@
 {% set standAloneUrl = absolute_url(path('public.booking')) %}
 {% set embedUrl = absolute_url(path('public.booking', {'embed': 1})) %}
 {% set iframeCode %}<iframe id="fhb-booking" src="{{ embedUrl }}" style="border:0;width:100%;max-width:960px;min-height:400px;" loading="lazy" title="{{ 'online_booking.public.page_title'|trans }}"></iframe>
-<script>window.addEventListener("message",function(e){if(!e.data)return;var f=document.getElementById("fhb-booking");if(!f)return;if(e.data.type==="fhb-resize"){f.style.height=e.data.height+"px"}else if(e.data.type==="fhb-scroll"){f.scrollIntoView({behavior:"smooth",block:"start"})}});</script>{% endset %}
+<script>window.addEventListener("message",function(e){if(!e.data)return;var f=document.getElementById("fhb-booking");if(!f)return;if(e.data.type==="fhb-resize"){f.style.height=e.data.height+"px"}else if(e.data.type==="fhb-scroll"){window.scrollTo({top:f.getBoundingClientRect().top+window.scrollY+(Number(e.data.offset)||0),behavior:"smooth"})}});</script>{% endset %}
 <div class="container" data-controller="settings online-booking-settings booking-rules tab-persistence"
      data-booking-rules-calendar-url-value="{{ path('settings.online_booking.rule_calendar') }}">
     <div class="row justify-content-center">
