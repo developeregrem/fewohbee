@@ -419,11 +419,11 @@
                                     </div>
                                     <div class="col-6 col-md">
                                         <label class="form-label small mb-1" for="firstname">{{ 'customer.firstname'|trans }}</label>
-                                        <input class="form-control form-control-sm" type="text" id="firstname" name="firstname" required value="{{ booker.firstname }}">
+                                        <input class="form-control form-control-sm" type="text" id="firstname" name="firstname" autocomplete="given-name" required value="{{ booker.firstname }}">
                                     </div>
                                     <div class="col-6 col-md">
                                         <label class="form-label small mb-1" for="lastname">{{ 'customer.lastname'|trans }}</label>
-                                        <input class="form-control form-control-sm" type="text" id="lastname" name="lastname" required value="{{ booker.lastname }}">
+                                        <input class="form-control form-control-sm" type="text" id="lastname" name="lastname" autocomplete="family-name" required value="{{ booker.lastname }}">
                                     </div>
                                 </div>
 
@@ -431,15 +431,15 @@
                                 <div class="row g-2 mb-2">
                                     <div class="col-12 col-md-4">
                                         <label class="form-label small mb-1" for="email">{{ 'online_booking.public.email'|trans }}</label>
-                                        <input class="form-control form-control-sm" type="email" id="email" name="email" required value="{{ booker.email }}">
+                                        <input class="form-control form-control-sm" type="email" id="email" name="email" autocomplete="email" required value="{{ booker.email }}">
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <label class="form-label small mb-1" for="phone">{{ 'online_booking.public.phone'|trans }}</label>
-                                        <input class="form-control form-control-sm" type="tel" id="phone" name="phone" value="{{ booker.phone }}">
+                                        <input class="form-control form-control-sm" type="tel" id="phone" name="phone" autocomplete="tel" value="{{ booker.phone }}">
                                     </div>
                                     <div class="col-6 col-md-4">
                                         <label class="form-label small mb-1" for="company">{{ 'online_booking.public.company'|trans }}</label>
-                                        <input class="form-control form-control-sm" type="text" id="company" name="company" value="{{ booker.company }}">
+                                        <input class="form-control form-control-sm" type="text" id="company" name="company" autocomplete="organization" value="{{ booker.company }}">
                                     </div>
                                 </div>
 
@@ -447,19 +447,19 @@
                                 <div class="row g-2 mb-2">
                                     <div class="col-12 col-md-5">
                                         <label class="form-label small mb-1" for="address">{{ 'customer.address'|trans }}</label>
-                                        <input class="form-control form-control-sm" type="text" id="address" name="address" required value="{{ booker.address }}">
+                                        <input class="form-control form-control-sm" type="text" id="address" name="address" autocomplete="street-address" required value="{{ booker.address }}">
                                     </div>
                                     <div class="col-4 col-md-2">
                                         <label class="form-label small mb-1" for="zip">{{ 'customer.zip'|trans }}</label>
-                                        <input class="form-control form-control-sm" type="text" id="zip" name="zip" required value="{{ booker.zip }}">
+                                        <input class="form-control form-control-sm" type="text" id="zip" name="zip" autocomplete="postal-code" required value="{{ booker.zip }}">
                                     </div>
                                     <div class="col-8 col-md-3">
                                         <label class="form-label small mb-1" for="city">{{ 'customer.city'|trans }}</label>
-                                        <input class="form-control form-control-sm" type="text" id="city" name="city" required value="{{ booker.city }}">
+                                        <input class="form-control form-control-sm" type="text" id="city" name="city" autocomplete="address-level2" required value="{{ booker.city }}">
                                     </div>
                                     <div class="col-12 col-md-2">
                                         <label class="form-label small mb-1" for="country">{{ 'customer.country'|trans }}</label>
-                                        <select class="form-select form-select-sm" id="country" name="country" required>
+                                        <select class="form-select form-select-sm" id="country" name="country" autocomplete="country" required>
                                             {% for key, country in countries %}
                                                 <option value="{{ key }}" {% if booker.country == key %}selected{% endif %}>{{ country }}</option>
                                             {% endfor %}
