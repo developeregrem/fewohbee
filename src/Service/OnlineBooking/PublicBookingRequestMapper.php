@@ -102,6 +102,9 @@ class PublicBookingRequestMapper
         }
         $dateFrom = $period->start;
         $dateTo = $period->end;
+        if ($dateTo <= $dateFrom) {
+            throw new PublicBookingException('online_booking.error.departure_after_arrival');
+        }
 
         $persons = max(1, (int) $request->request->get('persons', 1));
         $roomsCount = max(1, (int) $request->request->get('roomsCount', 1));

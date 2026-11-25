@@ -176,6 +176,15 @@ final class PublicBookingRequestMapperTest extends TestCase
         ]);
     }
 
+    public function testRejectsDepartureOnArrivalDay(): void
+    {
+        $this->expectException(PublicBookingException::class);
+        $this->expectExceptionMessage('online_booking.error.departure_after_arrival');
+
+        $day = (new \DateTimeImmutable('+3 days'))->format('Y-m-d');
+        $this->map(['dateFrom' => $day, 'dateTo' => $day]);
+    }
+
     /** Excessive public booking periods are rejected before pricing work starts. */
     public function testRejectsExcessivePeriod(): void
     {
