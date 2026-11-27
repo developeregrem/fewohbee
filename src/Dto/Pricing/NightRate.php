@@ -30,6 +30,9 @@ final readonly class NightRate
      * @param list<PromisedLine>|null $promisedLines        the promised guest lines, null when priced live
      * @param RateAdjustment|null     $adjustment           how price rules changed the row's unit price
      * @param string|null             $extraPersonSurcharge charge per night for every person beyond $includedPersons
+     * @param list<PromisedLine>|null $promisedExtraLines   the promised persons billed through the surcharge, by guest
+     *                                                      category; null when priced live or promised before categories
+     *                                                      changed the surcharge
      */
     public function __construct(
         public \DateTimeImmutable $night,
@@ -42,6 +45,7 @@ final readonly class NightRate
         public ?RateAdjustment $adjustment = null,
         public ?string $extraPersonSurcharge = null,
         public int $includedPersons = 0,
+        public ?array $promisedExtraLines = null,
     ) {
     }
 
@@ -74,6 +78,7 @@ final readonly class NightRate
             $promised->adjustment,
             $promised->extraPersonSurcharge,
             $promised->includedPersons,
+            $promised->extraLines,
         );
     }
 
@@ -94,10 +99,14 @@ final readonly class NightRate
             $adjustment,
             $extraPersonSurcharge ?? $this->extraPersonSurcharge,
             $this->includedPersons,
+            $this->promisedExtraLines,
         );
     }
 
-    /** Persons of a party of $persons billed through the surcharge; 0 without one. */
+    /**
+     * Persons of a party of $persons billed through the surcharge; 0 without one. Every one of
+     * them pays the full surcharge here - guest categories are applied by the price breakdown.
+     */
     public function extraPersons(int $persons): int
     {
         return null === $this->extraPersonSurcharge ? 0 : max(0, $persons - $this->includedPersons);

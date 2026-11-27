@@ -1557,6 +1557,8 @@ components:
           description: >-
             Per-room rows only: added per night for every person beyond `numberOfPersons`. Null when
             the row applies to exactly `numberOfPersons`. An exact row for the party takes precedence.
+            Adults are included first; a guest-category modifier (e.g. a child rate) changes the
+            surcharge for the further guests of its category, as the price quote shows.
         minStay: { type: [integer, 'null'] }
         active: { type: boolean }
         roomCategory:

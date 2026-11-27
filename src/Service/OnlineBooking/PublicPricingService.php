@@ -106,6 +106,10 @@ class PublicPricingService
      * every offered category it serves (categoryIds is empty for global extras).
      * Each sample is one representative room per available type and category.
      *
+     * An extra with a negative price is a discount the guest can claim (e.g. for pilgrims) and is
+     * offered like any other extra; only free extras (exactly 0) are left out, as they would add
+     * a line without changing the price.
+     *
      * @param array<int, array{categoryId: ?int, categoryName: ?string, sampleRoom: Appartment}> $samples
      *
      * @return array<int, array{id: int, description: string, categoryIds: list<int>, categoryName: ?string, calculationType: string, unitPrice: float, unitPriceFormatted: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int, isMandatory: bool, autoQuantity: bool}>
@@ -152,7 +156,7 @@ class PublicPricingService
 
                 $unitPrice = (float) $price->getPrice();
                 [$calculationType, $perUnit] = $this->unitPricing($price, $unitPrice, $validDays, $isGlobal ? $totalPersons : 1);
-                if ($perUnit <= 0.0) {
+                if (0.0 === $perUnit) {
                     continue;
                 }
 
@@ -268,7 +272,7 @@ class PublicPricingService
                 $quantity = $isOn ? 1 : 0;
             }
 
-            if ($quantity < 1 || $perUnit <= 0.0) {
+            if ($quantity < 1 || 0.0 === $perUnit) {
                 continue;
             }
 
@@ -359,10 +363,11 @@ class PublicPricingService
      * guest ends up in, and that is decided one step later. Everything else *is* knowable
      * here, because a modifier hangs off a guest category rather than off a room:
      *
-     *  - a room priced flat or per room is never touched by modifiers → no hint at all;
+     *  - a room priced flat, or per room without a surcharge per additional person, is never
+     *    touched by modifiers → no hint at all; with that surcharge the modifiers change it;
      *  - `DISCOUNT_PERCENT` and `FREE` always reduce, `SURCHARGE_ABSOLUTE` always adds;
-     *  - `FLAT_RATE` depends on this room's per-head rate — 14 € against a 30 € rate is a
-     *    reduction, against a 12 € rate it is a surcharge;
+     *  - `FLAT_RATE` depends on this room's per-head rate (or surcharge) — 14 € against a
+     *    30 € rate is a reduction, against a 12 € rate it is a surcharge;
      *  - with `minFullPayers` set, the first guests pay full fare regardless, so whether the
      *    adjustment applies at all depends on the allocation → the direction is left open.
      *
@@ -380,7 +385,7 @@ class PublicPricingService
             return null;
         }
 
-        $basePerHead = $this->resolvePerHeadRate($sampleRoom, $dateFrom, $dateTo);
+        $basePerHead = $this->resolveModifiableRate($sampleRoom, $dateFrom, $dateTo);
         if (null === $basePerHead) {
             return null;
         }
@@ -418,13 +423,14 @@ class PublicPricingService
     }
 
     /**
-     * The per-head rate this room is sold at, or null when the room is not priced per head.
+     * The per-person amount guest category modifiers change in this room: its per-head rate
+     * or, for a per-room price, its surcharge per additional person. Null when it has neither.
      *
      * Flat and per-room rates are paid once for the whole room, so a per-guest modifier
      * has nothing to attach to — {@see InvoiceService::buildApartmentModifierPositions()}
-     * skips them for exactly that reason.
+     * skips them for exactly that reason, except for the surcharge of a per-room price.
      */
-    private function resolvePerHeadRate(Appartment $room, \DateTimeImmutable $dateFrom, \DateTimeImmutable $dateTo): ?float
+    private function resolveModifiableRate(Appartment $room, \DateTimeImmutable $dateFrom, \DateTimeImmutable $dateTo): ?float
     {
         $origin = $this->configService->getReservationOrigin();
         $reservation = $this->buildSampleReservation($room, 1, $dateFrom, $dateTo, $origin);
@@ -433,6 +439,9 @@ class PublicPricingService
         foreach ($this->priceService->getNightRates($reservation) as $rate) {
             if (null === $rate) {
                 continue;
+            }
+            if ($rate->isPerRoom && null !== $rate->extraPersonSurcharge && !$room->isEventSpace()) {
+                return (float) $rate->extraPersonSurcharge;
             }
             if ($rate->isFlatPrice || $rate->isPerRoom) {
                 return null;

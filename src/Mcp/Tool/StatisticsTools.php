@@ -110,7 +110,7 @@ final class StatisticsTools
     #[McpTool(
         name: 'get_monthly_metrics',
         title: 'Monthly key figures',
-        description: 'Key figures of one month as shown in the monthly statistics: stays and overnight stays, arrivals, utilization per day, guests by country, booking origins, blocked rooms, turnover (all properties only) and data quality warnings.',
+        description: 'Key figures of one month as shown in the monthly statistics: overnight stays, arrivals, utilization per day, guests by country, booking origins, blocked rooms, turnover (all properties only) and data quality warnings. Only nights inside the month count. summary.room_nights_total counts booked room nights (one per room and night). summary.nights_total and tourism.overnights_total count overnight stays of guests (one per guest and night, as in tourism statistics), so they exceed the room nights whenever a room holds more than one guest. Totals cover the reservation statuses counted in the statistics; by_status lists every status separately.',
         annotations: new ToolAnnotations(readOnlyHint: true, openWorldHint: false),
     )]
     #[McpRequiresScope(ApiScope::STATISTICS_READ)]

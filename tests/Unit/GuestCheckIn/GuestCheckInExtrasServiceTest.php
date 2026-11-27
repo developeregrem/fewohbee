@@ -57,6 +57,31 @@ final class GuestCheckInExtrasServiceTest extends TestCase
         $service->snapshot($reservation, [18]);
     }
 
+    public function testDiscountWithNegativePriceIsOfferedAndFreeServiceIsNot(): void
+    {
+        $discount = (new Price())->setIsFlatPrice(false)->setIsPerRoom(false)->setIsBookableOnline(true);
+        $discount->setId(21);
+        $discount->setDescription('Pilgrim discount');
+        $discount->setPrice('-2.00');
+        $cot = (new Price())->setIsFlatPrice(true)->setIsBookableOnline(true);
+        $cot->setId(22);
+        $cot->setDescription('Baby cot');
+        $cot->setPrice('0.00');
+        $reservation = $this->reservation();
+        $repository = $this->createStub(PriceRepository::class);
+        $repository->method('findBookableOnlineExtras')->willReturn([$discount, $cot]);
+        $pricing = $this->createStub(PriceService::class);
+        $pricing->method('getPricesForReservationDays')->willReturn([1 => [$discount], 2 => [$discount]]);
+        $service = new GuestCheckInExtrasService($repository, $pricing);
+
+        self::assertSame([21], array_column($service->available($reservation), 'id'));
+
+        // -2 × 2 persons × 2 nights
+        $snapshot = $service->snapshot($reservation, [21]);
+        self::assertSame([['id' => 21, 'description' => 'Pilgrim discount', 'total' => '-8.00']], $snapshot);
+        self::assertSame([$discount], $service->pricesToApply($reservation, $snapshot));
+    }
+
     public function testServicesAreListedByName(): void
     {
         $parking = (new Price())->setIsFlatPrice(true)->setIsBookableOnline(true);

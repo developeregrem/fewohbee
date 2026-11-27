@@ -80,7 +80,7 @@ guest_category:
 
 guest_category_modifier:
   title: "Per-category surcharges / discounts"
-  description: "Define a surcharge, discount, flat rate or \"free\" per guest category on top of the nightly rate. The adult rate stays the base price. Modifiers only apply to nightly rates calculated per person — not to flat-rate or per-room prices."
+  description: "Define a surcharge, discount, flat rate or \"free\" per guest category on top of the nightly rate. The adult rate stays the base price. Modifiers apply to every amount charged per person: to nightly rates per person and, for per-room prices, to the surcharge per additional person. Flat-rate and per-room prices themselves stay unchanged."
   threshold_hint: "From which occupancy these modifiers take effect (minimum full-fare guests) is configured per room category — e.g. so that children are only discounted from 3 guests onwards."
   add: "Add modifier"
   edit: "Edit modifier"
@@ -100,7 +100,7 @@ guest_category_modifier:
     category: "Guest category"
     category.help: "Only categories on which a modifier can take effect are listed: no adult categories (they are the base rate) and only categories that count toward room occupancy. Non-occupancy guests (e.g. infants in a cot) are not billed by the apartment line."
     type: "Modifier type"
-    type.help: "Surcharge adds an amount to the adult rate. Discount subtracts a percentage. Flat rate replaces the adult rate. Free = 0.00."
+    type.help: "Surcharge adds an amount to the adult rate. Discount subtracts a percentage. Flat rate replaces the adult rate. Free = 0.00. For per-room prices, this applies to the surcharge per additional person instead of the adult rate."
     value: "Value"
     value.help: "Amount in the configured currency for surcharge/flat rate, percentage for discount. Ignored for \"Free\"."
     valid_from: "Valid from"

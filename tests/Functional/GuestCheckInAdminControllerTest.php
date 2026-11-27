@@ -748,6 +748,26 @@ final class GuestCheckInAdminControllerTest extends WebTestCase
         self::assertSelectorTextContains('#guest-checkin', 'keine E-Mail-Adresse');
     }
 
+    /** A booking imported from a portal calendar has no booker, so there is nobody to invite. */
+    public function testWithoutABookerThereIsNobodyToInvite(): void
+    {
+        $this->useInvitationTemplate();
+        $reservation = $this->createReservation('anna-'.bin2hex(random_bytes(4)).'@example.com');
+        $reservation->setBooker(null);
+        $this->em()->flush();
+        $this->loginAdmin();
+
+        $token = $this->tabToken($reservation);
+        self::assertSelectorNotExists('#guest-checkin form[action$="/checkin/invite"]');
+        self::assertSelectorTextContains('#guest-checkin', 'Schick den Link selbst');
+
+        // A dialog opened before the booker was removed still posts the invitation.
+        $this->client->request('POST', '/reservation/'.$reservation->getId().'/checkin/invite', ['_token' => $token]);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('.alert-warning', 'Die Einladung wurde nicht verschickt');
+        self::assertSame([], $this->mailsFor($reservation));
+    }
+
     public function testReadOnlyUsersCannotSendTheInvitation(): void
     {
         $this->useInvitationTemplate();

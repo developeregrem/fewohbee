@@ -787,6 +787,10 @@ class PriceService implements ResetInterface
      * Promised nights carry the guest lines of the promise instead, so a
      * modifier changed after booking does not reach the booking.
      *
+     * A per-room price with a surcharge has no per-head rate to modify; its
+     * nights carry the persons it bills through the surcharge instead, see
+     * extraPersonLines().
+     *
      * @return PriceBreakdown[] keyed by day index (0..nights-1)
      */
     public function getPriceBreakdownForReservation(Reservation $reservation, bool $ignorePromise = false, bool $applyPriceRules = true): array
@@ -821,12 +825,37 @@ class PriceService implements ResetInterface
                         $breakdown->addLine(new PriceBreakdownLine($category, $line->count, (float) $line->unit, null, $line->adjustment));
                     }
                 }
+                if (null !== $rate->promisedExtraLines) {
+                    $breakdown->extraPersonLines = [];
+                    foreach ($rate->promisedExtraLines as $line) {
+                        $category = $categories[$line->categoryId] ?? null;
+                        if (null !== $category) {
+                            $breakdown->extraPersonLines[] = new PriceBreakdownLine($category, $line->count, (float) $line->unit, null, $line->adjustment);
+                        }
+                    }
+                }
                 $result[$i] = $breakdown;
                 continue;
             }
 
             $basePerHead = (float) $rate->unit;
             $modifiers = $this->modifiersOn($night);
+
+            // Event spaces are not priced by guest category, so their surcharge stays the same for
+            // everyone. The same holds where the guest counts do not add up to the persons (a
+            // deleted category, data from before guest categories), as the persons are billed.
+            if ($rate->isPerRoom && null !== $rate->extraPersonSurcharge && !$reservation->isEventSpace()
+                && array_sum($this->seatGuests($guestCounts, $categories, PHP_INT_MAX)) === $reservation->getPersons()) {
+                $breakdown->extraPersonLines = $this->extraPersonLines(
+                    $rate,
+                    $guestCounts,
+                    $categories,
+                    $modifiers,
+                    $reservation->getAppartment()?->getRoomCategory(),
+                );
+                $result[$i] = $breakdown;
+                continue;
+            }
 
             // "Minimum full-fare guests" rule of the room type: the first N
             // occupants always pay the regular per-head rate; modifiers only
@@ -880,7 +909,8 @@ class PriceService implements ResetInterface
      *
      * Per-head pricing: sum(count × unit_with_modifier) per night.
      * Flat-price: basePrice once per night (occupancy-independent).
-     * Per-room: basePrice plus the surcharge for every person beyond the included ones.
+     * Per-room: basePrice plus the surcharge for every person beyond the included ones,
+     * as their guest categories change it.
      *
      * @return array<string, float> keyed by Y-m-d, value = apartment total in the requested base
      */
@@ -898,7 +928,7 @@ class PriceService implements ResetInterface
                 $stored = (float) $rate->unit;
             } elseif ($rate->isPerRoom) {
                 $stored = (float) $rate->unit
-                    + (null !== $rate->extraPersonSurcharge ? $rate->surchargeTotal($reservation->getPersons()) : 0.0);
+                    + (null !== $rate->extraPersonSurcharge ? $breakdown->extraPersonTotal($reservation->getPersons()) : 0.0);
             } else {
                 // Mirror the apartment invoice row: numberOfPersons × per-head,
                 // then apply modifier deltas (only for occupancy-counted, non-adult
@@ -947,14 +977,8 @@ class PriceService implements ResetInterface
 
     /**
      * Distributes the room type's "minimum full-fare guests" across the booked
-     * non-adult occupancy categories.
-     *
-     * Adults always pay full fare and consume slots first. Remaining slots are
-     * filled by the non-adult occupancy categories with the lowest sortOrder
-     * first (i.e. the categories the hotelier ranked highest — typically older
-     * children with the smallest discount), so the largest discounts survive for
-     * the surplus guests. Non-occupancy categories (e.g. infants in a cot) are
-     * not part of room occupancy and never consume a slot.
+     * non-adult occupancy categories, seated as seatGuests() describes. Adults
+     * always pay the full fare, so only the seats they leave to others count.
      *
      * @param array<int|string, int|string> $guestCounts  {categoryId: count}
      * @param array<int, GuestCategory>     $categories   {categoryId: GuestCategory}
@@ -969,48 +993,97 @@ class PriceService implements ResetInterface
             return [];
         }
 
-        // Adults (counted in occupancy) fill full-fare slots first.
-        $adultHeads = 0;
-        $nonAdultCategories = [];
+        return array_filter(
+            $this->seatGuests($guestCounts, $categories, $minFullPayers),
+            static fn (int $categoryId): bool => !$categories[$categoryId]->isAdult(),
+            ARRAY_FILTER_USE_KEY,
+        );
+    }
+
+    /**
+     * The persons a per-room price bills through its surcharge, by guest category.
+     *
+     * The room price covers its included persons, seated as seatGuests() describes. Every
+     * further guest pays the surcharge, changed by the guest category's modifier just as a
+     * per-head rate would be - "flat rate 8" makes a child cost 8 instead of the surcharge.
+     * The room type's minimum of full-fare guests keeps the first further guests at the full
+     * surcharge. Guests not counted in the occupancy take no bed and pay nothing.
+     *
+     * @param array<int|string, int|string> $guestCounts {categoryId: count}
+     * @param array<int, GuestCategory>     $categories  {categoryId: GuestCategory}
+     * @param GuestCategoryModifier[]       $modifiers   modifiers active on the night
+     *
+     * @return list<PriceBreakdownLine> lines at the surcharge each of their guests pays
+     */
+    private function extraPersonLines(NightRate $rate, array $guestCounts, array $categories, array $modifiers, ?RoomCategory $roomCategory): array
+    {
+        $included = $this->seatGuests($guestCounts, $categories, $rate->includedPersons);
+        $fullFare = $this->seatGuests($guestCounts, $categories, max($rate->includedPersons, $roomCategory?->getMinFullPayers() ?? 0));
+        $surcharge = (float) $rate->extraPersonSurcharge;
+
+        $lines = [];
         foreach ($guestCounts as $catId => $count) {
-            $count = (int) $count;
-            if ($count <= 0) {
-                continue;
-            }
             $category = $categories[$catId] ?? null;
             if (null === $category || !$category->isCountedInOccupancy()) {
                 continue;
             }
-            if ($category->isAdult()) {
-                $adultHeads += $count;
+            // Seating is greedy in one fixed order, so the included heads are part of the full-fare ones.
+            $atFullSurcharge = ($fullFare[$catId] ?? 0) - ($included[$catId] ?? 0);
+            $modified = (int) $count - ($fullFare[$catId] ?? 0);
+
+            if ($atFullSurcharge > 0) {
+                $lines[] = new PriceBreakdownLine($category, $atFullSurcharge, $surcharge);
+            }
+            if ($modified > 0) {
+                $modifier = $category->isAdult() ? null : $this->pickModifier($modifiers, $category);
+                $lines[] = new PriceBreakdownLine($category, $modified, round($this->applyModifier($surcharge, $modifier, $category), 2), $modifier);
+            }
+        }
+
+        return $lines;
+    }
+
+    /**
+     * Seats the first $seats guests of the party: adults first, then the non-adult
+     * occupancy categories with the lowest sortOrder (i.e. the categories the hotelier
+     * ranked highest — typically older children with the smallest discount), so the
+     * largest discounts survive for the guests beyond. Non-occupancy categories (e.g.
+     * infants in a cot) are not part of room occupancy and never take a seat.
+     *
+     * @param array<int|string, int|string> $guestCounts {categoryId: count}
+     * @param array<int, GuestCategory>     $categories  {categoryId: GuestCategory}
+     *
+     * @return array<int, int> {categoryId: number of its heads seated}
+     */
+    private function seatGuests(array $guestCounts, array $categories, int $seats): array
+    {
+        $party = [];
+        foreach ($guestCounts as $catId => $count) {
+            $count = (int) $count;
+            $category = $categories[$catId] ?? null;
+            if ($count <= 0 || null === $category || !$category->isCountedInOccupancy()) {
                 continue;
             }
-            $nonAdultCategories[(int) $catId] = ['count' => $count, 'category' => $category];
+            $party[(int) $catId] = ['count' => $count, 'category' => $category];
         }
 
-        $remainingSlots = $minFullPayers - $adultHeads;
-        if ($remainingSlots <= 0) {
-            return [];
-        }
-
-        // Lowest sortOrder first; stable tie-break on id for determinism.
+        // Adults first, then lowest sortOrder; stable tie-break on id for determinism.
         uasort(
-            $nonAdultCategories,
-            static fn (array $a, array $b): int => [$a['category']->getSortOrder(), $a['category']->getId()]
-                <=> [$b['category']->getSortOrder(), $b['category']->getId()]
+            $party,
+            static fn (array $a, array $b): int => [$a['category']->isAdult() ? 0 : 1, $a['category']->getSortOrder(), $a['category']->getId()]
+                <=> [$b['category']->isAdult() ? 0 : 1, $b['category']->getSortOrder(), $b['category']->getId()]
         );
 
-        $slots = [];
-        foreach ($nonAdultCategories as $catId => $entry) {
-            if ($remainingSlots <= 0) {
+        $seated = [];
+        foreach ($party as $catId => $entry) {
+            if ($seats <= 0) {
                 break;
             }
-            $take = min($entry['count'], $remainingSlots);
-            $slots[$catId] = $take;
-            $remainingSlots -= $take;
+            $seated[$catId] = min($entry['count'], $seats);
+            $seats -= $seated[$catId];
         }
 
-        return $slots;
+        return $seated;
     }
 
     /**

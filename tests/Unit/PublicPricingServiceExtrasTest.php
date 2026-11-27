@@ -151,6 +151,27 @@ final class PublicPricingServiceExtrasTest extends TestCase
         self::assertSame(294.0, $extras[0]['pricePerUnit']);
     }
 
+    public function testCatalogOffersDiscountExtraWithNegativePrice(): void
+    {
+        $pilgrimDiscount = $this->createPrice(15, 'Jakobspilger-Rabatt', -2.00); // global, per_person
+        $service = $this->buildService([$pilgrimDiscount], 7);
+
+        $extras = $service->catalogExtras($this->samplesForBothCategories(), $this->dateFrom, $this->dateTo, 2, 1);
+
+        self::assertCount(1, $extras);
+        self::assertSame(15, $extras[0]['id']);
+        self::assertSame(-2.0, $extras[0]['unitPrice']);
+        // -2 × 2 persons × 7 nights
+        self::assertSame(-28.0, $extras[0]['pricePerUnit']);
+    }
+
+    public function testCatalogLeavesOutFreeExtras(): void
+    {
+        $service = $this->buildService([$this->createPrice(16, 'Kinderbett', 0.00, true)], 7);
+
+        self::assertSame([], $service->catalogExtras($this->samplesForBothCategories(), $this->dateFrom, $this->dateTo, 2, 1));
+    }
+
     public function testCatalogListsCategoryBoundExtrasPerCategory(): void
     {
         $global = $this->createPrice(10, 'Breakfast', 14.00);
@@ -298,6 +319,22 @@ final class PublicPricingServiceExtrasTest extends TestCase
         self::assertSame('per_person_night', $resolved[0]['calculationType']);
         self::assertSame(1, $resolved[0]['quantity']);
         self::assertSame(280.0, $resolved[0]['lineTotal']);
+    }
+
+    public function testResolveSelectedDiscountExtraLowersTheTotal(): void
+    {
+        $pilgrimDiscount = $this->createPrice(15, 'Jakobspilger-Rabatt', -2.00); // global, per_person
+        $service = $this->buildService([$pilgrimDiscount], 7);
+
+        self::assertSame([], $service->resolveExtras($this->mixedBuckets(), $this->dateFrom, $this->dateTo, 5, 3, []));
+
+        $resolved = $service->resolveExtras($this->mixedBuckets(), $this->dateFrom, $this->dateTo, 5, 3, [15 => 1]);
+
+        self::assertCount(1, $resolved);
+        self::assertSame(1, $resolved[0]['quantity']);
+        // -2 × 5 persons × 7 nights
+        self::assertSame(-70.0, $resolved[0]['lineTotal']);
+        self::assertSame($pilgrimDiscount, $resolved[0]['price']);
     }
 
     public function testResolveOptionalCategoryBoundRequiresSelection(): void

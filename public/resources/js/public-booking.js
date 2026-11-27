@@ -409,7 +409,36 @@
         });
     }
 
+    /** Departure no earlier than the day after arrival. */
+    function initDateRange(scope) {
+        var from = scope.querySelector('#dateFrom');
+        var to = scope.querySelector('#dateTo');
+        if (!from || !to) {
+            return;
+        }
+
+        function sync() {
+            var base = from.value || from.min;
+            if (!base) {
+                return;
+            }
+            var next = new Date(base + 'T12:00:00Z');
+            if (isNaN(next.getTime())) {
+                return; // not an ISO date (e.g. typed into a browser without a date picker)
+            }
+            next.setUTCDate(next.getUTCDate() + 1);
+            to.min = next.toISOString().slice(0, 10);
+            if (to.value && to.value < to.min) {
+                to.value = '';
+            }
+        }
+
+        from.addEventListener('change', sync);
+        sync();
+    }
+
     function boot() {
+        initDateRange(document);
         document.querySelectorAll('[data-pgc-root]').forEach(init);
         initSteppers(document);
         document.querySelectorAll('form').forEach(initRoomSelection);

@@ -14,8 +14,25 @@
 {% block content %}
 {% set standAloneUrl = absolute_url(path('public.booking')) %}
 {% set embedUrl = absolute_url(path('public.booking', {'embed': 1})) %}
-{% set iframeCode %}<iframe id="fhb-booking" src="{{ embedUrl }}" style="border:0;width:100%;max-width:960px;min-height:400px;" loading="lazy" title="{{ 'online_booking.public.page_title'|trans }}"></iframe>
-<script>window.addEventListener("message",function(e){if(!e.data)return;var f=document.getElementById("fhb-booking");if(!f)return;if(e.data.type==="fhb-resize"){f.style.height=e.data.height+"px"}else if(e.data.type==="fhb-scroll"){f.scrollIntoView({behavior:"smooth",block:"start"})}});</script>{% endset %}
+{% set iframeTag %}<iframe id="fhb-booking" src="{{ embedUrl }}" style="border:0;width:100%;max-width:960px;min-height:400px;" loading="lazy" title="{{ 'online_booking.public.page_title'|trans }}"></iframe>{% endset %}
+{# The copied script occupies one line. Use block comments in its source. #}
+{% set iframeScript %}
+window.addEventListener('message', ({ source, origin, data }) => {
+    const iframe = document.getElementById('fhb-booking');
+    if (!source || source !== iframe?.contentWindow || origin !== new URL(iframe.src).origin) {
+        return;
+    }
+
+    const { type, height, offset = 0 } = data ?? {};
+    if (type === 'fhb-resize' && Number.isFinite(height) && height >= 0) {
+        iframe.style.height = `${height}px`;
+    } else if (type === 'fhb-scroll' && Number.isFinite(offset) && offset >= 0) {
+        const top = iframe.getBoundingClientRect().top + window.scrollY + offset;
+        window.scrollTo({ top, behavior: 'smooth' });
+    }
+});
+{% endset %}
+{% set iframeCode = iframeTag ~ "\n<script>" ~ (iframeScript|split("\n")|map(line => line|trim)|join(' ')|trim) ~ '</script>' %}
 <div class="container" data-controller="settings online-booking-settings booking-rules tab-persistence"
      data-booking-rules-calendar-url-value="{{ path('settings.online_booking.rule_calendar') }}">
     <div class="row justify-content-center">

@@ -1097,6 +1097,13 @@ class ReservationServiceController extends AbstractController
         if (null === $confirmations->emailTemplate()) {
             throw $this->createNotFoundException();
         }
+        // The button is disabled without a booker; a dialog opened before the booker was removed
+        // must not render the mail template, which expects one.
+        if (null === $reservation->getBooker()) {
+            $this->addFlash('warning', 'reservation.confirmation.no_booker');
+
+            return $this->render('feedback.html.twig');
+        }
         if ($confirmations->sendsImmediately()) {
             return $this->sendConfirmation($confirmations, $translator, $logger, $reservation, $request->request->getString('email'));
         }

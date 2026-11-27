@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace App\Service\Pricing;
 
-use App\Dto\PriceBreakdown;
+use App\Dto\PriceBreakdownLine;
 use App\Dto\Pricing\PricePromise;
 use App\Dto\Pricing\PromisedExtra;
 use App\Dto\Pricing\PromisedLine;
@@ -88,7 +88,12 @@ class PricePromiseService
                 continue;
             }
             if (null !== $rate) {
-                $nights[$night->format('Y-m-d')] = PromisedNight::fromRate($rate, $this->linesOf($breakdowns[$i] ?? null));
+                $breakdown = $breakdowns[$i] ?? null;
+                $nights[$night->format('Y-m-d')] = PromisedNight::fromRate(
+                    $rate,
+                    $this->linesOf($breakdown->lines ?? []),
+                    null !== $breakdown?->extraPersonLines ? $this->linesOf($breakdown->extraPersonLines) : null,
+                );
             }
         }
 
@@ -220,14 +225,15 @@ class PricePromiseService
         return (new PricePromise($this->clock->now()->format('Y-m-d'), $context, [], []))->toArray();
     }
 
-    /** @return list<PromisedLine> */
-    private function linesOf(?PriceBreakdown $breakdown): array
+    /**
+     * @param PriceBreakdownLine[] $breakdownLines
+     *
+     * @return list<PromisedLine>
+     */
+    private function linesOf(array $breakdownLines): array
     {
-        if (null === $breakdown) {
-            return [];
-        }
         $lines = [];
-        foreach ($breakdown->lines as $line) {
+        foreach ($breakdownLines as $line) {
             $lines[] = new PromisedLine(
                 (int) $line->category->getId(),
                 $line->count,

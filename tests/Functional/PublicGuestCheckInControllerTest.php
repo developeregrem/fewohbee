@@ -641,6 +641,50 @@ final class PublicGuestCheckInControllerTest extends WebTestCase
         self::assertCount(1, $this->em()->find(Reservation::class, $reservation->getId())?->getPrices() ?? []);
     }
 
+    public function testGuestCanClaimADiscountThatTheHotelierTakesOver(): void
+    {
+        $reservation = $this->createReservation();
+        $price = (new Price())->setIsBookableOnline(true)->setIsFlatPrice(false)->setIsPerRoom(false);
+        $price->setDescription('Pilgrim discount');
+        $price->setPrice('-2.00');
+        $price->setVat(7.0);
+        $price->setActive(true);
+        $price->setType(1);
+        $price->setAllDays(true);
+        $price->addReservationOrigin($reservation->getReservationOrigin());
+        $this->em()->persist($price);
+        $this->em()->flush();
+        $this->extraPriceId = (int) $price->getId();
+
+        $path = $this->linkPath($reservation);
+        $this->verify($path, 'Müller');
+        $crawler = $this->client->followRedirect();
+        // -2 × 2 persons × 2 nights
+        self::assertSelectorTextContains('.fhb-gci-extra-name', 'Pilgrim discount');
+        self::assertSelectorTextContains('.fhb-gci-extra-price', '-8.00');
+
+        $form = $crawler->filter('form[name="guest_check_in"]')->form();
+        $form['guest_check_in[arrivalTime]'] = '18:00';
+        $form['guest_check_in[mainGuest][salutation]'] = 'Frau';
+        $this->fillMainGuest($form);
+        $extraFields = $form->get('guest_check_in[extras]');
+        self::assertIsArray($extraFields);
+        $extraField = reset($extraFields);
+        self::assertInstanceOf(ChoiceFormField::class, $extraField);
+        $extraField->tick();
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(303);
+        $this->em()->clear();
+        $checkIn = $this->checkIn();
+        self::assertSame([['id' => $this->extraPriceId, 'description' => 'Pilgrim discount', 'total' => '-8.00']], $checkIn->getPayload()['extras'] ?? null);
+
+        self::getContainer()->get(GuestCheckInApplyService::class)->apply($checkIn, new GuestCheckInApplyRequest('booker', false, []));
+        $this->em()->clear();
+        $prices = $this->em()->find(Reservation::class, $reservation->getId())?->getPrices();
+        self::assertSame([$this->extraPriceId], array_values(array_map(static fn (Price $p): ?int => $p->getId(), $prices?->toArray() ?? [])));
+    }
+
     public function testChangedServiceCanBeDeferredWhileGuestDetailsAreApplied(): void
     {
         $reservation = $this->createReservation();

@@ -8,6 +8,7 @@ use App\Entity\AppSettings;
 use App\Entity\Customer;
 use App\Entity\Reservation;
 use App\Entity\Template;
+use App\Event\ReservationConfirmationSentEvent;
 use App\Repository\ReservationRepository;
 use App\Service\AppSettingsService;
 use App\Service\Reservation\ReservationConfirmationService;
@@ -17,6 +18,7 @@ use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 final class ReservationConfirmationServiceTest extends TestCase
 {
@@ -55,6 +57,39 @@ final class ReservationConfirmationServiceTest extends TestCase
         self::assertSame([], $confirmation->attachmentIds);
     }
 
+    public function testAMailFromTheEditorCountsAsConfirmationOnlyWithTheConfirmationTemplate(): void
+    {
+        $mail = (new Template())->setName('Buchungsbestätigung');
+        (new \ReflectionProperty(Template::class, 'id'))->setValue($mail, 7);
+        $variant = (new Template())->setName('Booking confirmation')->setLocale('en')->setBaseTemplate($mail);
+        (new \ReflectionProperty(Template::class, 'id'))->setValue($variant, 8);
+        $other = (new Template())->setName('Anfahrt');
+        (new \ReflectionProperty(Template::class, 'id'))->setValue($other, 9);
+        $rooms = [$this->reservation(1), $this->reservation(2)];
+        $dispatcher = new class implements EventDispatcherInterface {
+            /** @var list<object> */
+            public array $events = [];
+
+            public function dispatch(object $event, ?string $eventName = null): object
+            {
+                $this->events[] = $event;
+
+                return $event;
+            }
+        };
+        $service = $this->service((new AppSettings())->setConfirmationTemplate($mail), dispatcher: $dispatcher);
+
+        $service->recordSentFromEditor($other, $rooms);
+        self::assertCount(0, $dispatcher->events);
+
+        $service->recordSentFromEditor($mail, $rooms);
+        $service->recordSentFromEditor($variant, $rooms);
+        self::assertCount(2, $dispatcher->events);
+        $event = $dispatcher->events[1] ?? null;
+        self::assertInstanceOf(ReservationConfirmationSentEvent::class, $event);
+        self::assertSame($rooms, $event->reservations);
+    }
+
     private function reservation(int $id, ?Uuid $group = null, ?string $locale = null): Reservation
     {
         $booker = new Customer();
@@ -68,7 +103,7 @@ final class ReservationConfirmationServiceTest extends TestCase
     }
 
     /** @param Reservation[] $bookingGroup */
-    private function service(AppSettings $settings, array $bookingGroup = []): ReservationConfirmationService
+    private function service(AppSettings $settings, array $bookingGroup = [], ?EventDispatcherInterface $dispatcher = null): ReservationConfirmationService
     {
         $appSettings = $this->createStub(AppSettingsService::class);
         $appSettings->method('getSettings')->willReturn($settings);
@@ -77,6 +112,6 @@ final class ReservationConfirmationServiceTest extends TestCase
         $resolver = $this->createStub(WorkflowAttachmentResolver::class);
         $resolver->method('resolve')->willReturn(new ResolvedAttachmentSet());
 
-        return new ReservationConfirmationService($appSettings, $reservations, $resolver, $this->createStub(EntityManagerInterface::class), $this->createStub(SendTemplateEmailAction::class));
+        return new ReservationConfirmationService($appSettings, $reservations, $resolver, $this->createStub(EntityManagerInterface::class), $this->createStub(SendTemplateEmailAction::class), $dispatcher ?? $this->createStub(EventDispatcherInterface::class));
     }
 }

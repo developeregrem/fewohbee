@@ -184,6 +184,7 @@ invoice.tourist_tax.heading: Beherbergungsabgaben
 invoice.apartment_modifier.heading: 'Aufschläge / Ermäßigungen'
 invoice.apartment_modifier.position: '%category% — %modifier% (%nights% × %count%)'
 invoice.apartment_extra_person.position: 'Aufschlag je weitere Person (%nights% × %count%)'
+invoice.apartment_extra_person.category_position: 'Aufschlag je weitere Person: %category% — %modifier% (%nights% × %count%)'
 invoice.apartment_modifier.label.surcharge_absolute: 'Aufschlag %value%'
 invoice.apartment_modifier.label.discount_percent: 'Rabatt %value%%'
 invoice.apartment_modifier.label.flat_rate: 'Pauschalpreis %value%'

@@ -16,6 +16,7 @@ use App\Entity\ReservationStatus;
 use App\Entity\Role;
 use App\Entity\Template;
 use App\Entity\User;
+use App\Entity\Workflow;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -29,6 +30,9 @@ use Symfony\Component\Uid\Uuid;
  */
 final class ReservationConfirmationTest extends WebTestCase
 {
+    /** @var list<int> */
+    private array $workflowIds = [];
+
     public function testTheButtonOpensTheEditorForTheWholeBookingAndSendingRecordsItForEveryRoom(): void
     {
         $client = $this->authenticatedClient();
@@ -107,6 +111,31 @@ final class ReservationConfirmationTest extends WebTestCase
         $this->open($client, $crawler->filter('[data-action="reservations#openConfirmationAction"]'));
 
         self::assertSelectorTextContains('.alert-warning', 'keine E-Mail-Adresse');
+        self::assertSame([], $this->mailsFor($reservation));
+        self::assertSame([], $this->filesFor($reservation, $pdfTemplate));
+    }
+
+    /** A booking imported from a portal calendar has no booker, so there is nobody to confirm to. */
+    public function testWithoutABookerTheButtonIsDisabledAndOpeningItSaysWhy(): void
+    {
+        $client = $this->authenticatedClient();
+        [, $pdfTemplate] = $this->configure();
+        $reservation = $this->createReservation(null, '+970 days', null);
+
+        $crawler = $client->request('GET', sprintf('/reservation/get/%d', $reservation->getId()));
+        $button = $crawler->filter('[data-action="reservations#openConfirmationAction"]');
+        self::assertCount(1, $button);
+        self::assertNotNull($button->attr('disabled'));
+
+        foreach ([false, true] as $sendsImmediately) {
+            $this->settings()->setConfirmationSendImmediately($sendsImmediately);
+            $this->em()->flush();
+            $crawler = $this->open($client, $button);
+
+            self::assertResponseIsSuccessful();
+            self::assertSelectorTextContains('.alert-warning', 'kein Bucher');
+            self::assertCount(0, $crawler->filter('#template-form'));
+        }
         self::assertSame([], $this->mailsFor($reservation));
         self::assertSame([], $this->filesFor($reservation, $pdfTemplate));
     }
@@ -203,15 +232,103 @@ final class ReservationConfirmationTest extends WebTestCase
         self::assertTrue($settings->isConfirmationSendImmediately());
     }
 
+    public function testSendingRightAwayLetsAnAutomationConfirmEveryRoomOfTheBooking(): void
+    {
+        $client = $this->authenticatedClient();
+        $this->configure();
+        $this->settings()->setConfirmationSendImmediately(true);
+        $this->em()->flush();
+        $confirmed = $this->automateStatusAfterConfirmation();
+        $booker = $this->createBooker('confirm-status-'.bin2hex(random_bytes(4)).'@example.com');
+        $group = Uuid::v4();
+        $first = $this->createReservation($booker, '+980 days', $group);
+        $second = $this->createReservation($booker, '+980 days', $group);
+
+        $crawler = $client->request('GET', sprintf('/reservation/get/%d', $first->getId()));
+        $this->open($client, $crawler->filter('[data-action="reservations#openConfirmationAction"]'));
+
+        self::assertSelectorExists('.alert-success');
+        self::assertSame([$confirmed, $confirmed], $this->statusIdsOf($first, $second));
+    }
+
+    public function testSendingFromTheEditorLetsAnAutomationConfirmEveryRoomButOtherMailsDoNot(): void
+    {
+        $client = $this->authenticatedClient();
+        [$mailTemplate] = $this->configure();
+        $confirmed = $this->automateStatusAfterConfirmation();
+        $email = 'confirm-editor-'.bin2hex(random_bytes(4)).'@example.com';
+        $group = Uuid::v4();
+        $first = $this->createReservation($this->createBooker($email), '+990 days', $group);
+        $second = $this->createReservation($first->getBooker(), '+990 days', $group);
+        $initial = $this->statusIdsOf($first, $second);
+        $otherTemplate = $this->em()->getRepository(Template::class)->createQueryBuilder('t')
+            ->join('t.templateType', 'tt')
+            ->where('tt.name = :type')->andWhere('t.id != :confirmation')
+            ->setParameter('type', 'TEMPLATE_RESERVATION_EMAIL')->setParameter('confirmation', $mailTemplate->getId())
+            ->setMaxResults(1)->getQuery()->getSingleResult();
+
+        $crawler = $client->request('GET', sprintf('/reservation/get/%d', $first->getId()));
+        $crawler = $this->open($client, $crawler->filter('[data-action="reservations#openConfirmationAction"]'));
+        $send = static fn (Template $template): array => [
+            '_csrf_token' => $crawler->filter('#template-form input[name="_csrf_token"]')->attr('value'),
+            'templateId' => $template->getId(),
+            'to' => $email,
+            'subject' => 'Bestätigung',
+            'msg' => '<p>Hallo</p>',
+        ];
+
+        $client->request('POST', '/correspondence/email/send', $send($otherTemplate));
+        self::assertResponseIsSuccessful();
+        self::assertSame($initial, $this->statusIdsOf($first, $second), 'Another mail confirms nothing.');
+
+        $client->request('POST', '/correspondence/email/send', $send($mailTemplate));
+        self::assertResponseIsSuccessful();
+        self::assertSame([$confirmed, $confirmed], $this->statusIdsOf($first, $second));
+    }
+
     protected function tearDown(): void
     {
         if (null !== self::$kernel) {
             $em = $this->em();
             if ($em->isOpen()) {
                 $this->clearSettings();
+                foreach ($this->workflowIds as $id) {
+                    $em->getConnection()->executeStatement('DELETE FROM workflow_logs WHERE workflow_id = ?', [$id]);
+                    $em->getConnection()->executeStatement('DELETE FROM workflows WHERE id = ?', [$id]);
+                }
             }
         }
         parent::tearDown();
+    }
+
+    /**
+     * An automation that sets a booking to the first blocking status once its confirmation went
+     * out. The test reservations start with the first status, which is not blocking.
+     *
+     * @return int the id of the status it sets
+     */
+    private function automateStatusAfterConfirmation(): int
+    {
+        $status = $this->em()->getRepository(ReservationStatus::class)->findOneBy(['isBlocking' => true], ['id' => 'ASC'])
+            ?? throw new \RuntimeException('No blocking status in the sample data.');
+        $workflow = (new Workflow())
+            ->setName('Bestätigung → Status '.bin2hex(random_bytes(3)))
+            ->setTriggerType('reservation.confirmation_sent')
+            ->setActionType('change_reservation_status')
+            ->setActionConfig(['statusId' => (string) $status->getId()]);
+        $this->em()->persist($workflow);
+        $this->em()->flush();
+        $this->workflowIds[] = (int) $workflow->getId();
+
+        return (int) $status->getId();
+    }
+
+    /** @return list<?int> */
+    private function statusIdsOf(Reservation ...$reservations): array
+    {
+        $this->em()->clear();
+
+        return array_map(fn (Reservation $reservation): ?int => $this->em()->find(Reservation::class, $reservation->getId())?->getReservationStatus()?->getId(), array_values($reservations));
     }
 
     /**
@@ -307,7 +424,7 @@ final class ReservationConfirmationTest extends WebTestCase
         return $booker;
     }
 
-    private function createReservation(Customer $booker, string $arrival, ?Uuid $group): Reservation
+    private function createReservation(?Customer $booker, string $arrival, ?Uuid $group): Reservation
     {
         $start = new \DateTime($arrival);
         $reservation = new Reservation();

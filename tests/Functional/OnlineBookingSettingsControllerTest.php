@@ -58,8 +58,16 @@ final class OnlineBookingSettingsControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         // The website sets ?lang= itself; the code does not change per language.
-        self::assertCount(1, $crawler->filter('textarea[data-copy-target="input"]'));
-        self::assertStringNotContainsString('lang=', (string) $crawler->filter('textarea[data-copy-target="input"]')->text());
+        $embedField = $crawler->filter('textarea[data-copy-target="input"]');
+        self::assertCount(1, $embedField);
+        $embedCode = $embedField->text(null, false);
+        $lines = explode("\n", $embedCode);
+        self::assertCount(2, $lines);
+        self::assertStringStartsWith('<iframe ', $lines[0]);
+        self::assertStringEndsWith('</iframe>', $lines[0]);
+        self::assertStringStartsWith('<script>', $lines[1]);
+        self::assertStringEndsWith('</script>', $lines[1]);
+        self::assertStringNotContainsString('lang=', $embedCode);
         self::assertSelectorTextContains('ul.small', 'lang=de');
         self::assertSelectorTextContains('ul.small', 'lang=en');
     }

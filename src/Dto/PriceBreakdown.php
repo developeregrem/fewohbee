@@ -22,6 +22,15 @@ final class PriceBreakdown
     /** @var PriceBreakdownLine[] */
     public array $lines = [];
 
+    /**
+     * The persons a per-room price bills through its surcharge, by guest category, each line at
+     * the surcharge its guests pay. Null where they are not told apart - no guest counts, an event
+     * space, a promise made before - and every further person pays the full surcharge.
+     *
+     * @var list<PriceBreakdownLine>|null
+     */
+    public ?array $extraPersonLines = null;
+
     /** Null exactly when $basePrice is null. */
     public readonly ?NightRate $rate;
 
@@ -36,6 +45,24 @@ final class PriceBreakdown
     public function addLine(PriceBreakdownLine $line): void
     {
         $this->lines[] = $line;
+    }
+
+    /** What the surcharge of a per-room price adds to this night for a party of $persons. */
+    public function extraPersonTotal(int $persons): float
+    {
+        if (null === $this->rate || !$this->rate->isPerRoom || null === $this->rate->extraPersonSurcharge) {
+            return 0.0;
+        }
+        if (null === $this->extraPersonLines) {
+            return $this->rate->surchargeTotal($persons);
+        }
+
+        $sum = 0.0;
+        foreach ($this->extraPersonLines as $line) {
+            $sum += $line->total();
+        }
+
+        return $sum;
     }
 
     public function total(): float

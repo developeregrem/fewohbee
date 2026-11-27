@@ -105,6 +105,33 @@ final class PricePromiseTest extends TestCase
         self::assertSame(2, $night->includedPersons);
     }
 
+    public function testAPerRoomNightKeepsWhatEachGuestCategoryPaysAsFurtherPerson(): void
+    {
+        $extraLines = [new PromisedLine(1, 1, '22.00'), new PromisedLine(2, 1, '8.00', new GuestAdjustment(ModifierType::FLAT_RATE, 8.0))];
+        $promise = new PricePromise('2026-10-02', 'ctx', ['2026-12-20' => new PromisedNight(17, '76.00', false, true, true, [], null, '22.00', 1, $extraLines)], []);
+
+        $night = PricePromise::fromArray($promise->toArray())?->night(new \DateTimeImmutable('2026-12-20'));
+
+        self::assertEquals($extraLines, $night?->extraLines);
+    }
+
+    public function testAPerRoomNightWithoutFurtherPersonsStillTellsThemApart(): void
+    {
+        $promise = new PricePromise('2026-10-02', 'ctx', ['2026-12-20' => new PromisedNight(17, '76.00', false, true, true, [], null, '22.00', 1, [])], []);
+
+        $night = PricePromise::fromArray(json_decode(json_encode($promise->toArray(), JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR))?->night(new \DateTimeImmutable('2026-12-20'));
+
+        self::assertSame([], $night?->extraLines);
+    }
+
+    public function testAPromiseFromBeforeGuestCategoriesChangedTheSurchargeReadsWithoutExtraLines(): void
+    {
+        $stored = (new PricePromise('2026-10-02', 'ctx', ['2026-12-20' => new PromisedNight(17, '80.00', false, true, true, [], null, '15.00', 2)], []))->toArray();
+
+        self::assertArrayNotHasKey('e', $stored['n'][0]);
+        self::assertNull(PricePromise::fromArray($stored)?->night(new \DateTimeImmutable('2026-12-20'))?->extraLines);
+    }
+
     public function testAPromiseFromBeforeTheSurchargeReadsWithoutOne(): void
     {
         $stored = (new PricePromise('2026-10-02', 'ctx', ['2026-12-20' => new PromisedNight(17, '80.00', false, true, true)], []))->toArray();
@@ -121,6 +148,7 @@ final class PricePromiseTest extends TestCase
         yield 'segment without count' => [['v' => 1, 'at' => '2026-10-02', 'ctx' => 'x', 'n' => [['f' => '2026-12-20', 'p' => 1, 'u' => '1.00', 't' => 'p', 'g' => true]], 'x' => []]];
         yield 'unknown calculation type' => [['v' => 1, 'at' => '2026-10-02', 'ctx' => 'x', 'n' => [['f' => '2026-12-20', 'c' => 1, 'p' => 1, 'u' => '1.00', 't' => 'z', 'g' => true]], 'x' => []]];
         yield 'unknown modifier type' => [['v' => 1, 'at' => '2026-10-02', 'ctx' => 'x', 'n' => [['f' => '2026-12-20', 'c' => 1, 'p' => 1, 'u' => '1.00', 't' => 'p', 'g' => true, 'l' => [[1, 1, '1.00', 'bogus', '5.00']]]], 'x' => []]];
+        yield 'unreadable further person line' => [['v' => 1, 'at' => '2026-10-02', 'ctx' => 'x', 'n' => [['f' => '2026-12-20', 'c' => 1, 'p' => 1, 'u' => '1.00', 't' => 'r', 'g' => true, 's' => '5.00', 'x' => 1, 'e' => [['a', 1, '5.00']]]], 'x' => []]];
         yield 'extra without unit' => [['v' => 1, 'at' => '2026-10-02', 'ctx' => 'x', 'n' => [], 'x' => [['p' => 5, 'g' => true]]]];
     }
 

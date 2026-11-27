@@ -179,6 +179,40 @@ final class WorkflowActionTest extends TestCase
         self::assertSame('workflow.log.reservation_status_changed', $result);
     }
 
+    public function testChangeReservationStatusChangesEveryRoomOfTheBooking(): void
+    {
+        $status = new ReservationStatus();
+        $status->setName('Bestätigt');
+        $status->setColor('#00ff00');
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('find')->willReturn($status);
+        $first = new Reservation();
+        $second = new Reservation();
+
+        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService, $this->displayNameResolver);
+        $action->execute(['statusId' => 5], $first, ['allReservations' => [$first, $second]]);
+
+        self::assertSame($status, $first->getReservationStatus());
+        self::assertSame($status, $second->getReservationStatus());
+    }
+
+    public function testChangeReservationStatusIgnoresAGroupWithoutTheReservation(): void
+    {
+        $status = new ReservationStatus();
+        $status->setName('Bestätigt');
+        $status->setColor('#00ff00');
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('find')->willReturn($status);
+        $reservation = new Reservation();
+        $unrelated = new Reservation();
+
+        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService, $this->displayNameResolver);
+        $action->execute(['statusId' => 5], $reservation, ['allReservations' => [$unrelated]]);
+
+        self::assertSame($status, $reservation->getReservationStatus());
+        self::assertNull($unrelated->getReservationStatus());
+    }
+
     // -------------------------------------------------------------------------
     // ChangeReservationStatusAction – Invoice with linked Reservations
     // -------------------------------------------------------------------------

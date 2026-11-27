@@ -111,6 +111,27 @@ final class PublicBookingGuestAdjustmentTest extends TestCase
         ));
     }
 
+    /** A room price changes only through its surcharge, so a child rate is weighed against that. */
+    public function testRoomPriceWithSurchargeComparesTheChildRateWithTheSurcharge(): void
+    {
+        $service = $this->makeService(
+            [$this->guestCategory(2, 'Kind 6–17', true)],
+            [2 => $this->modifier(ModifierType::FLAT_RATE, 14.0)],
+            perRoom: true,
+            surcharge: '10.00',
+        );
+
+        $adjustment = $service->describeGuestPriceAdjustment(
+            $this->room(),
+            new \DateTimeImmutable('2026-06-01'),
+            new \DateTimeImmutable('2026-06-04'),
+            [2 => 1],
+        );
+
+        // 14 € against the 30 € room rate would be a reduction; against the 10 € surcharge it is not.
+        self::assertSame(PublicPricingService::ADJUSTMENT_SURCHARGE, $adjustment['direction'] ?? null);
+    }
+
     /** An infant in a cot does not occupy a bed and is never priced per head. */
     public function testNonOccupancyGuestTriggersNoAnnouncement(): void
     {
@@ -177,6 +198,7 @@ final class PublicBookingGuestAdjustmentTest extends TestCase
         array $modifiersByCategoryId,
         bool $perRoom = false,
         ?InvoiceService $invoiceService = null,
+        ?string $surcharge = null,
     ): PublicPricingService {
         $categoryRepository = $this->createStub(GuestCategoryRepository::class);
         $categoryRepository->method('findActiveOrdered')->willReturn($categories);
@@ -193,7 +215,7 @@ final class PublicBookingGuestAdjustmentTest extends TestCase
 
         $priceService = $this->createStub(PriceService::class);
         $priceService->method('getNightRates')->willReturn([
-            new NightRate(new \DateTimeImmutable('2026-06-01'), $price, number_format(self::PER_HEAD_RATE, 2, '.', ''), true, false, $perRoom),
+            new NightRate(new \DateTimeImmutable('2026-06-01'), $price, number_format(self::PER_HEAD_RATE, 2, '.', ''), true, false, $perRoom, extraPersonSurcharge: $surcharge),
         ]);
 
         $configService = $this->createStub(OnlineBookingConfigService::class);
