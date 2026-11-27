@@ -70,14 +70,19 @@
     margin-top: .5rem;
 }
 
-/* The invoice and its payment status share the first of the three places */
-.frontdesk-card-invoice {
+/* The invoice button is the payment status picker (InvoiceStatusPicker button): it fills its
+   place like the buttons beside it */
+.frontdesk-card-actions > .invoice-status-picker {
     display: flex;
-    gap: .25rem;
     min-width: 0;
 }
 
-.frontdesk-card-invoice > .btn {
+/* Without the menu's arrow, like the buttons beside it, so "Rechnung" fits on a phone */
+.frontdesk-card-actions > .invoice-status-picker > .dropdown-toggle::after {
+    display: none;
+}
+
+.frontdesk-card-actions > .invoice-status-picker > .btn {
     flex: 1;
     display: flex;
     align-items: center;

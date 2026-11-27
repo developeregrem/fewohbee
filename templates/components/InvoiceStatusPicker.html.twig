@@ -10,12 +10,18 @@
  # icon alone on a button, the save feedback at its corner (the front desk cards). Without the
  # invoices role it is the plain icon.
  # The reservation popover shows the same icon and menu, see Reservations/_macros.html.twig.
+ # `statusText` shows the name of the status beside the icon on the button (the front desk
+ # cards); the content of the component adds entries at the top of the menu, e.g. one that opens
+ # the invoice, so a single control both opens the invoice and changes its status.
  #
  #   <twig:InvoiceStatusPicker :invoice="invoice"/>
  #   <twig:InvoiceStatusPicker :invoice="invoice" label/>
- #   <twig:InvoiceStatusPicker :invoice="invoice" button/>
+ #   <twig:InvoiceStatusPicker :invoice="invoice" button statusText>
+ #       <li><button type="button" class="dropdown-item" …>…</button></li>
+ #   </twig:InvoiceStatusPicker>
  #}
-{% props invoice, label = false, button = false %}
+{% props invoice, label = false, button = false, statusText = false %}
+{% set extraItems %}{% block content %}{% endblock %}{% endset %}
 {% import 'Invoices/_status_macros.html.twig' as statusMacros %}
 {% set statusEnum = enum('App\\Entity\\Enum\\InvoiceStatus') %}
 {% set current = statusEnum.forDisplay(invoice.status) %}
@@ -35,9 +41,13 @@
             data-bs-toggle="dropdown" aria-expanded="false"
             title="{{ meansName ? meansName ~ ' · ' }}{{ 'invoice.status.change'|trans }}" data-invoice-status-target="toggle">
         {{ statusMacros.status_icon(invoice.status, means, true) }}
-        <span{% if not label %} class="visually-hidden"{% endif %} data-invoice-status-label>{{ current.labelKey|trans }}</span>
+        <span class="{{ label ? '' : (statusText ? 'text-truncate' : 'visually-hidden') }}" data-invoice-status-label>{{ current.labelKey|trans }}</span>
     </button>
     <ul class="dropdown-menu">
+        {% if extraItems|trim is not empty %}
+            {{ extraItems }}
+            <li><hr class="dropdown-divider"></li>
+        {% endif %}
         {# The payment means is otherwise only in the toggle's title, which a touch screen never shows #}
         {% if meansName %}<li><h6 class="dropdown-header">{{ meansName }}</h6></li>{% endif %}
         {% for item in statusEnum.menuOrder %}
@@ -56,8 +66,9 @@
     {% if label %}<twig:SaveState data-invoice-status-target="state"/>{% endif %}
 </span>
 {% else %}
-<span {{ attributes }} title="{{ meansName ? meansName ~ ' · ' }}{{ current.labelKey|trans }}">
+{# Read only; as a button (front desk card) it keeps its place among the buttons beside it #}
+<span {{ attributes.defaults({class: button ? 'btn btn-secondary disabled' : ''}) }} title="{{ meansName ? meansName ~ ' · ' }}{{ current.labelKey|trans }}">
     {{ statusMacros.status_icon(invoice.status, means) }}
-    <span{% if not label %} class="visually-hidden"{% endif %}>{{ current.labelKey|trans }}</span>
+    <span class="{{ label ? '' : (statusText ? 'text-truncate' : 'visually-hidden') }}">{{ current.labelKey|trans }}</span>
 </span>
 {% endif %}

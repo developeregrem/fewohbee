@@ -157,10 +157,13 @@ final class InvoiceStatusUpdateTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         $selector = '[data-invoice-status-id-value="'.$invoice->getId().'"]';
-        // Table (icon) and card (button) each carry the status menu next to the invoice
+        // Table (icon) and card (button "Rechnung") each have a single control: the status menu,
+        // which opens the invoice as well
+        $open = ' .dropdown-menu [data-url="/invoices/get/'.$invoice->getId().'/"]';
         self::assertCount(1, $crawler->filter('.frontdesk-table '.$selector.'.invoice-status-picker-compact'));
-        self::assertCount(1, $crawler->filter('.frontdesk-card-invoice '.$selector.'.invoice-status-picker-button'));
-        self::assertCount(1, $crawler->filter('.frontdesk-table [data-url="/invoices/get/'.$invoice->getId().'/"]'));
+        self::assertCount(1, $crawler->filter('.frontdesk-card-actions > '.$selector.'.invoice-status-picker-button'));
+        self::assertCount(1, $crawler->filter('.frontdesk-table '.$selector.$open));
+        self::assertCount(1, $crawler->filter('.frontdesk-card-actions > '.$selector.$open));
 
         $this->postStatus($client, $invoice, '2', (string) $crawler->filter($selector)->first()->attr('data-invoice-status-token-value'));
 

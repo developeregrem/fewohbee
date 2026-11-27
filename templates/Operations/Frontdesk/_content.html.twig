@@ -88,15 +88,19 @@
                 <td class="text-center">
                     {% if reservation.invoices|length > 0 %}
                         {% set invoice = reservation.invoices|first %}
-                        {# The invoice opens from its icon; the payment status beside it changes from its menu #}
-                        <span class="d-inline-flex align-items-center gap-1">
-                            <twig:IconButton icon="file-invoice" :label="'reservation.invoice'|trans ~ ' ' ~ invoice.number"
-                                             data-action="click->reservations#openModalContentAction"
-                                             data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
-                                             data-title="{{ 'reservation.invoice'|trans }} {{ invoice.number }}"
-                                             data-bs-toggle="modal" data-bs-target="#modalCenter"/>
-                            <twig:InvoiceStatusPicker :invoice="invoice"/>
-                        </span>
+                        {# One control: the payment status as an icon, its menu opens the invoice as well;
+                           without the invoices role only the status (the invoice is closed to it anyway) #}
+                        <twig:InvoiceStatusPicker :invoice="invoice">
+                            <li>
+                                <button type="button" class="dropdown-item"
+                                        data-action="click->reservations#openModalContentAction"
+                                        data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
+                                        data-title="{{ 'reservation.invoice'|trans }} {{ invoice.number }}"
+                                        data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                    <i class="fas fa-file-invoice me-2" aria-hidden="true"></i>{{ 'reservation.invoice'|trans }} {{ invoice.number }}
+                                </button>
+                            </li>
+                        </twig:InvoiceStatusPicker>
                     {% else %}
                         <a href="#" title="{{ 'reservation.button.create.invoice'|trans }}"
                            class="btn btn-icon{% if reservation.booker is null %} disabled{% endif %}"
@@ -214,19 +218,19 @@
                 <div class="frontdesk-card-actions">
                     {% if reservation.invoices|length > 0 %}
                         {% set invoice = reservation.invoices|first %}
-                        {# The invoice button and, beside it, the payment status as a button with its menu #}
-                        <div class="frontdesk-card-invoice">
-                            <a href="#" class="btn btn-secondary"
-                               data-action="click->reservations#openModalContentAction"
-                               data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
-                               data-title="{{ 'reservation.invoice'|trans }} {{ invoice.number }}"
-                               data-bs-toggle="modal" data-bs-target="#modalCenter"
-                               title="{{ 'reservation.invoice'|trans }} {{ invoice.number }}">
-                                <i class="fas fa-file-invoice" aria-hidden="true"></i>
-                                <span class="text-truncate">{{ 'operations.frontdesk.header.invoice'|trans }}</span>
-                            </a>
-                            <twig:InvoiceStatusPicker :invoice="invoice" button/>
-                        </div>
+                        {# One button in the invoice's place, as before with the status ("offen"): its menu
+                           opens the invoice or changes the status (read only without the invoices role) #}
+                        <twig:InvoiceStatusPicker :invoice="invoice" button statusText>
+                            <li>
+                                <button type="button" class="dropdown-item"
+                                        data-action="click->reservations#openModalContentAction"
+                                        data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
+                                        data-title="{{ 'reservation.invoice'|trans }} {{ invoice.number }}"
+                                        data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                    <i class="fas fa-file-invoice me-2" aria-hidden="true"></i>{{ 'reservation.invoice'|trans }} {{ invoice.number }}
+                                </button>
+                            </li>
+                        </twig:InvoiceStatusPicker>
                     {% else %}
                         <a href="#"
                            class="btn btn-secondary{% if reservation.booker is null %} disabled{% endif %}"
