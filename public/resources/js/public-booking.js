@@ -423,6 +423,9 @@
                 return;
             }
             var next = new Date(base + 'T12:00:00Z');
+            if (isNaN(next.getTime())) {
+                return; // not an ISO date (e.g. typed into a browser without a date picker)
+            }
             next.setUTCDate(next.getUTCDate() + 1);
             to.min = next.toISOString().slice(0, 10);
             if (to.value && to.value < to.min) {
