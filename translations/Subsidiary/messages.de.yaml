@@ -25,6 +25,7 @@ object.flash.invoice_number_pattern.invalid: 'Der Rechnungsnummern-Kreis ist ung
 object.invoice_number_pattern: 'Eigener Rechnungsnummern-Kreis'
 object.invoice_number_pattern.help: 'Leer lassen, um den Standard-Nummernkreis aus den Einstellungen zu verwenden. Platzhalter: <code>&lt;year&gt;</code>, <code>&lt;year2&gt;</code>, <code>&lt;month&gt;</code>, <code>&lt;day&gt;</code>, <code>&lt;number:4&gt;</code>. Rechnungen zu Zimmern dieser Niederlassung bekommen dann eine eigene, fortlaufende Nummer.'
 object.invoice_number_pattern.placeholder: 'z.B. RE-<year>-<number:4>'
+object.list.count: '{0}Keine Niederlassungen|{1}1 Niederlassung|]1,Inf[%count% Niederlassungen'
 object.name: Niederlassung
 object.opening_hours: Öffnungszeiten
 object.opening_hours.from: von

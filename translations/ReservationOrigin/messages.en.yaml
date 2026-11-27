@@ -1,4 +1,5 @@
 reservationorigin.add: Add origin
+reservationorigin.list.count: '{0}No origins|{1}1 origin|]1,Inf[%count% origins'
 reservationorigin.business: Business
 reservationorigin.color: Color
 reservationorigin.color.enable: Show color indicator

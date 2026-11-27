@@ -1,4 +1,5 @@
 reservationorigin.add: 'Herkunft hinzufügen'
+reservationorigin.list.count: '{0}Keine Herkunft|{1}1 Herkunft|]1,Inf[%count% Herkünfte'
 reservationorigin.business: geschäftlich
 reservationorigin.color: Farbe
 reservationorigin.color.enable: 'Farbindikator anzeigen'

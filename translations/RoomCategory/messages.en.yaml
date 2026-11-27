@@ -7,6 +7,8 @@ category:
   description: Management of room categories
   edit: 'Edit room category'
   rooms: '{0}No rooms|{1}1 room|]1,Inf[%count% rooms'
+  list:
+    count: '{0}No categories|{1}1 category|]1,Inf[%count% categories'
   min_full_payers: Minimum full-fare guests
   min_full_payers.help: >-
     Number of guests who always pay the full per-person rate before per-category

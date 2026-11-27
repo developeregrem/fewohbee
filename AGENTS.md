@@ -382,7 +382,13 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   a new building block there.
 - On phones the interface should feel like an app. Wherever entries can be created, touch
   screens get the round add button: `<twig:AddButton>` in the page header renders it together
-  with the regular button for the desktop (`fab-add-dropdown` when there are several kinds). Where a view pages
+  with the regular button for the desktop (`fab-add-dropdown` when there are several kinds). The
+  page's container carries `fab-add-clearance`, and each list on such a page ends with its footer
+  (`data-footer`, at least the count, `'%count%'` in a plural key): at the end of the page the
+  button rests on the footer instead of the last row's actions, and the page ends only a small
+  distance above the bottom bar (`touch.css` sets it, a little more for a footer without pages).
+  A page without such a footer keeps room the height of the button below its content. Where a
+  view pages
   through a sequence (month, year, day, pages of a list), a sideways swipe pages as well: use the
   `swipe-nav` controller (a year select or a month via `<twig:Pager>`, a date via
   `<twig:DatePager>`, or the pages of a list via `'swipe_nav': true` on `paginator.html.twig`)

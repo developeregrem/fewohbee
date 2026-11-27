@@ -2,6 +2,7 @@ user.action: Action
 user.active: Active
 user.delete.ask: Are you sure you want to delete this user?
 user.edit: 'Edit user'
+user.list.count: '{0}No users|{1}1 user|]1,Inf[%count% users'
 user.email: E-mail
 user.firstname: First name
 user.flash.create.success: User was successfully added.

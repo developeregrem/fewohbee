@@ -7,6 +7,8 @@ category:
   description: 'Verwaltung der Zimmerkategorien'
   edit: 'Zimmerkategorie bearbeiten'
   rooms: '{0}Keine Zimmer|{1}1 Zimmer|]1,Inf[%count% Zimmer'
+  list:
+    count: '{0}Keine Kategorien|{1}1 Kategorie|]1,Inf[%count% Kategorien'
   min_full_payers: 'Mindestanzahl Vollzahler'
   min_full_payers.help: 'Anzahl Gäste, die immer den vollen Personenpreis zahlen, bevor Preisanpassungen je Gästekategorie (z. B. Kinderrabatte) greifen. Beispiel: 2 → Rabatte greifen erst ab 3 Personen. 0 = keine Mindestanzahl.'
   kind: Raumart

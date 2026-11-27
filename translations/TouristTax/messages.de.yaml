@@ -4,6 +4,8 @@ tourist_tax:
   add: "Beherbergungsabgabe hinzufügen"
   edit: "Beherbergungsabgabe bearbeiten"
   empty: "Noch keine Beherbergungsabgaben definiert."
+  list:
+    count: '{0}Keine Beherbergungsabgaben|{1}1 Beherbergungsabgabe|]1,Inf[%count% Beherbergungsabgaben'
   delete:
     ask: "Diese Definition wirklich löschen?"
   subsidiaries:

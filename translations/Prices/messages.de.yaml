@@ -14,6 +14,7 @@ price.breakfast: Frühstück
 price.category: Zimmerkategorie
 price.list.empty: 'Noch keine Preise'
 price.list.empty.hint: 'Lege über „Preis hinzufügen“ einen Preis für deine Zimmer an.'
+price.list.count: '{0}Keine Preise|{1}1 Preis|]1,Inf[%count% Preise'
 price.category.all: 'Alle Kategorien'
 price.category.misc.hint: 'Optional: Ohne Auswahl gilt der Preis für alle Zimmerkategorien.'
 price.overview.section.appartment: Zimmerpreise

@@ -4,6 +4,7 @@ calendar:
     description: "Create calendars whose entries show up in the reservation overview."
     add: "Add calendar"
     empty: "No calendars configured yet."
+    count: '{0}No calendars|{1}1 calendar|]1,Inf[%count% calendars'
     source_url: "ICS URL"
     source_manual: "Manual"
     table:

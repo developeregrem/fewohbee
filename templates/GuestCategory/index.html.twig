@@ -120,6 +120,9 @@
                 </tbody>
             </table>
         </div>
+        <div class="data-footer">
+            <span>{{ 'guest_category.list.count'|trans({'%count%': guest_categories|length}) }}</span>
+        </div>
     </div>
 
     <section class="mt-4" aria-labelledby="guest-category-modifiers">
@@ -187,6 +190,9 @@
                     {% endfor %}
                     </tbody>
                 </table>
+            </div>
+            <div class="data-footer">
+                <span>{{ 'guest_category_modifier.list.count'|trans({'%count%': modifiers|length}) }}</span>
             </div>
             {% endif %}
         </div>

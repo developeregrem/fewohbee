@@ -3,6 +3,8 @@ guest_category:
   description: "Manage guest categories (e.g. adults, children, non-liable guests)"
   add: "Add guest category"
   edit: "Edit guest category"
+  list:
+    count: '{0}No guest categories|{1}1 guest category|]1,Inf[%count% guest categories'
   delete:
     ask: "Are you sure you want to delete this guest category?"
   system:
@@ -83,6 +85,8 @@ guest_category_modifier:
   add: "Add modifier"
   edit: "Edit modifier"
   empty: "No modifiers configured yet — nightly rates apply unchanged for every category."
+  list:
+    count: '{0}No modifiers|{1}1 modifier|]1,Inf[%count% modifiers'
   delete:
     ask: "Really delete this modifier?"
 

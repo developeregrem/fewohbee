@@ -14,6 +14,7 @@ price.breakfast: Breakfast
 price.category: Category
 price.list.empty: 'No prices yet'
 price.list.empty.hint: 'Add a price for your rooms with “Add price”.'
+price.list.count: '{0}No prices|{1}1 price|]1,Inf[%count% prices'
 price.category.all: All categories
 price.category.misc.hint: 'Optional: without a selection the price applies to every room category.'
 price.overview.section.appartment: Room prices

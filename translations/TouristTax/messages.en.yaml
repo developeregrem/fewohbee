@@ -4,6 +4,8 @@ tourist_tax:
   add: "Add tourist tax"
   edit: "Edit tourist tax"
   empty: "No tourist tax definitions yet."
+  list:
+    count: '{0}No tourist taxes|{1}1 tourist tax|]1,Inf[%count% tourist taxes'
   delete:
     ask: "Really delete this tourist tax definition?"
   subsidiaries:

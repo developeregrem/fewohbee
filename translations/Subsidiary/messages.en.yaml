@@ -25,6 +25,7 @@ object.flash.invoice_number_pattern.invalid: The invoice number range is invalid
 object.invoice_number_pattern: Own invoice number range
 object.invoice_number_pattern.help: 'Leave empty to use the default range from the settings. Placeholders: <code>&lt;year&gt;</code>, <code>&lt;year2&gt;</code>, <code>&lt;month&gt;</code>, <code>&lt;day&gt;</code>, <code>&lt;number:4&gt;</code>. Invoices for rooms of this branch then get their own running number.'
 object.invoice_number_pattern.placeholder: 'e.g. RE-<year>-<number:4>'
+object.list.count: '{0}No branches|{1}1 branch|]1,Inf[%count% branches'
 object.name: Branch
 object.opening_hours: Opening hours
 object.opening_hours.from: from

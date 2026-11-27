@@ -3,6 +3,8 @@ guest_category:
   description: "Verwaltung der Gastkategorien (z. B. Erwachsene, Kinder, nichtpflichtige Personen)"
   add: "Gastkategorie hinzufügen"
   edit: "Gastkategorie bearbeiten"
+  list:
+    count: '{0}Keine Gastkategorien|{1}1 Gastkategorie|]1,Inf[%count% Gastkategorien'
   delete:
     ask: "Diese Gastkategorie wirklich löschen?"
   system:
@@ -83,6 +85,8 @@ guest_category_modifier:
   add: "Preisanpassung hinzufügen"
   edit: "Preisanpassung bearbeiten"
   empty: "Noch keine Preisanpassungen angelegt — Übernachtungspreise gelten unverändert für alle Kategorien."
+  list:
+    count: '{0}Keine Preisanpassungen|{1}1 Preisanpassung|]1,Inf[%count% Preisanpassungen'
   delete:
     ask: "Diese Preisanpassung wirklich löschen?"
 

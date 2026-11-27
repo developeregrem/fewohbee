@@ -34,7 +34,7 @@
 
         {% for group in groups %}
             {# Card markup written out: the delete popover's block is not reachable inside a component #}
-            <div class="card data-card mb-3">
+            <div class="card data-card{{ not loop.last ? ' mb-3' }}">
                 {% if group.subsidiary %}
                     <div class="data-toolbar">
                         <h2 class="h6 mb-0">{{ group.subsidiary.name }}</h2>
@@ -98,6 +98,9 @@
                         {% endfor %}
                         </tbody>
                     </table>
+                </div>
+                <div class="data-footer">
+                    <span>{{ 'category.rooms'|trans({'%count%': group.apartments|length}) }}</span>
                 </div>
             </div>
         {% endfor %}

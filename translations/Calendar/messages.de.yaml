@@ -4,6 +4,7 @@ calendar:
     description: "Lege Kalender an, deren Termine in der Reservierungsübersicht erscheinen."
     add: "Kalender hinzufügen"
     empty: "Noch keine Kalender konfiguriert."
+    count: '{0}Keine Kalender|{1}1 Kalender|]1,Inf[%count% Kalender'
     source_url: "ICS-URL"
     source_manual: "Manuell"
     table:

@@ -18,7 +18,7 @@
     {% include 'Prices/_tabs.html.twig' with {'active': 'prices'} %}
 
     {% for group in priceGroups %}
-        <div class="card data-card mb-3">
+        <div class="card data-card{{ not loop.last ? ' mb-3' }}">
             <div class="data-toolbar">
                 <h2 class="h6 mb-0 price-group-title">
                     <span class="fw-normal text-body-secondary">{{ 'price.category'|trans }}:</span>
@@ -26,6 +26,9 @@
                 </h2>
             </div>
             {% include 'Prices/price_table.html.twig' with {'apartmentPrices': group.apartmentPrices, 'miscPrices': group.miscPrices} %}
+            <div class="data-footer">
+                <span>{{ 'price.list.count'|trans({'%count%': group.apartmentPrices|length + group.miscPrices|length}) }}</span>
+            </div>
         </div>
     {% else %}
         <div class="card">

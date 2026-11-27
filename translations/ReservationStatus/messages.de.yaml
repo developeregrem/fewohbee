@@ -7,6 +7,8 @@ status:
     ask: 'Diesen Reservierungsstatus wirklich löschen?'
   description: 'Statusverwaltung einer Reservierung'
   edit: 'Reservierungsstatus bearbeiten'
+  list:
+    count: '{0}Kein Status|{1}1 Status|]1,Inf[%count% Status'
   flash:
     create:
       success: 'Reservierungsstatus wurde erfolgreich angelegt.'
