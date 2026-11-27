@@ -82,7 +82,7 @@
     </div>
     <div class="fhb-field">
         <label class="fhb-label" for="dateTo">{{ 'online_booking.public.departure'|trans }}</label>
-        <input class="form-control" type="date" id="dateTo" name="dateTo" min="{{ minArrivalDate }}" value="{{ search.dateTo }}">
+        <input class="form-control" type="date" id="dateTo" name="dateTo" min="{{ minArrivalDate|date_modify('+1 day')|date('Y-m-d') }}" value="{{ search.dateTo }}">
     </div>
 </div>
 

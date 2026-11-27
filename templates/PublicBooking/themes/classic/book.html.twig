@@ -94,7 +94,7 @@
                                     </div>
                                     <div class="col-6 col-md-3">
                                         <label class="form-label mb-1" for="dateTo">{{ 'online_booking.public.departure'|trans }}</label>
-                                        <input class="form-control" type="date" id="dateTo" name="dateTo" min="{{ minArrivalDate }}" value="{{ search.dateTo }}">
+                                        <input class="form-control" type="date" id="dateTo" name="dateTo" min="{{ minArrivalDate|date_modify('+1 day')|date('Y-m-d') }}" value="{{ search.dateTo }}">
                                     </div>
                                     <div class="col-6 col-md-3">
                                         <label class="form-label mb-1" for="roomsCount">{{ 'online_booking.public.rooms'|trans }}</label>
@@ -655,6 +655,28 @@
 })();
 </script>
 {% endif %}
+
+{# Abreise frühestens am Tag nach der Anreise (Classic lädt public-booking.js nicht). #}
+<script>
+(function () {
+    var from = document.getElementById('dateFrom');
+    var to = document.getElementById('dateTo');
+    if (!from || !to) return;
+
+    function sync() {
+        var base = from.value || from.min;
+        if (!base) return;
+        var next = new Date(base + 'T12:00:00Z');
+        if (isNaN(next.getTime())) return; // kein ISO-Datum (z. B. Browser ohne Datumsauswahl)
+        next.setUTCDate(next.getUTCDate() + 1);
+        to.min = next.toISOString().slice(0, 10);
+        if (to.value && to.value < to.min) to.value = '';
+    }
+
+    from.addEventListener('change', sync);
+    sync();
+})();
+</script>
 
 {# Public guest-counts wiring — Vanilla-JS, da auf der Public-Seite kein
    Stimulus läuft. Verarbeitet zwei Standard-Number-Inputs (Erwachsene +
