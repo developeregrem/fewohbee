@@ -1,4 +1,7 @@
 {{ form_start(form) }}
+    {# Accounts and the remark are marked wide: where the panel lays the form out in two columns
+       (a phone held sideways, see dialogs.css) they keep the whole width, so a long account name
+       stays readable #}
     {% if batch is defined and batch %}
         <input type="hidden" name="batchId" value="{{ batch.id }}">
     {% endif %}
@@ -7,15 +10,27 @@
     {{ form_row(form.amount) }}
     {% if form.direction is defined %}
         {{ form_row(form.direction) }}
-        {{ form_row(form.category) }}
+        {{ form_row(form.category, {row_attr: {class: 'mb-3 form-row-wide'}}) }}
     {% else %}
-        {{ form_row(form.debitAccount) }}
-        {{ form_row(form.creditAccount) }}
+        {{ form_row(form.debitAccount, {row_attr: {class: 'mb-3 form-row-wide'}}) }}
+        {{ form_row(form.creditAccount, {row_attr: {class: 'mb-3 form-row-wide'}}) }}
     {% endif %}
     {{ form_row(form.taxRate) }}
     {{ form_row(form.invoiceNumber) }}
-    {{ form_row(form.requiresDocumentNumber) }}
-    {{ form_row(form.remark) }}
+    {# The explanation is a tooltip, not a help line beneath, so the form fits a phone held
+       sideways in two columns without scrolling #}
+    <div class="mb-3 row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm d-flex align-items-center">
+            {{ form_widget(form.requiresDocumentNumber) }}
+            <span class="ms-1 text-body-secondary" tabindex="0" data-bs-toggle="tooltip"
+                  title="{{ 'accounting.journal.entry.requires_document_help'|trans }}"
+                  aria-label="{{ 'accounting.journal.entry.requires_document_help'|trans }}">
+                <i class="fas fa-circle-question" aria-hidden="true"></i>
+            </span>
+        </div>
+    </div>
+    {{ form_row(form.remark, {row_attr: {class: 'mb-3 form-row-wide'}}) }}
     <div class="d-grid">
         <button type="submit" class="btn btn-primary">
             <i class="fas fa-save me-1"></i> {{ 'button.save'|trans }}

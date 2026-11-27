@@ -93,6 +93,7 @@ export default class extends Controller {
         const title = button.dataset.offcanvasTitle;
 
         this.offcanvasTitleTarget.textContent = title;
+        disposeTooltips(this.offcanvasBodyTarget);
         this.offcanvasBodyTarget.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>';
 
         const offcanvas = Offcanvas.getOrCreateInstance(this.offcanvasTarget);
@@ -103,6 +104,7 @@ export default class extends Controller {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
             this.offcanvasBodyTarget.innerHTML = await response.text();
+            enableTooltips(this.offcanvasBodyTarget);
         } catch {
             this.offcanvasBodyTarget.innerHTML = '<div class="alert alert-danger">Error loading form.</div>';
         }

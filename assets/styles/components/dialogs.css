@@ -60,3 +60,70 @@
         --bs-offcanvas-width: 100%;
     }
 }
+
+/* A long form in such a panel (offcanvas-form-columns) is laid out in two columns on a phone, so it
+   needs little or no scrolling instead of stacking or stretching each field. Short fields stand
+   in pairs; a row marked form-row-wide (an account name, a remark) keeps the whole width, so its
+   text is not cut off. Short forms (fewer than six fields) stay in one column. Held upright the
+   labels stand above the fields (form theme), held sideways beside them. */
+@media (max-width: 575.98px), (max-width: 991.98px) and (max-height: 500px) {
+    .offcanvas-form-columns .offcanvas-body > form:has(> .row:nth-of-type(6)) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        /* dense: a short field after a wide row fills the place left free beside the one before */
+        grid-auto-flow: row dense;
+    }
+
+    .offcanvas-form-columns .offcanvas-body > form:has(> .row:nth-of-type(6)) > :is(.form-row-wide, .d-grid) {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Held upright: the fields of a pair line up at the bottom, also beside a checkbox */
+@media (max-width: 575.98px) {
+    .offcanvas-form-columns .offcanvas-body > form:has(> .row:nth-of-type(6)) {
+        column-gap: .75rem;
+        align-items: end;
+    }
+
+    .offcanvas-form-columns .offcanvas-body > form:has(> .row:nth-of-type(6)) > .row {
+        /* over the form theme's mb-3, a utility with !important */
+        margin-bottom: .75rem !important;
+    }
+
+    .offcanvas-form-columns .offcanvas-body > form:has(> .row:nth-of-type(6)) .col-form-label {
+        padding-top: 0;
+        padding-bottom: .25rem;
+    }
+}
+
+/* Held sideways: tighter, so the form fits the low screen without scrolling */
+@media (min-width: 576px) and (max-width: 991.98px) and (max-height: 500px) {
+    .offcanvas-form-columns:has(.offcanvas-body > form > .row:nth-of-type(6)) .offcanvas-header {
+        padding-block: .5rem;
+    }
+
+    .offcanvas-form-columns:has(.offcanvas-body > form > .row:nth-of-type(6)) .offcanvas-body {
+        padding-block: .5rem;
+    }
+
+    .offcanvas-form-columns .offcanvas-body > form:has(> .row:nth-of-type(6)) {
+        column-gap: 1.5rem;
+    }
+
+    .offcanvas-form-columns .offcanvas-body > form:has(> .row:nth-of-type(6)) > .row {
+        /* over the form theme's mb-3, a utility with !important */
+        margin-bottom: .25rem !important;
+    }
+
+    /* A wide row spans both columns: a sixth of it is the label width of a half row, so the
+       labels and fields of both kinds line up */
+    .offcanvas-form-columns .offcanvas-body > form:has(> .row:nth-of-type(6)) > .form-row-wide > .col-form-label {
+        flex: 0 0 auto;
+        width: 16.6667%;
+    }
+
+    .offcanvas-form-columns .offcanvas-body > form:has(> .row:nth-of-type(6)) > .d-grid {
+        margin-top: .5rem;
+    }
+}

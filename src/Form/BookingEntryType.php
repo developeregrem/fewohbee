@@ -103,7 +103,6 @@ class BookingEntryType extends AbstractType
             // this stays off unless somebody says the entry is waiting for one.
             ->add('requiresDocumentNumber', CheckboxType::class, [
                 'label' => 'accounting.journal.entry.requires_document',
-                'help' => 'accounting.journal.entry.requires_document_help',
                 'required' => false,
             ])
             ->add('remark', TextType::class, [
