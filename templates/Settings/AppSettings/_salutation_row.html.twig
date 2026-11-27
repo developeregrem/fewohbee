@@ -9,9 +9,7 @@
             {{ form_errors(row[locale]) }}
         </td>
     {% endfor %}
-    <td class="text-end" style="width: 1%;">
-        <button type="button" class="btn btn-sm btn-outline-danger" data-action="collection#remove" title="{{ 'button.delete'|trans }}">
-            <i class="fas fa-trash-alt"></i>
-        </button>
+    <td class="data-table-actions text-end">
+        <twig:IconButton icon="trash-alt" :label="'button.delete'|trans" class="text-danger" data-action="collection#remove"/>
     </td>
 </tr>

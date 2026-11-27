@@ -108,6 +108,23 @@
     </div>
 </div>
 
+<h3 class="styleguide-heading">Page with several topics <code class="styleguide-ref">SectionHeader · SaveBar</code></h3>
+<div>
+    {# Each topic is a section card whose icon names it at a glance; one form over all of them
+       saves with the bar at its end, which stays in view while scrolling #}
+    <section class="card mb-3" aria-labelledby="sg-section-{{ scheme }}">
+        <twig:SectionHeader :headingId="'sg-section-' ~ scheme" icon="envelope" title="E-mail"
+                            description="Sender and mail server for messages sent from the application."/>
+        <div class="card-body">
+            <div class="mb-3 row">
+                <label class="col-form-label col-sm-4 text-sm-end" for="sg-sender-{{ scheme }}">Sender address</label>
+                <div class="col-sm"><input type="email" class="form-control" id="sg-sender-{{ scheme }}" value="info@example.org"></div>
+            </div>
+        </div>
+    </section>
+    <twig:SaveBar label="Save settings" hint="Changes take effect at once."/>
+</div>
+
 <h3 class="styleguide-heading">Suggestions while typing <code class="styleguide-ref">Autocomplete</code></h3>
 <div class="card card-body">
     <div class="row">

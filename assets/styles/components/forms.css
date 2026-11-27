@@ -10,9 +10,28 @@
     margin-top: .625rem;
 }
 
+/* A little more room between switch and label, given as the padding of the row: a margin on the
+   floating switch would reach into the line and push a long label (inline-block) below it. */
+.form-switch {
+    padding-left: 2.75em;
+}
+
 .form-switch > .form-check-input {
     margin-top: .25em;
-    margin-right: .75em;
+    margin-left: -2.75em;
+}
+
+/* The legend of a list of checkboxes or radios (form theme) starts on the line of the first
+   option; the padding of col-form-label lines a label up with a text field and would push it
+   below that line (Bootstrap's horizontal forms set pt-0 there). */
+fieldset > .row > legend.col-form-label {
+    padding-top: 0;
+}
+
+/* A section card ends with its content: the margin under the last form row would add to the
+   card's padding */
+section.card > .card-body > .mb-3:last-child {
+    margin-bottom: 0 !important;
 }
 
 /* Required fields of the form theme carry the same star as the fields written by hand, whose
@@ -32,4 +51,87 @@ input[type="month"] {
 
 input::-webkit-date-and-time-value {
     text-align: start;
+}
+
+/* Save bar of a form over several section cards (SaveBar): with a mouse a bar that stays in view
+   at the bottom while scrolling, above the bottom bar below lg, and follows it when the bars
+   slide away. */
+.save-bar {
+    position: sticky;
+    bottom: calc(var(--feb-bottomnav-offset, 0px) + .75rem);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: .5rem 1rem;
+    margin: 1rem 0;
+    padding: .5rem .75rem .5rem 1rem;
+    border: 1px solid var(--feb-border);
+    border-radius: var(--feb-radius-lg);
+    background: var(--feb-surface);
+    box-shadow: var(--feb-shadow-md);
+}
+
+.save-bar-hint {
+    display: none;
+    margin: 0;
+    color: var(--feb-text-muted);
+    font-size: var(--feb-font-size-sm);
+}
+
+@media (min-width: 768px) {
+    .save-bar-hint {
+        display: block;
+    }
+}
+
+.save-bar-button {
+    margin-left: auto;
+}
+
+.save-bar-label-short {
+    display: none;
+}
+
+/* Touch screens (the same test as the round add button in touch.css): only the button remains,
+   with its short label, floating at the bottom right in the add button's place. The bar stays
+   as an empty block that keeps the room below the content: with the gap above it (the card's
+   margin) and below it, the last card ends a little above the button. */
+@media not all and (hover: hover) and (pointer: fine) {
+    .save-bar {
+        position: static;
+        height: 3rem;
+        padding: 0;
+        border: 0;
+        background: none;
+        box-shadow: none;
+    }
+
+    .save-bar-hint,
+    .save-bar-label {
+        display: none;
+    }
+
+    .save-bar-label-short {
+        display: inline;
+    }
+
+    .save-bar-button {
+        position: fixed;
+        right: 1rem;
+        bottom: calc(1rem + max(env(safe-area-inset-bottom), var(--feb-bottomnav-offset, 0px)));
+        z-index: 1030;
+        display: inline-flex;
+        align-items: center;
+        height: 3.5rem;
+        padding: 0 1.25rem;
+        border-radius: var(--bs-border-radius-pill);
+        box-shadow: var(--feb-shadow-md);
+    }
+}
+
+@media (max-width: 991.98px) and (prefers-reduced-motion: no-preference) {
+    .save-bar,
+    .save-bar-button {
+        transition: bottom .2s ease;
+    }
 }

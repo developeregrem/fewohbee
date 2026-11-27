@@ -1,0 +1,18 @@
+{#
+ # Saves a form that runs over several section cards: the last element inside the form.
+ # With a mouse it is a bar that stays in view at the bottom while scrolling, the hint on its
+ # left from md. On touch screens only the button remains, labelled with the short shortLabel
+ # (default "Save"), floating at the bottom right like the round add button and in its place;
+ # the bar keeps the room below the content so the last fields scroll out from under it.
+ # A page with a save bar has no round add button: its lists keep their add button in their
+ # section. A form in a single card saves in the card's footer instead.
+ #
+ #   <twig:SaveBar :label="'app_settings.save'|trans" :hint="'app_settings.save_hint'|trans"/>
+ #}
+{% props label, hint = null, shortLabel = null %}
+<div {{ attributes.defaults({class: 'save-bar'}) }}>
+    {% if hint %}<p class="save-bar-hint">{{ hint }}</p>{% endif %}
+    <button class="btn btn-primary save-bar-button" type="submit">
+        <i class="fas fa-save me-1" aria-hidden="true"></i><span class="save-bar-label">{{ label }}</span><span class="save-bar-label-short">{{ shortLabel ?? 'button.save'|trans }}</span>
+    </button>
+</div>

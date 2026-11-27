@@ -28,10 +28,9 @@
 
     {{ form_start(form) }}
     <section class="card mb-4" aria-labelledby="mcp-access">
-        <div class="card-header">
-            <h2 class="h5 mb-0" id="mcp-access">{{ 'mcp.settings.section.access'|trans }}</h2>
-            <p class="text-body-secondary small fw-normal mb-0 mt-1">{{ 'mcp.settings.section.access_desc'|trans }}</p>
-        </div>
+        <twig:SectionHeader headingId="mcp-access" icon="shield-halved"
+                            :title="'mcp.settings.section.access'|trans"
+                            :description="'mcp.settings.section.access_desc'|trans"/>
         <div class="card-body">
             {{ form_row(form.mcpEnabled) }}
             {{ form_row(form.mcpWriteEnabled) }}
@@ -45,9 +44,7 @@
     {{ form_end(form) }}
 
     <section class="card mb-4" aria-labelledby="mcp-users">
-        <div class="card-header">
-            <h2 class="h5 mb-0" id="mcp-users">{{ 'mcp.settings.section.users'|trans }}</h2>
-        </div>
+        <twig:SectionHeader headingId="mcp-users" icon="users" :title="'mcp.settings.section.users'|trans"/>
         <div class="card-body">
             <p class="small mb-2">{{ 'mcp.settings.users.text'|trans }}</p>
             <a href="{{ path('profile') }}#api-tokens" class="btn btn-secondary">
@@ -58,10 +55,9 @@
 
     {% if active %}
         <section class="card data-card mb-4" aria-labelledby="mcp-tokens">
-            <div class="card-header">
-                <h2 class="h5 mb-0" id="mcp-tokens">{{ 'mcp.settings.section.tokens'|trans }}</h2>
-                <p class="text-body-secondary small fw-normal mb-0 mt-1">{{ 'mcp.settings.tokens.desc'|trans }}</p>
-            </div>
+            <twig:SectionHeader headingId="mcp-tokens" icon="key"
+                                :title="'mcp.settings.section.tokens'|trans"
+                                :description="'mcp.settings.tokens.desc'|trans"/>
             {% if mcpTokens is empty %}
                 <twig:EmptyState icon="key" :title="'mcp.settings.tokens.none'|trans"/>
             {% else %}
@@ -111,10 +107,9 @@
         </section>
 
         <section class="card data-card mb-4" aria-labelledby="mcp-log">
-            <div class="card-header">
-                <h2 class="h5 mb-0" id="mcp-log">{{ 'mcp.settings.section.log'|trans }}</h2>
-                <p class="text-body-secondary small fw-normal mb-0 mt-1">{{ 'mcp.settings.log.desc'|trans }}</p>
-            </div>
+            <twig:SectionHeader headingId="mcp-log" icon="clock-rotate-left"
+                                :title="'mcp.settings.section.log'|trans"
+                                :description="'mcp.settings.log.desc'|trans"/>
             {# A swipe on the log pages it, as the arrows do; only there, not on the form above #}
             <div data-controller="log-pagination swipe-nav"
                  data-log-pagination-url-value="{{ path('settings.mcp.logs') }}"

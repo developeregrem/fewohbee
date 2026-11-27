@@ -12,222 +12,189 @@
 
 {% block content %}
 <div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-10 col-xl-9">
+    <twig:PageHeader :title="'app_settings.nav.label'|trans" :back="path('settings.overview')" :backLabel="'nav.settings'|trans"/>
 
-            {# -- Header -- #}
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h2 class="fs-4 mb-0">
-                    <i class="fas fa-cog text-primary me-1"></i>
-                    {{ 'app_settings.page_title'|trans }}
-                </h2>
-            </div>
+    {{ form_start(form) }}
 
-            {{ form_start(form) }}
-
-            {# -- Public address -- #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-globe text-primary me-2"></i>{{ 'app_settings.section.public_address'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.public_address_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    {% if publicBaseUrlLocked %}
-                        <label class="form-label" for="public-base-url-preset">{{ 'app_settings.form.public_base_url'|trans }}</label>
+    <section class="card mb-4" aria-labelledby="settings-public-address">
+        <twig:SectionHeader headingId="settings-public-address" icon="globe"
+                            :title="'app_settings.section.public_address'|trans"
+                            :description="'app_settings.section.public_address_desc'|trans"/>
+        <div class="card-body">
+            {% if publicBaseUrlLocked %}
+                <div class="row mb-3">
+                    <label class="col-sm-4 col-form-label text-sm-end" for="public-base-url-preset">{{ 'app_settings.form.public_base_url'|trans }}</label>
+                    <div class="col-sm">
                         <input type="text" class="form-control" id="public-base-url-preset" value="{{ publicBaseUrl }}" readonly>
                         <div class="form-text">{{ 'app_settings.public_base_url.preset_hint'|trans }}</div>
-                    {% else %}
-                        {{ form_row(form.publicBaseUrl) }}
-                        {% if publicBaseUrl and not form.vars.value.publicBaseUrl %}
-                            <div class="form-text mt-n2 mb-2">{{ 'app_settings.public_base_url.fallback_hint'|trans({'%url%': publicBaseUrl}) }}</div>
-                        {% endif %}
-                    {% endif %}
-                    {% if not publicBaseUrl %}
-                        <div class="alert alert-info small mb-0 mt-2">{{ 'app_settings.public_base_url.missing_hint'|trans }}</div>
-                    {% elseif publicBaseUrlWarning %}
-                        <div class="alert alert-warning small mb-0 mt-2">{{ ('app_settings.public_base_url.warning_' ~ publicBaseUrlWarning)|trans }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            {# -- Currency -- #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-coins text-primary me-2"></i>{{ 'app_settings.section.currency'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.currency_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">{{ form_row(form.currency) }}</div>
-                        <div class="col-md-6">{{ form_row(form.currencySymbol) }}</div>
                     </div>
                 </div>
-            </div>
-
-            {# -- Invoices -- #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-file-invoice text-primary me-2"></i>{{ 'app_settings.section.invoices'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.invoices_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    {{ form_row(form.invoiceFilenamePattern) }}
-                    {{ form_row(form.invoiceNumberPattern) }}
-                </div>
-            </div>
-
-            {# -- Booking confirmation -- #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-paper-plane text-primary me-2"></i>{{ 'app_settings.section.confirmation'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.confirmation_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    {{ form_row(form.confirmationTemplate) }}
-                    {{ form_row(form.confirmationAttachments) }}
-                    {{ form_row(form.confirmationSendImmediately) }}
-                </div>
-            </div>
-
-            {# -- Guests -- #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-users text-primary me-2"></i>{{ 'app_settings.section.guests'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.guests_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    {% if form.guestLocales.children|length > 1 %}
-                        {{ form_row(form.guestLocales) }}
-                    {% else %}
-                        {% do form.guestLocales.setRendered %}
-                    {% endif %}
-                    {# Salutations: the first column is stored with the guest, the others are how guests read it. #}
-                    {% set salutationPrototype %}{{ include('Settings/AppSettings/_salutation_row.html.twig', {row: form.customerSalutations.vars.prototype}) }}{% endset %}
-                    <div class="mb-3" data-controller="collection"
-                         data-collection-prototype-value="{{ salutationPrototype|e('html_attr') }}"
-                         data-collection-index-value="{{ form.customerSalutations|length }}">
-                        {{ form_label(form.customerSalutations, null, {label_attr: {class: 'form-label'}}) }}
-                        <table class="table table-sm align-middle mb-2">
-                            {% if guest_extra_locales()|length > 0 %}
-                                <thead>
-                                    <tr>
-                                        <th>{{ language_name(base_locale(), false) }}</th>
-                                        {% for locale in guest_extra_locales() %}<th>{{ language_name(locale, false) }}</th>{% endfor %}
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                            {% endif %}
-                            <tbody data-collection-target="entries">
-                                {% for row in form.customerSalutations %}
-                                    {{ include('Settings/AppSettings/_salutation_row.html.twig') }}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="collection#add">
-                            <i class="fas fa-plus"></i> {{ 'app_settings.form.customer_salutations_add'|trans }}
-                        </button>
-                        {{ form_help(form.customerSalutations) }}
-                        {% do form.customerSalutations.setRendered %}
+            {% else %}
+                {{ form_row(form.publicBaseUrl) }}
+                {% if publicBaseUrl and not form.vars.value.publicBaseUrl %}
+                    <div class="row mt-n2 mb-3">
+                        <p class="col-sm offset-sm-4 form-text mb-0">{{ 'app_settings.public_base_url.fallback_hint'|trans({'%url%': publicBaseUrl}) }}</p>
                     </div>
-                </div>
-            </div>
-
-            {# -- Notifications -- #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-bell text-primary me-2"></i>{{ 'app_settings.section.notifications'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.notifications_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    {{ form_row(form.notificationEmail) }}
-                    {% if not form.vars.value.notificationEmail %}
-                        <div class="alert alert-info small py-2 mb-3">
-                            <i class="fas fa-info-circle me-1"></i>
-                            {{ 'app_settings.notification_fallback_hint'|trans({'%email%': fallbackEmail})|raw }}
-                        </div>
-                    {% endif %}
-                    {% for wf in [notifyOnlineBookingWorkflow, notifyCalendarImportWorkflow] %}
-                        {% if wf %}
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <div>
-                                <strong class="small">{{ wf.name|trans }}</strong>
-                                {% if wf.description %}
-                                    <br><span class="text-body-secondary small">{{ wf.description|trans }}</span>
-                                {% endif %}
-                            </div>
-                            <div class="d-flex align-items-center gap-2 ms-3">
-                                <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input" type="checkbox" role="switch"
-                                           id="wf-toggle-{{ wf.id }}"
-                                           {{ wf.enabled ? 'checked' : '' }}
-                                           data-controller="workflow-toggle"
-                                           data-action="change->workflow-toggle#toggle"
-                                           data-workflow-toggle-url-value="{{ path('settings.workflows.toggle', {id: wf.id}) }}"
-                                           data-workflow-toggle-token-value="{{ csrf_token('workflow-toggle-' ~ wf.id) }}">
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-            </div>
-
-            {# -- Mail -- #}
-            <div class="card mb-3" data-controller="mail-settings" data-mail-settings-test-url-value="{{ path('settings.general.smtp_test') }}" data-mail-settings-generic-error-value="{{ 'app_settings.smtp_test.generic_error'|trans }}">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-envelope text-primary me-2"></i>{{ 'app_settings.section.mail'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.mail_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    {% if not mailEnabled %}
-                        <div class="alert alert-warning small py-2 mb-3">
-                            <i class="fas fa-ban me-1"></i>
-                            {{ 'app_settings.mail_disabled_hint'|trans }}
-                        </div>
-                    {% endif %}
-
-                    <div class="row">
-                        <div class="col-md-6">{{ form_row(form.mailFromEmail) }}</div>
-                        <div class="col-md-6">{{ form_row(form.mailFromName) }}</div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">{{ form_row(form.mailReturnPath) }}</div>
-                        <div class="col-md-6 d-flex align-items-center pt-md-4">{{ form_row(form.mailCopy) }}</div>
-                    </div>
-
-                    <hr>
-
-                    <div class="row">
-                        <div class="col-md-5">{{ form_row(form.smtpHost) }}</div>
-                        <div class="col-md-3">{{ form_row(form.smtpPort) }}</div>
-                        <div class="col-md-4">{{ form_row(form.smtpEncryption) }}</div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">{{ form_row(form.smtpUsername) }}</div>
-                        <div class="col-md-6">{{ form_row(form.smtpPassword) }}</div>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <button class="btn btn-outline-primary btn-sm" type="button" data-action="mail-settings#testConnection" data-mail-settings-target="button">
-                            <i class="fas fa-plug me-1"></i>{{ 'app_settings.smtp_test.button'|trans }}
-                        </button>
-                        <div class="small" data-mail-settings-target="result"></div>
-                    </div>
-                </div>
-            </div>
-
-            {# -- Save bar -- #}
-            <div class="card sticky-bottom mb-3" style="z-index:10">
-                <div class="card-body py-2 d-flex align-items-center justify-content-between">
-                    <p class="text-body-secondary small mb-0 d-none d-md-block"></p>
-                    <button class="btn btn-primary" type="submit">
-                        <i class="fas fa-save me-1"></i>{{ 'app_settings.save'|trans }}
-                    </button>
-                </div>
-            </div>
-
-            {{ form_end(form) }}
-
+                {% endif %}
+            {% endif %}
+            {% if not publicBaseUrl %}
+                <div class="alert alert-info small mb-0">{{ 'app_settings.public_base_url.missing_hint'|trans }}</div>
+            {% elseif publicBaseUrlWarning %}
+                <div class="alert alert-warning small mb-0">{{ ('app_settings.public_base_url.warning_' ~ publicBaseUrlWarning)|trans }}</div>
+            {% endif %}
         </div>
-    </div>
+    </section>
+
+    <section class="card mb-4" aria-labelledby="settings-currency">
+        <twig:SectionHeader headingId="settings-currency" icon="coins"
+                            :title="'app_settings.section.currency'|trans"
+                            :description="'app_settings.section.currency_desc'|trans"/>
+        <div class="card-body">
+            {{ form_row(form.currency) }}
+            {{ form_row(form.currencySymbol) }}
+        </div>
+    </section>
+
+    <section class="card mb-4" aria-labelledby="settings-invoices">
+        <twig:SectionHeader headingId="settings-invoices" icon="file-invoice"
+                            :title="'app_settings.section.invoices'|trans"
+                            :description="'app_settings.section.invoices_desc'|trans"/>
+        <div class="card-body">
+            {{ form_row(form.invoiceFilenamePattern) }}
+            {{ form_row(form.invoiceNumberPattern) }}
+        </div>
+    </section>
+
+    <section class="card mb-4" aria-labelledby="settings-confirmation">
+        <twig:SectionHeader headingId="settings-confirmation" icon="paper-plane"
+                            :title="'app_settings.section.confirmation'|trans"
+                            :description="'app_settings.section.confirmation_desc'|trans"/>
+        <div class="card-body">
+            {{ form_row(form.confirmationTemplate) }}
+            {{ form_row(form.confirmationAttachments) }}
+            {{ form_row(form.confirmationSendImmediately) }}
+        </div>
+    </section>
+
+    <section class="card mb-4" aria-labelledby="settings-guests">
+        <twig:SectionHeader headingId="settings-guests" icon="users"
+                            :title="'app_settings.section.guests'|trans"
+                            :description="'app_settings.section.guests_desc'|trans"/>
+        <div class="card-body">
+            {% if form.guestLocales.children|length > 1 %}
+                {{ form_row(form.guestLocales) }}
+            {% else %}
+                {% do form.guestLocales.setRendered %}
+            {% endif %}
+            {# Salutations: the first column is stored with the guest, the others are how guests read it. #}
+            {% set salutationPrototype %}{{ include('Settings/AppSettings/_salutation_row.html.twig', {row: form.customerSalutations.vars.prototype}) }}{% endset %}
+            <fieldset class="row mb-3" data-controller="collection"
+                      data-collection-prototype-value="{{ salutationPrototype|e('html_attr') }}"
+                      data-collection-index-value="{{ form.customerSalutations|length }}">
+                <legend class="col-sm-4 col-form-label text-sm-end">{{ 'app_settings.form.customer_salutations'|trans }}</legend>
+                <div class="col-sm">
+                    <table class="table table-sm align-middle mb-2">
+                        {% if guest_extra_locales()|length > 0 %}
+                            <thead>
+                                <tr>
+                                    <th>{{ language_name(base_locale(), false) }}</th>
+                                    {% for locale in guest_extra_locales() %}<th>{{ language_name(locale, false) }}</th>{% endfor %}
+                                    <th class="data-table-actions"><span class="visually-hidden">{{ 'base.action'|trans }}</span></th>
+                                </tr>
+                            </thead>
+                        {% endif %}
+                        <tbody data-collection-target="entries">
+                            {% for row in form.customerSalutations %}
+                                {{ include('Settings/AppSettings/_salutation_row.html.twig') }}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-sm btn-secondary" data-action="collection#add">
+                        <i class="fas fa-plus me-1" aria-hidden="true"></i>{{ 'app_settings.form.customer_salutations_add'|trans }}
+                    </button>
+                    {{ form_help(form.customerSalutations) }}
+                    {% do form.customerSalutations.setRendered %}
+                </div>
+            </fieldset>
+        </div>
+    </section>
+
+    <section class="card mb-4" aria-labelledby="settings-notifications">
+        <twig:SectionHeader headingId="settings-notifications" icon="bell"
+                            :title="'app_settings.section.notifications'|trans"
+                            :description="'app_settings.section.notifications_desc'|trans"/>
+        <div class="card-body">
+            {{ form_row(form.notificationEmail) }}
+            {% if not form.vars.value.notificationEmail %}
+                <div class="alert alert-info small mb-3">
+                    {{ 'app_settings.notification_fallback_hint'|trans({'%email%': fallbackEmail})|raw }}
+                </div>
+            {% endif %}
+            {# The automations behind the notifications switch on and off at once, without saving the form #}
+            {% for wf in [notifyOnlineBookingWorkflow, notifyCalendarImportWorkflow] %}
+                {% if wf %}
+                    <div class="row mb-3">
+                        <div class="col-sm offset-sm-4"
+                             data-controller="workflow-toggle"
+                             data-workflow-toggle-url-value="{{ path('settings.workflows.toggle', {id: wf.id}) }}"
+                             data-workflow-toggle-token-value="{{ csrf_token('workflow-toggle-' ~ wf.id) }}">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       id="wf-toggle-{{ wf.id }}"
+                                       {{ wf.enabled ? 'checked' }}
+                                       {% if wf.description %}aria-describedby="wf-toggle-{{ wf.id }}-help"{% endif %}
+                                       data-workflow-toggle-target="input"
+                                       data-action="change->workflow-toggle#toggle">
+                                <label class="form-check-label d-inline" for="wf-toggle-{{ wf.id }}">{{ wf.name|trans }}</label>
+                                <twig:SaveState class="ms-2 align-top" data-workflow-toggle-target="state"/>
+                            </div>
+                            {% if wf.description %}
+                                <div class="form-text" id="wf-toggle-{{ wf.id }}-help">{{ wf.description|trans }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="card mb-4" aria-labelledby="settings-mail"
+             data-controller="mail-settings"
+             data-mail-settings-test-url-value="{{ path('settings.general.smtp_test') }}"
+             data-mail-settings-generic-error-value="{{ 'app_settings.smtp_test.generic_error'|trans }}">
+        <twig:SectionHeader headingId="settings-mail" icon="envelope"
+                            :title="'app_settings.section.mail'|trans"
+                            :description="'app_settings.section.mail_desc'|trans"/>
+        <div class="card-body">
+            {% if not mailEnabled %}
+                <div class="alert alert-warning small mb-3">{{ 'app_settings.mail_disabled_hint'|trans }}</div>
+            {% endif %}
+
+            {{ form_row(form.mailFromEmail) }}
+            {{ form_row(form.mailFromName) }}
+            {{ form_row(form.mailReturnPath) }}
+            {{ form_row(form.mailCopy) }}
+
+            <hr>
+
+            {{ form_row(form.smtpHost) }}
+            {{ form_row(form.smtpPort) }}
+            {{ form_row(form.smtpEncryption) }}
+            {{ form_row(form.smtpUsername) }}
+            {{ form_row(form.smtpPassword) }}
+            <div class="row">
+                <div class="col-sm offset-sm-4 d-flex flex-wrap align-items-center gap-2">
+                    <button class="btn btn-secondary" type="button" data-action="mail-settings#testConnection" data-mail-settings-target="button">
+                        <i class="fas fa-plug me-1" aria-hidden="true"></i>{{ 'app_settings.smtp_test.button'|trans }}
+                    </button>
+                    <div class="small" role="status" data-mail-settings-target="result"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <twig:SaveBar :label="'app_settings.save'|trans" :hint="'app_settings.save_hint'|trans"/>
+
+    {{ form_end(form) }}
 </div>
 {% endblock %}
