@@ -36,8 +36,7 @@ export default class extends Controller {
         'ruleRow',
         'ruleList',
         'ruleListEmpty',
-        'toggleButton',
-        'disabledBadge',
+        'ruleCount',
     ];
 
     connect() {
@@ -101,44 +100,10 @@ export default class extends Controller {
     }
 
     /**
-     * Enables or disables a rule without reloading the page — a reload would throw the
-     * operator back to the top of a long settings page.
+     * A rule was switched on or off in its list (<twig:ActiveToggle fetch>, which also marks the
+     * row): a disabled rule stops applying, so the calendar has to catch up.
      */
-    async toggleRule(event) {
-        event.preventDefault();
-
-        const form = event.currentTarget;
-        const response = await fetch(form.action, {
-            method: 'POST',
-            body: new FormData(form),
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        });
-
-        if (!response.ok) {
-            return;
-        }
-
-        const row = form.closest('li');
-        const enabled = !row.classList.contains('opacity-50');
-        row.classList.toggle('opacity-50', enabled);
-
-        const badge = row.querySelector('[data-booking-rules-target="disabledBadge"]');
-        if (badge) badge.hidden = !enabled;
-
-        const button = form.querySelector('[data-booking-rules-target="toggleButton"]');
-        if (button) {
-            button.title = enabled ? button.dataset.enableLabel : button.dataset.disableLabel;
-            // Green while active, neutral while inactive — as the server renders it on load.
-            button.classList.toggle('btn-success', !enabled);
-            button.classList.toggle('btn-outline-secondary', enabled);
-            const icon = button.querySelector('i');
-            if (icon) {
-                icon.classList.toggle('fa-toggle-on', !enabled);
-                icon.classList.toggle('fa-toggle-off', enabled);
-            }
-        }
-
-        // A disabled rule stops applying, so the calendar has to catch up.
+    ruleToggled() {
         this.reloadCalendar();
     }
 
@@ -413,15 +378,25 @@ export default class extends Controller {
         });
     }
 
-    /** Each list shows either its rules or its "nothing here yet" line. */
+    /** Each list shows either its rules with their count or its "nothing here yet" state. */
     updateEmptyStates() {
         this.ruleListTargets.forEach((list) => {
-            const hasRows = list.querySelector('li') !== null;
-            list.hidden = !hasRows;
+            const rows = list.querySelectorAll('li').length;
+            list.hidden = rows === 0;
 
             // Paired through the surrounding card, so the two lists cannot get mixed up.
-            const empty = list.closest('.card-body')?.querySelector('[data-booking-rules-target="ruleListEmpty"]');
-            if (empty) empty.hidden = hasRows;
+            const card = list.closest('.card');
+            const empty = card?.querySelector('[data-booking-rules-target="ruleListEmpty"]');
+            if (empty) empty.hidden = rows > 0;
+
+            // The server renders the count's wording for every number down to none
+            const count = card?.querySelector('[data-booking-rules-target="ruleCount"]');
+            if (count) {
+                count.hidden = rows === 0;
+                const texts = JSON.parse(count.dataset.texts || '[]');
+                const label = count.querySelector('span');
+                if (label && texts[rows] !== undefined) label.textContent = texts[rows];
+            }
         });
     }
 

@@ -10,6 +10,8 @@ booking_rules:
     add_period: "Sonderzeitraum hinzufügen"
     no_rules: "Noch keine Regel angelegt. Gäste können jede Aufenthaltslänge buchen."
     no_periods: "Keine Sonderzeiträume angelegt."
+    rules_count: '{0}Keine Regel|{1}1 Regel|]1,Inf[%count% Regeln'
+    periods_count: '{0}Kein Sonderzeitraum|{1}1 Sonderzeitraum|]1,Inf[%count% Sonderzeiträume'
     periods_all_past: "Alle Sonderzeiträume liegen in der Vergangenheit. Für künftige Buchungen wirken sie nicht mehr — passe die Zeiträume an, wenn sie weiterhin gelten sollen."
     periods_all_past_link: "Zu den Sonderzeiträumen"
     no_categories: "Keine Zimmerkategorie mehr zugeordnet — die Regel wirkt nicht."

@@ -48,41 +48,42 @@
 
 {% set locale = app.request.locale %}
 {% set todayKey = today.format('Y-m-d') %}
-<div class="card mb-3 booking-rule-calendar" id="booking-rule-calendar"
+{# A sideways swipe on the calendar pages a week, as the arrows do; only there, not on the lists
+   below (swipe-nav clicks the arrows, whose action loads the week). #}
+<section class="card mb-4 booking-rule-calendar" id="booking-rule-calendar" aria-labelledby="booking-rule-calendar-title"
      data-booking-rules-target="calendar"
+     data-controller="swipe-nav"
+     data-swipe-nav-local-value="true"
      data-category="{{ category.id }}"
      data-week="{{ weekStart.format('Y-m-d') }}"
      data-rules="{{ rules|json_encode|e('html_attr') }}"
      data-tip-overridden="{{ 'booking_rules.calendar_tip_overridden'|trans }}">
-    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <div>
-            <h5 class="card-title fs-6 mb-0"><i class="fas fa-calendar-days text-primary me-2"></i>{{ 'booking_rules.section_calendar'|trans }}</h5>
-            <p class="text-body-secondary small mb-0 mt-1">{{ 'booking_rules.section_calendar_desc'|trans }}</p>
+    <twig:SectionHeader headingId="booking-rule-calendar-title" icon="calendar-days"
+                        :title="'booking_rules.section_calendar'|trans"
+                        :description="'booking_rules.section_calendar_desc'|trans"/>
+    <div class="card-body d-flex flex-wrap align-items-center gap-2 pt-2 pb-0">
+        <label class="visually-hidden" for="booking-rule-calendar-category">{{ 'booking_rules.calendar_category'|trans }}</label>
+        <select id="booking-rule-calendar-category" class="form-select form-select-sm w-auto pe-5"
+                data-action="change->booking-rules#changeCalendarCategory">
+            {% for option in categories %}
+                <option value="{{ option.id }}" {{ option.id == category.id ? 'selected' }}>{{ option.name }}</option>
+            {% endfor %}
+        </select>
+        <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'booking_rules.calendar_navigation'|trans }}">
+            <button type="button" class="btn btn-secondary" data-nav="previous" data-week="{{ previousWeek.format('Y-m-d') }}"
+                    data-action="booking-rules#navigateCalendar" data-swipe-nav-target="previous"
+                    title="{{ 'booking_rules.calendar_previous'|trans }}" aria-label="{{ 'booking_rules.calendar_previous'|trans }}">
+                <i class="fas fa-chevron-left" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="btn btn-secondary" data-nav="today" data-week="{{ currentWeek.format('Y-m-d') }}"
+                    data-action="booking-rules#navigateCalendar">{{ 'booking_rules.calendar_today'|trans }}</button>
+            <button type="button" class="btn btn-secondary" data-nav="next" data-week="{{ nextWeek.format('Y-m-d') }}"
+                    data-action="booking-rules#navigateCalendar" data-swipe-nav-target="next"
+                    title="{{ 'booking_rules.calendar_next'|trans }}" aria-label="{{ 'booking_rules.calendar_next'|trans }}">
+                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+            </button>
         </div>
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            <label class="visually-hidden" for="booking-rule-calendar-category">{{ 'booking_rules.calendar_category'|trans }}</label>
-            <select id="booking-rule-calendar-category" class="form-select form-select-sm w-auto pe-5"
-                    data-action="change->booking-rules#changeCalendarCategory">
-                {% for option in categories %}
-                    <option value="{{ option.id }}" {{ option.id == category.id ? 'selected' }}>{{ option.name }}</option>
-                {% endfor %}
-            </select>
-            <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'booking_rules.calendar_navigation'|trans }}">
-                <button type="button" class="btn btn-outline-secondary" data-nav="previous" data-week="{{ previousWeek.format('Y-m-d') }}"
-                        data-action="booking-rules#navigateCalendar"
-                        title="{{ 'booking_rules.calendar_previous'|trans }}" aria-label="{{ 'booking_rules.calendar_previous'|trans }}">
-                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
-                </button>
-                <button type="button" class="btn btn-outline-secondary" data-nav="today" data-week="{{ currentWeek.format('Y-m-d') }}"
-                        data-action="booking-rules#navigateCalendar">{{ 'booking_rules.calendar_today'|trans }}</button>
-                <button type="button" class="btn btn-outline-secondary" data-nav="next" data-week="{{ nextWeek.format('Y-m-d') }}"
-                        data-action="booking-rules#navigateCalendar"
-                        title="{{ 'booking_rules.calendar_next'|trans }}" aria-label="{{ 'booking_rules.calendar_next'|trans }}">
-                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                </button>
-            </div>
-            <span class="small text-body-secondary font-monospace">{{ (days|first).date.format('d.m.') }} – {{ (days|last).date.format('d.m.Y') }}</span>
-        </div>
+        <span class="small text-body-secondary text-nowrap">{{ (days|first).date.format('d.m.') }} – {{ (days|last).date.format('d.m.Y') }}</span>
     </div>
 
     <div class="booking-rule-calendar__main"
@@ -153,4 +154,4 @@
         </div>
         <div class="brc-tip" data-booking-rules-target="calendarTip" role="tooltip" hidden></div>
     </div>
-</div>
+</section>

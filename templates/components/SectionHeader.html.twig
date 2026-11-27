@@ -1,6 +1,8 @@
 {#
  # Head of a section card on a page that covers several topics (settings pages): an icon that
- # names the topic at a glance, the title and an optional description below it.
+ # names the topic at a glance, the title and an optional description below it. The content
+ # of the component is the section's own action at the right, e.g. a button to add an entry
+ # to the section's list.
  #
  #   <section class="card mb-4" aria-labelledby="settings-mail">
  #       <twig:SectionHeader headingId="settings-mail" icon="envelope"
@@ -12,10 +14,14 @@
  # without the fa- prefix.
  #}
 {% props title, icon = null, description = null, headingId = null %}
+{% set actions %}{% block content %}{% endblock %}{% endset %}
 <div {{ attributes.defaults({class: 'card-header d-flex align-items-baseline gap-2'}) }}>
     {% if icon %}<i class="fas fa-{{ icon }} fa-fw fs-6 text-primary" aria-hidden="true"></i>{% endif %}
-    <div>
+    <div class="section-header-text me-auto">
         <h2 class="h5 mb-0"{% if headingId %} id="{{ headingId }}"{% endif %}>{{ title }}</h2>
         {% if description %}<p class="text-body-secondary small fw-normal mb-0 mt-1">{{ description }}</p>{% endif %}
     </div>
+    {% if actions|trim is not empty %}
+        <div class="section-header-actions">{{ actions }}</div>
+    {% endif %}
 </div>

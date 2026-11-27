@@ -361,7 +361,7 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   `<twig:Autocomplete>` (suggestions while typing, from a JSON endpoint; the page reacts to
   `autocomplete:select`), `<twig:DatePager>` (a day or week with arrows and swipe paging), `<twig:Pager>` (a year select
   or a named period such as a month between paging arrows), `<twig:SectionHeader>` (head of a
-  section card: icon, title, description), `<twig:SaveBar>` (saves a form that runs over several
+  section card: icon, title, description, the section's own action at the right), `<twig:SaveBar>` (saves a form that runs over several
   section cards: a bar that stays in view at the bottom, on touch screens a floating button in
   the place of the round add button). `<twig:PageHeader>` takes `back` and
   `backLabel` on a page below another one. Use them instead of writing their markup by hand; extra attributes

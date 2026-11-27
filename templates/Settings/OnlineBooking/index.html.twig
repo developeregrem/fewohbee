@@ -35,493 +35,432 @@ window.addEventListener('message', ({ source, origin, data }) => {
 {% set iframeCode = iframeTag ~ "\n<script>" ~ (iframeScript|split("\n")|map(line => line|trim)|join(' ')|trim) ~ '</script>' %}
 <div class="container" data-controller="settings online-booking-settings booking-rules tab-persistence"
      data-booking-rules-calendar-url-value="{{ path('settings.online_booking.rule_calendar') }}">
-    <div class="row justify-content-center">
-        <div class="col-lg-10 col-xl-9">
+    {% set enabled = form.vars.value.enabled %}
+    <twig:PageHeader :title="'online_booking.nav.label'|trans" :back="path('settings.overview')" :backLabel="'nav.settings'|trans">
+        <span class="badge {{ enabled ? 'bg-success-subtle text-success-emphasis' : 'bg-warning-subtle text-warning-emphasis' }}">
+            {{- (enabled ? 'online_booking.settings.status_enabled' : 'online_booking.settings.status_disabled')|trans -}}
+        </span>
+    </twig:PageHeader>
 
-            {# ── Header ── #}
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <div>
-                    <h2 class="fs-4 mb-1">
-                        <i class="fas fa-globe text-primary me-1"></i>
-                        {{ 'online_booking.settings.page_title'|trans }}
-                    </h2>
-                    <div class="d-flex flex-wrap gap-2">
-                        <span class="badge {{ form.vars.value.enabled ? 'bg-success-subtle text-success-emphasis' : 'bg-warning-subtle text-warning-emphasis' }}">
-                            <i class="fas {{ form.vars.value.enabled ? 'fa-toggle-on' : 'fa-toggle-off' }} me-1"></i>
-                            {{ form.vars.value.enabled ? ('online_booking.settings.status_enabled'|trans) : ('online_booking.settings.status_disabled'|trans) }}
-                        </span>
+    {# ── Tabs: the booking page settings and the booking rules are maintained apart ── #}
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link{% if activeTab == 'tab-settings' %} active{% endif %}" type="button" role="tab" id="tab-settings-link"
+                    data-bs-toggle="tab" data-bs-target="#tab-settings" aria-controls="tab-settings"
+                    aria-selected="{{ activeTab == 'tab-settings' ? 'true' : 'false' }}">
+                {{ 'online_booking.settings.tab_settings'|trans }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link{% if activeTab == 'tab-booking-rules' %} active{% endif %}" type="button" role="tab" id="tab-booking-rules-link"
+                    data-bs-toggle="tab" data-bs-target="#tab-booking-rules" aria-controls="tab-booking-rules"
+                    aria-selected="{{ activeTab == 'tab-booking-rules' ? 'true' : 'false' }}">
+                {{ 'online_booking.settings.tab_booking_rules'|trans }}
+                {# Expired special periods are otherwise easy to miss behind the tab. #}
+                {% if periodsAllPast %}<i class="fas fa-triangle-exclamation text-warning ms-1" title="{{ 'booking_rules.periods_all_past'|trans }}"></i>{% endif %}
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+    {# ── Tab: booking page settings ── #}
+    <div class="tab-pane fade{% if activeTab == 'tab-settings' %} show active{% endif %}" id="tab-settings" role="tabpanel" aria-labelledby="tab-settings-link">
+
+    {{ form_start(form) }}
+
+    {% if form.vars.submitted and not form.vars.valid %}
+        <div class="alert alert-danger mb-3" role="alert">
+            <div class="fw-semibold mb-1">{{ 'online_booking.settings.form_invalid_title'|trans }}</div>
+            <div class="small mb-2">{{ 'online_booking.settings.form_invalid_hint'|trans }}</div>
+            <div class="small">
+                {{ form_errors(form.enabled) }}
+                {{ form_errors(form.inquiryReservationStatusId) }}
+                {{ form_errors(form.bookingReservationStatusId) }}
+                {{ form_errors(form.reservationOriginId) }}
+                {{ form_errors(form.allowedEmbeddingOrigins) }}
+            </div>
+        </div>
+    {% endif %}
+
+    <section class="card mb-4" aria-labelledby="ob-general">
+        <twig:SectionHeader headingId="ob-general" icon="sliders"
+                            :title="'online_booking.settings.section_general'|trans"
+                            :description="'online_booking.settings.section_general_desc'|trans"/>
+        <div class="card-body">
+            {{ form_row(form.enabled) }}
+            {{ form_row(form.bookingMode) }}
+            {{ form_row(form.bookingHorizonMonths) }}
+
+            {# Entry point for guests: one card per mode, so the trade-off between both is
+               visible at a glance. #}
+            {% set isCalendarMode = form.vars.value.mode.value == 'calendar' %}
+            <fieldset class="row mb-3">
+                <legend class="col-sm-4 col-form-label text-sm-end">{{ 'online_booking.settings.mode'|trans }}</legend>
+                <div class="col-sm">
+                    <div class="row row-cols-1 row-cols-md-2 g-2">
+                        {% for choice in form.mode %}
+                            {% set modeValue = choice.vars.value %}
+                            <div class="col">
+                                <div class="choice-card">
+                                    {{ form_widget(choice, {'label_attr': {'class': 'fw-semibold'}}) }}
+                                    <p class="small text-body-secondary mb-0 mt-1">
+                                        {{ ('online_booking.settings.mode_' ~ modeValue ~ '_help')|trans }}
+                                        {% if modeValue == 'calendar' %}
+                                            <span class="ms-1 text-body-secondary" data-bs-toggle="tooltip" data-bs-html="true"
+                                                  title="{{ 'online_booking.settings.mode_calendar_limits'|trans }}">
+                                                <i class="fas fa-circle-question"></i>
+                                            </span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="form-text">{{ 'online_booking.settings.mode_help'|trans }}</div>
+                    {% if isCalendarMode %}
+                        {% if form.vars.value.theme.value != 'modern' %}
+                            <div class="alert alert-warning small mt-2 mb-0">{{ 'online_booking.settings.calendar_needs_modern'|trans }}</div>
+                        {% endif %}
+                        {% if calendarEligibleRoomCount == 0 %}
+                            <div class="alert alert-warning small mt-2 mb-0">{{ 'online_booking.settings.calendar_no_rooms'|trans }}</div>
+                        {% elseif calendarEligibleRoomCount > 1 %}
+                            <div class="alert alert-info small mt-2 mb-0">{{ 'online_booking.settings.calendar_many_rooms'|trans({'%count%': calendarEligibleRoomCount}) }}</div>
+                        {% endif %}
+                    {% endif %}
+                    {{ form_errors(form.mode) }}
+                </div>
+            </fieldset>
+
+            {{ form_row(form.allowedEmbeddingOrigins) }}
+        </div>
+    </section>
+
+    <section class="card mb-4" aria-labelledby="ob-availability">
+        <twig:SectionHeader headingId="ob-availability" icon="bed"
+                            :title="'online_booking.settings.section_availability_scope'|trans"
+                            :description="'online_booking.settings.section_availability_scope_desc'|trans"/>
+        <div class="card-body">
+            {# Each choice list opens below its "selected" option, in the field column #}
+            {% for scope in [
+                {mode: form.subsidiariesMode, list: form.selectedSubsidiaryIds, target: 'subsidiaries', title: 'online_booking.settings.selected_subsidiaries', hint: 'online_booking.settings.selected_subsidiaries_hint'},
+                {mode: form.roomsMode, list: form.selectedRoomIds, target: 'rooms', title: 'online_booking.settings.selected_rooms', hint: 'online_booking.settings.selected_rooms_hint'},
+            ] %}
+                {{ form_row(scope.mode, {row_attr: {class: 'mb-2'}}) }}
+                <div class="row mb-3">
+                    <div class="col-sm offset-sm-4">
+                        <div class="choice-box" data-online-booking-settings-target="{{ scope.target }}Wrap">
+                            <div class="choice-box-head">
+                                <div>
+                                    <p class="fw-semibold small mb-0">{{ scope.title|trans }}</p>
+                                    <p class="text-body-secondary small mb-0">{{ scope.hint|trans }}</p>
+                                </div>
+                                <span class="badge bg-primary-subtle text-primary-emphasis" data-online-booking-settings-target="{{ scope.target }}Count"></span>
+                            </div>
+                            <div class="choice-box-list">
+                                {{ form_widget(scope.list) }}
+                            </div>
+                            {{ form_errors(scope.list) }}
+                        </div>
                     </div>
                 </div>
-            </div>
+            {% endfor %}
 
-            {# ── Tabs: the booking page settings and the booking rules are maintained apart ── #}
-            <ul class="nav nav-tabs mb-3" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link{% if activeTab == 'tab-settings' %} active{% endif %}" type="button" role="tab" id="tab-settings-link"
-                            data-bs-toggle="tab" data-bs-target="#tab-settings" aria-controls="tab-settings"
-                            aria-selected="{{ activeTab == 'tab-settings' ? 'true' : 'false' }}">
-                        {{ 'online_booking.settings.tab_settings'|trans }}
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link{% if activeTab == 'tab-booking-rules' %} active{% endif %}" type="button" role="tab" id="tab-booking-rules-link"
-                            data-bs-toggle="tab" data-bs-target="#tab-booking-rules" aria-controls="tab-booking-rules"
-                            aria-selected="{{ activeTab == 'tab-booking-rules' ? 'true' : 'false' }}">
-                        {{ 'online_booking.settings.tab_booking_rules'|trans }}
-                        {# Expired special periods are otherwise easy to miss behind the tab. #}
-                        {% if periodsAllPast %}<i class="fas fa-triangle-exclamation text-warning ms-1" title="{{ 'booking_rules.periods_all_past'|trans }}"></i>{% endif %}
-                    </button>
-                </li>
-            </ul>
-
-            <div class="tab-content">
-            {# ── Tab: booking page settings ── #}
-            <div class="tab-pane fade{% if activeTab == 'tab-settings' %} show active{% endif %}" id="tab-settings" role="tabpanel" aria-labelledby="tab-settings-link">
-
-            {{ form_start(form) }}
-
-            {% if form.vars.submitted and not form.vars.valid %}
-                <div class="alert alert-danger mb-3" role="alert">
-                    <div class="fw-semibold mb-1">{{ 'online_booking.settings.form_invalid_title'|trans }}</div>
-                    <div class="small mb-2">{{ 'online_booking.settings.form_invalid_hint'|trans }}</div>
-                    <div class="small">
-                        {{ form_errors(form.enabled) }}
-                        {{ form_errors(form.inquiryReservationStatusId) }}
-                        {{ form_errors(form.bookingReservationStatusId) }}
-                        {{ form_errors(form.reservationOriginId) }}
-                        {{ form_errors(form.allowedEmbeddingOrigins) }}
+            {% if reservationOriginConfigured %}
+                <div class="row mb-3">
+                    <div class="col-sm-4 col-form-label text-sm-end">{{ 'online_booking.settings.price_overview_title'|trans }}</div>
+                    <div class="col-sm">
+                        <div class="form-control-plaintext">
+                            <p class="small text-body-secondary mb-2">{{ 'online_booking.settings.price_overview_hint'|trans }}</p>
+                            <p class="small fw-semibold mb-1">{{ 'online_booking.settings.price_overview_room'|trans }}</p>
+                            {% if priceOverview.room is not empty %}
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    {% for price in priceOverview.room %}
+                                        <span class="badge bg-primary-subtle text-primary-emphasis">{{ price.description }}{% if price.numberOfPersons %} ({{ price.numberOfPersons }}P){% endif %}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="small mb-2"><i class="fas fa-triangle-exclamation text-warning me-1" aria-hidden="true"></i>{{ 'online_booking.settings.price_overview_none'|trans }}</p>
+                            {% endif %}
+                            <p class="small fw-semibold mb-1">{{ 'online_booking.settings.price_overview_extras'|trans }}</p>
+                            {% if priceOverview.extras is not empty %}
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for price in priceOverview.extras %}
+                                        <span class="badge bg-success-subtle text-success-emphasis">{{ price.description }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="small text-body-secondary mb-0">{{ 'online_booking.settings.price_overview_no_extras'|trans }}</p>
+                            {% endif %}
+                        </div>
                     </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info small mb-0" role="alert">
+                    {{ 'online_booking.settings.price_coverage_hint'|trans|raw }}
                 </div>
             {% endif %}
+        </div>
+    </section>
 
-            {# ── General ── #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-sliders text-primary me-2"></i>{{ 'online_booking.settings.section_general'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_general_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">{{ form_row(form.enabled) }}</div>
-                        <div class="col-md-6">{{ form_row(form.bookingMode) }}</div>
-                    </div>
-                    <div class="row mt-2">
-                        <div class="col-md-6">{{ form_row(form.bookingHorizonMonths) }}</div>
-                    </div>
-
-                    {# Entry point for guests. Rendered like the design picker so the
-                       trade-off between both modes is visible at a glance. #}
-                    {% set isCalendarMode = form.vars.value.mode.value == 'calendar' %}
-                    <div class="border rounded mb-3">
-                        <div class="px-3 py-2 bg-body-secondary border-bottom">
-                            <p class="fw-semibold small mb-0">{{ 'online_booking.settings.mode'|trans }}</p>
-                            <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.mode_help'|trans }}</p>
-                        </div>
-                        <div class="p-3 row row-cols-1 row-cols-md-2 g-2">
-                            {% for choice in form.mode %}
-                                {% set modeValue = choice.vars.value %}
-                                <div class="col">
-                                    <div class="border rounded h-100 p-3">
-                                        {{ form_widget(choice, {'label_attr': {'class': 'fw-semibold'}}) }}
-                                        <p class="small text-body-secondary mb-0 mt-1">
-                                            {{ ('online_booking.settings.mode_' ~ modeValue ~ '_help')|trans }}
-                                            {% if modeValue == 'calendar' %}
-                                                <span class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true"
-                                                      title="{{ 'online_booking.settings.mode_calendar_limits'|trans }}">
-                                                    <i class="fas fa-circle-question"></i>
-                                                </span>
-                                            {% endif %}
-                                        </p>
-                                    </div>
+    <section class="card mb-4" aria-labelledby="ob-theme">
+        <twig:SectionHeader headingId="ob-theme" icon="palette"
+                            :title="'online_booking.settings.section_theme'|trans"
+                            :description="'online_booking.settings.section_theme_desc'|trans"/>
+        <div class="card-body">
+            {# Design picker: one selectable card per theme with a preview link #}
+            <fieldset class="row mb-3">
+                <legend class="col-sm-4 col-form-label text-sm-end">{{ 'online_booking.settings.theme'|trans }}</legend>
+                <div class="col-sm">
+                    <div class="row row-cols-1 row-cols-md-2 g-2">
+                        {% for choice in form.theme %}
+                            {% set themeValue = choice.vars.value %}
+                            <div class="col">
+                                <div class="choice-card">
+                                    {{ form_widget(choice, {'label_attr': {'class': 'fw-semibold'}}) }}
+                                    <p class="small text-body-secondary mb-1 mt-1">
+                                        {{ ('online_booking.settings.theme_' ~ themeValue ~ '_help')|trans }}
+                                    </p>
+                                    <a class="small text-decoration-none" target="_blank" rel="noopener"
+                                       href="{{ path('public.booking', {'previewTheme': themeValue}) }}">
+                                        <i class="fas fa-arrow-up-right-from-square me-1" aria-hidden="true"></i>{{ 'online_booking.settings.theme_preview'|trans }}
+                                    </a>
                                 </div>
-                            {% endfor %}
-                        </div>
-                        {% if isCalendarMode %}
-                            <div class="px-3 pb-3">
-                                {% if form.vars.value.theme.value != 'modern' %}
-                                    <div class="alert alert-warning py-2 small mb-2">
-                                        <i class="fas fa-triangle-exclamation me-1"></i>{{ 'online_booking.settings.calendar_needs_modern'|trans }}
-                                    </div>
-                                {% endif %}
-                                {% if calendarEligibleRoomCount == 0 %}
-                                    <div class="alert alert-warning py-2 small mb-0">
-                                        <i class="fas fa-triangle-exclamation me-1"></i>{{ 'online_booking.settings.calendar_no_rooms'|trans }}
-                                    </div>
-                                {% elseif calendarEligibleRoomCount > 1 %}
-                                    <div class="alert alert-info py-2 small mb-0">
-                                        <i class="fas fa-circle-info me-1"></i>{{ 'online_booking.settings.calendar_many_rooms'|trans({'%count%': calendarEligibleRoomCount}) }}
-                                    </div>
-                                {% endif %}
                             </div>
-                        {% endif %}
-                        {{ form_errors(form.mode) }}
+                        {% endfor %}
                     </div>
-                    <hr class="my-3">
-                    {{ form_row(form.allowedEmbeddingOrigins) }}
+                    <div class="form-text">{{ 'online_booking.settings.theme_help'|trans }}</div>
+                    {{ form_errors(form.theme) }}
+                </div>
+            </fieldset>
+
+            {{ form_row(form.themePrimaryColor) }}
+
+            {# One row for the background: the switch and the picker sit side by side under a
+               single label, since the picker only matters while the switch is on. #}
+            <div class="row mb-3">
+                <label class="col-sm-4 text-sm-end col-form-label" for="{{ form.themeBackgroundColor.vars.id }}">
+                    {{ 'online_booking.settings.theme_background'|trans }}
+                </label>
+                <div class="col-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        {# form_widget renders the checkbox together with its label, so adding one
+                           here would show it twice. #}
+                        {{ form_widget(form.useBackgroundColor) }}
+                        <div data-online-booking-settings-target="backgroundColorWrap">
+                            {{ form_widget(form.themeBackgroundColor) }}
+                        </div>
+                    </div>
+                    <div class="form-text">{{ 'online_booking.settings.theme_background_help'|trans }}</div>
+                    {{ form_errors(form.themeBackgroundColor) }}
                 </div>
             </div>
 
-            {# ── Availability Scope ── #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-bed text-primary me-2"></i>{{ 'online_booking.settings.section_availability_scope'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_availability_scope_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    {{ form_row(form.subsidiariesMode) }}
-
-                    <div class="border rounded mt-2" data-online-booking-settings-target="subsidiariesWrap">
-                        <div class="px-3 py-2 bg-body-secondary border-bottom d-flex justify-content-between align-items-center">
-                            <div>
-                                <p class="fw-semibold small mb-0">{{ 'online_booking.settings.selected_subsidiaries'|trans }}</p>
-                                <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.selected_subsidiaries_hint'|trans }}</p>
-                            </div>
-                            <span class="badge text-bg-primary" data-online-booking-settings-target="subsidiariesCount"></span>
-                        </div>
-                        <div class="p-3 row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-2" style="max-height:18rem;overflow:auto">
-                            {{ form_widget(form.selectedSubsidiaryIds) }}
-                        </div>
-                        <div class="px-3 pb-2">
-                            {{ form_errors(form.selectedSubsidiaryIds) }}
-                        </div>
-                    </div>
-
-                    <hr class="my-3">
-                    {{ form_row(form.roomsMode) }}
-
-                    <div class="border rounded mt-2" data-online-booking-settings-target="roomsWrap">
-                        <div class="px-3 py-2 bg-body-secondary border-bottom d-flex justify-content-between align-items-center">
-                            <div>
-                                <p class="fw-semibold small mb-0">{{ 'online_booking.settings.selected_rooms'|trans }}</p>
-                                <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.selected_rooms_hint'|trans }}</p>
-                            </div>
-                            <span class="badge text-bg-primary" data-online-booking-settings-target="roomsCount"></span>
-                        </div>
-                        <div class="p-3 row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-2" style="max-height:18rem;overflow:auto">
-                            {{ form_widget(form.selectedRoomIds) }}
-                        </div>
-                        <div class="px-3 pb-2">
-                            {{ form_errors(form.selectedRoomIds) }}
-                        </div>
-                    </div>
-                    {# ── Price overview ── #}
-                    {% if reservationOriginConfigured %}
-                        <div class="border rounded mt-3">
-                            <div class="px-3 py-2 bg-body-secondary border-bottom">
-                                <p class="fw-semibold small mb-0"><i class="fas fa-tags me-1"></i>{{ 'online_booking.settings.price_overview_title'|trans }}</p>
-                                <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.price_overview_hint'|trans }}</p>
-                            </div>
-                            <div class="px-3 py-2">
-                                <div class="small fw-semibold mb-1">{{ 'online_booking.settings.price_overview_room'|trans }}</div>
-                                {% if priceOverview.room is not empty %}
-                                    <div class="d-flex flex-wrap gap-1 mb-2">
-                                        {% for price in priceOverview.room %}
-                                            <span class="badge bg-primary-subtle text-primary-emphasis">{{ price.description }}{% if price.numberOfPersons %} ({{ price.numberOfPersons }}P){% endif %}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% else %}
-                                    <p class="text-body-secondary small mb-2"><i class="fas fa-triangle-exclamation text-warning me-1"></i>{{ 'online_booking.settings.price_overview_none'|trans }}</p>
-                                {% endif %}
-
-                                <div class="small fw-semibold mb-1">{{ 'online_booking.settings.price_overview_extras'|trans }}</div>
-                                {% if priceOverview.extras is not empty %}
-                                    <div class="d-flex flex-wrap gap-1 mb-0">
-                                        {% for price in priceOverview.extras %}
-                                            <span class="badge bg-success-subtle text-success-emphasis">{{ price.description }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% else %}
-                                    <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.price_overview_no_extras'|trans }}</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-info mt-3 small" role="alert">
-                            <i class="fas fa-info-circle me-1"></i>
-                            {{ 'online_booking.settings.price_coverage_hint'|trans|raw }}
-                        </div>
-                    {% endif %}
+            <div class="row mb-3">
+                <div class="col-sm offset-sm-4">
+                    <a class="small text-decoration-none" data-bs-toggle="collapse" href="#customCssCollapse" role="button" aria-expanded="{{ form.vars.value.customCss ? 'true' : 'false' }}" aria-controls="customCssCollapse">
+                        <i class="fas fa-chevron-right me-1" aria-hidden="true"></i>{{ 'online_booking.settings.custom_css'|trans }}
+                    </a>
                 </div>
             </div>
-
-            {# ── Theme ── #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-palette text-primary me-2"></i>{{ 'online_booking.settings.section_theme'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_theme_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    {# Design picker: one selectable card per theme with a preview link.
-                       Rendered without form_row/form_label because the horizontal form theme
-                       would right-align the label into its own grid column. #}
-                    <div class="border rounded mb-3">
-                        <div class="px-3 py-2 bg-body-secondary border-bottom">
-                            <p class="fw-semibold small mb-0">{{ 'online_booking.settings.theme'|trans }}</p>
-                            <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.theme_help'|trans }}</p>
-                        </div>
-                        <div class="p-3 row row-cols-1 row-cols-md-2 g-2">
-                            {% for choice in form.theme %}
-                                {% set themeValue = choice.vars.value %}
-                                <div class="col">
-                                    <div class="border rounded h-100 p-3">
-                                        {{ form_widget(choice, {'label_attr': {'class': 'fw-semibold'}}) }}
-                                        <p class="small text-body-secondary mb-1 mt-1">
-                                            {{ ('online_booking.settings.theme_' ~ themeValue ~ '_help')|trans }}
-                                        </p>
-                                        <a class="small text-decoration-none" target="_blank" rel="noopener"
-                                           href="{{ path('public.booking', {'previewTheme': themeValue}) }}">
-                                            <i class="fas fa-arrow-up-right-from-square me-1"></i>{{ 'online_booking.settings.theme_preview'|trans }}
-                                        </a>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                        <div class="px-3 pb-2">
-                            {{ form_errors(form.theme) }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">{{ form_row(form.themePrimaryColor) }}</div>
-                        {# One row for the background: the switch and the picker sit side by
-                           side under a single label, since the picker only matters while the
-                           switch is on. Rendered by hand because the horizontal form theme
-                           would otherwise stack them as two separate rows. #}
-                        <div class="col-md-6">
-                            <div class="row mb-3">
-                                <label class="col-sm-4 text-sm-end col-form-label" for="{{ form.themeBackgroundColor.vars.id }}">
-                                    {{ 'online_booking.settings.theme_background'|trans }}
-                                </label>
-                                <div class="col-sm-8">
-                                    <div class="d-flex align-items-center gap-3">
-                                        {# form_widget renders the checkbox together with its
-                                           label, so adding one here would show it twice. #}
-                                        {{ form_widget(form.useBackgroundColor) }}
-                                        <div data-online-booking-settings-target="backgroundColorWrap">
-                                            {{ form_widget(form.themeBackgroundColor) }}
-                                        </div>
-                                    </div>
-                                    <div class="form-text">{{ 'online_booking.settings.theme_background_help'|trans }}</div>
-                                    {{ form_errors(form.themeBackgroundColor) }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <a class="small text-body-secondary text-decoration-none" data-bs-toggle="collapse" href="#customCssCollapse" role="button" aria-expanded="{{ form.vars.value.customCss ? 'true' : 'false' }}" aria-controls="customCssCollapse">
-                            <i class="fas fa-chevron-right me-1"></i>{{ 'online_booking.settings.custom_css'|trans }}
-                        </a>
-                        <div class="collapse{{ form.vars.value.customCss ? ' show' : '' }}" id="customCssCollapse">
-                            <div class="mt-2">
-                                {{ form_row(form.customCss) }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="collapse{{ form.vars.value.customCss ? ' show' : '' }}" id="customCssCollapse">
+                {{ form_row(form.customCss) }}
             </div>
+        </div>
+    </section>
 
-            {# ── Confirmation workflow & status ── #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-envelope-open-text text-primary me-2"></i>{{ 'online_booking.settings.section_templates_status'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_templates_status_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    <p class="text-body-secondary small mb-2">
-                        {{ 'online_booking.settings.confirmation_workflow_help'|trans }}
-                    </p>
+    <section class="card mb-4" aria-labelledby="ob-confirmation">
+        <twig:SectionHeader headingId="ob-confirmation" icon="envelope-open-text"
+                            :title="'online_booking.settings.section_templates_status'|trans"
+                            :description="'online_booking.settings.section_templates_status_desc'|trans"/>
+        <div class="card-body">
+            {# The confirmation to the guest is an automation; its switch saves at once #}
+            <div class="row mb-3">
+                <div class="col-sm-4 col-form-label text-sm-end">{{ 'workflow.nav.label'|trans }}</div>
+                <div class="col-sm">
                     {% if bookingConfirmationWorkflow %}
                         {% include 'Settings/Workflow/_workflow_card.html.twig' with {
                             workflow: bookingConfirmationWorkflow,
                         } only %}
                     {% else %}
-                        <div class="alert alert-warning" role="alert">
+                        <div class="alert alert-warning small mb-2" role="alert">
                             {{ 'online_booking.settings.confirmation_workflow_missing'|trans }}
                         </div>
                     {% endif %}
-                    <div class="row">
-                        <div class="col-md-6">{{ form_row(form.inquiryReservationStatusId) }}</div>
-                        <div class="col-md-6">{{ form_row(form.bookingReservationStatusId) }}</div>
+                    <div class="form-text mt-0">{{ 'online_booking.settings.confirmation_workflow_help'|trans }}</div>
+                </div>
+            </div>
+            {{ form_row(form.inquiryReservationStatusId) }}
+            {{ form_row(form.bookingReservationStatusId) }}
+            {{ form_row(form.reservationOriginId) }}
+        </div>
+    </section>
+
+    <section class="card mb-4" aria-labelledby="ob-texts">
+        <twig:SectionHeader headingId="ob-texts" icon="file-contract"
+                            :title="'online_booking.settings.section_booking_texts'|trans"
+                            :description="'online_booking.settings.section_booking_texts_desc'|trans"/>
+        <div class="card-body">
+            {% import 'common/content_translations.html.twig' as contentTranslations %}
+            {{ form_row(form.commentPlaceholder) }}
+            {{ contentTranslations.inputs(form.translations, 'commentPlaceholder') }}
+            {{ form_row(form.paymentTerms) }}
+            {{ contentTranslations.inputs(form.translations, 'paymentTerms', {editorAttr: {'data-online-booking-settings-editor': 'payment'}}) }}
+            {{ form_row(form.cancellationTerms) }}
+            {{ contentTranslations.inputs(form.translations, 'cancellationTerms', {editorAttr: {'data-online-booking-settings-editor': 'cancellation'}}) }}
+            {{ form_row(form.successMessageText) }}
+            {{ contentTranslations.inputs(form.translations, 'successMessageText', {editorAttr: {'data-online-booking-settings-editor': 'success-message'}}) }}
+        </div>
+    </section>
+
+    <twig:SaveBar :label="'online_booking.settings.save'|trans" :hint="'online_booking.settings.save_hint'|trans"/>
+
+    {{ form_end(form) }}
+
+    <section class="card mb-4" aria-labelledby="ob-embed">
+        <twig:SectionHeader headingId="ob-embed" icon="code"
+                            :title="'online_booking.settings.section_embed'|trans"
+                            :description="'online_booking.settings.section_embed_desc'|trans"/>
+        <div class="card-body">
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label text-sm-end" for="ob-embed-url">{{ 'online_booking.settings.embed_url_label'|trans }}</label>
+                <div class="col-sm">
+                    <div class="input-group" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
+                        <input type="text" readonly class="form-control font-monospace small" id="ob-embed-url" value="{{ standAloneUrl }}" data-copy-target="input">
+                        <button class="btn btn-secondary" type="button" data-action="click->copy#copy" title="{{ 'copy.text'|trans }}" aria-label="{{ 'copy.text'|trans }}">
+                            <i class="fas fa-copy" aria-hidden="true"></i>
+                        </button>
                     </div>
-                    {{ form_row(form.reservationOriginId) }}
                 </div>
             </div>
 
-            {# ── Checkout Texts ── #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-file-contract text-primary me-2"></i>{{ 'online_booking.settings.section_booking_texts'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_booking_texts_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    {% import 'common/content_translations.html.twig' as contentTranslations %}
-                    {{ form_row(form.commentPlaceholder) }}
-                    {{ contentTranslations.inputs(form.translations, 'commentPlaceholder') }}
-                    {{ form_row(form.paymentTerms) }}
-                    {{ contentTranslations.inputs(form.translations, 'paymentTerms', {editorAttr: {'data-online-booking-settings-editor': 'payment'}}) }}
-                    {{ form_row(form.cancellationTerms) }}
-                    {{ contentTranslations.inputs(form.translations, 'cancellationTerms', {editorAttr: {'data-online-booking-settings-editor': 'cancellation'}}) }}
-                    {{ form_row(form.successMessageText) }}
-                    {{ contentTranslations.inputs(form.translations, 'successMessageText', {editorAttr: {'data-online-booking-settings-editor': 'success-message'}}) }}
-                </div>
-            </div>
-
-            {# ── Save bar ── #}
-            <div class="card sticky-bottom mb-3" style="z-index:10">
-                <div class="card-body py-2 d-flex align-items-center justify-content-between">
-                    <p class="text-body-secondary small mb-0 d-none d-md-block">{{ 'online_booking.settings.save_hint'|trans }}</p>
-                    <button class="btn btn-primary" type="submit">
-                        <i class="fas fa-save me-1"></i>{{ 'online_booking.settings.save'|trans }}
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label text-sm-end" for="ob-embed-code">{{ 'online_booking.settings.embed_iframe_label'|trans }}</label>
+                <div class="col-sm" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
+                    <textarea readonly class="form-control font-monospace small embed-code mb-2" id="ob-embed-code" rows="5" data-copy-target="input">{{ iframeCode }}</textarea>
+                    <button class="btn btn-secondary" type="button" data-action="click->copy#copy">
+                        <i class="fas fa-copy me-1" aria-hidden="true"></i>{{ 'copy.text'|trans }}
                     </button>
                 </div>
             </div>
 
-            {{ form_end(form) }}
-
-            {# ── Embed ── #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-code text-primary me-2"></i>{{ 'online_booking.settings.section_embed'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_embed_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">{{ 'online_booking.settings.embed_url_label'|trans }}</label>
-                        <div class="input-group" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
-                            <input type="text" readonly class="form-control font-monospace small" value="{{ standAloneUrl }}" data-copy-target="input">
-                            <button class="btn btn-outline-secondary shadow-none" type="button" data-action="click->copy#copy" title="{{ 'copy.text'|trans }}">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="form-label small fw-semibold">{{ 'online_booking.settings.embed_iframe_label'|trans }}</label>
-                        <div data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
-                            <textarea readonly class="form-control font-monospace small mb-2" rows="5" style="white-space:pre;resize:vertical" data-copy-target="input">{{ iframeCode }}</textarea>
-                            <button class="btn btn-outline-secondary ms-auto" type="button" data-action="click->copy#copy">
-                                <i class="fas fa-copy me-1"></i>{{ 'copy.text'|trans }}
-                            </button>
-                        </div>
-                    </div>
-
-                    {# Embedded, the page has no language choice: the website sets ?lang= (PublicBookingController). #}
-                    {% if guest_extra_locales()|length > 0 %}
-                        <div class="mt-3">
-                            <label class="form-label small fw-semibold">{{ 'online_booking.settings.embed_language_label'|trans }}</label>
+            {# Embedded, the page has no language choice: the website sets ?lang= (PublicBookingController). #}
+            {% if guest_extra_locales()|length > 0 %}
+                <div class="row mb-3">
+                    <div class="col-sm-4 col-form-label text-sm-end">{{ 'online_booking.settings.embed_language_label'|trans }}</div>
+                    <div class="col-sm">
+                        <div class="form-control-plaintext">
                             <p class="form-text mt-0 mb-1">{{ 'online_booking.settings.embed_language_help'|trans({'%language%': language_name(base_locale(), false)}) }}</p>
                             <ul class="small mb-1">
                                 {% for locale in guest_locales() %}
                                     <li><code>lang={{ locale }}</code> – {{ language_name(locale, false) }}</li>
                                 {% endfor %}
                             </ul>
-                            <p class="form-text mt-0">{{ 'online_booking.settings.embed_language_example'|trans }} <code>{{ embedUrl }}&amp;lang={{ guest_extra_locales()|first }}</code></p>
+                            <p class="form-text mb-0">{{ 'online_booking.settings.embed_language_example'|trans }} <code>{{ embedUrl }}&amp;lang={{ guest_extra_locales()|first }}</code></p>
                         </div>
-                    {% endif %}
-                </div>
-            </div>
-            </div>
-
-            {# ── Tab: booking rules ── #}
-            <div class="tab-pane fade{% if activeTab == 'tab-booking-rules' %} show active{% endif %}" id="tab-booking-rules" role="tabpanel" aria-labelledby="tab-booking-rules-link">
-
-            {# ── Expired special periods ── #}
-            {% if periodsAllPast %}
-                <div class="alert alert-warning mb-3 small d-flex flex-wrap align-items-center gap-2" role="alert">
-                    <span><i class="fas fa-triangle-exclamation me-1"></i>{{ 'booking_rules.periods_all_past'|trans }}</span>
-                    <a href="#booking-rule-periods" class="ms-auto fw-semibold">{{ 'booking_rules.periods_all_past_link'|trans }}</a>
+                    </div>
                 </div>
             {% endif %}
-
-            {# ── Calendar: what applies on each day ── #}
-            {% if calendar %}
-                {{ include('Settings/OnlineBooking/_rule_calendar.html.twig', calendar|merge({categories: categories})) }}
-            {% endif %}
-
-            {# ── Booking rules ── #}
-            {{ include('Settings/OnlineBooking/_rule_list.html.twig', {
-                listRules: rules,
-                anchorId: 'booking-rules',
-                icon: 'fa-calendar-check',
-                listTitle: 'booking_rules.section_rules',
-                listDesc: 'booking_rules.section_rules_desc',
-                addPath: 'settings.online_booking.rule_new',
-                addLabel: 'booking_rules.add_rule',
-                emptyLabel: 'booking_rules.no_rules',
-            }) }}
-
-            {# ── Special periods: the same entity, but limited to a date range ── #}
-            {{ include('Settings/OnlineBooking/_rule_list.html.twig', {
-                listRules: periods,
-                anchorId: 'booking-rule-periods',
-                icon: 'fa-calendar-alt',
-                listTitle: 'booking_rules.section_periods',
-                listDesc: 'booking_rules.section_periods_desc',
-                addPath: 'settings.online_booking.period_new',
-                addLabel: 'booking_rules.add_period',
-                emptyLabel: 'booking_rules.no_periods',
-            }) }}
-
-            {% if categories|length > 0 %}
-            <div class="card mb-3" id="booking-rule-limits">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-shield-halved text-primary me-2"></i>{{ 'online_booking.settings.section_restrictions'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_restrictions_desc'|trans }}</p>
-                </div>
-                <div class="card-body p-0">
-                    <form method="post" action="{{ path('settings.online_booking.save_category_restrictions') }}">
-                        <input type="hidden" name="_token" value="{{ csrf_token('ob_category_restrictions') }}">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-3">{{ 'online_booking.settings.restriction_category'|trans }}</th>
-                                        <th class="text-center" style="width:140px">{{ 'online_booking.settings.restriction_max_rooms'|trans }}</th>
-                                        <th class="text-center" style="width:140px">{{ 'online_booking.settings.restriction_min_occupancy'|trans }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for category in categories %}
-                                        {% set catId = category.id %}
-                                        {% set limit = limitsByCategory[catId] ?? null %}
-                                        <tr>
-                                            <td class="ps-3 fw-semibold small">{{ category.name }}</td>
-                                            <td class="text-center">
-                                                <input type="number" name="max_rooms_{{ catId }}" class="form-control form-control-sm text-center mx-auto" style="width:80px"
-                                                    value="{{ limit ? limit.maxRooms : '' }}" min="1" max="999"
-                                                    placeholder="-">
-                                            </td>
-                                            <td class="text-center">
-                                                <input type="number" name="min_occupancy_{{ catId }}" class="form-control form-control-sm text-center mx-auto" style="width:80px"
-                                                    value="{{ limit ? limit.minOccupancy : '' }}" min="1" max="99"
-                                                    placeholder="-">
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="card-body py-2 border-top d-flex justify-content-end">
-                            <button class="btn btn-sm btn-primary" type="submit">
-                                <i class="fas fa-save me-1"></i>{{ 'online_booking.settings.restrictions_save'|trans }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            {% endif %}
-            </div>
-            </div>
-
-            {# ── Rule offcanvas: one editor for both lists ── #}
-            <div class="offcanvas offcanvas-end" tabindex="-1" id="bookingRuleOffcanvas" data-booking-rules-target="offcanvas">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" data-booking-rules-target="offcanvasTitle"></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ 'button.cancel'|trans }}"></button>
-                </div>
-                <div class="offcanvas-body" data-booking-rules-target="offcanvasBody"></div>
-            </div>
-
         </div>
+    </section>
+    </div>
+
+    {# ── Tab: booking rules ── #}
+    <div class="tab-pane fade{% if activeTab == 'tab-booking-rules' %} show active{% endif %}" id="tab-booking-rules" role="tabpanel" aria-labelledby="tab-booking-rules-link">
+
+    {# ── Expired special periods ── #}
+    {% if periodsAllPast %}
+        <div class="alert alert-warning mb-3 small d-flex flex-wrap align-items-center gap-2" role="alert">
+            <span><i class="fas fa-triangle-exclamation me-1"></i>{{ 'booking_rules.periods_all_past'|trans }}</span>
+            <a href="#booking-rule-periods" class="ms-auto fw-semibold">{{ 'booking_rules.periods_all_past_link'|trans }}</a>
+        </div>
+    {% endif %}
+
+    {# ── Calendar: what applies on each day ── #}
+    {% if calendar %}
+        {{ include('Settings/OnlineBooking/_rule_calendar.html.twig', calendar|merge({categories: categories})) }}
+    {% endif %}
+
+    {# ── Booking rules ── #}
+    {{ include('Settings/OnlineBooking/_rule_list.html.twig', {
+        listRules: rules,
+        anchorId: 'booking-rules',
+        icon: 'calendar-check',
+        listTitle: 'booking_rules.section_rules',
+        listDesc: 'booking_rules.section_rules_desc',
+        addPath: 'settings.online_booking.rule_new',
+        addLabel: 'booking_rules.add_rule',
+        emptyIcon: 'calendar-check',
+        emptyLabel: 'booking_rules.no_rules',
+        countLabel: 'booking_rules.rules_count',
+    }) }}
+
+    {# ── Special periods: the same entity, but limited to a date range ── #}
+    {{ include('Settings/OnlineBooking/_rule_list.html.twig', {
+        listRules: periods,
+        anchorId: 'booking-rule-periods',
+        icon: 'calendar-alt',
+        listTitle: 'booking_rules.section_periods',
+        listDesc: 'booking_rules.section_periods_desc',
+        addPath: 'settings.online_booking.period_new',
+        addLabel: 'booking_rules.add_period',
+        emptyIcon: 'calendar-alt',
+        emptyLabel: 'booking_rules.no_periods',
+        countLabel: 'booking_rules.periods_count',
+    }) }}
+
+    {% if categories|length > 0 %}
+        <section class="card data-card mb-4" id="booking-rule-limits" aria-labelledby="booking-rule-limits-title">
+            <twig:SectionHeader headingId="booking-rule-limits-title" icon="shield-halved"
+                                :title="'online_booking.settings.section_restrictions'|trans"
+                                :description="'online_booking.settings.section_restrictions_desc'|trans"/>
+            <form method="post" action="{{ path('settings.online_booking.save_category_restrictions') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('ob_category_restrictions') }}">
+                <div class="table-responsive">
+                    <table class="table align-middle data-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>{{ 'online_booking.settings.restriction_category'|trans }}</th>
+                                <th class="text-center text-wrap">{{ 'online_booking.settings.restriction_max_rooms'|trans }}</th>
+                                <th class="text-center text-wrap">{{ 'online_booking.settings.restriction_min_occupancy'|trans }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category in categories %}
+                                {% set catId = category.id %}
+                                {% set limit = limitsByCategory[catId] ?? null %}
+                                <tr>
+                                    <td class="fw-semibold">{{ category.name }}</td>
+                                    <td class="text-center">
+                                        <input type="number" name="max_rooms_{{ catId }}" class="form-control form-control-sm text-center mx-auto booking-rule-limit-input"
+                                               value="{{ limit ? limit.maxRooms : '' }}" min="1" max="999" placeholder="-"
+                                               aria-label="{{ 'online_booking.settings.restriction_max_rooms'|trans }}: {{ category.name }}">
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="number" name="min_occupancy_{{ catId }}" class="form-control form-control-sm text-center mx-auto booking-rule-limit-input"
+                                               value="{{ limit ? limit.minOccupancy : '' }}" min="1" max="99" placeholder="-"
+                                               aria-label="{{ 'online_booking.settings.restriction_min_occupancy'|trans }}: {{ category.name }}">
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer text-end">
+                    <button class="btn btn-primary" type="submit">{{ 'online_booking.settings.restrictions_save'|trans }}</button>
+                </div>
+            </form>
+        </section>
+    {% endif %}
+    </div>
+    </div>
+
+    {# ── Rule offcanvas: one editor for both lists ── #}
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="bookingRuleOffcanvas" data-booking-rules-target="offcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" data-booking-rules-target="offcanvasTitle"></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ 'button.cancel'|trans }}"></button>
+        </div>
+        <div class="offcanvas-body" data-booking-rules-target="offcanvasBody"></div>
     </div>
 </div>
 {% endblock %}

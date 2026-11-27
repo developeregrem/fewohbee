@@ -263,3 +263,31 @@ th[aria-sort="descending"] .sort-icon {
 .table-visible-striped > tbody > tr:nth-child(even of :not(.d-none)) > * {
     --bs-table-bg-type: var(--bs-table-striped-bg);
 }
+
+/* The action of a section card's head (SectionHeader), e.g. a button to add to the section's
+   list: at the right of title and description, on phones in a line of its own below them,
+   in line with the title, so it does not squeeze the text */
+.section-header-actions {
+    flex-shrink: 0;
+    align-self: center;
+}
+
+@media (max-width: 575.98px) {
+    .card-header:has(> .section-header-actions) {
+        flex-wrap: wrap;
+    }
+
+    .card-header:has(> .section-header-actions) > .section-header-text {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .card-header > .section-header-actions {
+        flex-basis: 100%;
+        margin-top: .25rem;
+    }
+
+    .card-header > .fa-fw ~ .section-header-actions {
+        padding-left: calc(1.25rem + .5rem);
+    }
+}

@@ -256,15 +256,15 @@ final class BookingRestrictionControllerTest extends WebTestCase
 
         $crawler = $client->request('GET', '/settings/online-booking');
         $toggleSelector = 'form[action="/settings/online-booking/rules/'.$id.'/toggle"] button';
-        // Active rules show a green toggle, inactive ones a neutral one.
-        self::assertSelectorExists($toggleSelector.'.btn-success');
+        // The switch of the list (ActiveToggle) is pressed while the rule is active.
+        self::assertSelectorExists($toggleSelector.'[aria-pressed="true"]');
         $toggle = $crawler->filter('form[action="/settings/online-booking/rules/'.$id.'/toggle"]')->form();
         $client->submit($toggle);
         self::assertResponseRedirects('/settings/online-booking?tab=tab-booking-rules');
         self::assertFalse($this->repository()->find($id)?->isEnabled());
         $client->request('GET', '/settings/online-booking');
-        self::assertSelectorExists($toggleSelector.'.btn-outline-secondary');
-        self::assertSelectorNotExists($toggleSelector.'.btn-success');
+        self::assertSelectorExists($toggleSelector.'[aria-pressed="false"]');
+        self::assertSelectorNotExists($toggleSelector.'[aria-pressed="true"]');
 
         // The list toggles over ajax and updates the row itself, so no redirect is sent.
         $client->request('POST', '/settings/online-booking/rules/'.$id.'/toggle', $toggle->getPhpValues(), server: self::XHR);

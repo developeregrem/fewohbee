@@ -47,5 +47,8 @@ export default class extends Controller {
         row?.querySelectorAll('[data-inactive-badge]').forEach((badge) => {
             badge.hidden = active;
         });
+
+        // For a page that shows more of the record elsewhere (active-toggle:toggled)
+        this.dispatch('toggled', { detail: { active } });
     }
 }

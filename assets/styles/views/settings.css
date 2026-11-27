@@ -73,3 +73,66 @@
 .calendar-import-filter-remove:focus {
     opacity: 1;
 }
+
+/* Online booking: one card per option of a choice (entry for guests, design), the chosen one in
+   the primary tint like the other choice buttons */
+.choice-card {
+    height: 100%;
+    padding: .75rem 1rem;
+    border: 1px solid var(--feb-border);
+    border-radius: var(--feb-radius);
+}
+
+.choice-card:has(.form-check-input:checked) {
+    border-color: var(--feb-primary-subtle-border);
+    background-color: var(--feb-primary-subtle);
+}
+
+.choice-card .form-check {
+    margin-bottom: 0;
+}
+
+/* Online booking: the subsidiaries or rooms to offer, below their "selected" option; a long
+   list scrolls inside the box, in as many columns as fit */
+.choice-box {
+    border: 1px solid var(--feb-border);
+    border-radius: var(--feb-radius);
+    overflow: hidden;
+}
+
+.choice-box-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .5rem .75rem;
+    border-bottom: 1px solid var(--feb-border);
+    background-color: var(--feb-surface-2);
+}
+
+.choice-box-list {
+    max-height: 18rem;
+    overflow: auto;
+    padding: .75rem;
+}
+
+.choice-box-list > div {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: .25rem 1rem;
+}
+
+.choice-box-list .form-check {
+    margin-bottom: 0;
+}
+
+.choice-box > .invalid-feedback,
+.choice-box > .form-error {
+    padding: 0 .75rem .5rem;
+}
+
+/* Online booking: the code to embed, kept in its lines */
+.embed-code {
+    white-space: pre;
+    resize: vertical;
+}

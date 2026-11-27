@@ -10,6 +10,8 @@ booking_rules:
     add_period: "Add special period"
     no_rules: "No rule yet. Guests can book any length of stay."
     no_periods: "No special periods yet."
+    rules_count: '{0}No rules|{1}1 rule|]1,Inf[%count% rules'
+    periods_count: '{0}No special periods|{1}1 special period|]1,Inf[%count% special periods'
     periods_all_past: "All special periods lie in the past. They no longer affect future bookings — adjust the date ranges if they should still apply."
     periods_all_past_link: "Go to special periods"
     no_categories: "No room category assigned any more — this rule has no effect."

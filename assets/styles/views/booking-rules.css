@@ -257,3 +257,8 @@
 .brc-swatch.is-raised::after { background-color: var(--bs-danger); }
 
 .brc-swatch.has-gap::after { border: 1.5px solid var(--bs-danger); }
+
+/* Limits per room category: number fields as wide as their values */
+.booking-rule-limit-input {
+    width: 4rem;
+}
