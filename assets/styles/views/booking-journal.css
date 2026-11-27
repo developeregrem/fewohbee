@@ -73,6 +73,16 @@
     font-size: var(--feb-font-size-sm);
 }
 
+/* A long word in a remark ("Kontofuehrungsentgelte") may break, so it cannot widen the table past
+   a tablet held upright; the details keep 10rem, so they do not shrink to a narrow strip */
+.journal-entries .journal-details {
+    min-width: 10rem;
+}
+
+.journal-entries .journal-remark {
+    overflow-wrap: anywhere;
+}
+
 /* Phones: an entry is a block - the amount first, then date and document, the accounts and the
    details beneath (see data-table-stack) */
 @media (max-width: 767.98px) {

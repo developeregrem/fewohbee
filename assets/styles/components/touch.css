@@ -29,8 +29,15 @@
     }
 
     /* A list that ends with its footer (count and pages, centred) leaves the corner below the
-       round button empty, so the page keeps only its usual margin at the end */
+       round button empty, so the page keeps only a small margin at the end. A footer with only
+       the count (a single page) is lower than the button and its distance to the bottom
+       (1rem + 3.5rem): 2rem lift it just above the button's top edge, so the button covers the
+       empty end of the footer, not the actions of the last row (found by MeisterAdebar). */
     .fab-add-clearance:has(.data-footer) {
+        padding-bottom: 2rem;
+    }
+
+    .fab-add-clearance:has(.data-footer .pagination) {
         padding-bottom: 1rem;
     }
 }

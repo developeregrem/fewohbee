@@ -50,3 +50,13 @@
         display: none;
     }
 }
+
+/* Side panels (offcanvas) take the whole width on phones, also held sideways, like the dialogs
+   (fullscreen there): a narrow panel beside a strip of the page helps nobody. The frame's menu
+   keeps its own width. */
+@media (max-width: 575.98px), (max-width: 991.98px) and (max-height: 500px) {
+    .offcanvas-end:not(.app-nav-menu),
+    .offcanvas-start:not(.app-nav-menu) {
+        --bs-offcanvas-width: 100%;
+    }
+}

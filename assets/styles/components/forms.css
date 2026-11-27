@@ -21,3 +21,15 @@ label.col-form-label.required::after,
 label.form-label.required::after {
     content: " *";
 }
+
+/* Date and time fields read from the left like every other field; mobile browsers centre them */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"] {
+    text-align: start;
+}
+
+input::-webkit-date-and-time-value {
+    text-align: start;
+}

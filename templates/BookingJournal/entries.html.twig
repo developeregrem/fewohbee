@@ -196,7 +196,7 @@
                                     {%- if showRate %}<span class="text-nowrap">{{ entry.taxRate.name }}</span>{% endif -%}
                                 </div>
                             {%- endif -%}
-                            {%- if entry.remark is not empty %}<div>{{ entry.remark }}</div>{% endif -%}
+                            {%- if entry.remark is not empty %}<div class="journal-remark">{{ entry.remark }}</div>{% endif -%}
                         </td>
                         <td class="cell-actions data-table-actions text-end">
                             {% if not batch.closed %}
