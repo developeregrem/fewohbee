@@ -147,8 +147,6 @@ class PublicAvailabilityService
                 $maxRooms = $this->restrictionService->getMaxRoomsForCategory($category);
                 if (null !== $maxRooms && $row['availableCount'] > $maxRooms) {
                     $row['availableCount'] = $maxRooms;
-                    $row['roomIds'] = array_slice($row['roomIds'], 0, $maxRooms);
-                    $row['roomCapacities'] = array_intersect_key($row['roomCapacities'], array_flip($row['roomIds']));
                 }
             }
 
@@ -186,6 +184,7 @@ class PublicAvailabilityService
             $row['occupancyAvailableCounts'] = $this->buildOccupancyAvailableCounts(
                 $row['roomCapacities'],
                 $row['occupancyOptions'],
+                (int) $row['availableCount'],
             );
 
             // Build amenity and image data for the public booking page
@@ -337,11 +336,10 @@ class PublicAvailabilityService
             }
 
             $row['availableCount'] = $cappedCount;
-            $row['roomIds'] = array_slice($row['roomIds'], 0, $cappedCount);
-            $row['roomCapacities'] = array_intersect_key($row['roomCapacities'], array_flip($row['roomIds']));
             $row['occupancyAvailableCounts'] = $this->buildOccupancyAvailableCounts(
                 $row['roomCapacities'],
-                $row['occupancyOptions']
+                $row['occupancyOptions'],
+                $cappedCount,
             );
             $filtered[] = $row;
         }
@@ -365,7 +363,7 @@ class PublicAvailabilityService
      *
      * @return array<int, int>
      */
-    private function buildOccupancyAvailableCounts(array $roomCapacities, array $occupancyOptions): array
+    private function buildOccupancyAvailableCounts(array $roomCapacities, array $occupancyOptions, int $cap): array
     {
         $counts = [];
 
@@ -382,7 +380,7 @@ class PublicAvailabilityService
                 }
             }
 
-            $counts[$persons] = $count;
+            $counts[$persons] = min($count, $cap);
         }
 
         return $counts;

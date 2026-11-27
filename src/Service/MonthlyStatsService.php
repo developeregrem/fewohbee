@@ -46,6 +46,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *         reservations_total: int,
  *         guests_total: int,
  *         nights_total: int,
+ *         room_nights_total: int,
  *         arrivals_total: int,
  *         departures_total: int,
  *         turnovers_count: int
@@ -127,7 +128,10 @@ class MonthlyStatsService
         $summary = [
             'reservations_total' => 0,
             'guests_total' => 0,
+            // Overnight stays of guests (one per guest and night), like tourism.overnights_total.
             'nights_total' => 0,
+            // Booked room nights (one per reservation and night).
+            'room_nights_total' => 0,
             'arrivals_total' => 0,
             'departures_total' => 0,
             'turnovers_count' => 0,
@@ -216,6 +220,7 @@ class MonthlyStatsService
                 $byStatus[$statusKey]['utilization']['stays'] += $nights * $persons;
                 if ($isDefaultStatus) {
                     $stays += $nights * $persons;
+                    $summary['room_nights_total'] += $nights;
                 }
                 if ($useBookerFallback) {
                     $country = $this->resolveCountryForCustomer($reservation->getBooker());
