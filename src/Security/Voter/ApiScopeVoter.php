@@ -27,6 +27,7 @@ class ApiScopeVoter extends Voter
     public const PRICES_READ = 'API_SCOPE_PRICES_READ';
     public const TOURIST_TAX_READ = 'API_SCOPE_TOURIST_TAX_READ';
     public const SUBSIDIARIES_READ = 'API_SCOPE_SUBSIDIARIES_READ';
+    public const APARTMENTS_READ = 'API_SCOPE_APARTMENTS_READ';
     public const AVAILABILITY_READ = 'API_SCOPE_AVAILABILITY_READ';
     public const MCP_ACCESS = 'API_SCOPE_MCP_ACCESS';
     public const GUESTS_READ = 'API_SCOPE_GUESTS_READ';
@@ -44,6 +45,7 @@ class ApiScopeVoter extends Voter
         self::PRICES_READ => ApiScope::PRICES_READ,
         self::TOURIST_TAX_READ => ApiScope::TOURIST_TAX_READ,
         self::SUBSIDIARIES_READ => ApiScope::SUBSIDIARIES_READ,
+        self::APARTMENTS_READ => ApiScope::APARTMENTS_READ,
         self::AVAILABILITY_READ => ApiScope::AVAILABILITY_READ,
         self::MCP_ACCESS => ApiScope::MCP_ACCESS,
         self::GUESTS_READ => ApiScope::GUESTS_READ,

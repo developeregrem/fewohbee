@@ -15,6 +15,7 @@ enum ApiScope: string
     case PRICES_READ = 'prices:read';
     case TOURIST_TAX_READ = 'tourist-tax:read';
     case SUBSIDIARIES_READ = 'subsidiaries:read';
+    case APARTMENTS_READ = 'apartments:read';
     // Room counts per night without any reservation data, e.g. for a pricing tool.
     case AVAILABILITY_READ = 'availability:read';
     // MCP (AI assistants). mcp:access admits a token to the /mcp endpoint at all; the others
@@ -38,6 +39,7 @@ enum ApiScope: string
             self::PRICES_READ => 'ROLE_RESERVATIONS_RO',
             self::TOURIST_TAX_READ => 'ROLE_OPERATIONS',
             self::SUBSIDIARIES_READ => 'ROLE_RESERVATIONS_RO',
+            self::APARTMENTS_READ => 'ROLE_RESERVATIONS_RO',
             self::AVAILABILITY_READ => 'ROLE_RESERVATIONS_RO',
             self::MCP_ACCESS => null,
             self::GUESTS_READ => 'ROLE_CUSTOMERS',
@@ -77,7 +79,7 @@ enum ApiScope: string
     public function isForMcp(): bool
     {
         return match ($this) {
-            self::MCP_ACCESS, self::CALENDAR_READ, self::SUBSIDIARIES_READ, self::AVAILABILITY_READ => false,
+            self::MCP_ACCESS, self::CALENDAR_READ, self::SUBSIDIARIES_READ, self::APARTMENTS_READ, self::AVAILABILITY_READ => false,
             default => true,
         };
     }
@@ -107,6 +109,7 @@ enum ApiScope: string
             self::PRICES_READ => 'profile.apitokens.scopes.prices_read',
             self::TOURIST_TAX_READ => 'profile.apitokens.scopes.tourist_tax_read',
             self::SUBSIDIARIES_READ => 'profile.apitokens.scopes.subsidiaries_read',
+            self::APARTMENTS_READ => 'profile.apitokens.scopes.apartments_read',
             self::AVAILABILITY_READ => 'profile.apitokens.scopes.availability_read',
             self::MCP_ACCESS => 'profile.apitokens.scopes.mcp_access',
             self::GUESTS_READ => 'profile.apitokens.scopes.guests_read',

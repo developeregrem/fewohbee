@@ -53,6 +53,7 @@ class ApiTokenType extends AbstractType
         ApiScope::OPERATIONS_READ,
         ApiScope::CALENDAR_READ,
         ApiScope::SUBSIDIARIES_READ,
+        ApiScope::APARTMENTS_READ,
         ApiScope::GUESTS_READ,
         ApiScope::RESERVATIONS_WRITE,
         ApiScope::PRICES_WRITE,

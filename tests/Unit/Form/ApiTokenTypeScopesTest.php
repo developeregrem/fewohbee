@@ -24,7 +24,7 @@ final class ApiTokenTypeScopesTest extends TestCase
     {
         $scopes = ApiTokenType::collectScopes([
             'kind' => ApiTokenType::KIND_MCP,
-            'scopes' => [ApiScope::CALENDAR_READ->value, ApiScope::PRICES_READ->value],
+            'scopes' => [ApiScope::CALENDAR_READ->value, ApiScope::APARTMENTS_READ->value, ApiScope::PRICES_READ->value],
         ]);
 
         self::assertSame([ApiScope::PRICES_READ->value, ApiScope::MCP_ACCESS->value], $scopes);
@@ -34,10 +34,10 @@ final class ApiTokenTypeScopesTest extends TestCase
     {
         $scopes = ApiTokenType::collectScopes([
             'kind' => ApiTokenType::KIND_API,
-            'scopes' => [ApiScope::CALENDAR_READ->value, ApiScope::RESERVATIONS_WRITE->value, 'unknown:scope'],
+            'scopes' => [ApiScope::CALENDAR_READ->value, ApiScope::APARTMENTS_READ->value, ApiScope::RESERVATIONS_WRITE->value, 'unknown:scope'],
         ]);
 
-        self::assertSame([ApiScope::CALENDAR_READ->value], $scopes);
+        self::assertSame([ApiScope::CALENDAR_READ->value, ApiScope::APARTMENTS_READ->value], $scopes);
     }
 
     public function testReceiptSubmissionIsIndependentOfBankImportAndRest(): void

@@ -51,6 +51,7 @@ profile:
       prices_read: Preise
       tourist_tax_read: Kurtaxe
       subsidiaries_read: Niederlassungen (Stammdaten und Öffnungszeiten)
+      apartments_read: Zimmerstammdaten lesen
       availability_read: Verfügbarkeit (freie und belegte Zimmer, ohne Reservierungsdaten)
       mcp_access: KI-Assistent (MCP)
       guests_read: Gästedaten (Namen, Kontaktdaten, Bemerkungen)
@@ -87,6 +88,7 @@ profile:
         prices_read: Preise
         tourist_tax_read: Kurtaxe
         subsidiaries_read: Niederlassungen
+        apartments_read: Zimmerstammdaten
         availability_read: Verfügbarkeit
         operations_read: Betrieb
         guests_read: Gästedaten

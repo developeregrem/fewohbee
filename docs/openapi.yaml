@@ -26,6 +26,7 @@ info:
     | `prices:read` | ROLE_RESERVATIONS_RO |
     | `tourist-tax:read` | ROLE_OPERATIONS |
     | `subsidiaries:read` | ROLE_RESERVATIONS_RO |
+    | `apartments:read` | ROLE_RESERVATIONS_RO |
     | `availability:read` | ROLE_RESERVATIONS_RO |
     | `prices:write` | ROLE_ADMIN |
 
@@ -73,6 +74,8 @@ tags:
     description: >-
       Branch master data including the weekly opening hours, so a website or home
       automation can print them from one place instead of keeping a second copy.
+  - name: Apartments
+    description: Room master data and IDs for use in other API calls.
   - name: Calendars
     description: iCal export of a room's occupancy, public holidays, and custom calendars.
   - name: Statistics
@@ -104,7 +107,7 @@ paths:
         - $ref: '#/components/parameters/ObjectId'
         - name: apartmentId
           in: query
-          description: Restrict to a single room.
+          description: Restrict to a single room (ID from `GET /apartments`).
           schema: { type: integer }
         - $ref: '#/components/parameters/ReservationStatusId'
         - name: type
@@ -207,6 +210,49 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /apartments:
+    get:
+      tags: [Apartments]
+      operationId: listApartments
+      summary: List rooms and their IDs
+      description: |
+        Requires the `apartments:read` scope. Includes inactive rooms so integrations can
+        resolve references in older reservations.
+
+        Use the room's `number` and `description` to identify it, then use its `id` as
+        `apartmentId` in other API calls. Both labels can change or occur more than once,
+        even within one branch.
+      parameters:
+        - name: objectId
+          in: query
+          description: Restrict to the ID of an existing branch. Omit to list all rooms.
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Rooms ordered by branch name and room number. A branch without rooms yields an empty list.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Apartment' }
+                  meta:
+                    type: object
+                    required: [count]
+                    properties:
+                      count: { type: integer, minimum: 0 }
+        '400':
+          description: Invalid or unknown branch ID.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /apartments/{id}/calendar.ics:
@@ -1151,6 +1197,21 @@ components:
           schema: { $ref: '#/components/schemas/Error' }
 
   schemas:
+    Apartment:
+      type: object
+      required: [id, number, description, objectId, roomCategoryId, kind, active]
+      properties:
+        id: { type: integer, description: 'Room ID used as `apartmentId` in other API calls.' }
+        number: { type: string, description: 'The room number as entered, including leading zeros.', examples: ['007'] }
+        description: { type: string, description: The stored room description., examples: ['Garden room'] }
+        objectId: { type: [integer, 'null'], description: Branch ID. Null for older rooms without a branch. }
+        roomCategoryId: { type: [integer, 'null'], description: Room category ID. Null when no category is assigned. }
+        kind:
+          type: string
+          enum: [accommodation, event_space]
+          description: A room without a category has kind `accommodation`.
+        active: { type: boolean, description: Whether the room is active in the room settings. }
+
     Error:
       type: object
       properties:
