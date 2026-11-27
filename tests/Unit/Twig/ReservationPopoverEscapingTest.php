@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Twig;
 
+use App\Entity\Enum\PaymentMeansCode;
 use PHPUnit\Framework\TestCase;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -40,7 +41,7 @@ final class ReservationPopoverEscapingTest extends TestCase
             'reservationStatus' => ['name' => 'Bezahlt'],
         ]);
 
-        self::assertStringContainsString('R-1001 (invoice.status.paid)', $popoverHtml);
+        self::assertStringContainsString("<span title='invoice.status.paid'><span class='invoice-status-icon text-success'", $popoverHtml);
         self::assertStringNotContainsString('<i>(Bezahlt)</i>', $popoverHtml);
     }
 
@@ -49,17 +50,39 @@ final class ReservationPopoverEscapingTest extends TestCase
         $popoverHtml = $this->renderPopover(['invoices' => [['id' => 7, 'number' => 'R-1001', 'status' => 2]]], true);
 
         self::assertStringContainsString(
-            "<a href='/invoices/get/7/' class='js-invoice-link' title='reservation.invoice R-1001'>R-1001</a> (invoice.status.paid)",
+            "<a href='/invoices/get/7/' class='js-invoice-link' title='reservation.invoice R-1001'>R-1001</a> <a href='/invoices/update/7/status'",
             $popoverHtml,
         );
+    }
+
+    public function testThePaymentStatusOpensTheStatusMenuWithInvoiceRights(): void
+    {
+        $popoverHtml = $this->renderPopover(['invoices' => [[
+            'id' => 7,
+            'number' => 'R-1001',
+            'status' => 3,
+            'paymentMeans' => PaymentMeansCode::CASH,
+        ]]], true);
+
+        // The status rides on a class: the popover sanitizer drops data attributes
+        self::assertStringContainsString(
+            "<a href='/invoices/update/7/status' class='js-invoice-status invoice-status-toggle dropdown-toggle invoice-status-is-3' role='button' aria-expanded='false' title='invoice.status.change'>",
+            $popoverHtml,
+        );
+        self::assertStringContainsString(
+            "<span class='invoice-status-icon text-partial' aria-hidden='true'><i class='fa-solid fa-fw fa-coins'></i><i class='fa-solid fa-circle-half-stroke invoice-status-mark'></i></span>",
+            $popoverHtml,
+        );
+        self::assertStringContainsString("<span class='visually-hidden'>invoice.status.prepaid</span>", $popoverHtml);
     }
 
     public function testInvoiceNumberStaysPlainTextWithoutInvoiceRights(): void
     {
         $popoverHtml = $this->renderPopover(['invoices' => [['id' => 7, 'number' => 'R-1001', 'status' => 2]]]);
 
-        self::assertStringContainsString('R-1001 (invoice.status.paid)', $popoverHtml);
+        self::assertStringContainsString("R-1001 <span title='invoice.status.paid'>", $popoverHtml);
         self::assertStringNotContainsString('js-invoice-link', $popoverHtml);
+        self::assertStringNotContainsString('js-invoice-status', $popoverHtml);
     }
 
     public function testInvoiceLinkKeepsTheInvoiceNumberEscaped(): void
@@ -242,6 +265,7 @@ final class ReservationPopoverEscapingTest extends TestCase
             'path',
             static fn (string $route, array $parameters): string => match ($route) {
                 'invoices.get.invoice' => '/invoices/get/'.$parameters['id'].'/',
+                'invoices.update.status' => '/invoices/update/'.$parameters['id'].'/status',
                 'reservations.edit.remark' => '/reservation/'.$parameters['id'].'/edit/remark',
                 default => '/'.$route,
             },

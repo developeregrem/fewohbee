@@ -24,6 +24,7 @@
     --feb-neutral-rgb: 100, 112, 131;
     --feb-success-rgb: 26, 127, 75;
     --feb-info-rgb: 14, 116, 144;
+    --feb-partial-rgb: 124, 77, 196;
     --feb-warning-rgb: 245, 166, 35;
     --feb-on-warning-rgb: 51, 34, 0;
     --feb-danger-rgb: 200, 50, 44;
@@ -52,6 +53,7 @@
     --feb-neutral-rgb: 104, 116, 135;
     --feb-success-rgb: 31, 131, 80;
     --feb-info-rgb: 18, 122, 151;
+    --feb-partial-rgb: 167, 139, 250;
     --feb-warning-rgb: 224, 152, 34;
     --feb-on-warning-rgb: 38, 25, 0;
     --feb-danger-rgb: 203, 62, 56;

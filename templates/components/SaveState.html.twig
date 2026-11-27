@@ -3,8 +3,8 @@
  # once saved, a warning when saving failed. The page switches it with setSaveState() from
  # assets/js/save_state.js; state sets the starting point (only the styleguide needs it).
  #
- #   <select … data-action="change->invoices#invoiceStatusChangeAction">…</select>
- #   <twig:SaveState data-invoices-target="statusState"/>
+ #   <button … data-action="invoice-status#pick">…</button>
+ #   <twig:SaveState data-invoice-status-target="state"/>
  #}
 {% props state = null %}
 <span {{ attributes.defaults({class: 'save-state', role: 'status'}) }}{% if state %} data-state="{{ state }}"{% endif %}>

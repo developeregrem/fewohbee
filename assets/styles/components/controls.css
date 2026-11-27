@@ -286,6 +286,177 @@ details[open] > summary > .fhb-details-chevron {
     font-size: .62rem;
 }
 
+/* Partially paid has a colour of its own (--feb-partial), Bootstrap has no utility for it */
+.text-partial {
+    color: var(--feb-partial) !important;
+}
+
+.text-partial-emphasis {
+    color: var(--feb-partial-text) !important;
+}
+
+.bg-partial-subtle {
+    background-color: color-mix(in srgb, var(--feb-partial) 12%, var(--feb-surface)) !important;
+}
+
+/* Payment status that changes from the payment means icon in its colour (InvoiceStatusPicker):
+   the icon with an arrow is the toggle, the menu lists the statuses with icon and name and a
+   tick at the current one */
+.invoice-status-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+}
+
+.invoice-status-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .125rem;
+    padding: .125rem .25rem;
+    border: 0;
+    background: none;
+    color: var(--feb-text-muted);
+    border-radius: var(--bs-border-radius-sm);
+}
+
+.invoice-status-toggle:hover {
+    background-color: var(--bs-tertiary-bg);
+}
+
+.invoice-status-toggle:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 var(--bs-focus-ring-width) var(--bs-focus-ring-color);
+}
+
+.invoice-status-picker .btn > .invoice-status-icon {
+    margin-right: .25rem;
+}
+
+.invoice-status-option {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.invoice-status-option.active,
+.invoice-status-option:active {
+    background-color: var(--bs-dropdown-link-hover-bg);
+    color: var(--bs-dropdown-link-hover-color);
+}
+
+.invoice-status-option-check {
+    visibility: hidden;
+    margin-left: auto;
+    padding-left: 1rem;
+    color: var(--feb-text-muted);
+}
+
+.invoice-status-option.active > .invoice-status-option-check {
+    visibility: visible;
+}
+
+/* The status mark sits on the lower right corner of the payment means icon, cut out of it by a
+   ring in the colour of what lies below */
+.invoice-status-icon {
+    position: relative;
+    display: inline-block;
+    line-height: 1;
+}
+
+.invoice-status-mark {
+    position: absolute;
+    right: -.35em;
+    bottom: -.35em;
+    font-size: .8em;
+    border-radius: 50%;
+    background-color: var(--feb-surface);
+    box-shadow: 0 0 0 1.5px var(--feb-surface);
+}
+
+.dropdown-menu .invoice-status-mark {
+    background-color: var(--bs-dropdown-bg);
+    box-shadow: 0 0 0 1.5px var(--bs-dropdown-bg);
+}
+
+.btn .invoice-status-mark {
+    background-color: var(--bs-btn-bg);
+    box-shadow: 0 0 0 1.5px var(--bs-btn-bg);
+}
+
+/* The same menu inside a reservation popover (Reservations/_invoice_status_menu.html.twig): the
+   option shows its own save feedback where the tick sits - a spinner while saving, the tick once
+   it is the stored status, a warning when saving failed.
+   The menu floats over the popover (top/left from initPopoverInvoiceStatus), so the popover keeps
+   its size. */
+.invoice-status-popover-menu {
+    position: absolute;
+    margin: 0;
+    min-width: 0;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    z-index: 1;
+}
+
+.invoice-status-option .invoice-status-option-state > * {
+    display: none;
+}
+
+.invoice-status-option .invoice-status-option-state > .invoice-status-option-check {
+    display: inline-block;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.invoice-status-option.is-saving .invoice-status-option-state > .invoice-status-option-check,
+.invoice-status-option.is-failed .invoice-status-option-state > .invoice-status-option-check {
+    display: none;
+}
+
+.invoice-status-option.is-saving .invoice-status-option-state > .invoice-status-option-saving,
+.invoice-status-option.is-failed .invoice-status-option-state > .invoice-status-option-failed {
+    display: inline-block;
+}
+
+.invoice-status-option.active .invoice-status-option-state > .invoice-status-option-check {
+    visibility: visible;
+}
+
+/* Without the status name the save feedback is an icon only, the words stay for screen readers.
+   In a list row it has a slot of its own left of the status icon, kept whether it shows or not,
+   so the row never moves; on a button it sits on the button's corner. */
+.invoice-status-picker-compact > .save-state {
+    justify-content: center;
+    width: 1rem;
+    min-height: 0;
+}
+
+:is(.invoice-status-picker-compact, .invoice-status-picker-button) .save-state > span {
+    font-size: 0;
+}
+
+.invoice-status-picker-button {
+    position: relative;
+}
+
+.invoice-status-picker-button > .save-state {
+    position: absolute;
+    top: -.5rem;
+    right: -.5rem;
+    z-index: 1;
+    min-height: 0;
+}
+
+/* On the shown icon, so the tick fades out together with its background */
+.invoice-status-picker-button > .save-state > span {
+    padding: .125rem;
+    border-radius: 50%;
+    background-color: var(--feb-surface);
+}
+
+.invoice-status-picker .save-state > span > :is(i, .spinner-border) {
+    font-size: var(--feb-font-size-sm);
+}
+
 /* Feedback of a field that saves itself (SaveState): one of saving, saved, failed */
 .save-state {
     display: inline-flex;

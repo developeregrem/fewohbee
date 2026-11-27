@@ -2175,6 +2175,7 @@ export default class extends Controller {
         this.initClickPopoverDismissal();
         this.initCalendarEntryModal();
         this.initPopoverLinkModal();
+        this.initPopoverInvoiceStatus();
     }
 
     /**
@@ -2303,6 +2304,143 @@ export default class extends Controller {
     // when the trigger cell itself is clicked again. Close them on any click
     // on a link (the popover content links to edit/create a calendar entry)
     // or anywhere outside the popover.
+    // The payment status icon after an invoice number in a reservation's popover opens the status
+    // menu inside the popover, so the pointer never leaves it. The menu floats below the icon (above
+    // it near the bottom of the window) and leaves the popover's size alone; a pick saves at once, its option
+    // shows a spinner and then the tick, and the plan reloads shortly after (invoice:status-changed)
+    // for the new status and any bar colour a workflow changed. Plain click interceptor like
+    // initPopoverLinkModal: the popover content is sanitised HTML outside this controller, and the
+    // menu comes from <template id="invoice-status-popover-menu"> (only there with invoice rights).
+    initPopoverInvoiceStatus() {
+        if (document._reservationPopoverInvoiceStatusBound) {
+            return;
+        }
+        document._reservationPopoverInvoiceStatusBound = true;
+
+        document.addEventListener('click', (event) => {
+            const trigger = event.target.closest('.popover .js-invoice-status');
+            if (trigger) {
+                event.preventDefault();
+                toggleInvoiceStatusMenu(trigger);
+                return;
+            }
+            const option = event.target.closest('.popover .js-invoice-status-option');
+            if (option) {
+                event.preventDefault();
+                pickInvoiceStatus(option);
+                return;
+            }
+            // A click elsewhere closes an open menu, so it never covers the popover for good
+            if (!event.target.closest('.invoice-status-popover-menu')) {
+                document.querySelectorAll('.popover .invoice-status-popover-menu').forEach(closeMenu);
+            }
+        });
+
+        const currentStatus = (trigger) => Number(trigger.className.match(/invoice-status-is-(\d+)/)?.[1]);
+
+        const closeMenu = (menu) => {
+            menu.invoiceStatusTrigger?.setAttribute('aria-expanded', 'false');
+            menu.remove();
+        };
+
+        // Below the icon, or above it where the window ends; kept inside the window sideways.
+        // The popover is the positioned parent, so the menu moves with it.
+        const placeMenu = (menu, trigger, tip) => {
+            const gap = 2;
+            const tipRect = tip.getBoundingClientRect();
+            const iconRect = trigger.getBoundingClientRect();
+            const height = menu.offsetHeight;
+            const width = menu.offsetWidth;
+            const fitsBelow = iconRect.bottom + gap + height <= window.innerHeight;
+            const top = fitsBelow || iconRect.top - gap - height < 0
+                ? iconRect.bottom + gap
+                : iconRect.top - gap - height;
+            const left = Math.max(gap, Math.min(iconRect.left, window.innerWidth - width - gap));
+            menu.style.top = `${top - tipRect.top}px`;
+            menu.style.left = `${left - tipRect.left}px`;
+        };
+
+        const markCurrent = (menu, status) => {
+            menu.querySelectorAll('.js-invoice-status-option').forEach((option) => {
+                const isCurrent = Number(option.dataset.status) === status;
+                option.classList.toggle('active', isCurrent);
+                option.setAttribute('aria-current', String(isCurrent));
+            });
+        };
+
+        const toggleInvoiceStatusMenu = (trigger) => {
+            const tip = trigger.closest('.popover');
+            const template = document.getElementById('invoice-status-popover-menu');
+            if (!tip || !template) {
+                return;
+            }
+            const open = tip.querySelector('.invoice-status-popover-menu');
+            if (open) {
+                closeMenu(open);
+                if (open.invoiceStatusTrigger === trigger) {
+                    return;
+                }
+            }
+            const menu = template.content.firstElementChild.cloneNode(true);
+            menu.invoiceStatusTrigger = trigger;
+            // Every option shows the payment means of this invoice
+            const meansIcon = trigger.querySelector('.invoice-status-icon > i')?.className;
+            if (meansIcon) {
+                menu.querySelectorAll('.invoice-status-icon > i:first-child').forEach((icon) => {
+                    icon.className = meansIcon;
+                });
+            }
+            markCurrent(menu, currentStatus(trigger));
+            // Inside the popover, so the pointer on the menu still counts as on the popover
+            tip.append(menu);
+            placeMenu(menu, trigger, tip);
+            trigger.setAttribute('aria-expanded', 'true');
+        };
+
+        const pickInvoiceStatus = (option) => {
+            const menu = option.closest('.invoice-status-popover-menu');
+            const trigger = menu?.invoiceStatusTrigger;
+            const template = document.getElementById('invoice-status-popover-menu');
+            const status = Number(option.dataset.status);
+            if (!trigger || !template || menu.invoiceStatusSaving || status === currentStatus(trigger)) {
+                return;
+            }
+            menu.invoiceStatusSaving = true;
+            const announce = menu.querySelector('[role="status"]');
+            menu.querySelectorAll('.js-invoice-status-option').forEach((item) => item.classList.remove('is-failed'));
+            option.classList.add('is-saving');
+            httpRequest({
+                url: trigger.getAttribute('href'),
+                method: 'POST',
+                data: { 'invoice-status': status, _token: template.dataset.token },
+                loader: false,
+                onSuccess: () => {
+                    trigger.className = trigger.className.replace(/invoice-status-is-\d+/, `invoice-status-is-${status}`);
+                    trigger.querySelector('.invoice-status-icon')
+                        ?.replaceWith(option.querySelector('.invoice-status-icon').cloneNode(true));
+                    markCurrent(menu, status);
+                    if (announce) {
+                        announce.textContent = announce.dataset.saved || '';
+                    }
+                    // Long enough to see the tick, then the plan shows the new state
+                    window.setTimeout(() => {
+                        document.dispatchEvent(new CustomEvent('invoice:status-changed', { detail: { status } }));
+                    }, 700);
+                },
+                onError: () => {
+                    option.classList.add('is-failed');
+                    if (announce) {
+                        announce.textContent = announce.dataset.failed || '';
+                    }
+                },
+                onComplete: () => {
+                    option.classList.remove('is-saving');
+                    menu.invoiceStatusSaving = false;
+                },
+            });
+        };
+    }
+
     initClickPopoverDismissal() {
         if (document._calendarPopoverDismissalBound) {
             return;

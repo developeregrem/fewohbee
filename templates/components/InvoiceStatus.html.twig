@@ -1,12 +1,12 @@
 {#
  # The payment status of an invoice as a badge, in the same colour wherever it shows: open in
- # amber, partially paid in blue, paid in green, cancelled in grey.
+ # amber, partially paid in violet, paid in green, cancelled in grey.
  #
  #   <twig:InvoiceStatus :status="invoice.status"/>
  #}
 {% props status %}
 {% set key = {1: 'unpaid', 2: 'paid', 3: 'prepaid'}[status] ?? 'canceled' %}
-{% set variant = {unpaid: 'warning', paid: 'success', prepaid: 'info'}[key] ?? 'secondary' %}
+{% set variant = {unpaid: 'warning', paid: 'success', prepaid: 'partial'}[key] ?? 'secondary' %}
 <span {{ attributes.defaults({class: 'badge invoice-status text-' ~ variant ~ '-emphasis bg-' ~ variant ~ '-subtle'}) }}>
     {{- ('invoice.status.' ~ key)|trans -}}
 </span>

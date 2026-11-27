@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Reservation;
 
 /**
@@ -56,18 +55,10 @@ class FrontdeskViewService
                     continue;
                 }
 
-                $invoiceStatusLabel = null;
-                $firstInvoice = $reservation->getInvoices()->first();
-                if ($firstInvoice) {
-                    $statusEnum = InvoiceStatus::fromStatus($firstInvoice->getStatus());
-                    $invoiceStatusLabel = $statusEnum?->labelKey();
-                }
-
                 $items[] = [
                     'reservation' => $reservation,
                     'apartment' => $row['apartment'],
                     'categories' => $categories,
-                    'invoiceStatusLabel' => $invoiceStatusLabel,
                 ];
                 $seen[$reservationId] = true;
             }

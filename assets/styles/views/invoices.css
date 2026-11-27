@@ -10,12 +10,39 @@ details.einvoice-readiness > summary::-webkit-details-marker {
     display: none;
 }
 
-/* Invoice list: payment status, payment means and e-invoice check side by side */
+/* The e-invoice tooltip lists what is missing, one line each */
+.invoice-state-tooltip {
+    --bs-tooltip-max-width: 18rem;
+}
+
+.invoice-state-tooltip .tooltip-inner {
+    white-space: pre-line;
+    text-align: start;
+}
+
+/* The e-invoice icon is small for a finger: its tap area reaches a little beyond it, so a tap
+   meant for its tooltip does not open the invoice */
+@media not all and (hover: hover) and (pointer: fine) {
+    .invoice-state-einvoice {
+        position: relative;
+    }
+
+    .invoice-state-einvoice::after {
+        content: "";
+        position: absolute;
+        inset: -.5rem -.25rem;
+    }
+}
+
+/* Invoice list: payment status (in the payment means icon) and e-invoice check side by side.
+   They never wrap: a table squeezes a column down to its widest single item, so with long names
+   the e-invoice icon would drop below the status menu; the text columns give way instead. */
 .invoice-state {
     display: inline-flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    gap: .25rem .5rem;
+    gap: .5rem;
+    white-space: nowrap;
 }
 
 .invoice-table .data-table-link-text {

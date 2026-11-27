@@ -42,21 +42,8 @@
                     <td class="cell-meta">
                         <span class="invoice-state">
                             <span class="cell-narrow">{{ invoice.date|date('d.m.Y') }}</span>
-                            <twig:InvoiceStatus :status="invoice.status"/>
-                            {% if invoice.paymentMeans %}
-                                {% set paymentMeansIcon = {
-                                    'CASH': 'fa-coins',
-                                    'CREDIT_TRANSFER': 'fa-building-columns',
-                                    'CARD_PAYMENT': 'fa-credit-card',
-                                    'SEPA_CREDIT_TRANSFER': 'fa-building-columns',
-                                    'SEPA_DIRECT_DEBIT': 'fa-money-check'
-                                }[invoice.paymentMeans.name]|default('fa-circle-question') %}
-                                <span class="text-body-secondary" role="img"
-                                      title="{{ invoice.paymentMeans.name|trans }}"
-                                      aria-label="{{ invoice.paymentMeans.name|trans }}">
-                                    <i class="fa-solid {{ paymentMeansIcon }}" aria-hidden="true"></i>
-                                </span>
-                            {% endif %}
+                            {# Payment means icon in the colour of the payment status; a click changes the status #}
+                            <twig:InvoiceStatusPicker :invoice="invoice"/>
                             {# Per invoice, not list-wide: with per-branch issuers the profile can differ. #}
                             {% if readiness and readiness.configured %}
                                 {% if readiness.ready %}
@@ -70,7 +57,11 @@
                                         text: 'invoice.einvoice.status.missing'|trans ~ ':' ~ "\n" ~ readiness.result.messageKeys|map(key => key|trans)|join("\n"),
                                     } %}
                                 {% endif %}
-                                <span class="{{ einvoice.class }}" role="img" title="{{ einvoice.text }}" aria-label="{{ einvoice.text }}">
+                                {# Explains itself in a tooltip, on touch screens with a tap; the tap does
+                                   not open the invoice (data-row-link-ignore) #}
+                                <span class="invoice-state-einvoice {{ einvoice.class }}" role="img"
+                                      data-bs-toggle="tooltip" data-bs-custom-class="invoice-state-tooltip" data-row-link-ignore
+                                      title="{{ einvoice.text }}" aria-label="{{ einvoice.text }}">
                                     <i class="fa-solid fa-{{ einvoice.icon }}" aria-hidden="true"></i>
                                 </span>
                             {% endif %}

@@ -65,6 +65,24 @@
     <a href='{{ path('invoices.get.invoice', {'id': invoice.id}) }}' class='js-invoice-link' title='{{ 'reservation.invoice'|trans }} {{ invoice.number }}'>{{ invoice.number }}</a>
 {%- endmacro %}
 
+{# The payment status after the invoice number: the payment means icon in the colour of the
+   status (Invoices/_status_macros.html.twig). With invoice rights it opens the status menu inside
+   the popover (initPopoverInvoiceStatus in reservations_controller.js). The current status rides
+   on a class, because the popover sanitizer drops data attributes. #}
+{% macro invoice_status(invoice, canChange) -%}
+    {%- import 'Invoices/_status_macros.html.twig' as statusMacros -%}
+    {%- set current = enum('App\\Entity\\Enum\\InvoiceStatus').forDisplay(invoice.status) -%}
+    {%- if canChange -%}
+        <a href='{{ path('invoices.update.status', {'id': invoice.id}) }}' class='js-invoice-status invoice-status-toggle dropdown-toggle invoice-status-is-{{ current.value }}' role='button' aria-expanded='false' title='{{ 'invoice.status.change'|trans }}'>
+            {{- statusMacros.status_icon(invoice.status, invoice.paymentMeans ?? null) -}}
+            <span class='visually-hidden'>{{ current.labelKey|trans }}</span></a>
+    {%- else -%}
+        <span title='{{ current.labelKey|trans }}'>
+            {{- statusMacros.status_icon(invoice.status, invoice.paymentMeans ?? null) -}}
+            <span class='visually-hidden'>{{ current.labelKey|trans }}</span></span>
+    {%- endif -%}
+{%- endmacro %}
+
 {# Open the existing dialog for arrival time, departure time and remark. #}
 {% macro meta_link(reservation, text) -%}
     <a href='{{ path('reservations.edit.remark', {'id': reservation.id}) }}' class='js-reservation-meta-link' title='{{ 'nav.reservation.edit'|trans }}'>{{ text|e|nl2br }}</a>

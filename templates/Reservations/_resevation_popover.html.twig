@@ -50,9 +50,8 @@
             {% set mails = mails ~ popoverMacros.mail_link(address) ~ (loop.last ? "" : ", ") %}
         {% endfor %}
         {% for invoice in reservation.invoices %}
-            {% set invoiceStatus = enum('App\\Entity\\Enum\\InvoiceStatus').fromStatus(invoice.status) %}
             {% set invoiceNumbers = invoiceNumbers ~ (is_granted('ROLE_INVOICES') ? popoverMacros.invoice_link(invoice) : invoice.number|e) %}
-            {% if invoiceStatus %}{% set invoiceNumbers = invoiceNumbers ~ " (" ~ (invoiceStatus.labelKey|trans)|e ~ ")" %}{% endif %}
+            {% set invoiceNumbers = invoiceNumbers ~ " " ~ popoverMacros.invoice_status(invoice, is_granted('ROLE_INVOICES')) %}
             {% if not loop.last %}{% set invoiceNumbers = invoiceNumbers ~ ", " %}{% endif %}
         {% endfor %}
         {# With an invoice the popover states the invoice status instead of the reservation status #}

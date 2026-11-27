@@ -76,6 +76,7 @@ invoice.status.canceled: storniert
 invoice.status.unpaid: offen
 invoice.status.paid: bezahlt
 invoice.status.prepaid: angezahlt
+invoice.status.change: Zahlungsstatus ändern
 invoice.template: 'Rechnungstemplate wählen'
 invoice.template.bound_count: '{1} 1 Vorlage wird automatisch nach Zahlungsmethode gewählt|]1,Inf[ %count% Vorlagen werden automatisch nach Zahlungsmethode gewählt'
 invoice.template.none_found: 'Für diese Rechnung gibt es keine passende Rechnungsvorlage. Lege eine nicht eingebettete Rechnungsvorlage ohne Zahlungsmethode an.'

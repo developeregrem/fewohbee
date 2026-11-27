@@ -1,0 +1,13 @@
+{#
+ # The payment status of an invoice as an icon: the icon of the payment means in the colour of
+ # the status, with the status as a shape at its corner (InvoiceStatus::textClass()/markIcon()).
+ # Single quotes, so the markup also fits into the reservation popover's data-bs-content.
+ # `hook` marks the icon for invoice_status_controller.js / the popover menu to swap it.
+ #}
+{% macro status_icon(status, paymentMeans = null, hook = false) -%}
+    {%- set current = enum('App\\Entity\\Enum\\InvoiceStatus').forDisplay(status) -%}
+    <span class='invoice-status-icon {{ current.textClass }}' aria-hidden='true'{% if hook %} data-invoice-status-icon{% endif %}>
+        {#- -#}<i class='fa-solid fa-fw {{ paymentMeans ? paymentMeans.icon : 'fa-circle-question' }}'></i>
+        {#- -#}<i class='fa-solid {{ current.markIcon }} invoice-status-mark'></i>
+    {#- -#}</span>
+{%- endmacro %}

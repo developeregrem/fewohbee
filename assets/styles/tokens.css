@@ -60,6 +60,8 @@
     --feb-neutral: rgb(var(--feb-neutral-rgb));
     --feb-success: rgb(var(--feb-success-rgb));
     --feb-info: rgb(var(--feb-info-rgb));
+    /* Partly done, set apart from success and info in hue: a partially paid invoice */
+    --feb-partial: rgb(var(--feb-partial-rgb));
     --feb-warning: rgb(var(--feb-warning-rgb));
     --feb-danger: rgb(var(--feb-danger-rgb));
     --feb-on-primary: rgb(var(--feb-on-primary-rgb));
@@ -70,6 +72,7 @@
     --feb-primary-text: rgb(var(--feb-primary-text-rgb));
     --feb-success-text: color-mix(in srgb, var(--feb-success) 80%, var(--feb-text));
     --feb-info-text: color-mix(in srgb, var(--feb-info) 80%, var(--feb-text));
+    --feb-partial-text: color-mix(in srgb, var(--feb-partial) 80%, var(--feb-text));
     --feb-warning-text: color-mix(in srgb, var(--feb-warning) 55%, var(--feb-text));
     --feb-danger-text: color-mix(in srgb, var(--feb-danger) 80%, var(--feb-text));
 

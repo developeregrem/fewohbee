@@ -14,12 +14,8 @@ import {
     enablePopovers,
     setModalTitle
 } from '../js/utils.js';
-import { setSaveState } from '../js/save_state.js';
 
 /* stimulusFetch: 'lazy' */
-
-/* How long the payment status waits after a pick before it saves itself (ms) */
-const STATUS_SAVE_DELAY = 1500;
 
 const debounce = (fn, delay = 300) => {
     let t;
@@ -406,46 +402,6 @@ export default class extends Controller {
         });
     }
 
-    /**
-     * The payment status saves itself shortly after it was picked. The pause lets arrow keys
-     * step through the list (each step is a change on Windows) without saving every stop on the
-     * way - a status change can start an automation, e.g. a mail once an invoice is paid.
-     */
-    invoiceStatusChangeAction(event) {
-        const select = event.currentTarget;
-        clearTimeout(this.statusTimer);
-        setSaveState(document.getElementById('invoice-status-state'), null);
-        this.statusTimer = setTimeout(() => this.saveInvoiceStatus(select), STATUS_SAVE_DELAY);
-    }
-
-    saveInvoiceStatus(select) {
-        const value = select.value;
-        const indicator = document.getElementById('invoice-status-state');
-        if (value === select.dataset.savedValue) {
-            return;
-        }
-        setSaveState(indicator, 'saving');
-        httpRequest({
-            url: select.dataset.url,
-            method: 'POST',
-            data: httpSerializeForm(select.form),
-            loader: false,
-            onSuccess: () => {
-                select.dataset.savedValue = value;
-                setSaveState(indicator, select.value === value ? 'saved' : null);
-                this.doSearch();
-                // The occupancy plan behind the dialog shows the payment status in its popovers,
-                // and a workflow may have changed the reservation status (bar colour) as well.
-                document.dispatchEvent(new CustomEvent('invoice:status-changed'));
-            },
-            onError: () => {
-                // Back to what is stored, so the select never shows an unsaved status
-                select.value = select.dataset.savedValue;
-                setSaveState(indicator, 'failed');
-            },
-        });
-    }
-
     toggleInvoiceEditFieldsAction(event) {
         event.preventDefault();
         this.toggleInvoiceEditFields();
@@ -605,6 +561,12 @@ export default class extends Controller {
             data: `${httpSerializeForm(form)}&${httpSerializeForm('#page')}`,
             target: table,
             loader: false,
+            onSuccess: (html) => {
+                // The tooltips of the status icons go with the rows they belong to
+                disposeTooltips(table);
+                table.innerHTML = html;
+                enableTooltips(table);
+            },
         });
     }
 }

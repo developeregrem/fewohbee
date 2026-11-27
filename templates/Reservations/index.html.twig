@@ -147,6 +147,9 @@
              style="--week-watermark: url('{{ app.request.basepath }}/img/logo-fewohbee.png');">
         </div>
     </div>
+    {% if is_granted('ROLE_INVOICES') %}
+        {{ include('Reservations/_invoice_status_menu.html.twig') }}
+    {% endif %}
     {% if show == 'table' %}
     {# Desktop week view: navbar and filter row are hidden, these controls
        appear while the mouse moves (see initWeekView) #}

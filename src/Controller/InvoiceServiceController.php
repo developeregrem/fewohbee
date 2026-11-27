@@ -899,12 +899,12 @@ class InvoiceServiceController extends AbstractController
      * @return Response
      */
     #[Route('/update/{id}/status', name: 'invoices.update.status', methods: ['POST'])]
-    public function updateStatusAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, EventDispatcherInterface $eventDispatcher, Request $request, $id)
+    public function updateStatusAction(ManagerRegistry $doctrine, EventDispatcherInterface $eventDispatcher, Request $request, $id)
     {
         $em = $doctrine->getManager();
 
-        // The dialog saves the status as soon as it is picked and confirms only a 2xx answer
-        if (!$csrf->validateCSRFToken($request)) {
+        // The dialog and the list badge save the status as soon as it is picked and confirm only a 2xx answer
+        if (!$this->isCsrfTokenValid('invoice-status', $request->request->getString('_token'))) {
             return new Response('', Response::HTTP_FORBIDDEN);
         }
         $invoice = $em->getRepository(Invoice::class)->find($id);

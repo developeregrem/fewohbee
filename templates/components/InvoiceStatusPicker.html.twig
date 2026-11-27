@@ -1,0 +1,63 @@
+{#
+ # The payment status of an invoice that can be changed where it shows. The icon of the payment
+ # means (coins, bank, card …) stands in the colour of the status: open amber, partially paid
+ # violet, paid green, cancelled grey. A mark at its corner repeats the status as a shape (clock,
+ # half circle, tick, cross), since two of the colours are close and colour alone is no signal.
+ # With its arrow it opens a menu of the four statuses (icon, mark and name), and a pick saves at
+ # once (invoice_status_controller.js).
+ # In a list the icon stands alone, the save feedback in a fixed slot left of it. `label` adds the
+ # name of the status and shows the toggle as a button (the invoice dialog); `button` shows the
+ # icon alone on a button, the save feedback at its corner (the front desk cards). Without the
+ # invoices role it is the plain icon.
+ # The reservation popover shows the same icon and menu, see Reservations/_macros.html.twig.
+ #
+ #   <twig:InvoiceStatusPicker :invoice="invoice"/>
+ #   <twig:InvoiceStatusPicker :invoice="invoice" label/>
+ #   <twig:InvoiceStatusPicker :invoice="invoice" button/>
+ #}
+{% props invoice, label = false, button = false %}
+{% import 'Invoices/_status_macros.html.twig' as statusMacros %}
+{% set statusEnum = enum('App\\Entity\\Enum\\InvoiceStatus') %}
+{% set current = statusEnum.forDisplay(invoice.status) %}
+{% set means = invoice.paymentMeans ?? null %}
+{% set meansName = means ? means.name|trans : null %}
+{% if is_granted('ROLE_INVOICES') %}
+<span {{ attributes.defaults({class: 'dropdown invoice-status-picker' ~ (label ? '' : (button ? ' invoice-status-picker-button' : ' invoice-status-picker-compact'))}) }}
+      data-controller="invoice-status"
+      data-invoice-status-id-value="{{ invoice.id }}"
+      data-invoice-status-status-value="{{ invoice.status }}"
+      data-invoice-status-url-value="{{ path('invoices.update.status', {id: invoice.id}) }}"
+      data-invoice-status-token-value="{{ csrf_token('invoice-status') }}">
+    {# Without the name the save feedback has a place of its own (a slot left of the icon, or the
+       button's corner), so nothing around it moves #}
+    {% if not label %}<twig:SaveState data-invoice-status-target="state"/>{% endif %}
+    <button type="button" class="dropdown-toggle {{ label or button ? 'btn btn-secondary' : 'invoice-status-toggle' }}"
+            data-bs-toggle="dropdown" aria-expanded="false"
+            title="{{ meansName ? meansName ~ ' · ' }}{{ 'invoice.status.change'|trans }}" data-invoice-status-target="toggle">
+        {{ statusMacros.status_icon(invoice.status, means, true) }}
+        <span{% if not label %} class="visually-hidden"{% endif %} data-invoice-status-label>{{ current.labelKey|trans }}</span>
+    </button>
+    <ul class="dropdown-menu">
+        {# The payment means is otherwise only in the toggle's title, which a touch screen never shows #}
+        {% if meansName %}<li><h6 class="dropdown-header">{{ meansName }}</h6></li>{% endif %}
+        {% for item in statusEnum.menuOrder %}
+            <li>
+                <button type="button" class="dropdown-item invoice-status-option{{ item == current ? ' active' }}"
+                        aria-current="{{ item == current ? 'true' : 'false' }}"
+                        data-invoice-status-target="option" data-action="invoice-status#pick"
+                        data-invoice-status-status-param="{{ item.value }}">
+                    {{ statusMacros.status_icon(item.value, means, true) }}
+                    <span data-invoice-status-label>{{ item.labelKey|trans }}</span>
+                    <i class="fas fa-check invoice-status-option-check" aria-hidden="true"></i>
+                </button>
+            </li>
+        {% endfor %}
+    </ul>
+    {% if label %}<twig:SaveState data-invoice-status-target="state"/>{% endif %}
+</span>
+{% else %}
+<span {{ attributes }} title="{{ meansName ? meansName ~ ' · ' }}{{ current.labelKey|trans }}">
+    {{ statusMacros.status_icon(invoice.status, means) }}
+    <span{% if not label %} class="visually-hidden"{% endif %}>{{ current.labelKey|trans }}</span>
+</span>
+{% endif %}

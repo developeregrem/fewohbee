@@ -1,0 +1,23 @@
+{# The payment status menu of the reservation popover. The popover is built from a sanitised HTML
+   string, so the menu cannot live in it: initPopoverInvoiceStatus (reservations_controller.js)
+   clones this template into the open popover, floating below the status icon, and gives each option the payment
+   means icon of that invoice. The token is the same for every invoice. #}
+{% import 'Invoices/_status_macros.html.twig' as statusMacros %}
+<template id="invoice-status-popover-menu" data-token="{{ csrf_token('invoice-status') }}">
+    <div class="dropdown-menu show invoice-status-popover-menu">
+        {% for item in enum('App\\Entity\\Enum\\InvoiceStatus').menuOrder %}
+            <button type="button" class="dropdown-item invoice-status-option js-invoice-status-option"
+                    data-status="{{ item.value }}" aria-current="false">
+                {{ statusMacros.status_icon(item.value) }}
+                <span>{{ item.labelKey|trans }}</span>
+                <span class="invoice-status-option-state ms-auto ps-3" aria-hidden="true">
+                    <i class="fas fa-check invoice-status-option-check"></i>
+                    <span class="spinner-border spinner-border-sm invoice-status-option-saving"></span>
+                    <i class="fas fa-triangle-exclamation text-danger invoice-status-option-failed"></i>
+                </span>
+            </button>
+        {% endfor %}
+        <span class="visually-hidden" role="status"
+              data-saved="{{ 'save.state.saved'|trans }}" data-failed="{{ 'save.state.failed'|trans }}"></span>
+    </div>
+</template>

@@ -262,27 +262,16 @@
         </div>
 
 
-        {# Payment status, saved as soon as it is picked, and the e-invoice check; the footer holds the actions on the invoice #}
-        <form id="invoice-form-status" role="form" class="row g-2 align-items-center mt-3">
-            <div class="col-12 col-sm-auto">
-                <select id="invoce-status" name="invoice-status" class="form-select" aria-label="{{ 'invoice.status'|trans }}"
-                        data-url="{{ path('invoices.update.status', {'id': invoice.id}) }}"
-                        data-saved-value="{{ invoice.status }}"
-                        data-action="change->invoices#invoiceStatusChangeAction">
-                    <option value="1"{% if invoice.status == 1 %} selected{% endif %}>{{ 'invoice.status.unpaid'|trans }}</option>
-                    <option value="3"{% if invoice.status == 3 %} selected{% endif %}>{{ 'invoice.status.prepaid'|trans }}</option>
-                    <option value="2"{% if invoice.status == 2 %} selected{% endif %}>{{ 'invoice.status.paid'|trans }}</option>
-                    <option value="4"{% if invoice.status == 4 %} selected{% endif %}>{{ 'invoice.status.canceled'|trans }}</option>
-                </select>
-            </div>
+        {# Payment status, saved as soon as it is picked from its menu, and the e-invoice check;
+           the footer holds the actions on the invoice #}
+        <div id="invoice-form-status" class="row g-2 align-items-center mt-3">
             <div class="col-auto">
-                <twig:SaveState id="invoice-status-state"/>
+                <twig:InvoiceStatusPicker :invoice="invoice" label/>
             </div>
             <div class="col-12 col-sm text-sm-end">
                 {% include 'Invoices/_einvoice_readiness.html.twig' %}
             </div>
-            <input name="_csrf_token" value="{{ token }}" type="hidden">
-        </form>
+        </div>
     </div>
 </div>
 

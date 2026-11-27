@@ -70,6 +70,24 @@
     margin-top: .5rem;
 }
 
+/* The invoice and its payment status share the first of the three places */
+.frontdesk-card-invoice {
+    display: flex;
+    gap: .25rem;
+    min-width: 0;
+}
+
+.frontdesk-card-invoice > .btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .375rem;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
 .frontdesk-card-actions > .btn {
     display: flex;
     align-items: center;
