@@ -166,7 +166,20 @@
             return;
         }
 
-        target.scrollIntoView({ block: 'start', behavior: 'auto' });
+        if (window.parent !== window) {
+            // Embedded: let the host scroll, once the new height is applied.
+            var send = function () {
+                var offset = Math.round(target.getBoundingClientRect().top + window.scrollY);
+                window.parent.postMessage({ type: 'fhb-scroll', offset: offset }, '*');
+            };
+            if ('complete' === document.readyState) {
+                send();
+            } else {
+                window.addEventListener('load', send, { once: true });
+            }
+        } else {
+            target.scrollIntoView({ block: 'start', behavior: 'auto' });
+        }
         if (typeof target.focus === 'function') {
             target.focus({ preventScroll: true });
         }
