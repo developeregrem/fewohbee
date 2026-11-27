@@ -1,7 +1,8 @@
-{{ form_start(form) }}
-    {# Accounts and the remark are marked wide: where the panel lays the form out in two columns
-       (a phone held sideways, see dialogs.css) they keep the whole width, so a long account name
-       stays readable #}
+{# On a phone the form stands in two columns (form-columns, see dialogs.css), so it fits without
+   scrolling. Accounts and the remark are marked wide and keep the whole width, so a long account
+   name stays readable. The fields come in the order they are shown, also in pairs: the tax rate
+   right after the amount. #}
+{{ form_start(form, {attr: form.vars.attr|merge({class: ((form.vars.attr.class ?? '') ~ ' form-columns')|trim})}) }}
     {% if batch is defined and batch %}
         <input type="hidden" name="batchId" value="{{ batch.id }}">
     {% endif %}
@@ -11,15 +12,17 @@
     {% if form.direction is defined %}
         {{ form_row(form.direction) }}
         {{ form_row(form.category, {row_attr: {class: 'mb-3 form-row-wide'}}) }}
+        {{ form_row(form.taxRate) }}
     {% else %}
+        {{ form_row(form.taxRate) }}
         {{ form_row(form.debitAccount, {row_attr: {class: 'mb-3 form-row-wide'}}) }}
         {{ form_row(form.creditAccount, {row_attr: {class: 'mb-3 form-row-wide'}}) }}
     {% endif %}
-    {{ form_row(form.taxRate) }}
     {{ form_row(form.invoiceNumber) }}
-    {# The explanation is a tooltip, not a help line beneath, so the form fits a phone held
-       sideways in two columns without scrolling #}
-    <div class="mb-3 row">
+    {# The explanation is a tooltip, not a help line beneath, so the form fits a phone in two
+       columns without scrolling. Beside the invoice number it forms a pair; in the cash book the
+       tax rate pairs with the invoice number, so the checkbox has the whole width. #}
+    <div class="mb-3 row{{ form.direction is defined ? ' form-row-wide' }}">
         <div class="col-sm-4"></div>
         <div class="col-sm d-flex align-items-center">
             {{ form_widget(form.requiresDocumentNumber) }}
