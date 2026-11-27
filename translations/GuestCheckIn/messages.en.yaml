@@ -32,7 +32,7 @@ guest_checkin:
     section_general: "General"
     section_general_desc: "Before arriving, guests enter their arrival time and the details for the registration form."
     how:
-      link: "Every reservation gets its own link. You send it by email with an automation, paste it into e.g. the Airbnb chat or print it as a QR code."
+      link: "Every reservation gets its own link. You send it by email with an automation, paste it into e.g. the chat of a booking portal or print it as a QR code."
       verify: "Whoever opens the link first confirms arrival, departure and the last name of the booking. Only then are booking details shown."
       form: "The form comes prefilled with everything you already know about the guests, so returning guests only check and complete it. ID numbers are never shown in full. The guest can correct the details until the day of arrival."
       review: "You review the details in the reservation on the \"Check-in\" tab and confirm the check-in with one click, which puts them into the guest records."
@@ -70,6 +70,7 @@ guest_checkin:
     preview_banner: "Preview with sample data: this is how your guests see the check-in page. Nothing can be sent from here."
     preview_form: "Form"
     preview_stay: "After sending"
+    preview_views: "Preview view"
     preview_sample_firstname: "Jane"
     preview_sample_lastname: "Doe"
     preview_sample_companion: "John"

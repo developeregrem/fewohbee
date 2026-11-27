@@ -360,7 +360,10 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   failures with an error status so the tick only follows a real save),
   `<twig:Autocomplete>` (suggestions while typing, from a JSON endpoint; the page reacts to
   `autocomplete:select`), `<twig:DatePager>` (a day or week with arrows and swipe paging), `<twig:Pager>` (a year select
-  or a named period such as a month between paging arrows). `<twig:PageHeader>` takes `back` and
+  or a named period such as a month between paging arrows), `<twig:SectionHeader>` (head of a
+  section card: icon, title, description), `<twig:SaveBar>` (saves a form that runs over several
+  section cards: a bar that stays in view at the bottom, on touch screens a floating button in
+  the place of the round add button). `<twig:PageHeader>` takes `back` and
   `backLabel` on a page below another one. Use them instead of writing their markup by hand; extra attributes
   (`data-action`, `data-url` …) pass through. The content of a component is rendered in the
   component's own template: blocks pulled in with `{% use %}` / `block()` and macros imported by
@@ -407,6 +410,11 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   Navigation entries are described once in `templates/layout/_app_nav.html.twig`. Settings pages
   are not in the navigation: a new one is added to the settings overview
   (`templates/Settings/index.html.twig`); everything below `/settings` marks the settings entry.
+- A page that covers several topics (the larger settings pages) shows each topic as a
+  `section.card` headed by `<twig:SectionHeader>` with an icon that names the topic at a glance;
+  the section's `aria-labelledby` points at its `headingId`. A form in a single card saves in the
+  card footer; one form over several cards ends with `<twig:SaveBar>`. A page with a save bar
+  has no round add button: its lists keep their add button in their own section.
 - `btn-secondary` is the neutral button, `btn-primary` the one main action of a view. Use
   `text-body-secondary` for muted text.
 - Forms are rendered through the form theme `templates/form/fewohbee_bootstrap_5_layout.html.twig`

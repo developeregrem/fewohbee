@@ -5,14 +5,13 @@
 {% block banner %}
     {% if preview|default(false) %}
         {# Settings preview with sample data; nothing on this page reaches the server. #}
-        <div class="alert alert-info small d-flex flex-wrap align-items-center gap-2">
-            <span class="me-auto">{{ 'guest_checkin.settings.preview_banner'|trans }}</span>
-            {# Light buttons: the theme draws info alerts as a solid purple gradient with white text. #}
-            <div class="btn-group btn-group-sm" role="group">
+        <div class="fhb-gci-preview">
+            <p class="fhb-gci-preview-text"><i class="fas fa-eye" aria-hidden="true"></i>{{ 'guest_checkin.settings.preview_banner'|trans }}</p>
+            <nav class="fhb-gci-preview-switch" aria-label="{{ 'guest_checkin.settings.preview_views'|trans }}">
                 {% for view in ['form', 'stay'] %}
-                    <a class="btn {{ previewView == view ? 'btn-light fw-semibold' : 'btn-outline-light' }}" href="{{ path('settings.guest_checkin.preview', {'view': view}) }}"{% if previewView == view %} aria-current="page"{% endif %}>{{ ('guest_checkin.settings.preview_' ~ view)|trans }}</a>
+                    <a href="{{ path('settings.guest_checkin.preview', {'view': view}) }}"{% if previewView == view %} aria-current="page"{% endif %}>{{ ('guest_checkin.settings.preview_' ~ view)|trans }}</a>
                 {% endfor %}
-            </div>
+            </nav>
         </div>
     {% endif %}
 {% endblock %}

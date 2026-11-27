@@ -32,7 +32,7 @@ guest_checkin:
     section_general: "Allgemein"
     section_general_desc: "Gäste geben vor der Anreise ihre Anreisezeit und die Daten für den Meldeschein an."
     how:
-      link: "Jede Reservierung bekommt einen eigenen Link. Du verschickst ihn per Mail über eine Automatisierung, kopierst ihn z. B. in den Airbnb-Chat oder druckst ihn als QR-Code."
+      link: "Jede Reservierung bekommt einen eigenen Link. Du verschickst ihn per Mail über eine Automatisierung, kopierst ihn z. B. in den Chat eines Buchungsportals oder druckst ihn als QR-Code."
       verify: "Wer den Link öffnet, bestätigt zuerst Anreise, Abreise und Nachnamen der Buchung. Erst danach sind Buchungsdaten zu sehen."
       form: "Das Formular ist mit allem vorausgefüllt, was du schon über die Gäste weißt – Stammgäste prüfen und ergänzen nur noch. Ausweisnummern erscheinen dabei nie im Klartext. Der Gast kann seine Angaben bis zum Anreisetag korrigieren."
       review: "Du prüfst die Angaben in der Reservierung im Reiter „Check-in“ und bestätigst den Check-in per Klick – dabei landen sie in den Gästedaten."
@@ -70,6 +70,7 @@ guest_checkin:
     preview_banner: "Vorschau mit Beispieldaten: So sehen deine Gäste die Check-in-Seite. Absenden ist hier nicht möglich."
     preview_form: "Formular"
     preview_stay: "Nach dem Absenden"
+    preview_views: "Ansicht der Vorschau"
     preview_sample_firstname: "Erika"
     preview_sample_lastname: "Mustermann"
     preview_sample_companion: "Max"

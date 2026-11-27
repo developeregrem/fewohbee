@@ -56,6 +56,15 @@
         .fhb-gci-checklist > li > i { margin-top: .2rem; width: 1rem; text-align: center; }
         .fhb-gci-checklist-label { display: block; color: var(--fhb-text-muted); font-size: .8125rem; }
         .fhb-gci-checklist ul { list-style: none; padding: 0; margin: 0; }
+        /* Settings preview: a bar above the guest card, marked as not part of the guest page */
+        .fhb-gci-preview { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .625rem 1rem; margin-bottom: .75rem; padding: .625rem .75rem; border: 1px dashed color-mix(in srgb, var(--fhb-primary) 40%, transparent); border-radius: var(--fhb-radius-sm); background: color-mix(in srgb, var(--fhb-primary) 5%, var(--fhb-surface)); }
+        .fhb-gci-preview-text { flex: 1 1 16rem; margin: 0; color: var(--fhb-text-muted); font-size: .875rem; }
+        .fhb-gci-preview-text > i { color: var(--fhb-primary); margin-right: .375rem; }
+        .fhb-gci-preview-switch { display: flex; flex: 1 1 100%; border: 1px solid var(--fhb-border); border-radius: var(--fhb-radius-sm); background: var(--fhb-surface); overflow: hidden; }
+        .fhb-gci-preview-switch a { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: .375rem .875rem; color: var(--fhb-text-muted); font-size: .875rem; white-space: nowrap; text-decoration: none; }
+        .fhb-gci-preview-switch a + a { border-left: 1px solid var(--fhb-border); }
+        .fhb-gci-preview-switch a:hover { color: var(--fhb-text); background: var(--fhb-surface-muted); }
+        .fhb-gci-preview-switch a[aria-current="page"] { color: var(--fhb-text); font-weight: 600; background: color-mix(in srgb, var(--fhb-primary) 12%, var(--fhb-surface)); }
         /* iOS Safari collapses empty date/time inputs and centres their text. */
         .fhb-booking-root input[type="date"].form-control,
         .fhb-booking-root input[type="time"].form-control { -webkit-appearance: none; appearance: none; min-height: calc(1.5em + 1.1rem + 2px); }
@@ -63,6 +72,8 @@
         .fhb-booking-root input[type="time"]::-webkit-date-and-time-value { text-align: left; }
         @media (min-width: 576px) {
             .fhb-booking-root { padding: 2rem 1rem; }
+            .fhb-gci-preview { padding-left: 1rem; }
+            .fhb-gci-preview-switch { flex: 0 0 auto; }
             .fhb-gci-extra-choice.form-check.form-switch { align-items: center; }
             .fhb-gci-extra-choice .form-check-input { margin-top: 0; }
         }
@@ -71,8 +82,8 @@
 <body>
 <div class="fhb-booking-root">
     <div class="fhb-shell">
+        {% block banner %}{% endblock %}
         <div class="fhb-booking-card">
-            {% block banner %}{% endblock %}
             <div class="fhb-gci-top">
                 <p class="fhb-gci-house">{% block house %}{% endblock %}</p>
                 {% if token is defined %}
