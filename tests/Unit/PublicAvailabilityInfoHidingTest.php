@@ -109,8 +109,27 @@ final class PublicAvailabilityInfoHidingTest extends TestCase
 
         self::assertCount(1, $result);
         self::assertSame(2, $result[0]['availableCount']);
-        self::assertCount(2, $result[0]['roomIds'], 'roomIds must be trimmed alongside the visible count');
-        self::assertSame([1, 2], $result[0]['roomIds']);
+        self::assertSame(2, $result[0]['occupancyAvailableCounts'][2]);
+    }
+
+    /** A 2-bed and a 4-bed flat, one room requested: 4 guests can still pick the larger one. */
+    public function testCapKeepsTheRoomThatSeatsTheParty(): void
+    {
+        $flats = $this->roomCategory(1, 'Ferienwohnung');
+        $this->appartmentRepository->method('findForPublicBooking')->willReturn([
+            $this->createRoom(4, 2, $flats),
+            $this->createRoom(9, 4, $flats),
+        ]);
+
+        $result = $this->service->getAvailability(
+            new \DateTimeImmutable('2026-08-07'),
+            new \DateTimeImmutable('2026-08-14'),
+            4,
+            1,
+        );
+
+        self::assertSame(1, $result[0]['availableCount']);
+        self::assertSame(1, $result[0]['occupancyAvailableCounts'][4]);
     }
 
     /** Fewer rooms than requested: the real count stays, nothing is invented. */
