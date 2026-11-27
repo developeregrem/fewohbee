@@ -144,6 +144,48 @@ final class MonthlyStatsServiceCategoryTest extends TestCase
         self::assertEqualsWithDelta(3.0, $metrics['tourism']['overnights_by_country_and_category']['DE'][$adultCatId], 0.0001);
     }
 
+    public function testRoomNightsAreCountedSeparatelyFromGuestOvernights(): void
+    {
+        $statusId = 1;
+
+        // 5 nights with 2 guests, plus a stay over the month end with 4 guests of which only the
+        // night of Mar 31 falls into March: 6 room nights, but 5 × 2 + 1 × 4 = 14 guest overnights.
+        $reservations = [
+            $this->makeReservation(
+                '2026-03-10',
+                '2026-03-15',
+                persons: 2,
+                statusId: $statusId,
+                guestCounts: [1 => 2],
+                customers: [$this->makeCustomer('DE'), $this->makeCustomer('DE')],
+            ),
+            $this->makeReservation(
+                '2026-03-31',
+                '2026-04-05',
+                persons: 4,
+                statusId: $statusId,
+                guestCounts: [1 => 4],
+                customers: [],
+                booker: $this->makeCustomer('DE'),
+            ),
+            // A status that does not count in the statistics adds no room nights.
+            $this->makeReservation(
+                '2026-03-01',
+                '2026-03-08',
+                persons: 1,
+                statusId: 99,
+                guestCounts: [1 => 1],
+                customers: [$this->makeCustomer('DE')],
+            ),
+        ];
+
+        $metrics = $this->buildMetrics($reservations, $statusId);
+
+        self::assertSame(6, $metrics['summary']['room_nights_total']);
+        self::assertSame(14, $metrics['summary']['nights_total']);
+        self::assertSame(14, $metrics['tourism']['overnights_total']);
+    }
+
     /**
      * @param Reservation[] $reservations
      *
