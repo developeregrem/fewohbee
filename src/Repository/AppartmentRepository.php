@@ -61,6 +61,30 @@ class AppartmentRepository extends ServiceEntityRepository
     }
 
     /**
+     * Include inactive rooms for historical references and older rooms without a branch or category.
+     *
+     * @return list<array{id: int, number: string, description: string, objectId: ?int, roomCategoryId: ?int, kind: string, active: bool}>
+     */
+    public function findRoomMasterData(?int $objectId): array
+    {
+        // Match Appartment::getKind() for rooms with no category.
+        $qb = $this->createBaseQueryBuilder()
+            ->leftJoin('a.roomCategory', 'c')
+            ->select('a.id, a.number, a.description, o.id AS objectId, c.id AS roomCategoryId')
+            ->addSelect('COALESCE(c.kind, :accommodationKind) AS kind', 'a.active')
+            ->setParameter('accommodationKind', RoomCategoryKind::ACCOMMODATION->value);
+
+        if (null !== $objectId) {
+            $qb->andWhere('a.object = :objectId')->setParameter('objectId', $objectId);
+        }
+
+        return $this->addDefaultSorting($qb)
+            ->addOrderBy('a.id', \SortDirection::Ascending)
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    /**
      * Load all apartment IDs for configuration resolution in Online Booking.
      *
      * @return int[]

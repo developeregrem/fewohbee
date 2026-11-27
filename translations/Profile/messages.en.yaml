@@ -51,6 +51,7 @@ profile:
       prices_read: Prices
       tourist_tax_read: Tourist tax
       subsidiaries_read: Branches (master data and opening hours)
+      apartments_read: Read room master data
       availability_read: Availability (free and booked rooms, no reservation data)
       mcp_access: AI assistant (MCP)
       guests_read: Guest data (names, contact details, remarks)
@@ -87,6 +88,7 @@ profile:
         prices_read: prices
         tourist_tax_read: tourist tax
         subsidiaries_read: branches
+        apartments_read: room master data
         availability_read: availability
         operations_read: operations
         guests_read: guest data
