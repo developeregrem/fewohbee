@@ -264,7 +264,17 @@ details[open] > summary > .fhb-details-chevron {
     align-items: center;
     justify-content: center;
     width: 2.25rem;
+    height: 2.25rem;
     vertical-align: middle;
+}
+
+/* As large as the icon buttons beside it on touch screens, so the actions of every row stand in
+   the same places */
+@media (pointer: coarse) {
+    .icon-slot {
+        width: 2.75rem;
+        height: 2.75rem;
+    }
 }
 
 /* Switch of a record among a row's actions (ActiveToggle): green while on */

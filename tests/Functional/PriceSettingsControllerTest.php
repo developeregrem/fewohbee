@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** HTTP and persistence coverage for prices bound to several room categories, including the conflict check. */
@@ -131,8 +132,12 @@ final class PriceSettingsControllerTest extends WebTestCase
         self::assertSame('Stadtfest', $period->getDescription());
         self::assertSame('2031-05-03', $period->getEnd()?->format('Y-m-d'));
 
-        $client->request('GET', '/settings/prices/');
-        self::assertStringContainsString('01.05.2031 - 03.05.2031 <span class="text-body-secondary small">Stadtfest</span>', (string) $client->getResponse()->getContent());
+        // The list names the period with its description
+        $crawler = $client->request('GET', '/settings/prices/');
+        $periods = $crawler->filter('.price-table td')->reduce(
+            static fn (Crawler $cell): bool => str_contains($cell->text(), '01.05.2031 – 03.05.2031 Stadtfest')
+        );
+        self::assertCount(1, $periods);
     }
 
     #[DataProvider('rejectedEdits')]

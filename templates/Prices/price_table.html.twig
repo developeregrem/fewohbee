@@ -1,6 +1,7 @@
 {# The prices of one group of room categories, room prices and then other prices. The
    description opens the price for editing; on phones a price is a block: description, then persons, period,
-   weekdays and amount beneath. #}
+   weekdays and amount beneath. Periods, the surcharge text and the tax rate (beneath the amount)
+   may wrap, so the table fits a tablet held sideways without scrolling. #}
 {% use "common/delete_popover.html.twig" %}
 
 <div class="table-responsive">
@@ -10,9 +11,8 @@
     <th>{{ 'price.description'|trans }}</th>
     <th class="text-center">{{ 'price.persons'|trans }}</th>
     <th>{{ 'price.season'|trans }}</th>
-    <th>{{ 'price.daysinweek'|trans }}</th>
+    <th>{{ 'price.weekdays'|trans }}</th>
     <th class="text-end">{{ 'price.price'|trans }}</th>
-    <th class="text-end">{{ 'price.vat'|trans }}</th>
     <th class="data-table-actions"><span class="visually-hidden">{{ 'base.action'|trans }}</span></th>
 </tr>
 </thead>
@@ -51,7 +51,7 @@
             {%- if price.numberOfPersons is not null -%}
                 {{ price.hasExtraPersonSurcharge ? 'price.numberofpersons.up_to_count'|trans({'%count%': price.numberOfPersons}) : price.numberOfPersons }}
                 {% if price.hasExtraPersonSurcharge %}
-                    <div class="small text-body-secondary text-nowrap">{{ 'price.extra_person_surcharge.short'|trans({'%amount%': price.extraPersonSurcharge|number_format(2, ',', '.') ~ ' ' ~ currency_symbol}) }}</div>
+                    <div class="small text-body-secondary">{{ 'price.extra_person_surcharge.short'|trans({'%amount%': price.extraPersonSurcharge|number_format(2, ',', '.') ~ ' ' ~ currency_symbol}) }}</div>
                 {% endif %}
             {%- else -%}
                 -
@@ -63,7 +63,7 @@
                 {{ 'price.abbreviation.alldays'|trans }}
             {%- else -%}
                 {% for pricePeriod in price.pricePeriods %}
-                    <span class="d-block d-md-inline-block text-nowrap">{{ pricePeriod.start|date('d.m.Y') }} - {{ pricePeriod.end|date('d.m.Y') }}{% if pricePeriod.description %} <span class="text-body-secondary small">{{ pricePeriod.description }}</span>{% endif %}</span>
+                    <span class="d-block"><span class="text-nowrap">{{ pricePeriod.start|date('d.m.Y') }} –</span> <span class="text-nowrap">{{ pricePeriod.end|date('d.m.Y') }}</span>{% if pricePeriod.description %} <span class="text-body-secondary small">{{ pricePeriod.description }}</span>{% endif %}</span>
                 {% endfor %}
             {%- endif -%}
         </td>
@@ -77,8 +77,9 @@
         </td>
         <td class="cell-meta text-end text-nowrap price-amount">
             {{- price.price|number_format(2, ',', '.') }}<span class="cell-narrow"> {{ currency_symbol }} · {{ 'price.vat'|trans }} {{ vat }} %</span>
+            {#- The tax rate beneath the amount rather than in a column of its own, so the description keeps its room -#}
+            <div class="cell-wide small text-body-secondary">{{ 'price.vat'|trans }} {{ vat }} %</div>
         </td>
-        <td class="cell-wide text-end">{{ vat }}</td>
         <td class="cell-actions data-table-actions text-end">
             <twig:ActiveToggle :action="path('prices.toggle.price', {'id': price.id})"
                                :token="csrf_token('price-toggle-' ~ price.id)" :active="price.active"
