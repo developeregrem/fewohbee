@@ -56,22 +56,7 @@
         <span hidden data-fhb-room="{{ calendarRooms[0].uuid }}" data-fhb-capacity="{{ calendarRooms[0].maxGuests }}"></span>
     {% endif %}
 
-    {# Paging rather than appending: the window is replaced, so the widget keeps a
-       constant height and a date a year out is one pick instead of twelve clicks.
-       The month list is filled by the widget from the booking horizon. #}
-    <div class="fhb-cal-nav">
-        <button type="button" class="fhb-cal-nav-btn" data-fhb-calendar-prev
-                aria-label="{{ 'online_booking.public.calendar.previous_months'|trans }}">&lsaquo;</button>
-        <select class="form-select form-select-sm fhb-cal-jump" data-fhb-calendar-jump
-                aria-label="{{ 'online_booking.public.calendar.jump_to_month'|trans }}"></select>
-        <button type="button" class="fhb-cal-nav-btn" data-fhb-calendar-next
-                aria-label="{{ 'online_booking.public.calendar.next_months'|trans }}">&rsaquo;</button>
-    </div>
-
-    <div class="fhb-cal-grid" data-fhb-calendar-grid></div>
-    <div class="fhb-cal-foot">
-        <span class="fhb-cal-status" data-fhb-calendar-status role="status" aria-live="polite"></span>
-    </div>
+    {{ include('PublicBooking/themes/modern/_calendar_body.html.twig') }}
 </div>
 
 {# One accommodation per calendar booking, so the count is never a question. #}

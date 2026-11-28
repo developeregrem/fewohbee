@@ -207,6 +207,7 @@ online_booking:
     decrease: "Verringern"
     calendar:
       title: "Verfügbarkeit"
+      title_dates: "Reisezeitraum"
       room_label: "Unterkunft"
       legend_free: "frei"
       legend_busy: "belegt"

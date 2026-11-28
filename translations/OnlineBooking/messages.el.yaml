@@ -300,6 +300,7 @@ online_booking:
     decrease: Μείωση
     calendar:
       title: Διαθεσιμότητα
+      title_dates: Ημερομηνίες ταξιδιού
       room_label: Κατάλυμα
       legend_free: ελεύθερο
       legend_busy: κρατημένο

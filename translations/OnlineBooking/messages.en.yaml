@@ -207,6 +207,7 @@ online_booking:
     decrease: "Decrease"
     calendar:
       title: "Availability"
+      title_dates: "Travel dates"
       room_label: "Accommodation"
       legend_free: "free"
       legend_busy: "booked"

@@ -10,6 +10,10 @@
  * half-open like the backend: a departure day is not an occupied night, so the
  * guest can arrive on the day another guest leaves.
  *
+ * With data-fhb-calendar-picker the widget is a plain date-range picker for the
+ * search: no room, no availability requests, every night from today up to the
+ * booking horizon is selectable. The search answers availability per category.
+ *
  * Months are paged, not appended: the visible window is replaced when navigating,
  * which keeps the widget at a constant height. That matters most when embedded,
  * where the host sizes the iframe to the content and a growing calendar would
@@ -62,6 +66,9 @@
 
     function Calendar(root) {
         this.root = root;
+        // Rendered hidden where a visitor without JavaScript would otherwise see an
+        // empty, dead widget. Shown first: the width measured below needs layout.
+        root.hidden = false;
         this.endpoint = root.dataset.fhbCalendar;
         this.labels = JSON.parse(root.dataset.fhbCalendarLabels || '{}');
         this.locale = root.dataset.fhbCalendarLocale || 'de';
@@ -86,8 +93,9 @@
         /** The server's today: it validates the stay, so the guest's clock may not undercut it. */
         this.serverToday = root.dataset.fhbCalendarToday || null;
         this.todayKey = this.currentToday();
-        /** Exclusive end of the booking horizon once the server reported it. */
-        this.horizonEnd = null;
+        this.picker = root.hasAttribute('data-fhb-calendar-picker');
+        /** Exclusive end of the booking horizon: rendered for the picker, else reported by the server. */
+        this.horizonEnd = this.picker ? (root.dataset.fhbCalendarHorizonEnd || null) : null;
         this.firstMonth = startOfMonth(new Date());
         this.lastMonth = addMonths(this.firstMonth, this.monthsAhead - 1);
         this.viewMonth = this.firstMonth;
@@ -102,6 +110,10 @@
         this.bindGrid();
 
         this.restoreRoom();
+        if (this.picker) {
+            // No room to select, so nothing else triggers the first render.
+            this.render();
+        }
         this.restoreSelection();
         this.takeOverDateFields();
     }
@@ -551,11 +563,18 @@
     /* ── Selection ────────────────────────────────────────────────────── */
 
     /**
-     * A night is bookable when the server said so; unknown nights stay unselectable.
-     * The server reports whole months, so nights earlier today are filtered here.
+     * Whether a night can be booked. Never before today. The picker allows every
+     * night up to the booking horizon; the availability calendar only those the
+     * server reported as free, so nights not loaded yet stay unselectable.
      */
     Calendar.prototype.isNightFree = function (key) {
-        return key >= this.todayKey && this.nights[key] === true;
+        if (key < this.todayKey) {
+            return false;
+        }
+        if (this.picker) {
+            return this.horizonEnd === null || key < this.horizonEnd;
+        }
+        return this.nights[key] === true;
     };
 
     /** The latest possible departure for an arrival: the morning after the last free night. */
@@ -669,6 +688,11 @@
         if (!from || !to || from >= to || from < this.todayKey) {
             return;
         }
+        // The picker knows every rule up front, so a range it could not have
+        // produced (e.g. past the horizon) is not shown as a valid choice.
+        if (this.picker && !this.canDepart(from, to)) {
+            return;
+        }
 
         this.selectionStart = from;
         this.selectionEnd = to;
@@ -723,6 +747,12 @@
                 input.type = 'hidden';
             }
         });
+
+        // The picker shows no availability, so the button keeps promising the check.
+        if (this.picker) {
+            this.describeSelection();
+            return;
+        }
 
         document.querySelectorAll('[data-fhb-label-default]').forEach(function (label) {
             label.hidden = true;
