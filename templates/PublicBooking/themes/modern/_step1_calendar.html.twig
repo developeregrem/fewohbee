@@ -14,6 +14,7 @@
      data-fhb-calendar="{{ path('public.booking.calendar_data') }}"
      data-fhb-calendar-labels="{{ calendarLabels|json_encode }}"
      data-fhb-calendar-locale="{{ app.request.locale }}"
+     data-fhb-calendar-today="{{ minArrivalDate }}"
      data-fhb-calendar-months="{{ calendarHorizonMonths|default(12) }}">
     <div class="fhb-cal-head">
         <span class="fhb-section-title mb-0">
