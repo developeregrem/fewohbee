@@ -479,9 +479,9 @@
                                 <div class="fhb-booking-summary mt-3">
                                     <div class="small text-body-secondary mb-1">{{ 'online_booking.public.summary_title'|trans }}</div>
                                     <div class="small mb-1">
-                                        <strong>{{ 'online_booking.public.arrival'|trans }}:</strong> {{ search.dateFrom }}
+                                        <strong>{{ 'online_booking.public.arrival'|trans }}:</strong> {{ search.dateFrom|localized_date }}
                                         <span class="mx-1">|</span>
-                                        <strong>{{ 'online_booking.public.departure'|trans }}:</strong> {{ search.dateTo }}
+                                        <strong>{{ 'online_booking.public.departure'|trans }}:</strong> {{ search.dateTo|localized_date }}
                                         <span class="mx-1">|</span>
                                         <strong>{{ 'online_booking.public.persons'|trans }}:</strong> {{ search.persons }}
                                         <span class="mx-1">|</span>
