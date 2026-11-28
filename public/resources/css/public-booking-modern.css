@@ -519,6 +519,26 @@
     text-decoration: line-through;
 }
 
+/* Days that were never on offer (past, beyond the booking horizon) carry no
+   information, so they fade out rather than looking like a booking. */
+.fhb-cal-day.is-outside {
+    background: transparent;
+    color: var(--fhb-text-muted);
+    cursor: default;
+    opacity: 0.45;
+}
+
+/* While the departure is open: free days that cannot end this stay. They still
+   restart the selection on click, so they stay clickable, just quieter. */
+.fhb-cal-day.is-muted:not(.is-outside) {
+    opacity: 0.45;
+}
+
+.fhb-cal-day.is-today {
+    border-color: var(--fhb-border);
+    font-weight: 600;
+}
+
 .fhb-cal-day.is-between {
     background: color-mix(in srgb, var(--fhb-primary) 14%, transparent);
     border-radius: 0;

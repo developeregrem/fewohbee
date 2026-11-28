@@ -10,6 +10,10 @@
  * half-open like the backend: a departure day is not an occupied night, so the
  * guest can arrive on the day another guest leaves.
  *
+ * With data-fhb-calendar-picker the widget is a plain date-range picker for the
+ * search: no room, no availability requests, every night from today up to the
+ * booking horizon is selectable. The search answers availability per category.
+ *
  * Months are paged, not appended: the visible window is replaced when navigating,
  * which keeps the widget at a constant height. That matters most when embedded,
  * where the host sizes the iframe to the content and a growing calendar would
@@ -23,6 +27,8 @@
     var MAX_MONTHS_PER_REQUEST = 3;
     /** Longest stay we pre-load nights for while a departure is still open. */
     var MAX_SPAN_MONTHS = 6;
+    /** Mirrors ReservationPeriodService::MAX_NIGHTS closely enough to bound the walk. */
+    var MAX_STAY_NIGHTS = 366;
 
     function toKey(date) {
         var month = String(date.getMonth() + 1).padStart(2, '0');
@@ -60,6 +66,9 @@
 
     function Calendar(root) {
         this.root = root;
+        // Rendered hidden where a visitor without JavaScript would otherwise see an
+        // empty, dead widget. Shown first: the width measured below needs layout.
+        root.hidden = false;
         this.endpoint = root.dataset.fhbCalendar;
         this.labels = JSON.parse(root.dataset.fhbCalendarLabels || '{}');
         this.locale = root.dataset.fhbCalendarLocale || 'de';
@@ -81,6 +90,12 @@
         this.nights = {};
         this.loadedMonths = {};
         this.room = null;
+        /** The server's today: it validates the stay, so the guest's clock may not undercut it. */
+        this.serverToday = root.dataset.fhbCalendarToday || null;
+        this.todayKey = this.currentToday();
+        this.picker = root.hasAttribute('data-fhb-calendar-picker');
+        /** Exclusive end of the booking horizon: rendered for the picker, else reported by the server. */
+        this.horizonEnd = this.picker ? (root.dataset.fhbCalendarHorizonEnd || null) : null;
         this.firstMonth = startOfMonth(new Date());
         this.lastMonth = addMonths(this.firstMonth, this.monthsAhead - 1);
         this.viewMonth = this.firstMonth;
@@ -95,9 +110,23 @@
         this.bindGrid();
 
         this.restoreRoom();
+        if (this.picker) {
+            // No room to select, so nothing else triggers the first render.
+            this.render();
+        }
         this.restoreSelection();
         this.takeOverDateFields();
     }
+
+    /**
+     * The first day a stay may start: the later of the server's and the guest's
+     * today. A browser a day behind the server would otherwise offer a day the
+     * server rejects; one ahead simply moves on at its own midnight.
+     */
+    Calendar.prototype.currentToday = function () {
+        var local = toKey(new Date());
+        return this.serverToday !== null && this.serverToday > local ? this.serverToday : local;
+    };
 
     /* ── Month navigation ─────────────────────────────────────────────── */
 
@@ -305,6 +334,7 @@
             + '&from=' + encodeURIComponent(monthKey(missing))
             + '&months=' + count;
 
+        var room = this.room;
         fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
             .then(function (response) {
                 if (!response.ok) {
@@ -313,6 +343,14 @@
                 return response.json();
             })
             .then(function (data) {
+                // The guest switched rooms while this was in flight: these nights belong
+                // to the previous room. Drop them and load the current one instead.
+                if (room !== self.room) {
+                    self.loading = false;
+                    self.ensureLoaded();
+                    return;
+                }
+
                 self.applyCalendarEnd(data);
                 Object.keys(data.nights || {}).forEach(function (night) {
                     self.nights[night] = data.nights[night] === 1;
@@ -335,6 +373,10 @@
                 // The date inputs remain the source of truth, so a failed load costs
                 // the guest nothing beyond the calendar itself.
                 self.loading = false;
+                if (room !== self.room) {
+                    self.ensureLoaded();
+                    return;
+                }
                 self.setStatus(self.labels.unavailable || '');
             });
     };
@@ -350,6 +392,8 @@
         if (data.hasMore !== false || !data.toExclusive) {
             return;
         }
+
+        this.horizonEnd = data.toExclusive;
 
         // toExclusive is a departure boundary, so the preceding day identifies the
         // final month that contains at least one bookable night.
@@ -451,6 +495,10 @@
             cell.className = 'fhb-cal-day';
             cell.dataset.fhbDay = toKey(cursor);
             cell.textContent = String(cursor.getDate());
+            // A bare day number means nothing to a screen reader.
+            cell.setAttribute('aria-label', cursor.toLocaleDateString(this.locale, {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            }));
             days.appendChild(cell);
             cursor = addDays(cursor, 1);
         }
@@ -461,15 +509,43 @@
 
     Calendar.prototype.paint = function () {
         var self = this;
+        // Re-read on every paint: a page left open past midnight must not keep
+        // offering yesterday, nor hold on to an arrival that has passed since.
+        this.todayKey = this.currentToday();
+        if (this.selectionStart && this.selectionStart < this.todayKey) {
+            this.clearSelection();
+            this.clearForm();
+            this.describeSelection();
+        }
         var end = this.selectionEnd || this.hoverEnd;
         var rangeValid = this.selectionStart && end && this.canDepart(this.selectionStart, end);
+        // While the departure is open, only days up to the first occupied night can
+        // end the stay. That day itself is fine: the next guest arrives after we leave.
+        var departing = this.selectionStart && !this.selectionEnd;
+        var lastDeparture = departing ? this.lastDepartureFrom(this.selectionStart) : null;
 
         this.grid.querySelectorAll('[data-fhb-day]').forEach(function (cell) {
             var key = cell.dataset.fhbDay;
             var free = self.isNightFree(key);
+            // Past days and days beyond the horizon were never bookable — grey them
+            // out instead of striking them through like an actual booking.
+            var outside = key < self.todayKey || (self.horizonEnd !== null && key >= self.horizonEnd);
+            // A possible or chosen departure is never drawn as unavailable, even when
+            // its own night is taken or lies past the horizon.
+            var departure = key === self.selectionEnd
+                || (departing && lastDeparture !== null && key > self.selectionStart && key <= lastDeparture);
 
-            cell.classList.toggle('is-busy', !free);
-            cell.disabled = !free && key !== self.selectionEnd;
+            cell.classList.toggle('is-today', key === self.todayKey);
+            if (key === self.todayKey) {
+                cell.setAttribute('aria-current', 'date');
+            } else {
+                cell.removeAttribute('aria-current');
+            }
+            cell.classList.toggle('is-outside', outside && !departure);
+            cell.classList.toggle('is-busy', !free && !outside && !departure);
+            // Only free days: taken ones already read as taken and must stay distinct.
+            cell.classList.toggle('is-muted', departing && free && !departure && key !== self.selectionStart);
+            cell.disabled = !free && !departure;
             cell.classList.remove('is-start', 'is-end', 'is-between');
 
             if (key === self.selectionStart) {
@@ -486,9 +562,31 @@
 
     /* ── Selection ────────────────────────────────────────────────────── */
 
-    /** A night is bookable when the server said so; unknown nights stay unselectable. */
+    /**
+     * Whether a night can be booked. Never before today. The picker allows every
+     * night up to the booking horizon; the availability calendar only those the
+     * server reported as free, so nights not loaded yet stay unselectable.
+     */
     Calendar.prototype.isNightFree = function (key) {
+        if (key < this.todayKey) {
+            return false;
+        }
+        if (this.picker) {
+            return this.horizonEnd === null || key < this.horizonEnd;
+        }
         return this.nights[key] === true;
+    };
+
+    /** The latest possible departure for an arrival: the morning after the last free night. */
+    Calendar.prototype.lastDepartureFrom = function (startKey) {
+        if (!this.isNightFree(startKey)) {
+            return null;
+        }
+        var night = fromKey(startKey);
+        for (var i = 0; i < MAX_STAY_NIGHTS && this.isNightFree(toKey(night)); i++) {
+            night = addDays(night, 1);
+        }
+        return toKey(night);
     };
 
     /**
@@ -558,6 +656,9 @@
             this.selectionStart = key;
             this.selectionEnd = null;
             this.hoverEnd = null;
+            // The form must not keep submitting the previous stay while the guest
+            // is still choosing the new one.
+            this.clearForm();
             this.paint();
             this.describeSelection();
             return;
@@ -583,7 +684,13 @@
 
         var from = this.fromInput.value;
         var to = this.toInput.value;
-        if (!from || !to || from >= to) {
+        // A stale page can carry an arrival that has passed since; drop it.
+        if (!from || !to || from >= to || from < this.todayKey) {
+            return;
+        }
+        // The picker knows every rule up front, so a range it could not have
+        // produced (e.g. past the horizon) is not shown as a valid choice.
+        if (this.picker && !this.canDepart(from, to)) {
             return;
         }
 
@@ -592,6 +699,16 @@
         // Open the window on the arrival month rather than making the guest navigate
         // back to their own booking.
         this.goTo(startOfMonth(fromKey(from)));
+    };
+
+    /** Empty the date fields, e.g. when a new arrival starts a fresh selection. */
+    Calendar.prototype.clearForm = function () {
+        [this.fromInput, this.toInput].forEach(function (input) {
+            if (input && input.value !== '') {
+                input.value = '';
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
     };
 
     Calendar.prototype.applyToForm = function () {
@@ -630,6 +747,12 @@
                 input.type = 'hidden';
             }
         });
+
+        // The picker shows no availability, so the button keeps promising the check.
+        if (this.picker) {
+            this.describeSelection();
+            return;
+        }
 
         document.querySelectorAll('[data-fhb-label-default]').forEach(function (label) {
             label.hidden = true;

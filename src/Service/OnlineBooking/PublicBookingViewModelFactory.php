@@ -125,6 +125,9 @@ class PublicBookingViewModelFactory
             'selectedRoomCapacity' => null !== $calendarRoom ? (int) $calendarRoom->getBedsMax() : 0,
             'calendarRooms' => $this->calendarService->getSelectableRooms($config),
             'calendarHorizonMonths' => $this->monthsUntil($this->calendarService->getHorizonEnd()),
+            // Exclusive departure boundary: the search's date picker has no availability
+            // endpoint to learn it from.
+            'calendarHorizonEnd' => $this->calendarService->getHorizonEnd()->format('Y-m-d'),
             'bookableRoomCount' => $this->configService->countBookableRooms($config),
         ];
     }

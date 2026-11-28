@@ -1,13 +1,36 @@
 {# Search entry point: dates, rooms and party size share one grid row, so the whole
    query reads as a single line. The guests partial owns the row and the wiring; this
    only fills in the fields that come first. #}
+{# Range picker over the native date inputs: same widget as the availability
+   calendar, minus the availability. Which rooms are free depends on the category
+   and party size, so that is answered by the search itself. Without JavaScript the
+   date fields below stay in charge and the widget stays hidden. #}
+<div class="fhb-calendar" hidden
+     data-fhb-calendar=""
+     data-fhb-calendar-picker
+     data-fhb-calendar-horizon-end="{{ calendarHorizonEnd }}"
+     data-fhb-calendar-labels="{{ {
+         'pickArrival': 'online_booking.public.calendar.pick_arrival'|trans,
+         'pickDeparture': 'online_booking.public.calendar.pick_departure'|trans,
+         'selectedOne': 'online_booking.public.calendar.selected_one'|trans,
+         'selectedMany': 'online_booking.public.calendar.selected_many'|trans
+     }|json_encode }}"
+     data-fhb-calendar-locale="{{ app.request.locale }}"
+     data-fhb-calendar-today="{{ minArrivalDate }}"
+     data-fhb-calendar-months="{{ calendarHorizonMonths|default(12) }}">
+    <div class="fhb-cal-head">
+        <span class="fhb-section-title mb-0">{{ 'online_booking.public.calendar.title_dates'|trans }}</span>
+    </div>
+    {{ include('PublicBooking/themes/modern/_calendar_body.html.twig') }}
+</div>
+
 {% embed 'PublicBooking/themes/modern/_guests.html.twig' %}
     {% block leadingFields %}
-        <div class="fhb-field">
+        <div class="fhb-field" data-fhb-date-fallback>
             <label class="fhb-label" for="dateFrom">{{ 'online_booking.public.arrival'|trans }}</label>
             <input class="form-control" type="date" id="dateFrom" name="dateFrom" min="{{ minArrivalDate }}" value="{{ search.dateFrom }}">
         </div>
-        <div class="fhb-field">
+        <div class="fhb-field" data-fhb-date-fallback>
             <label class="fhb-label" for="dateTo">{{ 'online_booking.public.departure'|trans }}</label>
             <input class="form-control" type="date" id="dateTo" name="dateTo" min="{{ minArrivalDate|date_modify('+1 day')|date('Y-m-d') }}" value="{{ search.dateTo }}">
         </div>

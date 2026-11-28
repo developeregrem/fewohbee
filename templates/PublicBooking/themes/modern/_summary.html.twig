@@ -2,8 +2,8 @@
 <div class="fhb-summary">
     <div class="fhb-summary-title">{{ 'online_booking.public.summary_title'|trans }}</div>
     <div class="fhb-summary-facts">
-        <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.arrival'|trans }}:</strong> {{ search.dateFrom }}</span>
-        <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.departure'|trans }}:</strong> {{ search.dateTo }}</span>
+        <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.arrival'|trans }}:</strong> {{ search.dateFrom|localized_date }}</span>
+        <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.departure'|trans }}:</strong> {{ search.dateTo|localized_date }}</span>
         <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.persons'|trans }}:</strong> {{ search.persons }}</span>
         <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.rooms'|trans }}:</strong> {{ search.roomsCount }}</span>
     </div>
