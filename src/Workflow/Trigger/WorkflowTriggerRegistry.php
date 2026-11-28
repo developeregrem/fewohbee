@@ -31,6 +31,14 @@ class WorkflowTriggerRegistry
         return isset($this->triggersByType[$type]);
     }
 
+    /** The group of a trigger type; a type that is no longer known falls into the last group. */
+    public function groupOf(string $type): WorkflowTriggerGroup
+    {
+        return isset($this->triggersByType[$type])
+            ? $this->triggersByType[$type]->getGroup()
+            : WorkflowTriggerGroup::OTHER;
+    }
+
     /** @return array<string, WorkflowTriggerInterface> */
     public function all(): array
     {

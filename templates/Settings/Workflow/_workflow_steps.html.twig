@@ -1,0 +1,19 @@
+{# What a workflow does, as soft badges in its order: the trigger, the conditions, the action.
+   The icons are those of the sections on the edit page; the list's search includes the steps.
+   Expects: workflow #}
+<div class="d-flex flex-wrap gap-1 mt-1" data-list-filter-field>
+    <span class="badge text-wrap text-start text-secondary-emphasis bg-secondary-subtle">
+        <i class="fas fa-play me-1" aria-hidden="true"></i><span class="visually-hidden">{{ 'workflow.form.trigger_type'|trans }}: </span>
+        {{- ('workflow.trigger.' ~ workflow.triggerType|replace({'.': '_'}))|trans -}}
+    </span>
+    {% for cond in workflow.conditions %}
+        <span class="badge text-wrap text-start text-info-emphasis bg-info-subtle">
+            <i class="fas fa-filter me-1" aria-hidden="true"></i><span class="visually-hidden">{{ 'workflow.form.condition_type'|trans }}: </span>
+            {{- ('workflow.condition.' ~ cond.type|replace({'.': '_'}))|trans -}}
+        </span>
+    {% endfor %}
+    <span class="badge text-wrap text-start text-success-emphasis bg-success-subtle">
+        <i class="fas fa-paper-plane me-1" aria-hidden="true"></i><span class="visually-hidden">{{ 'workflow.form.action_type'|trans }}: </span>
+        {{- ('workflow.action.' ~ workflow.actionType|replace({'.': '_'}))|trans -}}
+    </span>
+</div>

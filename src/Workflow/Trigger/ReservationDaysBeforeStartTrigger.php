@@ -28,6 +28,11 @@ class ReservationDaysBeforeStartTrigger extends AbstractScheduledTrigger
         return 'workflow.trigger.reservation_days_before_start';
     }
 
+    public function getGroup(): WorkflowTriggerGroup
+    {
+        return WorkflowTriggerGroup::STAY;
+    }
+
     public function getEntityClass(): ?string
     {
         return Reservation::class;

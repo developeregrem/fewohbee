@@ -10,11 +10,19 @@ workflow:
   confirm_delete: "Really delete this automation?"
   delete: "Delete automation"
 
-  section:
-    system: "System Automations"
-    user: "Your Automations"
+  group:
+    bookings: "Bookings"
+    stay: "Around the stay"
+    invoices: "Invoices and payment"
+    schedule: "On a schedule"
+    other: "Other"
 
   empty_state: "No automations yet. Create your first automation!"
+  search:
+    placeholder: "Search automations"
+    none: "No automation found."
+  list:
+    count: '{0}No automations|{1}1 automation|]1,Inf[%count% automations'
 
   flash:
     created: "Automation created."

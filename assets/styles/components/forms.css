@@ -93,17 +93,23 @@ input::-webkit-date-and-time-value {
 }
 
 /* Touch screens (the same test as the round add button in touch.css): only the button remains,
-   with its short label, floating at the bottom right in the add button's place. The bar stays
-   as an empty block that keeps the room below the content: with the gap above it (the card's
-   margin) and below it, the last card ends a little above the button. */
+   with its short label, floating at the bottom right in the add button's place. The bar itself
+   takes no room where it stands - a form may end mid-page, with more below it (the log of an
+   automation, the embedding of the online booking). The page keeps the room at its end instead:
+   with the margin of its last card, that card ends a little above the button. */
 @media not all and (hover: hover) and (pointer: fine) {
     .save-bar {
         position: static;
-        height: 3rem;
+        height: 0;
+        margin: 0;
         padding: 0;
         border: 0;
         background: none;
         box-shadow: none;
+    }
+
+    .container:has(.save-bar) {
+        padding-bottom: 4rem;
     }
 
     .save-bar-hint,

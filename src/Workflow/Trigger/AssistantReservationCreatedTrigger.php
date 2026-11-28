@@ -31,6 +31,11 @@ class AssistantReservationCreatedTrigger implements ConditionalWorkflowTriggerIn
         return 'workflow.trigger.assistant_booking_created';
     }
 
+    public function getGroup(): WorkflowTriggerGroup
+    {
+        return WorkflowTriggerGroup::BOOKINGS;
+    }
+
     public function getEntityClass(): ?string
     {
         return Reservation::class;

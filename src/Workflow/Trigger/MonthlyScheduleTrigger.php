@@ -27,6 +27,11 @@ class MonthlyScheduleTrigger extends AbstractScheduledTrigger
         return 'workflow.trigger.schedule_monthly';
     }
 
+    public function getGroup(): WorkflowTriggerGroup
+    {
+        return WorkflowTriggerGroup::SCHEDULE;
+    }
+
     public function getEntityClass(): ?string
     {
         return null;

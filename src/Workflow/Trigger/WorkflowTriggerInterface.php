@@ -12,6 +12,9 @@ interface WorkflowTriggerInterface
 
     public function getLabelKey(): string;
 
+    /** The group the list of automations shows a workflow with this trigger in. */
+    public function getGroup(): WorkflowTriggerGroup;
+
     /**
      * The entity class this trigger relates to, or null for non-entity triggers.
      *

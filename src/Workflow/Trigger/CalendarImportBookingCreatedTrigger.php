@@ -19,6 +19,11 @@ class CalendarImportBookingCreatedTrigger implements WorkflowTriggerInterface
         return 'workflow.trigger.calendar_import_created';
     }
 
+    public function getGroup(): WorkflowTriggerGroup
+    {
+        return WorkflowTriggerGroup::BOOKINGS;
+    }
+
     public function getEntityClass(): ?string
     {
         return Reservation::class;

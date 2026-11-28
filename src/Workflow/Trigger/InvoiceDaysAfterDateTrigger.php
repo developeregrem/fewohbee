@@ -31,6 +31,11 @@ class InvoiceDaysAfterDateTrigger extends AbstractScheduledTrigger
         return 'workflow.trigger.invoice_days_after_date';
     }
 
+    public function getGroup(): WorkflowTriggerGroup
+    {
+        return WorkflowTriggerGroup::INVOICES;
+    }
+
     public function getEntityClass(): ?string
     {
         return Invoice::class;

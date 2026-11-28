@@ -397,7 +397,8 @@ never run two wrappers concurrently. Allow enough time for setup and execution t
   `<twig:DatePager>`, or the pages of a list via `'swipe_nav': true` on `paginator.html.twig`)
   and keep the arrows
   or the select visible. Filters and the period of a page sit in a `.page-toolbar` below the
-  page header. Prefer stacked lists
+  page header; a list that is on the page as a whole (no pages) is searched in the browser with
+  the `list-filter` controller and a `<twig:SearchField>` there. Prefer stacked lists
   (`data-table-stack`) to tables that scroll sideways. Where the name of a row opens it (no own
   open or edit button), the whole row opens: `data-controller="row-link"
   data-action="click->row-link#open"` on the table and `data-row-link-target="link"` on the name

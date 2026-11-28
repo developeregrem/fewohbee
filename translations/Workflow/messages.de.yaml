@@ -10,11 +10,19 @@ workflow:
   confirm_delete: "Diese Automatisierung wirklich löschen?"
   delete: "Automatisierung löschen"
 
-  section:
-    system: "Systeminterne Automatisierungen"
-    user: "Eigene Automatisierungen"
+  group:
+    bookings: "Buchungen"
+    stay: "Rund um den Aufenthalt"
+    invoices: "Rechnungen und Zahlung"
+    schedule: "Regelmäßig"
+    other: "Weitere"
 
   empty_state: "Noch keine eigenen Automatisierungen vorhanden. Erstelle deine erste Automatisierung!"
+  search:
+    placeholder: "Automatisierungen durchsuchen"
+    none: "Keine Automatisierung gefunden."
+  list:
+    count: '{0}Keine Automatisierung|{1}1 Automatisierung|]1,Inf[%count% Automatisierungen'
 
   flash:
     created: "Automatisierung wurde erstellt."

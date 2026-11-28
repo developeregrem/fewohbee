@@ -19,6 +19,11 @@ class InvoiceStatusChangedTrigger implements WorkflowTriggerInterface
         return 'workflow.trigger.invoice_status_changed';
     }
 
+    public function getGroup(): WorkflowTriggerGroup
+    {
+        return WorkflowTriggerGroup::INVOICES;
+    }
+
     public function getEntityClass(): ?string
     {
         return Invoice::class;

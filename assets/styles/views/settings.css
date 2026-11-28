@@ -136,3 +136,9 @@
     white-space: pre;
     resize: vertical;
 }
+
+/* Automations: several conditions of one workflow, set apart by a line (workflow_form_controller.js) */
+.workflow-condition + .workflow-condition {
+    padding-top: 1rem;
+    border-top: 1px solid var(--feb-border);
+}

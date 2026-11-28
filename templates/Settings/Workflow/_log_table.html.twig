@@ -1,6 +1,8 @@
+{# Execution log of one workflow, loaded and paged by workflow_form_controller.js (links with
+   data-page); the arrows of the paginator are the targets of the swipe-nav around it. #}
 {% if logs|length > 0 %}
 <div class="table-responsive">
-    <table class="table table-sm table-hover mb-0">
+    <table class="table table-hover align-middle data-table data-table-stack">
         <thead>
             <tr>
                 <th>{{ 'workflow.logs.date'|trans }}</th>
@@ -11,38 +13,31 @@
         </thead>
         <tbody>
             {% for log in logs %}
-            <tr>
-                <td class="text-nowrap">{{ log.executedAt|date('d.m.Y H:i') }}</td>
-                <td>
-                    {% if log.status == 'success' %}
-                        <span class="badge bg-success">{{ 'workflow.logs.status_success'|trans }}</span>
-                    {% elseif log.status == 'skipped' %}
-                        <span class="badge bg-warning text-dark">{{ 'workflow.logs.status_skipped'|trans }}</span>
-                    {% else %}
-                        <span class="badge bg-danger">{{ 'workflow.logs.status_error'|trans }}</span>
-                    {% endif %}
-                </td>
-                <td class="small text-body-secondary">
-                    {% if log.entityId %}#{{ log.entityId }}{% endif %}
-                </td>
-                <td class="small">{{ log.message|length > 120 ? log.message[:120] ~ '...' : log.message }}</td>
-            </tr>
+                {% set tone = log.status == 'success' ? 'success' : (log.status == 'skipped' ? 'warning' : 'danger') %}
+                <tr>
+                    <td class="text-nowrap">{{ log.executedAt|date('d.m.Y H:i') }}</td>
+                    <td class="cell-meta">
+                        <span class="badge text-{{ tone }}-emphasis bg-{{ tone }}-subtle">{{ ('workflow.logs.status_' ~ (log.status in ['success', 'skipped'] ? log.status : 'error'))|trans }}</span>
+                    </td>
+                    <td class="cell-meta text-body-secondary">{% if log.entityId %}#{{ log.entityId }}{% endif %}</td>
+                    <td class="cell-meta small">{{ log.message|length > 120 ? log.message[:120] ~ '…' : log.message }}</td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 {% if pages is defined and pages > 1 %}
-<div class="px-3 pt-2">
+<div class="data-footer">
+    <span></span>
     {% include 'paginator.html.twig' with {
         url: path('settings.workflows.logs', {'id': workflow.id}),
         page: page,
         pages: pages,
-        search: ''
+        search: '',
+        swipe_nav: true,
     } %}
 </div>
 {% endif %}
 {% else %}
-<div class="text-center py-3 text-body-secondary small">
-    {{ 'workflow.logs.empty'|trans }}
-</div>
+<p class="text-center text-body-secondary small py-3 mb-0">{{ 'workflow.logs.empty'|trans }}</p>
 {% endif %}

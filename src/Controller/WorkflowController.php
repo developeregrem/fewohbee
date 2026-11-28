@@ -18,6 +18,7 @@ use App\Service\DisplayNameResolver;
 use App\Workflow\Action\WorkflowActionRegistry;
 use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use App\Workflow\Condition\WorkflowConditionRegistry;
+use App\Workflow\Trigger\WorkflowTriggerGroup;
 use App\Workflow\Trigger\WorkflowTriggerRegistry;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -50,10 +51,19 @@ class WorkflowController extends AbstractController
     #[Route('', name: 'settings.workflows.index', methods: ['GET'])]
     public function index(): Response
     {
+        // Grouped by what they react to (the trigger's group), in the order of the groups; within
+        // a group the built-in workflows come first, then the own ones by name. Empty groups drop.
+        $groups = [];
+        foreach (WorkflowTriggerGroup::cases() as $group) {
+            $groups[$group->value] = ['group' => $group, 'workflows' => []];
+        }
+        $workflows = [...$this->workflowRepository->findSystemWorkflows(), ...$this->workflowRepository->findUserWorkflows()];
+        foreach ($workflows as $workflow) {
+            $groups[$this->triggerRegistry->groupOf($workflow->getTriggerType())->value]['workflows'][] = $workflow;
+        }
+
         return $this->render('Settings/Workflow/index.html.twig', [
-            'systemWorkflows' => $this->workflowRepository->findSystemWorkflows(),
-            'userWorkflows' => $this->workflowRepository->findUserWorkflows(),
-            'triggers' => $this->triggerRegistry->all(),
+            'groups' => array_values(array_filter($groups, static fn (array $entry): bool => [] !== $entry['workflows'])),
         ]);
     }
 

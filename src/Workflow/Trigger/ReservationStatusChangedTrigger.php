@@ -19,6 +19,11 @@ class ReservationStatusChangedTrigger implements WorkflowTriggerInterface
         return 'workflow.trigger.reservation_status_changed';
     }
 
+    public function getGroup(): WorkflowTriggerGroup
+    {
+        return WorkflowTriggerGroup::BOOKINGS;
+    }
+
     public function getEntityClass(): ?string
     {
         return Reservation::class;

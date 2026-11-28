@@ -1,50 +1,24 @@
-{% use "common/delete_popover.html.twig" %}
-
-<div class="card mb-2">
-    <div class="card-body py-2 d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center flex-grow-1 me-3">
-            <div class="form-check form-switch me-3 mb-0">
-                <input class="form-check-input" type="checkbox" role="switch"
-                       id="toggle-{{ workflow.id }}"
-                       {{ workflow.enabled ? 'checked' : '' }}
-                       data-controller="workflow-toggle"
-                       data-action="change->workflow-toggle#toggle"
-                       data-workflow-toggle-url-value="{{ path('settings.workflows.toggle', {id: workflow.id}) }}"
-                       data-workflow-toggle-token-value="{{ csrf_token('workflow-toggle-' ~ workflow.id) }}">
-            </div>
-            <div>
-                <strong>{{ workflow.system ? workflow.name|trans : workflow.name }}</strong>
-                {% if workflow.description %}
-                    <br><span class="text-body-secondary small">{{ workflow.system ? workflow.description|trans : workflow.description }}</span>
-                {% endif %}
-                <br>
-                <span class="badge text-wrap bg-secondary bg-opacity-25 text-body-secondary small">
-                    {{ ('workflow.trigger.' ~ workflow.triggerType|replace({'.': '_'}))|trans }}
-                </span>
-                {% for cond in workflow.conditions %}
-                    <span class="badge text-wrap bg-info bg-opacity-25 text-body-secondary small">
-                        {{ ('workflow.condition.' ~ cond.type|replace({'.': '_'}))|trans }}
-                    </span>
-                {% endfor %}
-                <span class="badge text-wrap bg-success bg-opacity-25 text-body-secondary small">
-                    {{ ('workflow.action.' ~ workflow.actionType|replace({'.': '_'}))|trans }}
-                </span>
-            </div>
-        </div>
-        <div class="d-flex flex-column flex-md-row align-items-center gap-1">
-            <a href="{{ path('settings.workflows.edit', {id: workflow.id}) }}" class="btn btn-sm btn-outline-secondary" title="{{ 'workflow.edit'|trans }}">
-                <i class="fas fa-pen"></i>
-            </a>
-            {% if not workflow.system %}
-                {% set id = workflow.id %}
-                {% set targetUrl = path('settings.workflows.delete', {id: workflow.id}) %}
-                <button type="button" class="btn btn-sm btn-outline-danger"
-                        title="{{ 'workflow.confirm_delete'|trans }}"
-                        data-popover="delete"
-                        data-bs-content='{{ block('deletePopoverContent') }}'>
-                    <i class="fas fa-trash"></i>
-                </button>
-            {% endif %}
-        </div>
+{# One workflow shown on another settings page (the confirmation of the online booking), inside
+   that page's form: the switch saves at once over fetch and tells so (SaveState), because a
+   form of its own (ActiveToggle) may not stand inside another form. The pen leads to the edit
+   page. Expects: workflow #}
+<div class="border rounded p-3 d-flex align-items-start gap-2"
+     data-controller="workflow-toggle"
+     data-workflow-toggle-url-value="{{ path('settings.workflows.toggle', {id: workflow.id}) }}"
+     data-workflow-toggle-token-value="{{ csrf_token('workflow-toggle-' ~ workflow.id) }}">
+    <div class="form-check form-switch me-auto mb-0">
+        <input class="form-check-input" type="checkbox" role="switch"
+               id="wf-card-toggle-{{ workflow.id }}"
+               {{ workflow.enabled ? 'checked' }}
+               {% if workflow.description %}aria-describedby="wf-card-desc-{{ workflow.id }}"{% endif %}
+               data-workflow-toggle-target="input"
+               data-action="change->workflow-toggle#toggle">
+        <label class="form-check-label d-inline fw-semibold" for="wf-card-toggle-{{ workflow.id }}">{{ workflow.system ? workflow.name|trans : workflow.name }}</label>
+        <twig:SaveState class="ms-2 align-top" data-workflow-toggle-target="state"/>
+        {% if workflow.description %}
+            <div class="small text-body-secondary" id="wf-card-desc-{{ workflow.id }}">{{ workflow.system ? workflow.description|trans : workflow.description }}</div>
+        {% endif %}
+        {{ include('Settings/Workflow/_workflow_steps.html.twig') }}
     </div>
+    <twig:IconButton icon="pen" :label="'workflow.edit'|trans" :href="path('settings.workflows.edit', {id: workflow.id})" class="flex-shrink-0"/>
 </div>

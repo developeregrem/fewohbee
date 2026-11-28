@@ -206,12 +206,16 @@ export default class extends Controller {
         if (!this._currentConditions) return null;
 
         const index = this._conditionCounter++;
+        // One condition is a row of the form grid (label left, select and remove button right),
+        // followed by its own fields; several conditions are set apart by a line (settings.css).
         const row = document.createElement('div');
         row.dataset.conditionRow = '';
         row.dataset.conditionIndex = index;
-        row.className = 'mb-3 border rounded p-3 position-relative';
+        row.className = 'workflow-condition';
 
         const removeLabel = this.translationsValue.remove_condition || 'Remove';
+        const typeLabel = this.translationsValue.condition_type || '';
+        const selectId = `wf-condition-${index}-type`;
 
         // Build condition type select
         const options = this._currentConditions
@@ -220,16 +224,20 @@ export default class extends Controller {
             .join('');
 
         row.innerHTML = `
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <select class="form-select form-select-sm" data-condition-type-select
-                        data-action="change->workflow-form#onConditionTypeChange">
-                    <option value="">--</option>
-                    ${options}
-                </select>
-                <button type="button" class="btn btn-sm btn-outline-danger ms-2 flex-shrink-0"
-                        data-action="click->workflow-form#removeCondition">
-                    <i class="fas fa-times"></i>
-                </button>
+            <div class="row mb-3">
+                <label for="${selectId}" class="col-sm-4 col-form-label text-sm-end">${typeLabel}</label>
+                <div class="col-sm d-flex align-items-center gap-2">
+                    <select class="form-select" id="${selectId}" data-condition-type-select
+                            data-action="change->workflow-form#onConditionTypeChange">
+                        <option value="">--</option>
+                        ${options}
+                    </select>
+                    <button type="button" class="btn btn-icon text-danger flex-shrink-0"
+                            title="${removeLabel}" aria-label="${removeLabel}"
+                            data-action="click->workflow-form#removeCondition">
+                        <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
             <div data-condition-config></div>
         `;
@@ -286,9 +294,15 @@ export default class extends Controller {
     _renderConfigFields(container, schema, prefix) {
         container.innerHTML = '';
         schema.forEach(field => {
+            // Each field is a row of the form grid: label left from sm, the field and its help right
             const div = document.createElement('div');
-            div.className = 'mb-3';
+            div.className = 'row mb-3';
             const id = `wf-${prefix}-${field.key}`;
+            const label = field.label || field.key;
+            const help = field.help ? `<div class="form-text">${field.help}</div>` : '';
+            const row = (control) => `
+                <label for="${id}" class="col-sm-4 col-form-label text-sm-end">${label}</label>
+                <div class="col-sm">${control}${help}</div>`;
 
             // Store showIf metadata on the wrapper div for later evaluation
             if (field.showIf) {
@@ -309,45 +323,39 @@ export default class extends Controller {
             }
 
             if (field.type === 'attachment_list') {
+                // A list of rows, not one field: the label names it without pointing at an input
                 div.innerHTML = `
-                    <label class="form-label">${field.label || field.key}</label>
-                    ${field.help ? `<div class="form-text mt-0 mb-2">${field.help}</div>` : ''}`;
-                div.appendChild(this._buildAttachmentList(field, id));
+                    <div class="col-sm-4 col-form-label text-sm-end">${label}</div>
+                    <div class="col-sm" data-field-body>
+                        ${field.help ? `<div class="form-text mt-0 mb-2">${field.help}</div>` : ''}
+                    </div>`;
+                div.querySelector('[data-field-body]').appendChild(this._buildAttachmentList(field, id));
                 container.appendChild(div);
                 return;
             }
 
             if (field.type === 'number') {
-                div.innerHTML = `
-                    <label for="${id}" class="form-label">${field.label || field.key}</label>
+                div.innerHTML = row(`
                     <input type="number" class="form-control" id="${id}"
                            data-config-key="${field.key}"
                            value="${field.default ?? ''}"
                            ${field.min !== undefined ? `min="${field.min}"` : ''}
-                           ${field.max !== undefined ? `max="${field.max}"` : ''}>
-                    ${field.help ? `<div class="form-text">${field.help}</div>` : ''}`;
+                           ${field.max !== undefined ? `max="${field.max}"` : ''}>`);
             } else if (field.type === 'select' && field.options) {
                 let options = field.options.map(o =>
                     `<option value="${o.value}"${o.value === (field.default ?? '') ? ' selected' : ''}>${o.label}</option>`
                 ).join('');
-                div.innerHTML = `
-                    <label for="${id}" class="form-label">${field.label || field.key}</label>
-                    <select class="form-select" id="${id}" data-config-key="${field.key}">${options}</select>
-                    ${field.help ? `<div class="form-text">${field.help}</div>` : ''}`;
+                div.innerHTML = row(`<select class="form-select" id="${id}" data-config-key="${field.key}">${options}</select>`);
             } else if (field.type === 'email') {
-                div.innerHTML = `
-                    <label for="${id}" class="form-label">${field.label || field.key}</label>
+                div.innerHTML = row(`
                     <input type="email" class="form-control" id="${id}"
                            data-config-key="${field.key}"
-                           value="${field.default ?? ''}">
-                    ${field.help ? `<div class="form-text">${field.help}</div>` : ''}`;
+                           value="${field.default ?? ''}">`);
             } else {
-                div.innerHTML = `
-                    <label for="${id}" class="form-label">${field.label || field.key}</label>
+                div.innerHTML = row(`
                     <input type="text" class="form-control" id="${id}"
                            data-config-key="${field.key}"
-                           value="${field.default ?? ''}">
-                    ${field.help ? `<div class="form-text">${field.help}</div>` : ''}`;
+                           value="${field.default ?? ''}">`);
             }
             container.appendChild(div);
         });
@@ -387,7 +395,7 @@ export default class extends Controller {
 
         const add = document.createElement('button');
         add.type = 'button';
-        add.className = 'btn btn-sm btn-outline-primary';
+        add.className = 'btn btn-sm btn-secondary';
         add.id = `${id}-add`;
         add.innerHTML = '<i class="fas fa-plus me-1"></i>';
         add.append(field.addLabel || '+');
@@ -406,12 +414,12 @@ export default class extends Controller {
         const row = document.createElement('div');
         row.dataset.attachmentRow = '';
         // Same layout as the condition rows so both lists look alike.
-        row.className = 'd-flex align-items-center justify-content-between mb-2';
+        row.className = 'd-flex align-items-center gap-2 mb-2';
 
         // Built via DOM APIs on purpose: template names are user-authored and
         // data-attachment-item carries JSON with quotes.
         const select = document.createElement('select');
-        select.className = 'form-select form-select-sm';
+        select.className = 'form-select';
         const placeholder = document.createElement('option');
         placeholder.value = '';
         placeholder.textContent = labels.select || '--';
@@ -448,9 +456,10 @@ export default class extends Controller {
 
         const remove = document.createElement('button');
         remove.type = 'button';
-        remove.className = 'btn btn-sm btn-outline-danger ms-2 flex-shrink-0';
+        remove.className = 'btn btn-icon text-danger flex-shrink-0';
         remove.title = labels.remove || '';
-        remove.innerHTML = '<i class="fas fa-times"></i>';
+        remove.setAttribute('aria-label', labels.remove || '');
+        remove.innerHTML = '<i class="fas fa-trash-alt" aria-hidden="true"></i>';
         remove.addEventListener('click', () => {
             row.remove();
             // Removal fires no change event of its own, but fields depending on this

@@ -33,6 +33,11 @@ class GuestCheckInConfirmedTrigger implements ConditionalWorkflowTriggerInterfac
         return 'workflow.trigger.guest_checkin_confirmed';
     }
 
+    public function getGroup(): WorkflowTriggerGroup
+    {
+        return WorkflowTriggerGroup::STAY;
+    }
+
     public function getEntityClass(): ?string
     {
         return Reservation::class;

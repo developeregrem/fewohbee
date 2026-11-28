@@ -19,6 +19,11 @@ class OnlineBookingCreatedTrigger implements WorkflowTriggerInterface
         return 'workflow.trigger.online_booking_created';
     }
 
+    public function getGroup(): WorkflowTriggerGroup
+    {
+        return WorkflowTriggerGroup::BOOKINGS;
+    }
+
     public function getEntityClass(): ?string
     {
         return Reservation::class;

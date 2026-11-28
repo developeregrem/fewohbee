@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 {% block title %}
     {{ parent() }} - {{ 'workflow.page_title'|trans }}
@@ -11,55 +12,83 @@
 {% block page_title %}{{ 'workflow.nav.label'|trans }}{% endblock %}
 
 {% block content %}
-<div class="container fab-add-clearance" data-controller="settings">
-    <div class="row justify-content-center">
-        <div class="col-lg-10 col-xl-9">
-
-            {# -- Header -- #}
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h2 class="fs-4 mb-0">
-                    <i class="fas fa-bolt text-primary me-1"></i>
-                    {{ 'workflow.page_title'|trans }}
-                </h2>
-                <a href="{{ path('settings.workflows.new') }}" class="btn btn-primary btn-sm fab-add-inline">
-                    <i class="fas fa-plus me-1"></i>{{ 'workflow.new'|trans }}
-                </a>
-                <a href="{{ path('settings.workflows.new') }}" class="btn fab-add"
-                   title="{{ 'workflow.new'|trans }}" aria-label="{{ 'workflow.new'|trans }}">
-                    <i class="fas fa-plus"></i>
-                </a>
-            </div>
-
-            <p class="text-body-secondary mb-4">{{ 'workflow.page_description'|trans }}</p>
-
-            {# -- System Workflows -- #}
-            {% if systemWorkflows|length > 0 %}
-            <h5 class="fs-6 text-body-secondary mb-2">
-                <i class="fas fa-lock me-1"></i>{{ 'workflow.section.system'|trans }}
-            </h5>
-            {% for workflow in systemWorkflows %}
-                {% include 'Settings/Workflow/_workflow_card.html.twig' with {'workflow': workflow} %}
-            {% endfor %}
-            {% endif %}
-
-            {# -- User Workflows -- #}
-            <h5 class="fs-6 text-body-secondary mb-2 mt-4">
-                <i class="fas fa-user me-1"></i>{{ 'workflow.section.user'|trans }}
-            </h5>
-            {% if userWorkflows|length > 0 %}
-                {% for workflow in userWorkflows %}
-                    {% include 'Settings/Workflow/_workflow_card.html.twig' with {'workflow': workflow} %}
-                {% endfor %}
-            {% else %}
-                <div class="card mb-3">
-                    <div class="card-body text-center text-body-secondary py-4">
-                        <i class="fas fa-inbox fa-2x mb-2 d-block mx-auto" aria-hidden="true"></i>
-                        {{ 'workflow.empty_state'|trans }}
-                    </div>
-                </div>
-            {% endif %}
-
-        </div>
+<div class="container fab-add-clearance" data-controller="settings list-filter">
+    <twig:PageHeader :title="'workflow.nav.label'|trans" :back="path('settings.overview')" :backLabel="'nav.settings'|trans">
+        <twig:AddButton :label="'workflow.new'|trans" :href="path('settings.workflows.new')"/>
+    </twig:PageHeader>
+    <p class="text-body-secondary small mb-3">{{ 'workflow.page_description'|trans }}</p>
+    {# Searches name, description and the steps of each automation, in the browser #}
+    <div class="page-toolbar mb-3">
+        <twig:SearchField :placeholder="'workflow.search.placeholder'|trans"
+                          data-action="submit->list-filter#submit"
+                          input:data-list-filter-target="input" input:data-action="input->list-filter#filter"/>
     </div>
+
+    {# One section per group of triggers, along the way of a guest; built-in and own automations
+       mixed. The built-in ones can be switched and edited, not deleted: a lock takes the place of
+       their delete button. #}
+    {% set groupIcons = {bookings: 'calendar-plus', stay: 'suitcase-rolling', invoices: 'file-invoice', schedule: 'clock', other: 'circle-question'} %}
+    {% if groups is empty %}
+        <div class="card data-card mb-4">
+            <twig:EmptyState icon="bolt" :title="'workflow.empty_state'|trans"/>
+        </div>
+    {% endif %}
+    <div class="card data-card mb-4" data-list-filter-target="empty" hidden>
+        <twig:EmptyState icon="search" :title="'workflow.search.none'|trans"/>
+    </div>
+    {% for entry in groups %}
+        {% set headingId = 'workflows-' ~ entry.group.value %}
+        <section class="card data-card mb-4" aria-labelledby="{{ headingId }}" data-list-filter-target="group">
+            <twig:SectionHeader :headingId="headingId" :icon="groupIcons[entry.group.value]" :title="entry.group.labelKey()|trans"/>
+            <div class="table-responsive">
+                {# One column beside the actions: the group's heading says what the rows are #}
+                <table class="table table-hover align-middle data-table" data-controller="row-link" data-action="click->row-link#open">
+                    <tbody>
+                        {% for workflow in entry.workflows %}
+                            <tr{% if not workflow.enabled %} class="is-inactive"{% endif %} data-list-filter-target="item">
+                                <td>
+                                    <a href="{{ path('settings.workflows.edit', {id: workflow.id}) }}" class="data-table-link" data-row-link-target="link">
+                                        <span class="data-table-link-text" data-list-filter-field>{{ workflow.system ? workflow.name|trans : workflow.name }}</span>
+                                    </a>
+                                    <span class="badge text-secondary-emphasis bg-secondary-subtle ms-1" data-inactive-badge {{ workflow.enabled ? 'hidden' }}>{{ 'base.inactive'|trans }}</span>
+                                    {% if workflow.description %}
+                                        <div class="small text-body-secondary" data-list-filter-field>{{ workflow.system ? workflow.description|trans : workflow.description }}</div>
+                                    {% endif %}
+                                    {{ include('Settings/Workflow/_workflow_steps.html.twig') }}
+                                </td>
+                                <td class="cell-actions data-table-actions text-end">
+                                    <twig:ActiveToggle :action="path('settings.workflows.toggle', {id: workflow.id})"
+                                                       :token="csrf_token('workflow-toggle-' ~ workflow.id)" :active="workflow.enabled"
+                                                       :enableLabel="'button.enable'|trans" :disableLabel="'button.disable'|trans"
+                                                       fetch inactiveClass="is-inactive"/>
+                                    {% if workflow.system %}
+                                        <span class="icon-slot text-body-tertiary" title="{{ 'workflow.flash.cannot_delete_system'|trans }}">
+                                            <i class="fas fa-lock" aria-hidden="true"></i>
+                                            <span class="visually-hidden">{{ 'workflow.flash.cannot_delete_system'|trans }}</span>
+                                        </span>
+                                    {% else %}
+                                        {% set id = workflow.id %}
+                                        {% set targetUrl = path('settings.workflows.delete', {id: workflow.id}) %}
+                                        <button type="button" class="btn btn-icon text-danger"
+                                                title="{{ 'button.delete'|trans }}" aria-label="{{ 'button.delete'|trans }}"
+                                                data-popover="delete"
+                                                data-title="{{ 'workflow.confirm_delete'|trans }}"
+                                                data-bs-content='{{ block('deletePopoverContent') }}'>
+                                            <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                                        </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {# The texts for every count down to none: the search counts the rows it shows #}
+            <div class="data-footer" data-list-filter-target="count"
+                 data-texts="{{ range(0, entry.workflows|length)|map(n => 'workflow.list.count'|trans({'%count%': n}))|json_encode|e('html_attr') }}">
+                <span>{{ 'workflow.list.count'|trans({'%count%': entry.workflows|length}) }}</span>
+            </div>
+        </section>
+    {% endfor %}
 </div>
 {% endblock %}
